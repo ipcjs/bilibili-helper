@@ -1,0 +1,66 @@
+{
+  "extName": {
+    "message": "Bilibili Helper",
+    "description": "Extension: Name"
+  },
+  "goBili": {
+    "message": "Go to bilibili.com",
+    "description": "Popup Button: go_bili"
+  },
+  "cssSwitchOff": {
+    "message": "Enable Beautifier",
+    "description": "Popup Button: css_switch_off"
+  },
+  "cssSwitchOn": {
+    "message": "Disable Beautifier",
+    "description": "Popup Button: css_switch_on"
+  },
+  "adModeOff": {
+    "message": "Enter AD Mode",
+    "description": "Popup Button: ad_mode_off"
+  },
+  "adModeOn": {
+    "message": "Leave AD Mode",
+    "description": "Popup Button: ad_mode_on"
+  },
+  "goVideo": {
+    "message": "GO!",
+    "description": "Popup Button: go_video"
+  },
+  "goDynamic": {
+    "message": "Followings",
+    "description": "Popup Button: go_dynamic"
+  },
+  "notLogged": {
+    "message": " (Not Login)",
+    "description": "Popup Button: not_logged"
+  },
+  "nNewUpdate": {
+    "message": " (%n New)",
+    "description": "Popup Button: new_update"
+  },
+  "goSubscription": {
+    "message": "Subscriptions",
+    "description": "Popup Button: go_subscription"
+  },
+  "goOption": {
+    "message": "Options",
+    "description": "Popup Button: go_option"
+  },
+  "searchBili": {
+    "message": "Search Bilibili for '%s'",
+    "description": "Context Menu: Title"
+  },
+  "optionPage": {
+    "message": "Options",
+    "description": "Option Page: Title"
+  },
+  "noticeficationTitle": {
+    "message": "Bilibili Helper Noticefication",
+    "description": "Noticefication: Title"
+  },
+  "followingUpdateMessage": {
+    "message": "Your bilibili followings have %n new updates!",
+    "description": "Noticefication: Following Update Message"
+  }
+}

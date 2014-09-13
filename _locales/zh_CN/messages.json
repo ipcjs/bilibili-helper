@@ -1,0 +1,66 @@
+{
+  "extName": {
+    "message": "哔哩哔哩助手",
+    "description": "Extension: Name"
+  },
+  "goBili": {
+    "message": "一键前往bilibili.com",
+    "description": "Popup Button: go_bili"
+  },
+  "cssSwitchOff": {
+    "message": "开启美化功能",
+    "description": "Popup Button: css_switch_off"
+  },
+  "cssSwitchOn": {
+    "message": "关闭美化功能",
+    "description": "Popup Button: css_switch_on"
+  },
+  "adModeOff": {
+    "message": "进入点广告模式",
+    "description": "Popup Button: ad_mode_off"
+  },
+  "adModeOn": {
+    "message": "离开点广告模式",
+    "description": "Popup Button: ad_mode_on"
+  },
+  "goVideo": {
+    "message": "跳转",
+    "description": "Popup Button: go_video"
+  },
+  "goDynamic": {
+    "message": "我关注的",
+    "description": "Popup Button: go_dynamic"
+  },
+  "notLogged": {
+    "message": "(未登录)",
+    "description": "Popup Button: not_logged"
+  },
+  "nNewUpdate": {
+    "message": "(%n个更新)",
+    "description": "Popup Button: new_update"
+  },
+  "goSubscription": {
+    "message": "我订阅的",
+    "description": "Popup Button: go_subscription"
+  },
+  "goOption": {
+    "message": "更多选项",
+    "description": "Popup Button: go_option"
+  },
+  "searchBili": {
+    "message": "用 哔哩哔哩 搜索 “%s”",
+    "description": "Context Menu: Title"
+  },
+  "optionPage": {
+    "message": "选项页",
+    "description": "Option Page: Title"
+  },
+  "noticeficationTitle": {
+    "message": "哔哩哔哩助手提醒",
+    "description": "Noticefication: Title"
+  },
+  "followingUpdateMessage": {
+    "message": "您的账户收到了%n个关注推送!",
+    "description": "Noticefication: Following Update Message"
+  }
+}
