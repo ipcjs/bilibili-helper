@@ -173,8 +173,8 @@
 							infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
 						}
 						main.append(infoSection);
-						if (biliHelper.error) {
-							var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p></p></div>').find('p').text(biliHelper.error);
+						if (!biliHelper.cid && biliHelper.error) {
+							var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
 							main.append(errorSection);
 						}
 						if (biliHelper.redirectUrl) {
@@ -303,8 +303,23 @@
 						}
 					}
 					if (typeof videoInfo.code !== "undefined") {
-						var error = true;
-						console.warn('[Bilbili Helper] Failed to get video info via API! Error ' + videoInfo.code + ': ' + videoInfo.error);
+						if (biliHelper.page != 1) {
+							chrome.extension.sendMessage({
+								command: "getVideoInfo",
+								avid: biliHelper.avid,
+								pg: 1
+							}, function(response) {
+								var firstVideoInfo = response.videoInfo;
+								if (firstVideoInfo.pages == biliHelper.page - 1) {
+									biliHelper.pageOffset -= 1;
+									work();
+									return false;
+								}
+							});
+						} else {
+							biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
+							$('#loading-notice').fadeOut(300);
+						}
 					} else {
 						biliHelper.cid = videoInfo.cid;
 					}
@@ -461,33 +476,16 @@
 							}
 						}, 1000);
 
-						if (error) {
-							if (biliHelper.page != 1) {
-								chrome.extension.sendMessage({
-									command: "getVideoInfo",
-									avid: biliHelper.avid,
-									pg: 1
-								}, function(response) {
-									var firstVideoInfo = response.videoInfo;
-									if (firstVideoInfo.pages == biliHelper.page - 1) {
-										biliHelper.pageOffset -= 1;
-										work();
-										return false;
-									}
-								});
-							} else {
-								biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
-								$('#loading-notice').fadeOut(300);
-							}
-						} else {
-							if (!biliHelper.favorHTML5) {
-								$('#loading-notice').fadeOut(300, function() {
-									biliHelper.switcher.iframe();
-								});
-							}
+						if (biliHelper.cid && !biliHelper.favorHTML5) {
+							$('#loading-notice').fadeOut(300, function() {
+								biliHelper.switcher.iframe();
+							});
 						}
 					}
-					if (error) return false;
+					if (!biliHelper.cid) {
+						biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
+						return false;
+					}
 					chrome.extension.sendMessage({
 						command: "getDownloadLink",
 						cid: biliHelper.cid,
