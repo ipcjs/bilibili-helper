@@ -1,6 +1,10 @@
 (function() {
-	var adModeOn = false,
-		biliHelper = new Object();
+	if (typeof biliHelper !== "undefined") return false;
+
+	console.log("initializing");
+	
+	var adModeOn = false;
+	window.biliHelper = new Object();
 
 	function formatInt(Source, Length) {
 		var strTemp = "";
@@ -100,8 +104,6 @@
 		});
 	}
 
-	intilize_style();
-
 	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 		switch (request.command) {
 			case "update":
@@ -136,7 +138,8 @@
 		}
 	});
 
-	$(document).ready(function() {
+	var biliHelperFunc = function() {
+		intilize_style();
 		var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?$/,
 			urlResult = bili_reg.exec(document.URL);
 		if (urlResult) {
@@ -331,6 +334,7 @@
 							document.write(page);
 							document.close();
 						});
+						biliHelperFunc();
 						return false;
 					}
 					if (biliHelper.replacePlayer) {
@@ -526,5 +530,6 @@
 				});
 			}
 		}
-	});
+	}
+	biliHelperFunc();
 })();
