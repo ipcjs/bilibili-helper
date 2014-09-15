@@ -1,10 +1,9 @@
 (function() {
-	if (typeof biliHelper !== "undefined") return false;
 
-	console.log("initializing");
-	
+	if ($("html").hasClass("bilibili-helper")) return false;
+
 	var adModeOn = false;
-	window.biliHelper = new Object();
+	var biliHelper = new Object();
 
 	function formatInt(Source, Length) {
 		var strTemp = "";
@@ -140,6 +139,7 @@
 
 	var biliHelperFunc = function() {
 		intilize_style();
+		$("html").addClass("bilibili-helper");
 		var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?$/,
 			urlResult = bili_reg.exec(document.URL);
 		if (urlResult) {
@@ -531,5 +531,5 @@
 			}
 		}
 	}
-	biliHelperFunc();
+	$(document).ready(biliHelperFunc);
 })();
