@@ -384,7 +384,18 @@
 
 
 <div class="z">
-
+	<div class="v_bgm_list">
+        <div class="info">
+        	<a class="t" href="/sp/%sp_title_uri%" target="_blank">%sp_title%</a>
+			<div id="sp_dingyue"></div>
+		</div>
+        <div class="video">
+            <div class="b-head"><ul id="v_bgm_list_tab" class="b-slt-tab"></ul></div>
+            <div id="v_bgm_list_page"></div>
+            <div id="v_bgm_list_data"></div>
+            <div id="v_bgm_list_toggle"><span class="autoheight">查看更多</span></div>
+        </div>
+	</div>
 	    
     <div class="ad ad-e1"></div>
     <div class="ad ad-e2"></div>
@@ -490,13 +501,26 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <script language="javascript">
-var aid='%avid%';var typeid='%tid%';var mid='%mid%';var pageno = '%page%';var totalpage = '1';var wb_title='%title%';var wb_desc = '%title% 分享自#哔哩哔哩助手#播放页';var wb_info='%title% 分享自#哔哩哔哩助手#播放页';var wb_url='http://www.bilibili.com/video/av%avid%/';var wb_full_url='http://www.bilibili.com/video/av%avid%/';var wb_img='%pic%';var spid = 0;
+var aid='%avid%';var typeid='%tid%';var mid='%mid%';var pageno = '%page%';var totalpage = '1';var wb_title='%title%';var wb_desc = '%title% 分享自#哔哩哔哩助手#播放页';var wb_info='%title% 分享自#哔哩哔哩助手#播放页';var wb_url='http://www.bilibili.com/video/av%avid%/';var wb_full_url='http://www.bilibili.com/video/av%avid%/';var wb_img='%pic%';var spid = %spid%;
 var isSpFav="0";
 var isSpAtt="0";
 
 $(function(){
 	loadHTML5(%avid%,%page%);kwtags(%tags%);
     lrurl();
+    if (spid) {
+    	if (window.AttentionList) {
+    		for (var i in window.AttentionList) {
+    			var o = window.AttentionList[i];
+    			if ((o < 0) && (o *-1 ) == spid) {
+    				isSpAtt = isSpFav = "1";
+    				break;
+    			}
+    		}
+    	}
+    	showSpAdbtn();
+    	new bbBangumiSp(aid, spid, %season_id%, "%sp_title_uri%");
+    }
     js_viewallalist();
 });
 </script>

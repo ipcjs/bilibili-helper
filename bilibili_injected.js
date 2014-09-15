@@ -261,7 +261,7 @@
 					},
 					html5: function() {
 						this.current = "html5";
-						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" autobuffer="true"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
+						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" autobuffer="true" poster="' + biliHelper.videoPic + '"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
 						ABP.create(document.getElementById("bilibili_helper_html5_player"), {
 							"src": {
 								"playlist": [{
@@ -285,6 +285,7 @@
 				}, function(response) {
 					var videoInfo = response.videoInfo,
 						error = false;
+					biliHelper.videoPic = videoInfo.pic;
 					if ($('#alist a').length) {
 						var maxPage = 0;
 						$('#alist a').each(function(i, e) {
@@ -325,7 +326,7 @@
 					}
 					if (biliHelper.genPage) {
 						$.get(chrome.extension.getURL("template.html"), function(template) {
-							var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid).replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl).replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(",")));
+							var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid).replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '').replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id).replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl).replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(",")));
 							document.open();
 							document.write(page);
 							document.close();
