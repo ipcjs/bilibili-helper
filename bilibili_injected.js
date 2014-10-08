@@ -416,6 +416,9 @@
 						abp.playerUnit.addEventListener("normal", function() {
 							player_fullwin(false);
 						});
+						$("#bofqi").resize(function() {
+							if (abp && abp.cmManager) abp.cmManager.setBounds();
+						});
 					}
 				}
 				work();
