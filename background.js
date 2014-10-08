@@ -185,7 +185,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 						rel_search: getOption("rel_search")
 					});
 				} else {
-					getFileData("http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&type=mp4", function(avPlaybackLink) {
+					getFileData("http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4", function(avPlaybackLink) {
 						avPlaybackLink = JSON.parse(avPlaybackLink);
 						sendResponse({
 							download: avDownloadLink.from == 'qq' ? avPlaybackLink : avDownloadLink,
