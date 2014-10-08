@@ -4,6 +4,10 @@
 
 	var adModeOn = false;
 	var biliHelper = new Object();
+	var ff_status = {},
+		ff_status_id = 0,
+		ff_embed_stack = null,
+		ff_embed_stack_style = null;
 
 	function formatInt(Source, Length) {
 		var strTemp = "";
@@ -101,6 +105,133 @@
 		}, function(response) {
 			if (response.result == "ok") enable(response.css);
 		});
+	}
+
+	function player_fullwin(d) {
+		if (!1 != d || null !== ff_embed_stack) {
+			if (null === ff_embed_stack) {
+				ff_embed_stack = [];
+				ff_embed_stack_style = [];
+				var f = $("#bofqi").get(0);
+				do {
+					$(f).attr("embed_stack", !0), ff_embed_stack.push(f)
+				} while (f = f.parentNode)
+			}
+			d ? ($(".rklist").hide(), $("#bofqi").removeClass("wide"), $("#bofqi").addClass("webfullscreen")) : ($(".rklist").show(), $("#bofqi").removeClass("wide"), $("#bofqi").removeClass("webfullscreen"));
+			var f = $("div"),
+				h;
+			for (h in f) {
+				if (f[h] && f[h].getAttribute && !f[h].getAttribute("embed_stack") && f[h] && f[h].style) {
+					var g;
+					f[h].getAttribute("ff_id") ? g = ff_status[f[h].getAttribute("ff_id")] : (ff_status_id++, f[h].setAttribute("ff_id", ff_status_id), ff_status[ff_status_id] = f[h].style.display);
+					f[h].style.display = d ? "none" : g
+				}
+			}
+			for (h in ff_embed_stack) {
+				(f = ff_embed_stack[h]) && f.style && (ff_embed_stack_style[h] || (ff_embed_stack_style[h] = {
+					position: f.style.position,
+					width: f.style.width,
+					height: f.style.height,
+					padding: f.style.padding,
+					margin: f.style.margin
+				}), d ? (f.style.position = "fixed", f.style.width = "100%", f.style.height = "100%", f.style.padding = "0 0", f.style.margin = "0 0") : (f.style.position = ff_embed_stack_style[h].position, f.style.width = ff_embed_stack_style[h].width, f.style.height = ff_embed_stack_style[h].height, f.style.padding = ff_embed_stack_style[h].padding, f.style.margin = ff_embed_stack_style[h].margin))
+			}
+		}
+	}
+
+	function player_widewin() {
+		$("#bofqi").removeClass("webfullscreen");
+		$("#bofqi").addClass("wide")
+	}
+
+	function miniPlayer() {
+		var l = $("#bofqi"),
+			j = l.offset().top + l.height() + 100,
+			s = 0,
+			r = !1;
+		$('<input type="checkbox" id="checkbox_miniplayer" /><label class="no-select" for="checkbox_miniplayer">\u5f00\u542f\u8ff7\u4f60\u64ad\u653e\u5668</label>').appendTo(".common .b-head");
+		var q = $("#checkbox_miniplayer");
+		1 != ChatGetSettings("b_miniplayer") && null != ChatGetSettings("b_miniplayer") || q.attr("checked", !0);
+		q.change(function() {
+			var a = $(this).is(":checked") ? 1 : 0;
+			ChatSaveSettings("b_miniplayer", a);
+			0 == a ? (r = !0, o()) : (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j && (r = !1, p()))
+		});
+		var p = function() {
+				if (!l.hasClass("float") && !r && 0 != $(".comm").find("ul").length) {
+					var a = $('<div class="dami"></div>').insertBefore(l);
+					l.hasClass("wide") && a.addClass("wide");
+					$('<div class="move"><div class="gotop">\u56de\u5230\u9876\u90e8</div><div class="t">\u70b9\u51fb\u6309\u4f4f\u62d6\u52a8</div><div class="close">\u5173\u95ed</div></div>').prependTo(l);
+					0 < $(".huodong_bg").length && $(".huodong_bg").hide();
+					a = 0 < $(".rat").length ? $(".rat").offset().left : $(".v_small").offset().left;
+					l.addClass("float").css({
+						left: a,
+						opacity: 0
+					}).stop().animate({
+						opacity: 1
+					}, 300);
+					730 >= $(window).height() && l.css({
+						top: "inherit",
+						bottom: "5px"
+					})
+				}
+			},
+			o = function() {
+				n();
+				$(".move", l).remove();
+				$(".dami").remove();
+				l.removeClass("float");
+				l.css({
+					left: "",
+					top: "",
+					bottom: ""
+				});
+				0 < $(".huodong_bg").length && $(".huodong_bg").show()
+			},
+			n = function() {
+				s = 0;
+				$(".mmask").remove();
+				$(document).unbind("mousemove");
+				$("body,#bofqi").removeClass("noselect");
+				$(".move", l).removeClass("on")
+			};
+		$(document).scroll(function() {
+			0 != ChatGetSettings("b_miniplayer") && (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j ? p() : (r && (r = !1), l.hasClass("float") && o()))
+		});
+		l.hover(function() {
+			l.hasClass("float") && !s && $(".move", l).show()
+		}, function() {
+			s || $(".move", l).hide()
+		});
+		$(l).delegate(".move", "mousedown", function(a) {
+			s = 1;
+			$("body,#bofqi").addClass("noselect");
+			$(this).addClass("on");
+			$('<div class="mmask"></div>').appendTo("body");
+			var e = a.pageX - $(this).offset().left,
+				c = a.pageY - $(this).offset().top;
+			$(document).bind("mousemove", function(d) {
+				var g = d.clientX - e,
+					f = d.clientY - c <= $(window).height() - l.height() ? d.clientY - c : $(window).height() - l.height(),
+					f = d.clientY - c >= $(window).height() - l.height() - 5 ? $(window).height() - l.height() - 5 : 0 >= d.clientY - c ? 0 : d.clientY - c;
+				l.css({
+					left: g,
+					top: f
+				})
+			})
+		});
+		$(l).delegate(".move", "mouseup", function(b) {
+			n()
+		});
+		$(l).delegate(".move .close", "click", function(b) {
+			r = !0;
+			o()
+		});
+		$(l).delegate(".move .gotop", "click", function(b) {
+			$("html,body").animate({
+				scrollTop: $(".viewbox").offset().top
+			}, 300)
+		})
 	}
 
 	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
@@ -248,7 +379,7 @@
 				biliHelper.switcher = {
 					current: "original",
 					original: function() {
-						this.current = "current";
+						this.current = "original";
 						notifyCidHack(function() {
 							$('#bofqi').html(biliHelper.originalPlayer);
 							if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
@@ -269,7 +400,7 @@
 					html5: function() {
 						this.current = "html5";
 						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" autobuffer="true" poster="' + biliHelper.videoPic + '"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
-						ABP.create(document.getElementById("bilibili_helper_html5_player"), {
+						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
 							"src": {
 								"playlist": [{
 									"video": document.getElementById("bilibili_helper_html5_player_video"),
@@ -278,6 +409,12 @@
 							},
 							width: "100%",
 							height: "100%"
+						});
+						abp.playerUnit.addEventListener("wide", function() {
+							player_widewin();
+						});
+						abp.playerUnit.addEventListener("normal", function() {
+							player_fullwin(false);
 						});
 					}
 				}
@@ -341,155 +478,24 @@
 						biliHelperFunc();
 						return false;
 					}
+
 					if (biliHelper.replacePlayer) {
-						var ff_status = {},
-							ff_status_id = 0,
-							ff_embed_stack = null,
-							ff_embed_stack_style = null;
-
-						function player_fullwin(d) {
-							if (!1 != d || null !== ff_embed_stack) {
-								if (null === ff_embed_stack) {
-									ff_embed_stack = [];
-									ff_embed_stack_style = [];
-									var f = $("#bofqi").get(0);
-									do {
-										$(f).attr("embed_stack", !0), ff_embed_stack.push(f)
-									} while (f = f.parentNode)
-								}
-								d ? ($(".rklist").hide(), $("#bofqi").removeClass("wide"), $("#bofqi").addClass("webfullscreen")) : ($(".rklist").show(), $("#bofqi").removeClass("wide"), $("#bofqi").removeClass("webfullscreen"));
-								var f = $("div"),
-									h;
-								for (h in f) {
-									if (f[h] && f[h].getAttribute && !f[h].getAttribute("embed_stack") && f[h] && f[h].style) {
-										var g;
-										f[h].getAttribute("ff_id") ? g = ff_status[f[h].getAttribute("ff_id")] : (ff_status_id++, f[h].setAttribute("ff_id", ff_status_id), ff_status[ff_status_id] = f[h].style.display);
-										f[h].style.display = d ? "none" : g
-									}
-								}
-								for (h in ff_embed_stack) {
-									(f = ff_embed_stack[h]) && f.style && (ff_embed_stack_style[h] || (ff_embed_stack_style[h] = {
-										position: f.style.position,
-										width: f.style.width,
-										height: f.style.height,
-										padding: f.style.padding,
-										margin: f.style.margin
-									}), d ? (f.style.position = "fixed", f.style.width = "100%", f.style.height = "100%", f.style.padding = "0 0", f.style.margin = "0 0") : (f.style.position = ff_embed_stack_style[h].position, f.style.width = ff_embed_stack_style[h].width, f.style.height = ff_embed_stack_style[h].height, f.style.padding = ff_embed_stack_style[h].padding, f.style.margin = ff_embed_stack_style[h].margin))
-								}
-							}
-						}
-
-						function player_widewin() {
-							$("#bofqi").removeClass("webfullscreen");
-							$("#bofqi").addClass("wide")
-						}
-
-						function miniPlayer() {
-							var l = $("#bofqi"),
-								j = l.offset().top + l.height() + 100,
-								s = 0,
-								r = !1;
-							$('<input type="checkbox" id="checkbox_miniplayer" /><label class="no-select" for="checkbox_miniplayer">\u5f00\u542f\u8ff7\u4f60\u64ad\u653e\u5668</label>').appendTo(".common .b-head");
-							var q = $("#checkbox_miniplayer");
-							1 != ChatGetSettings("b_miniplayer") && null != ChatGetSettings("b_miniplayer") || q.attr("checked", !0);
-							q.change(function() {
-								var a = $(this).is(":checked") ? 1 : 0;
-								ChatSaveSettings("b_miniplayer", a);
-								0 == a ? (r = !0, o()) : (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j && (r = !1, p()))
-							});
-							var p = function() {
-									if (!l.hasClass("float") && !r && 0 != $(".comm").find("ul").length) {
-										var a = $('<div class="dami"></div>').insertBefore(l);
-										l.hasClass("wide") && a.addClass("wide");
-										$('<div class="move"><div class="gotop">\u56de\u5230\u9876\u90e8</div><div class="t">\u70b9\u51fb\u6309\u4f4f\u62d6\u52a8</div><div class="close">\u5173\u95ed</div></div>').prependTo(l);
-										0 < $(".huodong_bg").length && $(".huodong_bg").hide();
-										a = 0 < $(".rat").length ? $(".rat").offset().left : $(".v_small").offset().left;
-										l.addClass("float").css({
-											left: a,
-											opacity: 0
-										}).stop().animate({
-											opacity: 1
-										}, 300);
-										730 >= $(window).height() && l.css({
-											top: "inherit",
-											bottom: "5px"
-										})
-									}
-								},
-								o = function() {
-									n();
-									$(".move", l).remove();
-									$(".dami").remove();
-									l.removeClass("float");
-									l.css({
-										left: "",
-										top: "",
-										bottom: ""
-									});
-									0 < $(".huodong_bg").length && $(".huodong_bg").show()
-								},
-								n = function() {
-									s = 0;
-									$(".mmask").remove();
-									$(document).unbind("mousemove");
-									$("body,#bofqi").removeClass("noselect");
-									$(".move", l).removeClass("on")
-								};
-							$(document).scroll(function() {
-								0 != ChatGetSettings("b_miniplayer") && (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j ? p() : (r && (r = !1), l.hasClass("float") && o()))
-							});
-							l.hover(function() {
-								l.hasClass("float") && !s && $(".move", l).show()
-							}, function() {
-								s || $(".move", l).hide()
-							});
-							$(l).delegate(".move", "mousedown", function(a) {
-								s = 1;
-								$("body,#bofqi").addClass("noselect");
-								$(this).addClass("on");
-								$('<div class="mmask"></div>').appendTo("body");
-								var e = a.pageX - $(this).offset().left,
-									c = a.pageY - $(this).offset().top;
-								$(document).bind("mousemove", function(d) {
-									var g = d.clientX - e,
-										f = d.clientY - c <= $(window).height() - l.height() ? d.clientY - c : $(window).height() - l.height(),
-										f = d.clientY - c >= $(window).height() - l.height() - 5 ? $(window).height() - l.height() - 5 : 0 >= d.clientY - c ? 0 : d.clientY - c;
-									l.css({
-										left: g,
-										top: f
-									})
-								})
-							});
-							$(l).delegate(".move", "mouseup", function(b) {
-								n()
-							});
-							$(l).delegate(".move .close", "click", function(b) {
-								r = !0;
-								o()
-							});
-							$(l).delegate(".move .gotop", "click", function(b) {
-								$("html,body").animate({
-									scrollTop: $(".viewbox").offset().top
-								}, 300)
-							})
-						}
-
 						miniPlayer();
+					}
 
-						window.postMessage ? (c = function(a) {
-							"https://secure.bilibili.com" != a.origin && "https://ssl.bilibili.com" != a.origin || "secJS:" != a.data.substr(0, 6) || eval(a.data.substr(6));
-							"undefined" != typeof console && console.log(a.origin + ": " + a.data)
-						}, window.addEventListener ? window.addEventListener("message", c, !1) : window.attachEvent && window.attachEvent("onmessage", c)) : setInterval(function() {
-							if (evalCode = __GetCookie("__secureJS")) {
-								__SetCookie("__secureJS", ""), eval(evalCode)
-							}
-						}, 1000);
-
-						if (biliHelper.cid && !biliHelper.favorHTML5) {
-							$('#loading-notice').fadeOut(300, function() {
-								biliHelper.switcher.iframe();
-							});
+					window.postMessage ? (c = function(a) {
+						"https://secure.bilibili.com" != a.origin && "https://ssl.bilibili.com" != a.origin || "secJS:" != a.data.substr(0, 6) || eval(a.data.substr(6));
+						"undefined" != typeof console && console.log(a.origin + ": " + a.data)
+					}, window.addEventListener ? window.addEventListener("message", c, !1) : window.attachEvent && window.attachEvent("onmessage", c)) : setInterval(function() {
+						if (evalCode = __GetCookie("__secureJS")) {
+							__SetCookie("__secureJS", ""), eval(evalCode)
 						}
+					}, 1000);
+
+					if (biliHelper.cid && !biliHelper.favorHTML5) {
+						$('#loading-notice').fadeOut(300, function() {
+							biliHelper.switcher.iframe();
+						});
 					}
 					if (!biliHelper.cid) {
 						biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
