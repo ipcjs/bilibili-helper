@@ -58,7 +58,8 @@
 		if (biliHelper.cidHack) {
 			chrome.extension.sendMessage({
 				command: "cidHack",
-				cid: biliHelper.cid
+				cid: biliHelper.cid,
+				type: biliHelper.cidHack
 			}, function(response) {
 				if (typeof callback === 'function') callback();
 			});
@@ -254,10 +255,17 @@
 					mode: adMode(request.css)
 				});
 				return true;
+			case "copyright":
+				biliHelper.copyright = true;
+				return true;
 			case "error":
-				if (!biliHelper.cidHack) {
-					biliHelper.cidHack = true;
+				if (biliHelper.cidHack == 0) {
+					biliHelper.cidHack = 1;
 					biliHelper.switcher[biliHelper.switcher.current]();
+				} else if (biliHelper.cidHack == 1 && biliHelper.copyright) {
+					biliHelper.cidHack = 2;
+					biliHelper.switcher[biliHelper.switcher.current]();
+					finishUp();
 				}
 				return true;
 			default:
@@ -268,14 +276,59 @@
 		}
 	});
 
+	var finishUp = function() {
+		chrome.extension.sendMessage({
+			command: "getDownloadLink",
+			cid: biliHelper.cid,
+			cidHack: biliHelper.cidHack
+		}, function(response) {
+			var videoDownloadLink = response["download"],
+				videoPlaybackLink = response["playback"];
+			biliHelper.downloadUrls = [];
+			biliHelper.playbackUrls = [];
+			if (videoDownloadLink.result == "error") {
+				if (typeof videoDownloadLink.message == "string") {
+					if (videoDownloadLink.message.indexOf("地区") > -1) {
+						biliHelper.copyright = true;
+					}
+					biliHelper.error = '错误: ' + videoDownloadLink.message;
+				}
+			} else {
+				if (typeof videoDownloadLink.durl["url"] === "undefined") {
+					biliHelper.downloadUrls = videoDownloadLink.durl;
+				} else {
+					biliHelper.downloadUrls.push(videoDownloadLink.durl);
+				}
+				if (typeof videoPlaybackLink.durl["url"] === "undefined") {
+					biliHelper.playbackUrls = videoPlaybackLink.durl;
+				} else {
+					biliHelper.playbackUrls.push(videoPlaybackLink.durl);
+				}
+				$('#loading-notice').fadeOut(300);
+				if (biliHelper.favorHTML5 && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
+					$('#loading-notice').fadeOut(300, function() {
+						biliHelper.switcher.html5();
+					});
+				} else if (biliHelper.replacePlayer) {
+					$('#loading-notice').fadeOut(300, function() {
+						biliHelper.switcher.swf();
+					});
+				} else {
+					$('#loading-notice').fadeOut(300);
+				}
+			}
+		});
+	}
+
 	var biliHelperFunc = function() {
 		intilize_style();
 		$("html").addClass("bilibili-helper");
 		var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?$/,
-			urlResult = bili_reg.exec(document.URL);
+			urlResult = bili_reg.exec(document.URL.split('#')[0]);
 		if (urlResult) {
 			biliHelper.avid = urlResult[1];
 			biliHelper.page = urlResult[2];
+			biliHelper.cidHack = 0;
 			if (typeof biliHelper.page === "undefined") {
 				biliHelper.page = 1;
 			} else {
@@ -286,9 +339,17 @@
 				command: "init"
 			}, function(response) {
 				biliHelper.genPage = false;
+				biliHelper.copyright = false;
 				if (!$('.z').length) {
 					biliHelper.genPage = true;
 					biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
+				}
+				if ($('.z .z-msg').length > 0 && $('.z .z-msg').text().indexOf('版权') > -1) {
+					biliHelper.genPage = true;
+					biliHelper.copyright = true;
+				}
+				if ($('#bofqi div') > 0 && $('#bofqi div').text().indexOf('版权') > -1) {
+					biliHelper.copyright = true;
 				}
 				if ($('meta[name="redirect"]').length) {
 					biliHelper.redirectUrl = $('meta[name="redirect"]').attr('content');
@@ -315,9 +376,9 @@
 							var redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
 							main.append(redirectSection);
 						}
-						if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.error === "undefined") {
+						if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.cid !== "undefined") {
 							var switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
-							switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
+							switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
 								$('.arc-tool-bar .helper .section.switcher a.b-btn').addClass('w');
 								biliHelper.switcher[$(this).attr('type')]();
 								$(this).removeClass('w');
@@ -325,7 +386,7 @@
 							if (biliHelper.redirectUrl) {
 								switcherSection.find('a[type="original"]').remove();
 							}
-							if (!biliHelper.replacePlayer || biliHelper.error) {
+							if (!biliHelper.replacePlayer || !biliHelper.cid) {
 								switcherSection.find('a[type="iframe"],a[type="swf"]').remove();
 							}
 							if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
@@ -336,7 +397,8 @@
 						}
 						if (typeof biliHelper.downloadUrls !== "undefined" || biliHelper.error) {
 							if (typeof biliHelper.downloadUrls !== "object" || !biliHelper.downloadUrls.length) {
-								var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p>视频地址获取失败</p></div>');
+								var errorMessage = biliHelper.error || "视频地址获取失败",
+									downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>' + errorMessage + '</p></div>');
 							} else {
 								var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p></p></div>');
 								for (i in biliHelper.downloadUrls) {
@@ -345,14 +407,13 @@
 								}
 							}
 						} else {
-							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p>视频地址获取中，请稍等…</p></div>');
+							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
 						}
 						main.append(downloaderSection);
 						blockInfo.addClass('active');
 					}
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
-				biliHelper.originalPlayer = $('#bofqi').html();
 				if (response.replace == "on" &&
 					($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 					($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
@@ -388,7 +449,7 @@
 					swf: function() {
 						this.current = "swf";
 						notifyCidHack(function() {
-							$('#bofqi').html('<embed id="bofqi_embed" class="player" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" allowscriptaccess="always" rel="noreferrer" flashvars="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" src="https://static-s.bilibili.com/play.swf" type="application/x-shockwave-flash" allowfullscreen="true" quality="high">');
+							$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="http://static.hdslb.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
 						});
 					},
 					iframe: function() {
@@ -424,7 +485,7 @@
 				work();
 			});
 
-			function work() {
+			var work = function() {
 				chrome.extension.sendMessage({
 					command: "getVideoInfo",
 					avid: biliHelper.avid,
@@ -497,48 +558,20 @@
 
 					if (biliHelper.cid && !biliHelper.favorHTML5) {
 						$('#loading-notice').fadeOut(300, function() {
-							biliHelper.switcher.iframe();
+							biliHelper.switcher.swf();
 						});
 					}
 					if (!biliHelper.cid) {
 						biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
 						return false;
 					}
-					chrome.extension.sendMessage({
-						command: "getDownloadLink",
-						cid: biliHelper.cid,
-					}, function(response) {
-						var videoDownloadLink = response["download"],
-							videoPlaybackLink = response["playback"];
-						biliHelper.downloadUrls = [];
-						biliHelper.playbackUrls = [];
-						if (typeof videoDownloadLink.durl["url"] === "undefined") {
-							biliHelper.downloadUrls = videoDownloadLink.durl;
-						} else {
-							biliHelper.downloadUrls.push(videoDownloadLink.durl);
-						}
-						if (typeof videoPlaybackLink.durl["url"] === "undefined") {
-							biliHelper.playbackUrls = videoPlaybackLink.durl;
-						} else {
-							biliHelper.playbackUrls.push(videoPlaybackLink.durl);
-						}
-						$('#loading-notice').fadeOut(300);
-						if (biliHelper.favorHTML5 && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
-							$('#loading-notice').fadeOut(300, function() {
-								biliHelper.switcher.html5();
-							});
-						} else if (biliHelper.replacePlayer) {
-							$('#loading-notice').fadeOut(300, function() {
-								biliHelper.switcher.iframe();
-							});
-						} else {
-							$('#loading-notice').fadeOut(300);
-						}
-						$('.viewbox .info h2').html(addTitleLink($('.viewbox .info h2').attr('title'), response.rel_search));
-						$(".titleNumber").click(function() {
-							var msgbox = new MessageBox;
-							msgbox.show(this, '\u70b9\u51fb\u641c\u7d22\u76f8\u5173\u89c6\u9891\uff1a<br /><a target="_blank" href="http://www.bilibili.com/search?orderby=default&keyword=' + encodeURIComponent($(this).attr("previous")) + '">' + $(this).attr("previous") + '</a><br /><a target="_blank" href="http://www.bilibili.com/search?orderby=ranklevel&keyword=' + encodeURIComponent($(this).attr("next")) + '">' + $(this).attr("next") + '</a>', 1e3);
-						});
+
+					finishUp();
+
+					$('.viewbox .info h2').html(addTitleLink($('.viewbox .info h2').attr('title'), response.rel_search));
+					$(".titleNumber").click(function() {
+						var msgbox = new MessageBox;
+						msgbox.show(this, '\u70b9\u51fb\u641c\u7d22\u76f8\u5173\u89c6\u9891\uff1a<br /><a target="_blank" href="http://www.bilibili.com/search?orderby=default&keyword=' + encodeURIComponent($(this).attr("previous")) + '">' + $(this).attr("previous") + '</a><br /><a target="_blank" href="http://www.bilibili.com/search?orderby=ranklevel&keyword=' + encodeURIComponent($(this).attr("next")) + '">' + $(this).attr("next") + '</a>', 1e3);
 					});
 				});
 			}

@@ -1,5 +1,6 @@
 var notification = false,
-	playerTabs = {};
+	playerTabs = {},
+	cidHackType = {};
 
 function getFileData(url, callback) {
 	xmlhttp = new XMLHttpRequest();
@@ -12,17 +13,16 @@ function getFileData(url, callback) {
 	xmlhttp.send();
 }
 
-function getUrlVars(url)
-{
-    var vars = [], hash;
-    var hashes = url.slice(url.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++)
-    {
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-    return vars;
+function getUrlVars(url) {
+	var vars = [],
+		hash;
+	var hashes = url.slice(url.indexOf('?') + 1).split('&');
+	for (var i = 0; i < hashes.length; i++) {
+		hash = hashes[i].split('=');
+		vars.push(hash[0]);
+		vars[hash[0]] = hash[1];
+	}
+	return vars;
 }
 
 function searchBilibili(info) {
@@ -140,6 +140,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "cidHack":
 			playerTabs[sender.tab.id] = request.cid;
+			cidHackType[request.cid] = request.type;
+			sendResponse();
+			return true;
 		case "getOption":
 			sendResponse({
 				value: getOption(request.key)
@@ -175,7 +178,17 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			});
 			return true;
 		case "getDownloadLink":
-			getFileData("http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"), function(avDownloadLink) {
+			var url = {
+				download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
+				playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
+			}
+			if (request.cidHack == 2) {
+				var url = {
+					download: "https://bilibili.guguke.net/playurl.json?cid=" + request.cid + "&type=" + getOption("dlquality"),
+					playback: "https://bilibili.guguke.net/playurl.json?cid=" + request.cid + "&type=mp4"
+				}
+			}
+			getFileData(url["download"], function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4' && avDownloadLink.from != 'qq') {
 					sendResponse({
@@ -185,7 +198,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 						rel_search: getOption("rel_search")
 					});
 				} else {
-					getFileData("http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4", function(avPlaybackLink) {
+					getFileData(url["playback"], function(avPlaybackLink) {
 						avPlaybackLink = JSON.parse(avPlaybackLink);
 						sendResponse({
 							download: avDownloadLink.from == 'qq' ? avPlaybackLink : avDownloadLink,
@@ -278,8 +291,12 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 });
 
 chrome.webRequest.onBeforeRequest.addListener(function(details) {
-	chrome.tabs.sendMessage(details.tabId, {command: "error"});
-}, {urls: ["http://comment.bilibili.com/1272.xml"]});
+	chrome.tabs.sendMessage(details.tabId, {
+		command: "error"
+	});
+}, {
+	urls: ["http://comment.bilibili.com/1272.xml"]
+});
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var blockingResponse = {};
@@ -287,11 +304,17 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 		playerTabs[details.tabId] = false;
 		var params = getUrlVars(details.url);
 		if (params['cid']) {
-			blockingResponse.redirectUrl = 'http://interface.bilibili.com/playurl?platform=bilihelper&cid=' + params['cid'] + '&appkey=95acd7f6cc3392f3';
+			if (cidHackType[params['cid']] == 1) {
+				blockingResponse.redirectUrl = 'http://interface.bilibili.com/playurl?platform=bilihelper&cid=' + params['cid'] + '&appkey=95acd7f6cc3392f3';
+			} else if (cidHackType[params['cid']] == 2) {
+				blockingResponse.redirectUrl = 'https://bilibili.guguke.net/playurl.xml?cid=' + params['cid'];
+			}
 		}
 	}
 	return blockingResponse;
-}, {urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*"]}, ["blocking"]);
+}, {
+	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*"]
+}, ["blocking"]);
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders,
@@ -314,4 +337,6 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 		blockingResponse.responseHeaders = headers;
 	}
 	return blockingResponse;
-}, {urls: ["http://www.bilibili.com/video/av*"]}, ["responseHeaders", "blocking"]);
+}, {
+	urls: ["http://www.bilibili.com/video/av*"]
+}, ["responseHeaders", "blocking"]);
