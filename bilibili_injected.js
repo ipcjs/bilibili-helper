@@ -108,43 +108,6 @@
 		});
 	}
 
-	function player_fullwin(d) {
-		if (!1 != d || null !== ff_embed_stack) {
-			if (null === ff_embed_stack) {
-				ff_embed_stack = [];
-				ff_embed_stack_style = [];
-				var f = $("#bofqi").get(0);
-				do {
-					$(f).attr("embed_stack", !0), ff_embed_stack.push(f)
-				} while (f = f.parentNode)
-			}
-			d ? ($(".rklist").hide(), $("#bofqi").removeClass("wide"), $("#bofqi").addClass("webfullscreen")) : ($(".rklist").show(), $("#bofqi").removeClass("wide"), $("#bofqi").removeClass("webfullscreen"));
-			var f = $("div"),
-				h;
-			for (h in f) {
-				if (f[h] && f[h].getAttribute && !f[h].getAttribute("embed_stack") && f[h] && f[h].style) {
-					var g;
-					f[h].getAttribute("ff_id") ? g = ff_status[f[h].getAttribute("ff_id")] : (ff_status_id++, f[h].setAttribute("ff_id", ff_status_id), ff_status[ff_status_id] = f[h].style.display);
-					f[h].style.display = d ? "none" : g
-				}
-			}
-			for (h in ff_embed_stack) {
-				(f = ff_embed_stack[h]) && f.style && (ff_embed_stack_style[h] || (ff_embed_stack_style[h] = {
-					position: f.style.position,
-					width: f.style.width,
-					height: f.style.height,
-					padding: f.style.padding,
-					margin: f.style.margin
-				}), d ? (f.style.position = "fixed", f.style.width = "100%", f.style.height = "100%", f.style.padding = "0 0", f.style.margin = "0 0") : (f.style.position = ff_embed_stack_style[h].position, f.style.width = ff_embed_stack_style[h].width, f.style.height = ff_embed_stack_style[h].height, f.style.padding = ff_embed_stack_style[h].padding, f.style.margin = ff_embed_stack_style[h].margin))
-			}
-		}
-	}
-
-	function player_widewin() {
-		$("#bofqi").removeClass("webfullscreen");
-		$("#bofqi").addClass("wide")
-	}
-
 	function miniPlayer() {
 		var l = $("#bofqi"),
 			j = l.offset().top + l.height() + 100,
@@ -472,13 +435,19 @@
 							height: "100%"
 						});
 						abp.playerUnit.addEventListener("wide", function() {
-							player_widewin();
+							$("#bofqi").addClass("wide");
 						});
 						abp.playerUnit.addEventListener("normal", function() {
-							player_fullwin(false);
+							$("#bofqi").removeClass("wide");
 						});
-						$("#bofqi").resize(function() {
-							if (abp && abp.cmManager) abp.cmManager.setBounds();
+						var bofqiHeight = 0;
+						$(window).scroll(function() {
+							if (bofqiHeight != $("#bofqi").width()) {
+								bofqiHeight = $("#bofqi").width();
+								if (abp && abp.cmManager) {
+									abp.cmManager.setBounds();
+								}
+							}
 						});
 					}
 				}
