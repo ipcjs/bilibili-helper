@@ -190,7 +190,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			}
 			getFileData(url["download"], function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
-				if (getOption("dlquality") == 'mp4' && avDownloadLink.from != 'qq') {
+				if (getOption("dlquality") == 'mp4') {
 					sendResponse({
 						download: avDownloadLink,
 						playback: avDownloadLink,
@@ -201,8 +201,8 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 					getFileData(url["playback"], function(avPlaybackLink) {
 						avPlaybackLink = JSON.parse(avPlaybackLink);
 						sendResponse({
-							download: avDownloadLink.from == 'qq' ? avPlaybackLink : avDownloadLink,
-							playback: avPlaybackLink.from == 'qq' ? avDownloadLink : avPlaybackLink,
+							download: avDownloadLink,
+							playback: avPlaybackLink,
 							dlquality: getOption("dlquality"),
 							rel_search: getOption("rel_search")
 						});

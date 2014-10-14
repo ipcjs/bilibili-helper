@@ -229,6 +229,8 @@
 					biliHelper.cidHack = 2;
 					biliHelper.switcher[biliHelper.switcher.current]();
 					finishUp();
+				} else if (biliHelper.switcher.current != "original") {
+					biliHelper.switcher["original"]();
 				}
 				return true;
 			default:
@@ -377,6 +379,7 @@
 					}
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
+				biliHelper.originalPlayer = $('#bofqi').html();
 				if (response.replace == "on" &&
 					($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 					($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
