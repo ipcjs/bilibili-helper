@@ -228,7 +228,6 @@
 				} else if (biliHelper.cidHack == 1 && biliHelper.copyright) {
 					biliHelper.cidHack = 2;
 					biliHelper.switcher[biliHelper.switcher.current]();
-					finishUp();
 				} else if (biliHelper.switcher.current != "original") {
 					biliHelper.switcher["original"]();
 				}
@@ -241,11 +240,11 @@
 		}
 	});
 
-	var finishUp = function() {
+	var finishUp = function(forceCidHack) {
 		chrome.extension.sendMessage({
 			command: "getDownloadLink",
 			cid: biliHelper.cid,
-			cidHack: biliHelper.cidHack
+			cidHack: forceCidHack || biliHelper.cidHack
 		}, function(response) {
 			var videoDownloadLink = response["download"],
 				videoPlaybackLink = response["playback"];
@@ -255,6 +254,9 @@
 				if (typeof videoDownloadLink.message == "string") {
 					if (videoDownloadLink.message.indexOf("地区") > -1) {
 						biliHelper.copyright = true;
+						if (forceCidHack || biliHelper.cidHack != 2) {
+							finishUp(2);
+						}
 					}
 					biliHelper.error = '错误: ' + videoDownloadLink.message;
 				}
