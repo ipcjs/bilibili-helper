@@ -1,5 +1,4 @@
 (function() {
-
 	if ($("html").hasClass("bilibili-helper")) return false;
 
 	var adModeOn = false;
@@ -55,12 +54,20 @@
 	}
 
 	function notifyCidHack(callback) {
+		var majorVersion = parseInt(/Chrome\/([\d\.apre]+)/.exec(window.navigator.userAgent)[1]);
 		if (biliHelper.cidHack) {
 			chrome.extension.sendMessage({
 				command: "cidHack",
 				cid: biliHelper.cid,
 				type: biliHelper.cidHack
 			}, function(response) {
+				if (majorVersion < 37 && !biliHelper.outdateNotice) {
+					biliHelper.outdateNotice = true;
+					biliHelper.favorHTML5 = true;
+					if (confirm('您的 Chrome 版本过旧，可能无法完成播放器替换。\n扩展支持的最低版本: Chrome 37\n您正在使用的版本: Chrome ' + /Chrome\/([\d\.apre]+)/.exec(window.navigator.userAgent)[1] + '\n您想要下载新版吗？')) {
+						window.open('http://w.x.baidu.com/alading/anquan_soft_down_b/14744');
+					};
+				}
 				if (typeof callback === 'function') callback();
 			});
 		} else {
