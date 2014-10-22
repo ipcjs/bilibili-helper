@@ -65,7 +65,7 @@
 					biliHelper.outdateNotice = true;
 					biliHelper.favorHTML5 = true;
 					if (confirm('您的 Chrome 版本过旧，可能无法完成播放器替换。\n扩展支持的最低版本: Chrome 37\n您正在使用的版本: Chrome ' + /Chrome\/([\d\.apre]+)/.exec(window.navigator.userAgent)[1] + '\n您想要下载新版吗？')) {
-						window.open('http://w.x.baidu.com/alading/anquan_soft_down_b/14744');
+						window.open('http://dlsw.baidu.com/sw-search-sp/soft/9d/14744/ChromeStandaloneSetup.1413788677.exe');
 					};
 				}
 				if (typeof callback === 'function') callback();
