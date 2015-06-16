@@ -27,7 +27,7 @@ function getDynamic() {
 
 $(document).ready(function() {
 	chrome.tabs.getSelected(null, function(tab) {
-		if(tab.url.match(/:\/\/(.[^/]+)/)[1] == "www.bilibili.com" || tab.url.match(/:\/\/(.[^/]+)/)[1] == "bilibili.smgbb.cn" || tab.url.match(/:\/\/(.[^/]+)/)[1] == "space.bilibili.com") {
+		if(tab.url.match(/:\/\/(.[^/]+)/)[1] == "www.bilibili.com" || tab.url.match(/:\/\/(.[^/]+)/)[1] == "space.bilibili.com") {
 			$("#go_bili").hide();
 		} else if(tab.url.match(/:\/\/(.[^/]+)/)[1] == "space.bilibili.com" || tab.url.match(/:\/\/(.[^/]+)/)[1] == "member.bilibili.com") {
 			$("#go_bili, #ad_mode").hide();
@@ -46,7 +46,7 @@ $(document).ready(function() {
 	}, 500);
 	$('#go_bili').click(function() {
 		chrome.tabs.create({
-			url: 'http://www.bilibili.com/'
+			url: bkg_page.getOption("indexversion") == "old" ? "http://www.bilibili.com/index_old.html" : "http://www.bilibili.com/"
 		});
 		return false;
 	});

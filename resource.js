@@ -9,6 +9,7 @@ var defaultOptions = {
 	"ad": "keep",
 	"ad_opacity": 0.1,
 	"dlquality": "flv",
+	"indexversion": "new",
 	"dynamic": "on",
 	"enabled": false,
 	"replace": "on",

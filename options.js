@@ -9,6 +9,7 @@ $(document).ready(function() {
 	$("div[option=\"" + bkg_page.getOption("contextmenu") + "\"].contextmenu").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("dynamic") + "\"].dynamic").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("dlquality") + "\"].dlquality").addClass("on");
+	$("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("rel_search") + "\"].rel_search").addClass("on");
 	var adOption = bkg_page.getOption("ad");
 	$("div[option=\"" + adOption + "\"].ad").addClass("on");
@@ -65,6 +66,13 @@ $(document).ready(function() {
 		$('.dlquality').removeClass('on');
 		$(this).addClass('on');
 		bkg_page.setOption("dlquality", $(this).attr("option"));
+		updatepreview();
+	});
+	$('.indexversion').click(function() {
+		if ($(this).hasClass('on')) return false;
+		$('.indexversion').removeClass('on');
+		$(this).addClass('on');
+		bkg_page.setOption("indexversion", $(this).attr("option"));
 		updatepreview();
 	});
 	$('.rel_search').click(function() {
