@@ -39,6 +39,7 @@ $(document).ready(function() {
 	$('#ad_mode').html(chrome.i18n.getMessage('adModeOff'));
 	$('#go_video').html(chrome.i18n.getMessage('goVideo'));
 	$('#go_option').html(chrome.i18n.getMessage('goOption'));
+	$('#go_favorite').html(chrome.i18n.getMessage('goFavorite'));
 	getDynamic();
 	adModeFunction("checkAdMode");
 	setTimeout(function() {
@@ -57,6 +58,12 @@ $(document).ready(function() {
 		bkg_page.setOption("updates", 0);
 		chrome.tabs.create({
 			url: "http://www.bilibili.com/account/dynamic"
+		});
+		return false;
+	});
+	$('#go_favorite').click(function() {
+		chrome.tabs.create({
+			url: "http://member.bilibili.com/#favorite_manage"
 		});
 		return false;
 	});

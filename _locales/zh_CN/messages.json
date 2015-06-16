@@ -28,8 +28,12 @@
     "description": "Popup Button: go_video"
   },
   "goDynamic": {
-    "message": "我关注的",
+    "message": "我的关注",
     "description": "Popup Button: go_dynamic"
+  },
+  "goFavorite": {
+    "message": "我的收藏",
+    "description": "Popup Button: go_favorite"
   },
   "notLogged": {
     "message": "(未登录)",
