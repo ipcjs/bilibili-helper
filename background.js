@@ -300,13 +300,11 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var blockingResponse = {};
-	console.log(details);
 	if (getOption("replace") == "on") {
 		if (details.url.indexOf('retry=1') < 0) {
 			blockingResponse.redirectUrl = details.url + '&retry=1';
 		}
 	}
-	console.log(blockingResponse);
 	return blockingResponse;
 }, {
 	urls: ["http://g3.letv.cn/vod/v2/*"]

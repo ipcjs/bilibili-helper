@@ -25,7 +25,7 @@
    "manifest_version": 2,
    "name": "__MSG_extName__",
    "options_page": "options.html",
-   "permissions": [ "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "*://*.bilibili.com/*", "http://g3.letv.cn/*" ],
+   "permissions": [ "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
    "version": "0.6.9",
    "web_accessible_resources": [ "bilibili-helper.woff", "template.html", "imgs/icon-32.png", "imgs/loading.gif" ]
