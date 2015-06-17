@@ -257,7 +257,7 @@
 				videoPlaybackLink = response["playback"];
 			biliHelper.downloadUrls = [];
 			biliHelper.playbackUrls = [];
-			if (videoDownloadLink.result == "error") {
+			if (videoDownloadLink.result == "error" || typeof videoPlaybackLink.durl === "undefined") {
 				if (typeof videoDownloadLink.message == "string") {
 					if (videoDownloadLink.message.indexOf("地区") > -1) {
 						biliHelper.copyright = true;
