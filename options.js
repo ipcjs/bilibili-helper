@@ -82,4 +82,8 @@ $(document).ready(function() {
 		bkg_page.setOption("rel_search", $(this).attr("option"));
 		updatepreview();
 	});
+	if (document.location.hash == '#update') {
+		alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
+		document.location = chrome.extension.getURL('options.html');
+	}
 });

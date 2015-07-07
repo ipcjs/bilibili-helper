@@ -17,7 +17,9 @@ var defaultOptions = {
 	"html5": "off",
 	"contextmenu": "on",
 	"rel_search": "without",
-	"updates": 0
+	"updates": 0,
+	"version": 0,
+	"playerConfig": "{\"volume\":1,\"opacity\":0.8,\"scale\":1,\"prop\":true}"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {
@@ -37,6 +39,7 @@ function getOption(key) {
 function setOption(key, value, pushcss) {
 	localStorage.setItem(key, value);
 	if (pushcss) updateAll();
+	return true;
 }
 
 function getCSS(url) {

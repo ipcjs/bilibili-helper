@@ -314,6 +314,7 @@
 			}, function(response) {
 				biliHelper.genPage = false;
 				biliHelper.copyright = false;
+				biliHelper.playerConfig = response.playerConfig;
 				if (!$('.z').length) {
 					biliHelper.genPage = true;
 					biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
@@ -437,15 +438,15 @@
 						this.current = "html5";
 						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" autobuffer="true" poster="' + biliHelper.videoPic + '"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
 						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
-							"src": {
-								"playlist": [{
-									"video": document.getElementById("bilibili_helper_html5_player_video"),
-									"comments": "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
+							src: {
+								playlist: [{
+									video: document.getElementById("bilibili_helper_html5_player_video"),
+									comments: "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
 								}]
 							},
 							width: "100%",
 							height: "100%",
-							config: {}
+							config: biliHelper.playerConfig
 						});
 						abp.playerUnit.addEventListener("wide", function() {
 							$("#bofqi").addClass("wide");
@@ -454,10 +455,25 @@
 							$("#bofqi").removeClass("wide");
 						});
 						abp.playerUnit.addEventListener("sendcomment", function(e) {
-							console.log('comment', e.detail);
+							var commentId = e.detail.id,
+									commentData = e.detail;
+							delete e.detail.id;
+							chrome.extension.sendMessage({
+								command: "sendComment",
+								avid: biliHelper.avid,
+								cid: biliHelper.cid,
+								page: biliHelper.page + biliHelper.pageOffset,
+								comment: commentData
+							}, function(response) {
+								response.tmp_id = commentId;
+								abp.commentCallback(response);
+							});
 						});
 						abp.playerUnit.addEventListener("saveconfig", function(e) {
-							console.log('config', e.detail);
+							chrome.extension.sendMessage({
+								command: "savePlayerConfig",
+								config: e.detail
+							});
 						});
 						var bofqiHeight = 0;
 						$(window).scroll(function() {

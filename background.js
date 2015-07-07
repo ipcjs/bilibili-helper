@@ -4,13 +4,35 @@ var notification = false,
 
 function getFileData(url, callback) {
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("GET", url, false);
+	xmlhttp.open("GET", url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
 		}
 	}
 	xmlhttp.send();
+}
+
+function postFileData(url, data, callback) {
+	var encodeData = "", append = false;
+	Object.keys(data).forEach(function(key) {
+		if (!append) {
+			append = true;
+		} else {
+			encodeData += "&";
+		}
+		encodeData += encodeURIComponent(key).replace(/%20/g, "+") + "=" +
+			encodeURIComponent(data[key]).replace(/%20/g, "+");
+	});
+	xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("POST", url, true);
+	xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			if (typeof callback == "function") callback(xmlhttp.responseText);
+		}
+	}
+	xmlhttp.send(encodeData);
 }
 
 function getUrlVars(url) {
@@ -135,7 +157,8 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			sendResponse({
 				replace: getOption("replace"),
 				html5: getOption("html5"),
-				version: version
+				version: version,
+				playerConfig: JSON.parse(getOption("playerConfig"))
 			});
 			return true;
 		case "cidHack":
@@ -252,6 +275,31 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 				}
 			});
 			return true;
+		case "savePlayerConfig":
+			sendResponse({
+				result: setOption("playerConfig", JSON.stringify(request.config))
+			});
+			return true;
+		case "sendComment":
+			var errorCode = ["正常", "选择的弹幕模式错误", "用户被禁止", "系统禁止",
+			"投稿不存在", "UP主禁止", "权限有误", "视频未审核/未发布", "禁止游客弹幕"];
+			request.comment.cid = request.cid;
+			postFileData("http://interface.bilibili.com/dmpost?cid=" + request.cid +
+				"&aid=" + request.avid + "&pid=" + request.page, request.comment, function (result) {
+					result = parseInt(result);
+					if (result < 0) {
+						sendResponse({
+							result: false,
+							error: errorCode[-result]
+						});
+					} else {
+						sendResponse({
+							result: true,
+							id: result
+						});
+					}
+				});
+			return true;
 		default:
 			sendResponse({
 				result: "unknown"
@@ -279,6 +327,13 @@ checkDynamic();
 chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 5
 });
+
+if (getOption("version") < chrome.app.getDetails().version) {
+	setOption("version", chrome.app.getDetails().version);
+	chrome.tabs.create({
+		url: chrome.extension.getURL('options.html#update')
+	});
+}
 
 chrome.alarms.onAlarm.addListener(function(alarm) {
 	switch (alarm.name) {
