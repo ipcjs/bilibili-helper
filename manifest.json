@@ -10,7 +10,7 @@
    },
    "content_scripts": [ {
       "all_frames": true,
-      "js": [ "jq.bilibili.js", "bilibili_injected.js", "CommentCoreLibrary.min.js", "ABPlayer.min.js" ],
+      "js": [ "jq.bilibili.js", "bilibili_injected.js", "ColPick.js", "CommentCoreLibrary.min.js", "ABPlayer.min.js" ],
       "matches": [ "*://*.bilibili.com/*" ],
       "run_at": "document_start"
    } ],

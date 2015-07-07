@@ -444,13 +444,20 @@
 								}]
 							},
 							width: "100%",
-							height: "100%"
+							height: "100%",
+							config: {}
 						});
 						abp.playerUnit.addEventListener("wide", function() {
 							$("#bofqi").addClass("wide");
 						});
 						abp.playerUnit.addEventListener("normal", function() {
 							$("#bofqi").removeClass("wide");
+						});
+						abp.playerUnit.addEventListener("sendcomment", function(e) {
+							console.log('comment', e.detail);
+						});
+						abp.playerUnit.addEventListener("saveconfig", function(e) {
+							console.log('config', e.detail);
 						});
 						var bofqiHeight = 0;
 						$(window).scroll(function() {
