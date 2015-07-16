@@ -259,37 +259,42 @@
 			biliHelper.playbackUrls = [];
 			if (videoDownloadLink.result == "error" || typeof videoPlaybackLink.durl === "undefined") {
 				if (typeof videoDownloadLink.message == "string") {
-					if (videoDownloadLink.message.indexOf("地区") > -1) {
-						biliHelper.copyright = true;
-						if (forceCidHack || biliHelper.cidHack != 2) {
-							finishUp(2);
+					if (typeof videoPlaybackLink.message == "string") {
+						if (videoDownloadLink.message.indexOf("地区") > -1) {
+							biliHelper.copyright = true;
+							if (forceCidHack || biliHelper.cidHack != 2) {
+								finishUp(2);
+								return false;
+							}
 						}
+						biliHelper.error = '错误: ' + videoDownloadLink.message;
+						return false;
+					} else {
+						videoDownloadLink = videoPlaybackLink;
 					}
-					biliHelper.error = '错误: ' + videoDownloadLink.message;
 				}
+			}
+			if (typeof videoDownloadLink.durl["url"] === "undefined") {
+				biliHelper.downloadUrls = videoDownloadLink.durl;
 			} else {
-				if (typeof videoDownloadLink.durl["url"] === "undefined") {
-					biliHelper.downloadUrls = videoDownloadLink.durl;
-				} else {
-					biliHelper.downloadUrls.push(videoDownloadLink.durl);
-				}
-				if (typeof videoPlaybackLink.durl["url"] === "undefined") {
-					biliHelper.playbackUrls = videoPlaybackLink.durl;
-				} else {
-					biliHelper.playbackUrls.push(videoPlaybackLink.durl);
-				}
+				biliHelper.downloadUrls.push(videoDownloadLink.durl);
+			}
+			if (typeof videoPlaybackLink.durl["url"] === "undefined") {
+				biliHelper.playbackUrls = videoPlaybackLink.durl;
+			} else {
+				biliHelper.playbackUrls.push(videoPlaybackLink.durl);
+			}
+			$('#loading-notice').fadeOut(300);
+			if (biliHelper.favorHTML5 && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
+				$('#loading-notice').fadeOut(300, function() {
+					biliHelper.switcher.html5();
+				});
+			} else if (biliHelper.replacePlayer) {
+				$('#loading-notice').fadeOut(300, function() {
+					biliHelper.switcher.swf();
+				});
+			} else {
 				$('#loading-notice').fadeOut(300);
-				if (biliHelper.favorHTML5 && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
-					$('#loading-notice').fadeOut(300, function() {
-						biliHelper.switcher.html5();
-					});
-				} else if (biliHelper.replacePlayer) {
-					$('#loading-notice').fadeOut(300, function() {
-						biliHelper.switcher.swf();
-					});
-				} else {
-					$('#loading-notice').fadeOut(300);
-				}
 			}
 		});
 	}
@@ -347,7 +352,7 @@
 							var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
 							main.append(errorSection);
 						}
-						if (biliHelper.redirectUrl) {
+						if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
 							var redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
 							main.append(redirectSection);
 						}
@@ -456,7 +461,7 @@
 						});
 						abp.playerUnit.addEventListener("sendcomment", function(e) {
 							var commentId = e.detail.id,
-									commentData = e.detail;
+								commentData = e.detail;
 							delete e.detail.id;
 							chrome.extension.sendMessage({
 								command: "sendComment",
@@ -497,6 +502,10 @@
 				}, function(response) {
 					var videoInfo = response.videoInfo,
 						error = false;
+					if (typeof videoInfo.cid == 'number' && $('.z .viewbox').length == 0) {
+						biliHelper.genPage = true;
+						biliHelper.copyright = true;
+					}
 					biliHelper.videoPic = videoInfo.pic;
 					if ($('#alist a').length) {
 						var maxPage = 0;
@@ -543,7 +552,7 @@
 							document.write(page);
 							document.close();
 						});
-						biliHelperFunc();
+						setTimeout(biliHelperFunc, 500);
 						return false;
 					}
 
