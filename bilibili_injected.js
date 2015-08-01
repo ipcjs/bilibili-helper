@@ -302,7 +302,7 @@
 	var biliHelperFunc = function() {
 		intilize_style();
 		$("html").addClass("bilibili-helper");
-		var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?$/,
+		var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?.*?$/,
 			urlResult = bili_reg.exec(document.URL.split('#')[0].split('?')[0]);
 		if (urlResult) {
 			biliHelper.avid = urlResult[1];
