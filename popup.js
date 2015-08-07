@@ -44,7 +44,8 @@ $(document).ready(function() {
 	adModeFunction("checkAdMode");
 	setTimeout(function() {
 		$('button').blur();
-	}, 500);
+		$('#video_id').focus();
+	}, 100);
 	$('#go_bili').click(function() {
 		chrome.tabs.create({
 			url: bkg_page.getOption("indexversion") == "old" ? "http://www.bilibili.com/index_old.html" : "http://www.bilibili.com/"
