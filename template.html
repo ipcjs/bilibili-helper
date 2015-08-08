@@ -16,11 +16,11 @@
 		<script type="text/javascript" src="http://static.hdslb.com/js/base.core.v3.js"></script>
 		
 		
+<link rel="stylesheet" href="http://static.hdslb.com/tag/css/tag-manage.css" type="text/css">
 <script type="text/javascript" src="http://static.hdslb.com/js/jquery.qrcode.min.js"></script>
 <script type="text/javascript" src="http://static.hdslb.com/js/swfobject.js"></script>
 <script type="text/javascript" src="http://static.hdslb.com/js/page.arc.js"></script>
 <script type="text/javascript" src="http://static.hdslb.com/js/video.min.js"></script>
-
 		
 	</head>
 
@@ -94,7 +94,7 @@
 	<li class="no_border"><a class="i-link" target="_blank" href="http://app.bilibili.com" title="手机端">手机端</a></li>
 	<li class="yoo"><a class="i-link" target="_blank" href="http://yoo.bilibili.com/index.html" title="日本游">日本游<em class="new"></em></a></li>
 </ul>					</div>
-					<div class="uns_box">
+<div class="uns_box">
 	<ul class="menu">
 
 		<li id="i_menu_profile_btn" guest="no" class="u-i i_user" i_menu="#i_menu_profile">
@@ -110,7 +110,7 @@
 					<li><a href="http://www.bilibili.com/account/at" class="at">@我的<div class="num" id="at_num"></div></a></li>
 				</ul>
 				<ul class="member-menu">
-					<li><a href="http://member.bilibili.com/" target="_blank" class="member">会员中心</a></li>
+					<li><a href="http://space.bilibili.com/" target="_blank" class="member">个人空间</a></li>
 					<li><a target="_blank" href="https://account.bilibili.com/" class="account">账户中心</a></li>
 				</ul>
 				<div class="member-bottom">
@@ -291,9 +291,8 @@
 		</div>
             
 		<div class="z">
-
-			
-<div id="heimu"></div>
+		<div class="main-inner">
+			<div id="heimu"></div>
     <div class="viewbox">
         <div class="info">
         <div class="v-title"><h1 title="%title%">%title%</h1></div><div class="arcrank"></div>
@@ -320,9 +319,12 @@
     </div>
 
 </div>
+		</div>
 
 <div class="player-wrapper">
-    <div class="scontent" id="bofqi"></div>
+    <div class="scontent" id="bofqi">
+    	<div id='player_placeholder' class='player'></div>
+    </div>
     <div class="arc-tool-bar">
         <div class="block share"><span class="t">分享</span>
             <div class="share-list" id="share_list">
@@ -359,9 +361,9 @@
     </div>
 </div>
 
-
-<div class="z">
-	<div class="v_bgm_list">
+<div class="main-inner">
+	 <div class="bangumi-content v_large">
+	 	<div class="v_bgm_list">
         <div class="video">
             <div class="b-head">
             	<a class="t" href="/sp/%sp_title_uri%" target="_blank">%sp_title%</a>
@@ -372,19 +374,15 @@
             <div id="v_bgm_list_data"></div>
             <div id="v_bgm_list_toggle"><span class="autoheight">查看更多</span></div>
         </div>
-	</div>
-	    
-    <div class="ad ad-e1"></div>
-    <div class="ad ad-e2"></div>
-    <div class="v_large">
+		</div>
+	 </div>
+	 <div class="v_large">
         <div class="v_info">
             <div class="s_tag">
-                <ul class="tag">
-                    
-                </ul>
+                <ul class="tag"></ul>
                 <span id="newtag">
-                                    <a href="javascript:;" class="b-btn w" onclick="return addNewTag(%avid%)">增加TAG</a>
-                                </span>
+                    <a href="javascript:;" class="b-btn w" onclick="return addNewTag(%avid%)">增加TAG</a>
+                </span>
             </div>
                         <div class="intro">
                         %description%
@@ -404,9 +402,7 @@
     
 
 <div itemprop="video" itemscope itemtype="http://schema.org/VideoObject" style="display:none"><meta itemprop="name" property="media:title" content="%title%" /><span property="media:type" content="application/x-shockwave-flash" /><meta itemprop="thumbnailUrl" rel="media:thumbnail" content="%pic%" /><meta itemprop="embedURL" content="http://static.hdslb.com/miniloader.swf?aid=%avid%&page=%page%" /><meta itemprop="uploadDate" content="%created_at%" /></div>
-
-			
-		</div>
+</div>
 		
 		<div class="footer">
 	<div class="footer-cnt clearfix">
@@ -472,6 +468,8 @@ $(function(){
 </script>
 
 <link rel="stylesheet" type="text/css" href="http://static.hdslb.com/css/bpoint/bpoints.css" />
+<script type="text/javascript" src="http://static.hdslb.com/tag/js/tag.core.js"></script>
+<script type="text/javascript" src="http://static.hdslb.com/tag/js/manage.tag.js"></script>
 <script type="text/javascript" src="http://static.hdslb.com/js/bpoint/bpoints.js"></script>
 <script src="http://interface.bilibili.com/count?aid=2568636&mid=928123" type="text/javascript" language="javascript"></script>
 <script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -482,8 +480,14 @@ var isSpFav="0";
 var isSpAtt="0";
 
 $(function(){
-	loadHTML5(%avid%,%page%);kwtags(%tags%);
-    lrurl();
+    TagManager.init({
+        aid: aid,
+        upUid: mid,
+        allowAdd: 0
+    });
+    loadHTML5(%avid%,%page%);
+    kwtags(%tags%);
+    lrurl();    	
     if (spid) {
     	if (window.AttentionList) {
     		for (var i in window.AttentionList) {
