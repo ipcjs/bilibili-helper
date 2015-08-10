@@ -556,10 +556,6 @@
 						return false;
 					}
 
-					if (biliHelper.replacePlayer) {
-						miniPlayer();
-					}
-
 					window.postMessage ? (c = function(a) {
 						"https://secure.bilibili.com" != a.origin && "https://ssl.bilibili.com" != a.origin || "secJS:" != a.data.substr(0, 6) || eval(a.data.substr(6));
 						"undefined" != typeof console && console.log(a.origin + ": " + a.data)
