@@ -1,7 +1,15 @@
 {
   "extName": {
-    "message": "Bilibili Helper",
+    "message": "Bilibili Helper: Bilibili.com Auxiliary",
     "description": "Extension: Name"
+  },
+  "extShortName": {
+    "message": "Bilibili Helper",
+    "description": "Extension: Short Name"
+  },
+  "extDescription": {
+    "message": "An auxiliary extension for Bilibili which allows users to bypass playback restrictions, replace video players and use shortcuts.",
+    "description": "Extension: Description"
   },
   "goBili": {
     "message": "Go to bilibili.com",

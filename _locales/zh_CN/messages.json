@@ -1,7 +1,15 @@
 {
   "extName": {
-    "message": "哔哩哔哩助手",
+    "message": "哔哩哔哩助手：bilibili.com 综合辅助扩展",
     "description": "Extension: Name"
+  },
+  "extShortName": {
+    "message": "哔哩哔哩助手",
+    "description": "Extension: Short Name"
+  },
+  "extDescription": {
+    "message": "哔哩哔哩弹幕网辅助扩展，可以绕过区域限制、替换播放器、去广告、推送通知并进行一些快捷操作",
+    "description": "Extension: Description"
   },
   "goBili": {
     "message": "一键前往bilibili.com",

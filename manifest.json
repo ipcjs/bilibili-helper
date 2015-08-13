@@ -6,7 +6,7 @@
    "browser_action": {
       "default_icon": "imgs/icon-19.png",
       "default_popup": "popup.html",
-      "default_title": "__MSG_extName__"
+      "default_title": "__MSG_extShortName__"
    },
    "content_scripts": [ {
       "all_frames": true,
@@ -15,7 +15,7 @@
       "run_at": "document_start"
    } ],
    "default_locale": "zh_CN",
-   "description": "哔哩哔哩(bilibili.com)辅助工具，可以替换播放器、去广告、推送通知并进行一些快捷操作",
+   "description": "__MSG_extDescription__",
    "icons": {
       "128": "imgs/icon-128.png",
       "16": "imgs/icon-16.png",
@@ -24,6 +24,7 @@
    "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDd/wqh8sN1lnVWVGyKqhGM0Zz0ZuY3Dq5hNK3qNBw1/+B/XGe+zzwe7aSyr0qikd8pkN5HpoDvEDdkFHcdhPwXWoQGKiNAnKtohuz/2+g5YzLYzQg2bRqKdYJebEoCoiHtoSNS/HRtUeg483ypAH26LLyD6p+ykwQNo9DvtBo0kwIDAQAB",
    "manifest_version": 2,
    "name": "__MSG_extName__",
+   "short_name": "__MSG_extShortName__",
    "options_page": "options.html",
    "permissions": [ "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
