@@ -390,6 +390,10 @@
 							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
 						}
 						main.append(downloaderSection);
+						if (biliHelper.cid) {
+							var commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
+							main.append(commentSection);
+						}
 						blockInfo.addClass('active');
 					}
 				});
