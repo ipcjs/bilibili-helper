@@ -1,7 +1,7 @@
 $(document).ready(function() {
 	var bkg_page = chrome.extension.getBackgroundPage();
-	document.title = chrome.i18n.getMessage('extName') + " - " + chrome.i18n.getMessage('optionPage');
-	$("#menu_title").text(chrome.i18n.getMessage('extName'));
+	document.title = chrome.i18n.getMessage('extShortName') + " - " + chrome.i18n.getMessage('optionPage');
+	$("#menu_title").text(chrome.i18n.getMessage('extShortName'));
 	$("#version").html(bkg_page.version);
 	$("#ad_opacity_opt").hide();
 	$("div[option=\"" + bkg_page.getOption("replace") + "\"].replace").addClass("on");
