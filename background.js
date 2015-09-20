@@ -1,4 +1,6 @@
 var notification = false,
+	notificationAvid = {},
+	lastDyn = 0,
 	playerTabs = {},
 	cidHackType = {};
 
@@ -14,7 +16,8 @@ function getFileData(url, callback) {
 }
 
 function postFileData(url, data, callback) {
-	var encodeData = "", append = false;
+	var encodeData = "",
+		append = false;
 	Object.keys(data).forEach(function(key) {
 		if (!append) {
 			append = true;
@@ -26,7 +29,7 @@ function postFileData(url, data, callback) {
 	});
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("POST", url, true);
-	xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
@@ -89,44 +92,47 @@ function disableAll() {
 }
 
 function checkDynamic() {
-	chrome.cookies.get({
-		url: "http://interface.bilibili.com/nav.js",
-		name: "DedeUserID"
-	}, function(cookie) {
-		if (cookie === null) return false;
-		else if (getOption("dynamic") == "on") {
-			getFileData("http://interface.bilibili.com/nav.js", function(data) {
-				chrome.cookies.get({
-					url: "http://interface.bilibili.com/nav.js",
-					name: "_cnt_dyn"
-				}, function(cookie) {
-					if (typeof cookie !== "undefined") {
-						if (cookie.value > getOption("updates")) {
-							if (notification) chrome.notifications.clear("bh-" + notification, function() {});
-							notification = (new Date()).getTime();
-							chrome.notifications.create("bh-" + notification, {
-								type: "basic",
-								iconUrl: "imgs/icon-32.png",
-								title: chrome.i18n.getMessage('noticeficationTitle'),
-								message: chrome.i18n.getMessage('followingUpdateMessage').replace('%n', cookie.value),
-								isClickable: false
-							}, function() {})
-						}
-						setOption("updates", cookie.value);
-						if (getOption("updates") == 0) {
-							chrome.browserAction.setBadgeText({
-								text: ""
-							});
-						} else {
-							chrome.browserAction.setBadgeText({
-								text: getOption("updates")
-							});
-						}
-					}
-				});
-			});
-		}
-	});
+	if (getOption("dynamic") == "on") {
+		getFileData("http://interface.bilibili.com/widget/getDynamic?pagesize=1", function(data) {
+			var dynamic = JSON.parse(data),
+				content = dynamic.list[0];
+			if (typeof dynamic === "object" && typeof dynamic.num === "number") {
+				if (dynamic.num > getOption("updates") && content.dyn_id != lastDyn) {
+					if (notification) chrome.notifications.clear("bh-" + notification, function() {});
+					notification = (new Date()).getTime();
+					var message = chrome.i18n.getMessage('followingUpdateMessage')
+						.replace('%n', dynamic.num)
+						.replace('%uploader', content.uname)
+						.replace('%title', content.title),
+						icon = content.cover ? content.cover : "imgs/icon-128.png";
+					notificationAvid["bh-" + notification] = content.aid;
+					chrome.notifications.create("bh-" + notification, {
+						type: "basic",
+						iconUrl: icon,
+						title: chrome.i18n.getMessage('noticeficationTitle'),
+						message: message,
+						isClickable: false,
+						buttons: [{
+							title: chrome.i18n.getMessage('notificationWatch')
+						}, {
+							title: chrome.i18n.getMessage('notificationShowAll')
+						}]
+					}, function() {});
+					lastDyn = content.dyn_id;
+				}
+				setOption("updates", dynamic.num);
+				if (getOption("updates") == 0 || content.dyn_id != lastDyn) {
+					chrome.browserAction.setBadgeText({
+						text: ""
+					});
+				} else {
+					chrome.browserAction.setBadgeText({
+						text: getOption("updates")
+					});
+				}
+			}
+		});
+	}
 }
 
 function getCid(avid, callback) {
@@ -282,10 +288,12 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "sendComment":
 			var errorCode = ["正常", "选择的弹幕模式错误", "用户被禁止", "系统禁止",
-			"投稿不存在", "UP主禁止", "权限有误", "视频未审核/未发布", "禁止游客弹幕"];
+				"投稿不存在", "UP主禁止", "权限有误", "视频未审核/未发布", "禁止游客弹幕"
+			];
 			request.comment.cid = request.cid;
 			postFileData("http://interface.bilibili.com/dmpost?cid=" + request.cid +
-				"&aid=" + request.avid + "&pid=" + request.page, request.comment, function (result) {
+				"&aid=" + request.avid + "&pid=" + request.page, request.comment,
+				function(result) {
 					result = parseInt(result);
 					if (result < 0) {
 						sendResponse({
@@ -325,7 +333,7 @@ setIcon();
 checkDynamic();
 
 chrome.alarms.create("checkDynamic", {
-	periodInMinutes: 5
+	periodInMinutes: 1
 });
 
 if (getOption("version") < chrome.app.getDetails().version) {
@@ -342,6 +350,18 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 			return true;
 		default:
 			return false;
+	}
+});
+
+chrome.notifications.onButtonClicked.addListener(function(notificationId, index) {
+	if (index == 0 && notificationAvid[notificationId]) {
+		chrome.tabs.create({
+			url: "http://www.bilibili.com/video/av" + notificationAvid[notificationId]
+		});
+	} else if (index == 1) {
+		chrome.tabs.create({
+			url: "http://www.bilibili.com/account/dynamic"
+		});
 	}
 });
 

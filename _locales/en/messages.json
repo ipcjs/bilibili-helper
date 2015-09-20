@@ -72,7 +72,15 @@
     "description": "Noticefication: Title"
   },
   "followingUpdateMessage": {
-    "message": "Your bilibili followings have %n new updates!",
+    "message": "Your bilibili followings updated (%n new)!\n%uploader just published '%title'!",
     "description": "Noticefication: Following Update Message"
+  },
+  "notificationWatch": {
+    "message": "Watch",
+    "description": "Noticefication: Watch"
+  },
+  "notificationShowAll": {
+    "message": "Show All",
+    "description": "Noticefication: Show All"
   }
 }

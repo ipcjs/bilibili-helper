@@ -72,7 +72,15 @@
     "description": "Noticefication: Title"
   },
   "followingUpdateMessage": {
-    "message": "您的账户收到了%n个关注推送!",
+    "message": "您的哔哩哔哩关注更新了(%n 个新动态)!\n%uploader 刚刚发布了「%title」!",
     "description": "Noticefication: Following Update Message"
+  },
+  "notificationWatch": {
+    "message": "观看",
+    "description": "Noticefication: Watch"
+  },
+  "notificationShowAll": {
+    "message": "显示全部",
+    "description": "Noticefication: Show All"
   }
 }

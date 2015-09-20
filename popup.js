@@ -16,7 +16,7 @@ function adModeFunction(cmd) {
 
 function getDynamic() {
 	bkg_page.chrome.cookies.get({
-		url: "http://interface.bilibili.com/nav.js",
+		url: "http://interface.bilibili.com/",
 		name: "DedeUserID"
 	}, function(cookie) {
 		if(cookie === null) $('#go_dynamic').html(chrome.i18n.getMessage('goDynamic') + chrome.i18n.getMessage('notLogged'));
