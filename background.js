@@ -68,17 +68,10 @@ function notifyAllTabs(message) {
 	});
 }
 
-function setIcon() {
-	chrome.browserAction.setIcon({
-		path: "imgs/icon-19.png"
-	});
-}
-
 function updateAll() {
 	notifyAllTabs({
 		command: "update"
 	});
-	setIcon();
 }
 
 function enableAll() {
@@ -104,7 +97,7 @@ function checkDynamic() {
 						.replace('%n', dynamic.num)
 						.replace('%uploader', content.uname)
 						.replace('%title', content.title),
-						icon = content.cover ? content.cover : "imgs/icon-128.png";
+						icon = content.cover ? content.cover : "imgs/icon-256.png";
 					notificationAvid["bh-" + notification] = content.aid;
 					chrome.notifications.create("bh-" + notification, {
 						type: "basic",
@@ -327,8 +320,6 @@ if (getOption("contextmenu") == "on") {
 		onclick: searchBilibili
 	});
 }
-
-setIcon();
 
 checkDynamic();
 

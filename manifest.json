@@ -4,7 +4,10 @@
       "persistent": true
    },
    "browser_action": {
-      "default_icon": "imgs/icon-19.png",
+      "default_icon": {
+         "19": "imgs/icon-19.png",
+         "38": "imgs/icon-38.png"
+      },
       "default_popup": "popup.html",
       "default_title": "__MSG_extShortName__"
    },
@@ -17,6 +20,7 @@
    "default_locale": "zh_CN",
    "description": "__MSG_extDescription__",
    "icons": {
+      "256": "imgs/icon-256.png",
       "128": "imgs/icon-128.png",
       "16": "imgs/icon-16.png",
       "32": "imgs/icon-32.png"
