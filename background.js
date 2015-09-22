@@ -90,13 +90,13 @@ function checkDynamic() {
 			var dynamic = JSON.parse(data),
 				content = dynamic.list[0];
 			if (typeof dynamic === "object" && typeof dynamic.num === "number") {
-				if (dynamic.num > getOption("updates") && content.dyn_id != lastDyn) {
+				if (content.dyn_id != lastDyn) {
 					if (notification) chrome.notifications.clear("bh-" + notification, function() {});
 					notification = (new Date()).getTime();
 					var message = chrome.i18n.getMessage('followingUpdateMessage')
 						.replace('%n', dynamic.num)
-						.replace('%uploader', content.uname)
-						.replace('%title', content.title),
+						.replace('%uploader', content.dyn_type == 'SPECIAL_ADDBANGUMI' ? '搬' : content.uname)
+						.replace('%title', content.dyn_type == 'SPECIAL_ADDBANGUMI' ? content.stitle : content.title),
 						icon = content.cover ? content.cover : "imgs/icon-256.png";
 					notificationAvid["bh-" + notification] = content.aid;
 					chrome.notifications.create("bh-" + notification, {
