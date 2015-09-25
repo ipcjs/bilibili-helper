@@ -1,6 +1,5 @@
 var notification = false,
 	notificationAvid = {},
-	lastDyn = 0,
 	playerTabs = {},
 	cidHackType = {};
 
@@ -90,7 +89,7 @@ function checkDynamic() {
 			var dynamic = JSON.parse(data),
 				content = dynamic.list[0];
 			if (typeof dynamic === "object" && typeof dynamic.num === "number") {
-				if (content.dyn_id != lastDyn) {
+				if (content.dyn_id != parseInt(getOption("lastDyn"))) {
 					if (notification) chrome.notifications.clear("bh-" + notification, function() {});
 					notification = (new Date()).getTime();
 					var message = chrome.i18n.getMessage('followingUpdateMessage')
@@ -111,14 +110,15 @@ function checkDynamic() {
 							title: chrome.i18n.getMessage('notificationShowAll')
 						}]
 					}, function() {});
-					lastDyn = content.dyn_id;
+					setOption("lastDyn", content.dyn_id);
 				}
-				setOption("updates", dynamic.num);
-				if (getOption("updates") == 0 || content.dyn_id != lastDyn) {
+				if (content.dyn_id == parseInt(getOption("lastDyn")) {
+					setOption("updates", 0);
 					chrome.browserAction.setBadgeText({
 						text: ""
 					});
 				} else {
+					setOption("updates", dynamic.num);
 					chrome.browserAction.setBadgeText({
 						text: getOption("updates")
 					});
