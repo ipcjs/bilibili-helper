@@ -112,7 +112,7 @@ function checkDynamic() {
 					}, function() {});
 					setOption("lastDyn", content.dyn_id);
 				}
-				if (content.dyn_id == parseInt(getOption("lastDyn")) {
+				if (content.dyn_id == parseInt(getOption("lastDyn"))) {
 					setOption("updates", 0);
 					chrome.browserAction.setBadgeText({
 						text: ""
