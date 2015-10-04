@@ -1,11 +1,34 @@
 var notification = false,
 	notificationAvid = {},
 	playerTabs = {},
-	cidHackType = {};
+	cidHackType = {},
+	locale = 0;
 
-function getFileData(url, callback) {
+URL.prototype.__defineGetter__('query', function() {
+	var parsed = this.search.substr(1).split('&');
+	var parsedObj = {};
+	parsed.forEach(function(elem, iter, arr) {
+		var vals = arr[iter].split('=');
+		parsedObj[vals[0]] = vals[1];
+	});
+	return parsedObj;
+});
+
+var randomIP = function(fakeip) {
+	var ip_addr = '220.181.111.';
+	if (fakeip == 2) ip_addr = '59.152.193.';
+	ip_addr += Math.floor(Math.random() * 254 + 1);
+	return ip_addr;
+}
+
+function getFileData(url, callback, fakeip) {
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("GET", url, true);
+	if (fakeip && locale != fakeip) {
+		var ip = randomIP(fakeip);
+		xmlhttp.setRequestHeader('Client-IP', ip);
+		xmlhttp.setRequestHeader('X-Forwarded-For', ip);
+	}
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
@@ -201,14 +224,12 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "getDownloadLink":
 			var url = {
-				download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
-				playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
-			}
+					download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
+					playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
+				},
+				zoneid = 1;
 			if (request.cidHack == 2) {
-				var url = {
-					download: "https://bilibili.guguke.net/playurl.json?cid=" + request.cid + "&type=" + getOption("dlquality"),
-					playback: "https://bilibili.guguke.net/playurl.json?cid=" + request.cid + "&type=mp4"
-				}
+				zoneid = 2;
 			}
 			getFileData(url["download"], function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
@@ -228,9 +249,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 							dlquality: getOption("dlquality"),
 							rel_search: getOption("rel_search")
 						});
-					});
+					}, zoneid);
 				}
-			});
+			}, zoneid);
 			return true;
 		case "getMyInfo":
 			getFileData("http://api.bilibili.com/myinfo", function(myinfo) {
@@ -327,6 +348,24 @@ chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1
 });
 
+getFileData("http://www.telize.com/geoip", function(result) {
+	result = JSON.parse(result);
+	switch (result.country_code) {
+		case "CN":
+			locale = 1;
+			break;
+		case "TW":
+		case "HK":
+		case "MO":
+			locale = 2;
+			break;
+		default:
+			locale = 0;
+			break;
+	}
+	isMainland = result == "true";
+});
+
 if (getOption("version") < chrome.app.getDetails().version) {
 	setOption("version", chrome.app.getDetails().version);
 	chrome.tabs.create({
@@ -376,23 +415,22 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	urls: ["http://g3.letv.cn/vod/v2/*"]
 }, ["blocking"]);
 
-chrome.webRequest.onHeadersReceived.addListener(function(details) {
-	var blockingResponse = {};
-	if (getOption("replace") == "on" && details.url.indexOf("cid=" + playerTabs[details.tabId]) > 0) {
-		playerTabs[details.tabId] = false;
-		var params = getUrlVars(details.url);
-		if (params['cid']) {
-			if (cidHackType[params['cid']] == 1) {
-				blockingResponse.redirectUrl = 'http://interface.bilibili.com/playurl?platform=bilihelper&cid=' + params['cid'] + '&appkey=95acd7f6cc3392f3';
-			} else if (cidHackType[params['cid']] == 2) {
-				blockingResponse.redirectUrl = 'https://bilibili.guguke.net/playurl.xml?cid=' + params['cid'];
-			}
-		}
-	}
-	return blockingResponse;
+chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
+	var query = new URL(details.url).query;
+	var ip = randomIP(cidHackType[query['cid']] == 2 ? 2 : 1);
+	details.requestHeaders.push({
+		name: 'X-Forwarded-For',
+		value: ip
+	}, {
+		name: 'Client-IP',
+		value: ip
+	});
+	return {
+		requestHeaders: details.requestHeaders
+	};
 }, {
 	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*"]
-}, ["blocking"]);
+}, ['requestHeaders', 'blocking']);
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders,
