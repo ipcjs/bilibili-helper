@@ -2,6 +2,7 @@ var notification = false,
 	notificationAvid = {},
 	playerTabs = {},
 	cidHackType = {},
+	viCache = {},
 	locale = 0;
 
 URL.prototype.__defineGetter__('query', function() {
@@ -32,6 +33,8 @@ function getFileData(url, callback, fakeip) {
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
+		} else if (xmlhttp.status > 400) {
+			if (typeof callback == "function") callback("{}");
 		}
 	}
 	xmlhttp.send();
@@ -151,12 +154,15 @@ function checkDynamic() {
 	}
 }
 
-function getCid(avid, callback) {
-	if (typeof cidCache[avid] != "undefined") {
-		callback(cidCache[avid], true);
+function getVideoInfo(avid, page, callback) {
+	page = parseInt(page);
+	var currTime = parseInt(new Date().getTime() / 1000);
+	if (isNaN(page) || page < 1) page = 1;
+	if (typeof viCache[avid + '-' + page] != "undefined" && currTime - viCache[avid + '-' + page]['ts'] <= 3600) {
+		callback(viCache[avid + '-' + page], true);
 		return true;
 	}
-	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=1", function(avInfo) {
+	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=" + page, function(avInfo) {
 		avInfo = JSON.parse(avInfo);
 		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
 			setTimeout(function() {
@@ -164,10 +170,23 @@ function getCid(avid, callback) {
 			}, 1000);
 		} else {
 			if (typeof avInfo.cid == "number") {
-				cidCache[avid] = avInfo.cid;
-				localStorage.setItem("cidCache", JSON.stringify(cidCache));
+				viCache[avid + '-' + page] = {
+					mid: avInfo.mid,
+					tid: avInfo.tid,
+					cid: avInfo.cid,
+					pic: avInfo.pic,
+					pages: avInfo.pages,
+					title: avInfo.title,
+					sp_title: avInfo.sp_title,
+					spid: avInfo.spid,
+					season_id: avInfo.season_id,
+					created_at: avInfo.created_at,
+					description: avInfo.description,
+					tag: avInfo.tag,
+					ts: currTime
+				};
 			}
-			callback(avInfo.cid, false);
+			callback(avInfo, false);
 		}
 	});
 	return true;
@@ -215,8 +234,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			});
 			return true;
 		case "getVideoInfo":
-			getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + request.avid + "&page=" + request.pg, function(avInfo) {
-				avInfo = JSON.parse(avInfo);
+			getVideoInfo(request.avid, request.pg, function(avInfo) {
 				sendResponse({
 					videoInfo: avInfo
 				});
@@ -348,23 +366,28 @@ chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1
 });
 
-getFileData("http://www.telize.com/geoip", function(result) {
-	result = JSON.parse(result);
-	switch (result.country_code) {
-		case "CN":
-			locale = 1;
-			break;
-		case "TW":
-		case "HK":
-		case "MO":
-			locale = 2;
-			break;
-		default:
-			locale = 0;
-			break;
-	}
-	isMainland = result == "true";
-});
+function getLocale() {
+	getFileData("http://www.telize.com/geoip", function(result) {
+		result = JSON.parse(result);
+		if (result.country_code) {
+			switch (result.country_code) {
+				case "CN":
+					locale = 1;
+					break;
+				case "TW":
+				case "HK":
+				case "MO":
+					locale = 2;
+					break;
+				default:
+					locale = 0;
+					break;
+			}
+		} else {
+			setTimeout(getLocale, 1000);
+		}
+	});
+}
 
 if (getOption("version") < chrome.app.getDetails().version) {
 	setOption("version", chrome.app.getDetails().version);

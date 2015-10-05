@@ -61,13 +61,6 @@
 				cid: biliHelper.cid,
 				type: biliHelper.cidHack
 			}, function(response) {
-				if (majorVersion < 37 && !biliHelper.outdateNotice) {
-					biliHelper.outdateNotice = true;
-					biliHelper.favorHTML5 = true;
-					if (confirm('您的 Chrome 版本过旧，可能无法完成播放器替换。\n扩展支持的最低版本: Chrome 37\n您正在使用的版本: Chrome ' + /Chrome\/([\d\.apre]+)/.exec(window.navigator.userAgent)[1] + '\n您想要下载新版吗？')) {
-						window.open('http://dlsw.baidu.com/sw-search-sp/soft/9d/14744/ChromeStandaloneSetup.1413788677.exe');
-					};
-				}
 				if (typeof callback === 'function') callback();
 			});
 		} else {
@@ -333,6 +326,9 @@
 				}
 				if ($('meta[name="redirect"]').length) {
 					biliHelper.redirectUrl = $('meta[name="redirect"]').attr('content');
+					if (biliHelper.redirectUrl.indexOf('mimi.gg/') > -1) {
+						biliHelper.cidHack = 2;
+					}
 				}
 				biliHelper.version = response.version;
 				var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\">加载中，请稍候…</div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
