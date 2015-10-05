@@ -458,13 +458,15 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	var query = new URL(details.url).query;
 	var ip = randomIP(cidHackType[query['cid']] == 2 ? 2 : 1);
-	details.requestHeaders.push({
-		name: 'X-Forwarded-For',
-		value: ip
-	}, {
-		name: 'Client-IP',
-		value: ip
-	});
+	if (locale != cidHackType[query['cid']]) {
+		details.requestHeaders.push({
+			name: 'X-Forwarded-For',
+			value: ip
+		}, {
+			name: 'Client-IP',
+			value: ip
+		})
+	}
 	return {
 		requestHeaders: details.requestHeaders
 	};
