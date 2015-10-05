@@ -332,66 +332,64 @@
 				}
 				biliHelper.version = response.version;
 				var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\">加载中，请稍候…</div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
-				helperBlock.find('.title').click(function() {
+				helperBlock.mouseenter(function() {
 					var blockInfo = $(this).closest('.block').find('.info'),
 						main = blockInfo.find('.main');
-					if (blockInfo.hasClass('active')) {
-						blockInfo.removeClass('active');
-					} else {
-						main.empty();
-						var infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
-						if (biliHelper.cid) {
-							infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
-						}
-						main.append(infoSection);
-						if (!biliHelper.cid && biliHelper.error) {
-							var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
-							main.append(errorSection);
-						}
-						if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
-							var redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
-							main.append(redirectSection);
-						}
-						if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.cid !== "undefined") {
-							var switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
-							switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
-								$('.arc-tool-bar .helper .section.switcher a.b-btn').addClass('w');
-								biliHelper.switcher[$(this).attr('type')]();
-								$(this).removeClass('w');
-							}));
-							if (biliHelper.redirectUrl) {
-								switcherSection.find('a[type="original"]').remove();
-							}
-							if (!biliHelper.replacePlayer || !biliHelper.cid) {
-								switcherSection.find('a[type="iframe"],a[type="swf"]').remove();
-							}
-							if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
-								switcherSection.find('a[type="html5"]').remove();
-							}
-							switcherSection.find('a.b-btn[type="' + biliHelper.switcher.current + '"]').removeClass('w');
-							main.append(switcherSection);
-						}
-						if (typeof biliHelper.downloadUrls !== "undefined" || biliHelper.error) {
-							if (typeof biliHelper.downloadUrls !== "object" || !biliHelper.downloadUrls.length) {
-								var errorMessage = biliHelper.error || "视频地址获取失败",
-									downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>' + errorMessage + '</p></div>');
-							} else {
-								var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p></p></div>');
-								for (i in biliHelper.downloadUrls) {
-									var segmentInfo = biliHelper.downloadUrls[i];
-									if (typeof segmentInfo == "object") downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
-								}
-							}
-						} else {
-							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
-						}
-						main.append(downloaderSection);
-						if (biliHelper.cid) {
-							var commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
-							main.append(commentSection);
-						}
-						blockInfo.addClass('active');
+					main.empty();
+					var infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
+					if (biliHelper.cid) {
+						infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
 					}
+					main.append(infoSection);
+					if (!biliHelper.cid && biliHelper.error) {
+						var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
+						main.append(errorSection);
+					}
+					if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
+						var redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
+						main.append(redirectSection);
+					}
+					if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.cid !== "undefined") {
+						var switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
+						switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
+							$('.arc-tool-bar .helper .section.switcher a.b-btn').addClass('w');
+							biliHelper.switcher[$(this).attr('type')]();
+							$(this).removeClass('w');
+						}));
+						if (biliHelper.redirectUrl) {
+							switcherSection.find('a[type="original"]').remove();
+						}
+						if (!biliHelper.replacePlayer || !biliHelper.cid) {
+							switcherSection.find('a[type="iframe"],a[type="swf"]').remove();
+						}
+						if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
+							switcherSection.find('a[type="html5"]').remove();
+						}
+						switcherSection.find('a.b-btn[type="' + biliHelper.switcher.current + '"]').removeClass('w');
+						main.append(switcherSection);
+					}
+					if (typeof biliHelper.downloadUrls !== "undefined" || biliHelper.error) {
+						if (typeof biliHelper.downloadUrls !== "object" || !biliHelper.downloadUrls.length) {
+							var errorMessage = biliHelper.error || "视频地址获取失败",
+								downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>' + errorMessage + '</p></div>');
+						} else {
+							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p></p></div>');
+							for (i in biliHelper.downloadUrls) {
+								var segmentInfo = biliHelper.downloadUrls[i];
+								if (typeof segmentInfo == "object") downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
+							}
+						}
+					} else {
+						var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
+					}
+					main.append(downloaderSection);
+					if (biliHelper.cid) {
+						var commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
+						main.append(commentSection);
+					}
+					blockInfo.addClass('active');
+				}).mouseleave(function() {
+					$(this).closest('.block').find('.info').removeClass('active');
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
 				biliHelper.originalPlayer = $('#bofqi').html();

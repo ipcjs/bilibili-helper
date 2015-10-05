@@ -3,7 +3,9 @@ var notification = false,
 	playerTabs = {},
 	cidHackType = {},
 	viCache = {},
-	locale = 0;
+	locale = 0,
+	localeAcquired = false,
+	localeTimeout = null;
 
 URL.prototype.__defineGetter__('query', function() {
 	var parsed = this.search.substr(1).split('&');
@@ -366,6 +368,10 @@ chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1
 });
 
+chrome.alarms.create("getLocale", {
+	periodInMinutes: 5
+});
+
 function getLocale() {
 	getFileData("http://www.telize.com/geoip", function(result) {
 		result = JSON.parse(result);
@@ -383,11 +389,16 @@ function getLocale() {
 					locale = 0;
 					break;
 			}
+			localeAcquired = true;
 		} else {
-			setTimeout(getLocale, 1000);
+			localeTimeout = setTimeout(function() {
+				getLocale();
+			}, 5000);
 		}
 	});
 }
+
+getLocale();
 
 if (getOption("version") < chrome.app.getDetails().version) {
 	setOption("version", chrome.app.getDetails().version);
@@ -400,6 +411,12 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 	switch (alarm.name) {
 		case "checkDynamic":
 			checkDynamic();
+			return true;
+		case "getLocale":
+			if (!getLocale) {
+				clearTimeout(localeTimeout);
+				getLocale();
+			}
 			return true;
 		default:
 			return false;
