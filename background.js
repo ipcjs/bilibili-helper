@@ -168,7 +168,7 @@ function getVideoInfo(avid, page, callback) {
 		avInfo = JSON.parse(avInfo);
 		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
 			setTimeout(function() {
-				getCid(avid, callback);
+				getVideoInfo(avid, page, callback);
 			}, 1000);
 		} else {
 			if (typeof avInfo.cid == "number") {
@@ -477,7 +477,8 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders,
 		blockingResponse = {};
-	if (details.statusLine == "HTTP/1.1 302 Moved Temporarily" && getOption("replace") == "on") {
+	console.log(details.statusLine);
+	if (details.statusLine.indexOf("HTTP/1.1 302") == 0 && getOption("replace") == "on") {
 		blockingResponse.responseHeaders = [];
 		var redirectUrl = "";
 		for (i in headers) {
