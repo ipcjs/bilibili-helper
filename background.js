@@ -29,7 +29,6 @@ function getFileData(url, callback, fakeip) {
 	xmlhttp.open("GET", url, true);
 	if (fakeip && locale != fakeip) {
 		var ip = randomIP(fakeip);
-		console.log('getFileData', url, fakeip, ip);
 		xmlhttp.setRequestHeader('Client-IP', ip);
 		xmlhttp.setRequestHeader('X-Forwarded-For', ip);
 	}
@@ -159,23 +158,13 @@ function checkDynamic() {
 
 function resolvePlaybackLink(avPlaybackLink, callback) {
 	if (!avPlaybackLink || !avPlaybackLink.durl || !avPlaybackLink.durl[0] || !avPlaybackLink.durl[0].url) return avPlaybackLink;
-	recursiveResolve(avPlaybackLink.durl[0].url, function(url) {
-		avPlaybackLink.durl[0].url = url;
-		if (typeof callback == "function") callback(avPlaybackLink);
-	});
-}
-
-function recursiveResolve(url, callback) {
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("HEAD", url, true);
+	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4) {
-			var location = xmlhttp.getResponseHeader("Location");
-			if (parseInt(xmlhttp.status / 100) == 3 || location) {
-				recursiveResolve(location, callback);
-			} else {
-				if (typeof callback == "function") callback(url);
-			}
+			var url = xmlhttp.responseURL || url;
+			avPlaybackLink.durl[0].url = url;
+			if (typeof callback == "function") callback(avPlaybackLink);
 		}
 	}
 	xmlhttp.send();

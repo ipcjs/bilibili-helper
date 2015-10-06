@@ -439,7 +439,7 @@
 					},
 					html5: function() {
 						this.current = "html5";
-						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
+						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
 						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
 							src: {
 								playlist: [{
