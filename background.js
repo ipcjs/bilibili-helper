@@ -26,7 +26,7 @@ var randomIP = function(fakeip) {
 
 function getFileData(url, callback, fakeip) {
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("GET", url);
+	xmlhttp.open("GET", url, true);
 	if (fakeip && locale != fakeip) {
 		var ip = randomIP(fakeip);
 		console.log('getFileData', url, fakeip, ip);
@@ -56,7 +56,7 @@ function postFileData(url, data, callback) {
 			encodeURIComponent(data[key]).replace(/%20/g, "+");
 	});
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("POST", url);
+	xmlhttp.open("POST", url, true);
 	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -167,7 +167,7 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 
 function recursiveResolve(url, callback) {
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("HEAD", url);
+	xmlhttp.open("HEAD", url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4) {
 			var location = xmlhttp.getResponseHeader("Location");
