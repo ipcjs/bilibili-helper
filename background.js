@@ -26,7 +26,7 @@ var randomIP = function(fakeip) {
 
 function getFileData(url, callback, fakeip) {
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("GET", url, true);
+	xmlhttp.open("GET", url);
 	if (fakeip && locale != fakeip) {
 		var ip = randomIP(fakeip);
 		console.log('getFileData', url, fakeip, ip);
@@ -56,7 +56,7 @@ function postFileData(url, data, callback) {
 			encodeURIComponent(data[key]).replace(/%20/g, "+");
 	});
 	xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("POST", url, true);
+	xmlhttp.open("POST", url);
 	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -157,6 +157,30 @@ function checkDynamic() {
 	}
 }
 
+function resolvePlaybackLink(avPlaybackLink, callback) {
+	if (!avPlaybackLink || !avPlaybackLink.durl || !avPlaybackLink.durl[0] || !avPlaybackLink.durl[0].url) return avPlaybackLink;
+	recursiveResolve(avPlaybackLink.durl[0].url, function(url) {
+		avPlaybackLink.durl[0].url = url;
+		if (typeof callback == "function") callback(avPlaybackLink);
+	});
+}
+
+function recursiveResolve(url, callback) {
+	xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("HEAD", url);
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4) {
+			var location = xmlhttp.getResponseHeader("Location");
+			if (parseInt(xmlhttp.status / 100) == 3 || location) {
+				recursiveResolve(location, callback);
+			} else {
+				if (typeof callback == "function") callback(url);
+			}
+		}
+	}
+	xmlhttp.send();
+}
+
 function getVideoInfo(avid, page, callback) {
 	page = parseInt(page);
 	var currTime = parseInt(new Date().getTime() / 1000);
@@ -255,21 +279,25 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			getFileData(url["download"], function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4') {
-					sendResponse({
-						download: avDownloadLink,
-						playback: avDownloadLink,
-						dlquality: getOption("dlquality"),
-						rel_search: getOption("rel_search")
-					});
-				} else {
-					getFileData(url["playback"], function(avPlaybackLink) {
-						avPlaybackLink = JSON.parse(avPlaybackLink);
+					resolvePlaybackLink(avDownloadLink, function(avRealPlaybackLink) {
 						sendResponse({
 							download: avDownloadLink,
-							playback: avPlaybackLink,
+							playback: avRealPlaybackLink,
 							dlquality: getOption("dlquality"),
 							rel_search: getOption("rel_search")
 						});
+					})
+				} else {
+					getFileData(url["playback"], function(avPlaybackLink) {
+						avPlaybackLink = JSON.parse(avPlaybackLink);
+						resolvePlaybackLink(avPlaybackLink, function(avRealPlaybackLink) {
+							sendResponse({
+								download: avDownloadLink,
+								playback: avRealPlaybackLink,
+								dlquality: getOption("dlquality"),
+								rel_search: getOption("rel_search")
+							});
+						})
 					}, zoneid);
 				}
 			}, zoneid);
@@ -443,18 +471,6 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 }, {
 	urls: ["http://comment.bilibili.com/1272.xml"]
 });
-
-chrome.webRequest.onHeadersReceived.addListener(function(details) {
-	var blockingResponse = {};
-	if (getOption("replace") == "on") {
-		if (details.url.indexOf('retry=1') < 0) {
-			blockingResponse.redirectUrl = details.url + '&retry=1';
-		}
-	}
-	return blockingResponse;
-}, {
-	urls: ["http://g3.letv.cn/vod/v2/*"]
-}, ["blocking"]);
 
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	var query = new URL(details.url).query;
