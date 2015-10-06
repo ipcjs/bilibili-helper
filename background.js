@@ -29,6 +29,7 @@ function getFileData(url, callback, fakeip) {
 	xmlhttp.open("GET", url, true);
 	if (fakeip && locale != fakeip) {
 		var ip = randomIP(fakeip);
+		console.log('getFileData', url, fakeip, ip);
 		xmlhttp.setRequestHeader('Client-IP', ip);
 		xmlhttp.setRequestHeader('X-Forwarded-For', ip);
 	}
@@ -114,9 +115,9 @@ function disableAll() {
 function checkDynamic() {
 	if (getOption("dynamic") == "on") {
 		getFileData("http://interface.bilibili.com/widget/getDynamic?pagesize=1", function(data) {
-			var dynamic = JSON.parse(data),
-				content = dynamic.list[0];
+			var dynamic = JSON.parse(data);
 			if (typeof dynamic === "object" && typeof dynamic.num === "number") {
+				var content = dynamic.list[0];
 				if (content.dyn_id != parseInt(getOption("lastDyn"))) {
 					if (notification) chrome.notifications.clear("bh-" + notification, function() {});
 					notification = (new Date()).getTime();
@@ -471,13 +472,12 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 		requestHeaders: details.requestHeaders
 	};
 }, {
-	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*"]
+	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*"]
 }, ['requestHeaders', 'blocking']);
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders,
 		blockingResponse = {};
-	console.log(details.statusLine);
 	if (details.statusLine.indexOf("HTTP/1.1 302") == 0 && getOption("replace") == "on") {
 		blockingResponse.responseHeaders = [];
 		var redirectUrl = "";
