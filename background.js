@@ -477,7 +477,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 		requestHeaders: details.requestHeaders
 	};
 }, {
-	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*"]
+	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*"]
 }, ['requestHeaders', 'blocking']);
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
