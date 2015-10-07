@@ -560,7 +560,6 @@
 
 					window.postMessage ? (c = function(a) {
 						"https://secure.bilibili.com" != a.origin && "https://ssl.bilibili.com" != a.origin || "secJS:" != a.data.substr(0, 6) || eval(a.data.substr(6));
-						"undefined" != typeof console && console.log(a.origin + ": " + a.data)
 					}, window.addEventListener ? window.addEventListener("message", c, !1) : window.attachEvent && window.attachEvent("onmessage", c)) : setInterval(function() {
 						if (evalCode = __GetCookie("__secureJS")) {
 							__SetCookie("__secureJS", ""), eval(evalCode)
