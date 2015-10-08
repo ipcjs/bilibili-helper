@@ -25,7 +25,7 @@ var randomIP = function(fakeip) {
 }
 
 function getFileData(url, callback, fakeip) {
-	xmlhttp = new XMLHttpRequest();
+	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("GET", url, true);
 	if (fakeip && locale != fakeip) {
 		var ip = randomIP(fakeip);
@@ -54,7 +54,7 @@ function postFileData(url, data, callback) {
 		encodeData += encodeURIComponent(key).replace(/%20/g, "+") + "=" +
 			encodeURIComponent(data[key]).replace(/%20/g, "+");
 	});
-	xmlhttp = new XMLHttpRequest();
+	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("POST", url, true);
 	xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xmlhttp.onreadystatechange = function() {
@@ -158,7 +158,7 @@ function checkDynamic() {
 
 function resolvePlaybackLink(avPlaybackLink, callback) {
 	if (!avPlaybackLink || !avPlaybackLink.durl || !avPlaybackLink.durl[0] || !avPlaybackLink.durl[0].url) return avPlaybackLink;
-	xmlhttp = new XMLHttpRequest();
+	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4) {
