@@ -250,6 +250,7 @@
 				videoPlaybackLink = response["playback"];
 			biliHelper.downloadUrls = [];
 			biliHelper.playbackUrls = [];
+			notifyCidHack();
 			if (videoDownloadLink.result == "error" || typeof videoPlaybackLink.durl === "undefined") {
 				if (typeof videoDownloadLink.message == "string") {
 					if (typeof videoPlaybackLink.message == "string") {
@@ -328,6 +329,7 @@
 					biliHelper.redirectUrl = $('meta[name="redirect"]').attr('content');
 					if (biliHelper.redirectUrl.indexOf('mimi.gg/') > -1) {
 						biliHelper.cidHack = 2;
+						notifyCidHack();
 					}
 				}
 				biliHelper.version = response.version;

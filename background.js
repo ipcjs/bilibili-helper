@@ -24,14 +24,9 @@ var randomIP = function(fakeip) {
 	return ip_addr;
 }
 
-function getFileData(url, callback, fakeip) {
+function getFileData(url, callback) {
 	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("GET", url, true);
-	if (fakeip && locale != fakeip) {
-		var ip = randomIP(fakeip);
-		xmlhttp.setRequestHeader('Client-IP', ip);
-		xmlhttp.setRequestHeader('X-Forwarded-For', ip);
-	}
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
@@ -157,7 +152,10 @@ function checkDynamic() {
 }
 
 function resolvePlaybackLink(avPlaybackLink, callback) {
-	if (!avPlaybackLink || !avPlaybackLink.durl || !avPlaybackLink.durl[0] || !avPlaybackLink.durl[0].url) return avPlaybackLink;
+	if (!avPlaybackLink || !avPlaybackLink.durl || !avPlaybackLink.durl[0] || !avPlaybackLink.durl[0].url) {
+		if (typeof callback == "function") callback(avPlaybackLink);
+		return false;
+	}
 	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
@@ -260,14 +258,14 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			var url = {
 					download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
 					playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
-				},
-				zoneid = 1;
-			if (request.cidHack == 2) {
-				zoneid = 2;
+				};
+			if (request.cidHack && request.cidHack != locale) {
+				cidHackType[request.cid] = request.cidHack;
 			}
 			getFileData(url["download"], function(avDownloadLink) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4') {
+					if (avDownloadLink)
 					resolvePlaybackLink(avDownloadLink, function(avRealPlaybackLink) {
 						sendResponse({
 							download: avDownloadLink,
@@ -287,9 +285,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 								rel_search: getOption("rel_search")
 							});
 						})
-					}, zoneid);
+					});
 				}
-			}, zoneid);
+			});
 			return true;
 		case "getMyInfo":
 			getFileData("http://api.bilibili.com/myinfo", function(myinfo) {
