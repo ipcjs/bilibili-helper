@@ -314,6 +314,91 @@
 				biliHelper.genPage = false;
 				biliHelper.copyright = false;
 				biliHelper.playerConfig = response.playerConfig;
+				biliHelper.switcher = {
+					current: "original",
+					original: function() {
+						this.current = "original";
+						notifyCidHack(function() {
+							$('#bofqi').html(biliHelper.originalPlayer);
+							if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
+						});
+					},
+					swf: function() {
+						this.current = "swf";
+						notifyCidHack(function() {
+							$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="https://static-s.bilibili.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
+						});
+					},
+					iframe: function() {
+						this.current = "iframe";
+						notifyCidHack(function() {
+							$('#bofqi').html('<iframe height="536" width="980" class="player" src="https://secure.bilibili.com/secure,cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" scrolling="no" border="0" frameborder="no" framespacing="0" onload="window.securePlayerFrameLoaded=true"></iframe>');
+						});
+					},
+					html5: function() {
+						this.current = "html5";
+						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
+						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
+							src: {
+								playlist: [{
+									video: document.getElementById("bilibili_helper_html5_player_video"),
+									comments: "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
+								}]
+							},
+							width: "100%",
+							height: "100%",
+							config: biliHelper.playerConfig
+						});
+						abp.playerUnit.addEventListener("wide", function() {
+							$("#bofqi").addClass("wide");
+						});
+						abp.playerUnit.addEventListener("normal", function() {
+							$("#bofqi").removeClass("wide");
+						});
+						abp.playerUnit.addEventListener("sendcomment", function(e) {
+							var commentId = e.detail.id,
+								commentData = e.detail;
+							delete e.detail.id;
+							chrome.extension.sendMessage({
+								command: "sendComment",
+								avid: biliHelper.avid,
+								cid: biliHelper.cid,
+								page: biliHelper.page + biliHelper.pageOffset,
+								comment: commentData
+							}, function(response) {
+								response.tmp_id = commentId;
+								abp.commentCallback(response);
+							});
+						});
+						abp.playerUnit.addEventListener("saveconfig", function(e) {
+							chrome.extension.sendMessage({
+								command: "savePlayerConfig",
+								config: e.detail
+							});
+						});
+						var bofqiHeight = 0;
+						$(window).scroll(function() {
+							if (bofqiHeight != $("#bofqi").width()) {
+								bofqiHeight = $("#bofqi").width();
+								if (abp && abp.cmManager) {
+									abp.cmManager.setBounds();
+								}
+							}
+						});
+					},
+					bilimac: function() {
+						this.current = "bilimac";
+						$('#bofqi').html('<div style="height:300px;background:#ccc"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
+						$.post("http://localhost:23330/rpc", {
+							action: 'playVideoByCID',
+							data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
+						}, function() {
+							$('#bofqi').find('#loading-notice').text('已在 Bilibili Mac 客户端中加载');
+						}).fail(function() {
+							$('#bofqi').find('#loading-notice').text('调用 Bilibili Mac 客户端失败 :(');
+						});
+					}
+				};
 				if (!$('.z').length) {
 					biliHelper.genPage = true;
 					biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
@@ -427,91 +512,6 @@
 						biliHelper.favorHTML5 = false;
 					});
 					$('#bofqi').append(replaceNotice);
-				}
-				biliHelper.switcher = {
-					current: "original",
-					original: function() {
-						this.current = "original";
-						notifyCidHack(function() {
-							$('#bofqi').html(biliHelper.originalPlayer);
-							if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
-						});
-					},
-					swf: function() {
-						this.current = "swf";
-						notifyCidHack(function() {
-							$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="https://static-s.bilibili.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
-						});
-					},
-					iframe: function() {
-						this.current = "iframe";
-						notifyCidHack(function() {
-							$('#bofqi').html('<iframe height="536" width="980" class="player" src="https://secure.bilibili.com/secure,cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" scrolling="no" border="0" frameborder="no" framespacing="0" onload="window.securePlayerFrameLoaded=true"></iframe>');
-						});
-					},
-					html5: function() {
-						this.current = "html5";
-						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
-						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
-							src: {
-								playlist: [{
-									video: document.getElementById("bilibili_helper_html5_player_video"),
-									comments: "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
-								}]
-							},
-							width: "100%",
-							height: "100%",
-							config: biliHelper.playerConfig
-						});
-						abp.playerUnit.addEventListener("wide", function() {
-							$("#bofqi").addClass("wide");
-						});
-						abp.playerUnit.addEventListener("normal", function() {
-							$("#bofqi").removeClass("wide");
-						});
-						abp.playerUnit.addEventListener("sendcomment", function(e) {
-							var commentId = e.detail.id,
-								commentData = e.detail;
-							delete e.detail.id;
-							chrome.extension.sendMessage({
-								command: "sendComment",
-								avid: biliHelper.avid,
-								cid: biliHelper.cid,
-								page: biliHelper.page + biliHelper.pageOffset,
-								comment: commentData
-							}, function(response) {
-								response.tmp_id = commentId;
-								abp.commentCallback(response);
-							});
-						});
-						abp.playerUnit.addEventListener("saveconfig", function(e) {
-							chrome.extension.sendMessage({
-								command: "savePlayerConfig",
-								config: e.detail
-							});
-						});
-						var bofqiHeight = 0;
-						$(window).scroll(function() {
-							if (bofqiHeight != $("#bofqi").width()) {
-								bofqiHeight = $("#bofqi").width();
-								if (abp && abp.cmManager) {
-									abp.cmManager.setBounds();
-								}
-							}
-						});
-					},
-					bilimac: function() {
-						this.current = "bilimac";
-						$('#bofqi').html('<div style="height:300px;background:#ccc"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
-						$.post("http://localhost:23330/rpc", {
-							action: 'playVideoByCID',
-							data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
-						}, function() {
-							$('#bofqi').find('#loading-notice').text('已在 Bilibili Mac 客户端中加载');
-						}).fail(function() {
-							$('#bofqi').find('#loading-notice').text('调用 Bilibili Mac 客户端失败 :(');
-						});
-					}
 				}
 				work();
 			});
