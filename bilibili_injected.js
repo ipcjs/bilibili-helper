@@ -332,7 +332,7 @@
 						notifyCidHack();
 					}
 				}
-				if (window.bilimac_player_type == 'force') {
+				if (localStorage.getItem('bilimac_player_type') == 'force') {
 					biliHelper.switcher.current = 'bilimac';
 				}
 				biliHelper.version = response.version;
@@ -370,7 +370,7 @@
 						if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
 							switcherSection.find('a[type="html5"]').remove();
 						}
-						if (!window.bilimac_player_type) {
+						if (!localStorage.getItem('bilimac_player_type')) {
 							switcherSection.find('a[type="bilimac"]').remove();
 						}
 						switcherSection.find('a.b-btn[type="' + biliHelper.switcher.current + '"]').removeClass('w');
@@ -400,7 +400,7 @@
 					$(this).closest('.block').find('.info').removeClass('active');
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
-				biliHelper.originalPlayer = window.bilimac_original_player || $('#bofqi').html();
+				biliHelper.originalPlayer = localStorage.getItem('bilimac_original_player') || $('#bofqi').html();
 				if (response.replace == "on" &&
 					($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 					($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
@@ -590,7 +590,7 @@
 						}
 					}, 1000);
 
-					if (biliHelper.cid && !biliHelper.favorHTML5 && window.bilimac_player_type != 'force') {
+					if (biliHelper.cid && !biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force') {
 						$('#loading-notice').fadeOut(300, function() {
 							biliHelper.switcher.swf();
 						});
