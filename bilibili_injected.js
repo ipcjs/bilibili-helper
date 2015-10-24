@@ -332,6 +332,9 @@
 						notifyCidHack();
 					}
 				}
+				if (window.bilimac_player_type == 'force') {
+					biliHelper.switcher.current = 'bilimac';
+				}
 				biliHelper.version = response.version;
 				var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\">加载中，请稍候…</div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
 				helperBlock.mouseenter(function() {
@@ -353,7 +356,7 @@
 					}
 					if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.cid !== "undefined") {
 						var switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
-						switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
+						switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="bilimac">Bilibili Mac 客户端</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
 							$('.arc-tool-bar .helper .section.switcher a.b-btn').addClass('w');
 							biliHelper.switcher[$(this).attr('type')]();
 							$(this).removeClass('w');
@@ -366,6 +369,9 @@
 						}
 						if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
 							switcherSection.find('a[type="html5"]').remove();
+						}
+						if (!window.bilimac_player_type) {
+							switcherSection.find('a[type="bilimac"]').remove();
 						}
 						switcherSection.find('a.b-btn[type="' + biliHelper.switcher.current + '"]').removeClass('w');
 						main.append(switcherSection);
@@ -394,7 +400,7 @@
 					$(this).closest('.block').find('.info').removeClass('active');
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
-				biliHelper.originalPlayer = $('#bofqi').html();
+				biliHelper.originalPlayer = window.bilimac_original_player || $('#bofqi').html();
 				if (response.replace == "on" &&
 					($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 					($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
@@ -402,6 +408,10 @@
 					($('#bofqi object').length + $('#bofqi embed').length + $('#bofqi iframe').length == 0)) {
 					biliHelper.replacePlayer = true;
 				} else {
+					if (response.secureAvailable && $('#bofqi object').attr('data') == 'http://static.hdslb.com/play.swf') {
+						$('#bofqi object').attr('data', 'https://static-s.bilibili.com/play.swf');
+						biliHelper.originalPlayer.replace('http://static.hdslb.com/play.swf', 'https://static-s.bilibili.com/play.swf');
+					}
 					biliHelper.replacePlayer = false;
 				}
 				if (response.html5 == "on") {
@@ -441,7 +451,7 @@
 					},
 					html5: function() {
 						this.current = "html5";
-						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
+						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
 						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
 							src: {
 								playlist: [{
@@ -488,6 +498,18 @@
 									abp.cmManager.setBounds();
 								}
 							}
+						});
+					},
+					bilimac: function() {
+						this.current = "bilimac";
+						$('#bofqi').html('<div style="height:300px;background:#ccc"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
+						$.post("http://localhost:23330/rpc", {
+							action: 'playVideoByCID',
+							data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
+						}, function() {
+							$('#bofqi').find('#loading-notice').text('已在 Bilibili Mac 客户端中加载');
+						}).fail(function() {
+							$('#bofqi').find('#loading-notice').text('调用 Bilibili Mac 客户端失败 :(');
 						});
 					}
 				}
@@ -568,7 +590,7 @@
 						}
 					}, 1000);
 
-					if (biliHelper.cid && !biliHelper.favorHTML5) {
+					if (biliHelper.cid && !biliHelper.favorHTML5 && window.bilimac_player_type != 'force') {
 						$('#loading-notice').fadeOut(300, function() {
 							biliHelper.switcher.swf();
 						});

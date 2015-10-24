@@ -15,7 +15,7 @@
       "all_frames": true,
       "js": [ "jq.bilibili.js", "bilibili_injected.js", "ColPick.js", "CommentCoreLibrary.min.js", "ABPlayer.min.js" ],
       "matches": [ "*://*.bilibili.com/*" ],
-      "run_at": "document_start"
+      "run_at": "document_end"
    } ],
    "default_locale": "zh_CN",
    "description": "__MSG_extDescription__",

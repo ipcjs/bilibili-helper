@@ -5,7 +5,9 @@ var notification = false,
 	viCache = {},
 	locale = 0,
 	localeAcquired = false,
-	localeTimeout = null;
+	localeTimeout = null,
+	secureAvailable = false,
+	videoPlaybackHosts = ["http://*.hdslb.com/*"];
 
 URL.prototype.__defineGetter__('query', function() {
 	var parsed = this.search.substr(1).split('&');
@@ -160,7 +162,12 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4) {
-			var url = xmlhttp.responseURL || url;
+			var url = xmlhttp.responseURL || url,
+				videoHost = new URL(url).origin + '/*';
+			if (videoPlaybackHosts.indexOf(videoHost) < 0) {
+				videoPlaybackHosts.push(videoHost);
+				resetVideoHostList();
+			}
 			avPlaybackLink.durl[0].url = url;
 			if (typeof callback == "function") callback(avPlaybackLink);
 		}
@@ -206,6 +213,17 @@ function getVideoInfo(avid, page, callback) {
 	return true;
 }
 
+function checkSecurePlayer() {
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("HEAD", "https://static-s.bilibili.com/play.swf", true);
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			secureAvailable = xmlhttp.getResponseHeader('Content-Type') == 'application/x-shockwave-flash';
+		}
+	}
+	xmlhttp.send();
+}
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 	switch (request.command) {
 		case "init":
@@ -213,6 +231,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 				replace: getOption("replace"),
 				html5: getOption("html5"),
 				version: version,
+				secureAvailable: secureAvailable,
 				playerConfig: JSON.parse(getOption("playerConfig"))
 			});
 			return true;
@@ -256,9 +275,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "getDownloadLink":
 			var url = {
-					download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
-					playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
-				};
+				download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
+				playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
+			};
 			if (request.cidHack && request.cidHack != locale) {
 				cidHackType[request.cid] = request.cidHack;
 			}
@@ -266,14 +285,14 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 				avDownloadLink = JSON.parse(avDownloadLink);
 				if (getOption("dlquality") == 'mp4') {
 					if (avDownloadLink)
-					resolvePlaybackLink(avDownloadLink, function(avRealPlaybackLink) {
-						sendResponse({
-							download: avDownloadLink,
-							playback: avRealPlaybackLink,
-							dlquality: getOption("dlquality"),
-							rel_search: getOption("rel_search")
-						});
-					})
+						resolvePlaybackLink(avDownloadLink, function(avRealPlaybackLink) {
+							sendResponse({
+								download: avDownloadLink,
+								playback: avRealPlaybackLink,
+								dlquality: getOption("dlquality"),
+								rel_search: getOption("rel_search")
+							});
+						})
 				} else {
 					getFileData(url["playback"], function(avPlaybackLink) {
 						avPlaybackLink = JSON.parse(avPlaybackLink);
@@ -380,6 +399,8 @@ if (getOption("contextmenu") == "on") {
 
 checkDynamic();
 
+checkSecurePlayer();
+
 chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1
 });
@@ -478,27 +499,41 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*"]
 }, ['requestHeaders', 'blocking']);
 
+function receivedHeaderModifier (details) {
+	details.responseHeaders.push({
+		name: "Access-Control-Allow-Origin",
+		value: "http://www.bilibili.com"
+	});
+	return {
+		responseHeaders: details.responseHeaders
+	};
+};
+
+function resetVideoHostList() {
+	if (chrome.webRequest.onHeadersReceived.hasListener(receivedHeaderModifier)) {
+		chrome.webRequest.onHeadersReceived.removeListener(receivedHeaderModifier);
+	}
+	chrome.webRequest.onHeadersReceived.addListener(receivedHeaderModifier, {
+		urls: videoPlaybackHosts
+	}, ["responseHeaders", "blocking"]);
+}
+
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
-	var headers = details.responseHeaders,
-		blockingResponse = {};
+	var headers = details.responseHeaders;
 	if (details.statusLine.indexOf("HTTP/1.1 302") == 0 && getOption("replace") == "on") {
-		blockingResponse.responseHeaders = [];
 		var redirectUrl = "";
-		for (i in headers) {
-			if (headers[i].name.toLowerCase() != "location") {
-				blockingResponse.responseHeaders.push(headers[i]);
-			} else {
-				redirectUrl = headers[i]["value"];
+		for (var i = 0; i < headers.length; i++) {
+			if (headers[i].name.toLowerCase() == "location") {
+				headers.splice(i, 1, {
+					name: "Set-Cookie",
+					value: "redirectUrl=" + encodeURIComponent(redirectUrl)
+				});
 			}
 		}
-		blockingResponse.responseHeaders.push({
-			name: "Set-Cookie",
-			value: "redirectUrl=" + encodeURIComponent(redirectUrl)
-		})
-	} else {
-		blockingResponse.responseHeaders = headers;
 	}
-	return blockingResponse;
+	return {
+		responseHeaders: headers
+	};
 }, {
 	urls: ["http://www.bilibili.com/video/av*"]
 }, ["responseHeaders", "blocking"]);

@@ -8,7 +8,7 @@
     "description": "Extension: Short Name"
   },
   "extDescription": {
-    "message": "哔哩哔哩弹幕网辅助扩展，可以绕过区域限制、替换播放器、去广告、推送通知并进行一些快捷操作",
+    "message": "哔哩哔哩弹幕网辅助扩展，可以替换HTML5播放器、绕过区域限制、推送通知并进行一些快捷操作",
     "description": "Extension: Description"
   },
   "goBili": {
