@@ -521,12 +521,11 @@ function resetVideoHostList() {
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders;
 	if (details.statusLine.indexOf("HTTP/1.1 302") == 0 && getOption("replace") == "on") {
-		var redirectUrl = "";
 		for (var i = 0; i < headers.length; i++) {
 			if (headers[i].name.toLowerCase() == "location") {
 				headers.splice(i, 1, {
 					name: "Set-Cookie",
-					value: "redirectUrl=" + encodeURIComponent(redirectUrl)
+					value: "redirectUrl=" + encodeURIComponent(headers[i].value)
 				});
 			}
 		}

@@ -279,7 +279,7 @@
 				biliHelper.playbackUrls.push(videoPlaybackLink.durl);
 			}
 			$('#loading-notice').fadeOut(300);
-			if (biliHelper.favorHTML5 && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
+			if (biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force' && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
 				$('#loading-notice').fadeOut(300, function() {
 					biliHelper.switcher.html5();
 				});
@@ -504,7 +504,7 @@
 				} else {
 					biliHelper.favorHTML5 = false;
 				}
-				if (biliHelper.replacePlayer || biliHelper.favorHTML5) {
+				if (biliHelper.replacePlayer || biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force') {
 					var replaceNotice = $('<div id="loading-notice">正在尝试替换播放器…<span id="cancel-replacing">取消</span></div>');
 					replaceNotice.find('#cancel-replacing').click(function() {
 						$('#loading-notice').fadeOut(300);
