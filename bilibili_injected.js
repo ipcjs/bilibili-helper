@@ -388,7 +388,8 @@
 					},
 					bilimac: function() {
 						this.current = "bilimac";
-						$('#bofqi').html('<div style="height:300px;background:#ccc"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
+						$('#bofqi').html('<div id="player_placeholder" class="player"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
+						$('#bofqi').find('#player_placeholder').css({background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat', '-webkit-filter': 'blur(20px)', overflow: 'hidden', visibility: 'visible'});
 						$.post("http://localhost:23330/rpc", {
 							action: 'playVideoByCID',
 							data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
@@ -486,16 +487,15 @@
 				});
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
 				biliHelper.originalPlayer = localStorage.getItem('bilimac_original_player') || $('#bofqi').html();
-				if (response.replace == "on" &&
-					($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
+				if (response.replace == "on" && localStorage.getItem('bilimac_player_type') != 'force' &&
+					(($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 					($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
-					($('#bofqi iframe').length > 0 && ($('#bofqi iframe').attr('src').indexOf('bilibili.com') < 0 || $('#bofqi iframe').attr('src').indexOf('iqiyi') > 0)) ||
-					($('#bofqi object').length + $('#bofqi embed').length + $('#bofqi iframe').length == 0)) {
+					($('#bofqi iframe').length > 0 && ($('#bofqi iframe').attr('src').indexOf('bilibili.com') < 0 || $('#bofqi iframe').attr('src').indexOf('iqiyi') > 0)) || ($('#bofqi object').length + $('#bofqi embed').length + $('#bofqi iframe').length == 0))) {
 					biliHelper.replacePlayer = true;
 				} else {
 					if (response.secureAvailable && $('#bofqi object').attr('data') == 'http://static.hdslb.com/play.swf') {
 						$('#bofqi object').attr('data', 'https://static-s.bilibili.com/play.swf');
-						biliHelper.originalPlayer.replace('http://static.hdslb.com/play.swf', 'https://static-s.bilibili.com/play.swf');
+						biliHelper.originalPlayer = biliHelper.originalPlayer.replace('http://static.hdslb.com/play.swf', 'https://static-s.bilibili.com/play.swf');
 					}
 					biliHelper.replacePlayer = false;
 				}
@@ -508,8 +508,14 @@
 					var replaceNotice = $('<div id="loading-notice">正在尝试替换播放器…<span id="cancel-replacing">取消</span></div>');
 					replaceNotice.find('#cancel-replacing').click(function() {
 						$('#loading-notice').fadeOut(300);
-						biliHelper.replacePlayer = false;
-						biliHelper.favorHTML5 = false;
+						if (biliHelper.favorHTML5) {
+							if (biliHelper.replacePlayer && !biliHelper.redirectUrl && !biliHelper.genPage) {
+								biliHelper.switcher.swf();
+							} else {
+								biliHelper.switcher.original();
+							}
+							biliHelper.favorHTML5 = false;
+						}
 					});
 					$('#bofqi').append(replaceNotice);
 				}
