@@ -492,7 +492,7 @@
 					}
 					var querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p></p></div>');
 					if (biliHelper.comments) {
-						var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result"></span></div>');
+						var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
 						control.find('.b-input').keyup(function() {
 							var keyword = control.find('input').val(),
 								regex = new RegExp(parseSafe(keyword), 'gi');
