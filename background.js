@@ -231,7 +231,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 				replace: getOption("replace"),
 				html5: getOption("html5"),
 				version: version,
-				secureAvailable: secureAvailable,
 				playerConfig: JSON.parse(getOption("playerConfig"))
 			});
 			return true;
@@ -480,6 +479,18 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 	urls: ["http://comment.bilibili.com/1272.xml"]
 });
 
+chrome.webRequest.onBeforeRequest.addListener(function(details) {
+	if (secureAvailable) {
+		return {
+			redirectUrl: "https://static-s.bilibili.com/play.swf"
+		}
+	} else {
+		return {};
+	};
+}, {
+	urls: ["http://static.hdslb.com/play.swf"]
+}, ["blocking"]);
+
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	var query = new URL(details.url).query;
 	var ip = randomIP(cidHackType[query['cid']] == 2 ? 2 : 1);
@@ -499,7 +510,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*"]
 }, ['requestHeaders', 'blocking']);
 
-function receivedHeaderModifier (details) {
+function receivedHeaderModifier(details) {
 	details.responseHeaders.push({
 		name: "Access-Control-Allow-Origin",
 		value: "http://www.bilibili.com"
