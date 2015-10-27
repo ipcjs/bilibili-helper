@@ -456,36 +456,40 @@
 		if (localStorage.getItem('bilimac_player_type') == 'force') {
 			biliHelper.switcher.set('bilimac');
 		}
-		var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>"),
-			blockInfo = helperBlock.find('.info');
-		biliHelper.mainBlock = blockInfo.find('.main');
-		biliHelper.mainBlock.infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
-		biliHelper.mainBlock.append(biliHelper.mainBlock.infoSection);
-		if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
-			biliHelper.mainBlock.redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
-			biliHelper.mainBlock.append(biliHelper.mainBlock.redirectSection);
+		if (!biliHelper.genPage) {
+			var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>"),
+				blockInfo = helperBlock.find('.info');
+			biliHelper.mainBlock = blockInfo.find('.main');
+			biliHelper.mainBlock.infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
+			biliHelper.mainBlock.append(biliHelper.mainBlock.infoSection);
+			if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
+				biliHelper.mainBlock.redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
+				biliHelper.mainBlock.append(biliHelper.mainBlock.redirectSection);
+			}
+			biliHelper.mainBlock.switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
+			biliHelper.mainBlock.switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w hidden" type="bilimac">Bilibili Mac 客户端</a><a class="b-btn w hidden" type="swf">SWF 播放器</a><a class="b-btn w hidden" type="iframe">Iframe 播放器</a><a class="b-btn w hidden" type="html5">HTML5 播放器</a>').click(function() {
+				biliHelper.switcher[$(this).attr('type')]();
+			}));
+			if (biliHelper.redirectUrl) {
+				biliHelper.mainBlock.switcherSection.find('a[type="original"]').addClass('hidden');
+			}
+			if (localStorage.getItem('bilimac_player_type')) {
+				biliHelper.mainBlock.switcherSection.find('a[type="bilimac"]').removeClass('hidden');
+			}
+			biliHelper.mainBlock.append(biliHelper.mainBlock.switcherSection);
+			biliHelper.mainBlock.downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
+			biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
+			biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
+			biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
+			helperBlock.find('.title').click(function() {
+				blockInfo.toggleClass('active');
+			});
+			biliHelper.switcher.set('original');
+			setTimeout(function() {
+				$('.player-wrapper .arc-tool-bar').append(helperBlock);
+			}, 100);
 		}
-		biliHelper.mainBlock.switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
-		biliHelper.mainBlock.switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w hidden" type="bilimac">Bilibili Mac 客户端</a><a class="b-btn w hidden" type="swf">SWF 播放器</a><a class="b-btn w hidden" type="iframe">Iframe 播放器</a><a class="b-btn w hidden" type="html5">HTML5 播放器</a>').click(function() {
-			biliHelper.switcher[$(this).attr('type')]();
-		}));
-		if (biliHelper.redirectUrl) {
-			biliHelper.mainBlock.switcherSection.find('a[type="original"]').addClass('hidden');
-		}
-		if (localStorage.getItem('bilimac_player_type')) {
-			biliHelper.mainBlock.switcherSection.find('a[type="bilimac"]').removeClass('hidden');
-		}
-		biliHelper.mainBlock.append(biliHelper.mainBlock.switcherSection);
-		biliHelper.mainBlock.downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
-		biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
-		biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
-		biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
-		helperBlock.find('.title').click(function() {
-			blockInfo.toggleClass('active');
-		});
-		biliHelper.switcher.set('original');
-		if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
-		if (biliHelper.replaceEnabled && localStorage.getItem('bilimac_player_type') != 'force' &&
+		if (!biliHelper.genPage && biliHelper.replaceEnabled && localStorage.getItem('bilimac_player_type') != 'force' &&
 			(($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 				($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
 				($('#bofqi iframe').length > 0 && ($('#bofqi iframe').attr('src').indexOf('bilibili.com') < 0 || $('#bofqi iframe').attr('src').indexOf('iqiyi') > 0)) || ($('#bofqi object').length + $('#bofqi embed').length + $('#bofqi iframe').length == 0))) {
@@ -494,7 +498,7 @@
 		} else {
 			biliHelper.replacePlayer = false;
 		}
-		if (biliHelper.favorHTML5) {
+		if (!biliHelper.genPage && biliHelper.favorHTML5) {
 			$('#bofqi').html('<div id="player_placeholder" class="player"></div>');
 			$('#bofqi').find('#player_placeholder').css({
 				background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat',
@@ -503,7 +507,7 @@
 				visibility: 'visible'
 			});
 		}
-		if (biliHelper.replacePlayer || biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force') {
+		if (biliHelper.replacePlayer || biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force' && !biliHelper.genPage) {
 			var replaceNotice = $('<div id="loading-notice">正在尝试替换播放器…<span id="cancel-replacing">取消</span></div>');
 			replaceNotice.find('#cancel-replacing').click(function() {
 				$('#loading-notice').fadeOut(300);
@@ -570,68 +574,70 @@
 					}
 				} else {
 					biliHelper.cid = videoInfo.cid;
-					biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
-					biliHelper.mainBlock.commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
-					biliHelper.mainBlock.append(biliHelper.mainBlock.commentSection);
-					$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
-						biliHelper.comments = response.getElementsByTagName('d');
-						var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
-						control.find('.b-input').keyup(function() {
-							var keyword = control.find('input').val(),
-								regex = new RegExp(parseSafe(keyword), 'gi');
-							control.find('ul.list').html('<li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li>');
-							if (control.find('.b-slt .txt').text() != '请选择需要查询的弹幕' && keyword.trim() != '') control.find('.b-slt .txt').html(parseSafe(control.find('.b-slt .txt').text()).replace(regex, function(kw) {
-								return '<span class="kw">' + kw + '</span>';
-							}));
-							if (keyword.trim() != '') {
-								control.find('.b-slt .txt').text(control.find('.b-slt .txt').text());
-							}
-							for (var i = 0; i < biliHelper.comments.length; i++) {
-								var node = biliHelper.comments[i],
-									text = node.childNodes[0];
-								if (text && node && regex.test(text.nodeValue)) {
-									text = text.nodeValue;
-									var commentData = node.getAttribute('p').split(','),
-										sender = commentData[6],
-										time = parseTime(parseInt(commentData[0]) * 1000);
-									control.find('ul.list').append($('<li></li>').data('sender', sender).html('[' + time + '] ' + (keyword.trim() == '' ? parseSafe(text) : parseSafe(text).replace(regex, function(kw) {
-										return '<span class="kw">' + kw + '</span>';
-									}))));
+					if (!biliHelper.genPage) {
+						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
+						biliHelper.mainBlock.commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
+						biliHelper.mainBlock.append(biliHelper.mainBlock.commentSection);
+						$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
+							biliHelper.comments = response.getElementsByTagName('d');
+							var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
+							control.find('.b-input').keyup(function() {
+								var keyword = control.find('input').val(),
+									regex = new RegExp(parseSafe(keyword), 'gi');
+								control.find('ul.list').html('<li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li>');
+								if (control.find('.b-slt .txt').text() != '请选择需要查询的弹幕' && keyword.trim() != '') control.find('.b-slt .txt').html(parseSafe(control.find('.b-slt .txt').text()).replace(regex, function(kw) {
+									return '<span class="kw">' + kw + '</span>';
+								}));
+								if (keyword.trim() != '') {
+									control.find('.b-slt .txt').text(control.find('.b-slt .txt').text());
 								}
-							}
-						});
-						control.find('.b-input').keyup();
-						SelectModule.bind(control.find('div.b-slt'), {
-							onChange: function(item) {
-								var sender = $(item[0]).data('sender');
-								control.find('.result').text('查询中…');
-								if (sender.indexOf('D') == 0) {
-									control.find('.result').text('游客弹幕');
-									return;
-								}
-								$.get('http://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
-									if (!data || data.error != 0 || typeof data.data != 'object' || !data.data[0].id) {
-										control.find('.result').text('查询失败, 发送用户可能已被管理员删除.');
-									} else {
-										var uid = parseSafe(data.data[0].id);
-										control.find('.result').html('发送者 UID: <a href="http://space.bilibili.com/' + uid + '" target="_blank">' + uid + '</a>');
-										$.getJSON('http://api.bilibili.cn/userinfo?mid=' + uid + '&type=json', function(data) {
-											if (data.code == 0) {
-												control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
-												var s = document.createElement('script');
-												s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
-												document.body.appendChild(s);
-												s.parentNode.removeChild(s);
-											}
-										});
+								for (var i = 0; i < biliHelper.comments.length; i++) {
+									var node = biliHelper.comments[i],
+										text = node.childNodes[0];
+									if (text && node && regex.test(text.nodeValue)) {
+										text = text.nodeValue;
+										var commentData = node.getAttribute('p').split(','),
+											sender = commentData[6],
+											time = parseTime(parseInt(commentData[0]) * 1000);
+										control.find('ul.list').append($('<li></li>').data('sender', sender).html('[' + time + '] ' + (keyword.trim() == '' ? parseSafe(text) : parseSafe(text).replace(regex, function(kw) {
+											return '<span class="kw">' + kw + '</span>';
+										}))));
 									}
-								}, 'json').fail(function() {
-									control.find('.result').text('查询失败, 无法连接到服务器 :(');
-								});
-							}
-						});
-						biliHelper.mainBlock.querySection.find('p').empty().append(control);
-					}, 'xml');
+								}
+							});
+							control.find('.b-input').keyup();
+							SelectModule.bind(control.find('div.b-slt'), {
+								onChange: function(item) {
+									var sender = $(item[0]).data('sender');
+									control.find('.result').text('查询中…');
+									if (sender.indexOf('D') == 0) {
+										control.find('.result').text('游客弹幕');
+										return;
+									}
+									$.get('http://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
+										if (!data || data.error != 0 || typeof data.data != 'object' || !data.data[0].id) {
+											control.find('.result').text('查询失败, 发送用户可能已被管理员删除.');
+										} else {
+											var uid = parseSafe(data.data[0].id);
+											control.find('.result').html('发送者 UID: <a href="http://space.bilibili.com/' + uid + '" target="_blank">' + uid + '</a>');
+											$.getJSON('http://api.bilibili.cn/userinfo?mid=' + uid + '&type=json', function(data) {
+												if (data.code == 0) {
+													control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
+													var s = document.createElement('script');
+													s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
+													document.body.appendChild(s);
+													s.parentNode.removeChild(s);
+												}
+											});
+										}
+									}, 'json').fail(function() {
+										control.find('.result').text('查询失败, 无法连接到服务器 :(');
+									});
+								}
+							});
+							biliHelper.mainBlock.querySection.find('p').empty().append(control);
+						}, 'xml');
+					}
 				}
 				if (biliHelper.genPage) {
 					tagList = "";
