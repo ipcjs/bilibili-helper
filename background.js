@@ -438,9 +438,16 @@ getLocale();
 
 if (getOption("version") < chrome.app.getDetails().version) {
 	setOption("version", chrome.app.getDetails().version);
-	chrome.tabs.create({
-		url: chrome.extension.getURL('options.html#update')
-	});
+	chrome.notifications.create('bh-update', {
+		type: 'basic',
+		iconUrl: "imgs/icon-256.png",
+		title: chrome.i18n.getMessage('noticeficationTitle'),
+		message: chrome.i18n.getMessage('noticeficationExtensionUpdate').replace('%v', chrome.app.getDetails().version),
+		isClickable: false,
+		buttons: [{
+			title: chrome.i18n.getMessage('noticeficationNewFeatures')
+		}]
+	}, function() {});
 }
 
 chrome.alarms.onAlarm.addListener(function(alarm) {
@@ -460,7 +467,11 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 });
 
 chrome.notifications.onButtonClicked.addListener(function(notificationId, index) {
-	if (index == 0 && notificationAvid[notificationId]) {
+	if (notificationId == 'bh-update') {
+		chrome.tabs.create({
+			url: chrome.extension.getURL("options.html#update")
+		});
+	} else if (index == 0 && notificationAvid[notificationId]) {
 		chrome.tabs.create({
 			url: "http://www.bilibili.com/video/av" + notificationAvid[notificationId]
 		});

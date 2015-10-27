@@ -71,6 +71,14 @@
     "message": "Bilibili Helper Noticefication",
     "description": "Noticefication: Title"
   },
+  "noticeficationExtensionUpdate": {
+    "message": "Bilibili Helper just auto updated to v%v!",
+    "description": "Noticefication: Extension Update"
+  },
+  "noticeficationNewFeatures": {
+    "message": "What's New",
+    "description": "Noticefication: New Features"
+  },
   "followingUpdateMessage": {
     "message": "Your bilibili followings updated (%n new)!\n%uploader just published '%title'!",
     "description": "Noticefication: Following Update Message"

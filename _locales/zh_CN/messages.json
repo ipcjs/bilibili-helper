@@ -71,6 +71,14 @@
     "message": "哔哩哔哩助手提醒",
     "description": "Noticefication: Title"
   },
+  "noticeficationExtensionUpdate": {
+    "message": "哔哩哔哩助手已自动更新到 v%v!",
+    "description": "Noticefication: Extension Update"
+  },
+  "noticeficationNewFeatures": {
+    "message": "查看更新内容",
+    "description": "Noticefication: New Features"
+  },
   "followingUpdateMessage": {
     "message": "您的哔哩哔哩关注更新了(%n 个新动态)!\n%uploader 刚刚发布了「%title」!",
     "description": "Noticefication: Following Update Message"
