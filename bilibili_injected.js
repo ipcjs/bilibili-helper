@@ -278,6 +278,19 @@
 			} else {
 				biliHelper.playbackUrls.push(videoPlaybackLink.durl);
 			}
+			if (typeof biliHelper.downloadUrls !== "object" || !biliHelper.downloadUrls.length) {
+				var errorMessage = biliHelper.error || "视频地址获取失败";
+				biliHelper.mainBlock.downloaderSection.find('p').html('<span></span>' + parseSafe(errorMessage));
+			} else {
+				biliHelper.mainBlock.downloaderSection.find('p').empty();
+				for (i in biliHelper.downloadUrls) {
+					var segmentInfo = biliHelper.downloadUrls[i];
+					if (typeof segmentInfo == "object") biliHelper.mainBlock.downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
+				}
+			}
+			if (biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1) {
+				biliHelper.mainBlock.switcherSection.find('a[type="html5"]').removeClass('hidden');
+			}
 			$('#loading-notice').fadeOut(300);
 			if (biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force' && biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0) {
 				$('#loading-notice').fadeOut(300, function() {
@@ -289,6 +302,7 @@
 				});
 			} else {
 				$('#loading-notice').fadeOut(300);
+				biliHelper.switcher.original();
 			}
 		});
 	}
@@ -302,6 +316,7 @@
 			biliHelper.avid = urlResult[1];
 			biliHelper.page = urlResult[2];
 			biliHelper.cidHack = 0;
+			biliHelper.videoPic = $('img.cover_image').attr('src');
 			if (typeof biliHelper.page === "undefined") {
 				biliHelper.page = 1;
 			} else {
@@ -316,27 +331,32 @@
 				biliHelper.playerConfig = response.playerConfig;
 				biliHelper.switcher = {
 					current: "original",
+					set: function(newMode) {
+						biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + this.current + '"]').addClass('w');
+						biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + newMode + '"]').removeClass('w');
+						this.current = newMode;
+					},
 					original: function() {
-						this.current = "original";
+						this.set('original');
 						notifyCidHack(function() {
 							$('#bofqi').html(biliHelper.originalPlayer);
 							if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
 						});
 					},
 					swf: function() {
-						this.current = "swf";
+						this.set('swf');
 						notifyCidHack(function() {
 							$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="https://static-s.bilibili.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
 						});
 					},
 					iframe: function() {
-						this.current = "iframe";
+						this.set('iframe');
 						notifyCidHack(function() {
 							$('#bofqi').html('<iframe height="536" width="980" class="player" src="https://secure.bilibili.com/secure,cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" scrolling="no" border="0" frameborder="no" framespacing="0" onload="window.securePlayerFrameLoaded=true"></iframe>');
 						});
 					},
 					html5: function() {
-						this.current = "html5";
+						this.set('html5');
 						$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
 						var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
 							src: {
@@ -387,7 +407,7 @@
 						});
 					},
 					bilimac: function() {
-						this.current = "bilimac";
+						this.set('bilimac');
 						$('#bofqi').html('<div id="player_placeholder" class="player"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
 						$('#bofqi').find('#player_placeholder').css({
 							background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat',
@@ -424,145 +444,63 @@
 					}
 				}
 				if (localStorage.getItem('bilimac_player_type') == 'force') {
-					biliHelper.switcher.current = 'bilimac';
+					biliHelper.switcher.set('bilimac');
 				}
 				biliHelper.version = response.version;
-				var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\">加载中，请稍候…</div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
+				var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>"),
+					blockInfo = helperBlock.find('.info');
+				biliHelper.mainBlock = blockInfo.find('.main');
+				biliHelper.mainBlock.infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
+				biliHelper.mainBlock.append(biliHelper.mainBlock.infoSection);
+				if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
+					biliHelper.mainBlock.redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
+					biliHelper.mainBlock.append(biliHelper.mainBlock.redirectSection);
+				}
+				biliHelper.mainBlock.switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
+				biliHelper.mainBlock.switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w hidden" type="bilimac">Bilibili Mac 客户端</a><a class="b-btn w hidden" type="swf">SWF 播放器</a><a class="b-btn w hidden" type="iframe">Iframe 播放器</a><a class="b-btn w hidden" type="html5">HTML5 播放器</a>').click(function() {
+					biliHelper.switcher[$(this).attr('type')]();
+				}));
+				if (biliHelper.redirectUrl) {
+					biliHelper.mainBlock.switcherSection.find('a[type="original"]').addClass('hidden');
+				}
+				if (localStorage.getItem('bilimac_player_type')) {
+					biliHelper.mainBlock.switcherSection.find('a[type="bilimac"]').removeClass('hidden');
+				}
+				biliHelper.mainBlock.append(biliHelper.mainBlock.switcherSection);
+				biliHelper.mainBlock.downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
+				biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
+				biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
+				biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
 				helperBlock.find('.title').click(function() {
-					var blockInfo = $(this).closest('.block').find('.info'),
-						main = blockInfo.find('.main');
-					if (blockInfo.hasClass('active')) {
-						blockInfo.removeClass('active');
-						return;
-					}
-					main.empty();
-					var infoSection = $('<div class="section video"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
-					if (biliHelper.cid) {
-						infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
-					}
-					main.append(infoSection);
-					if (!biliHelper.cid && biliHelper.error) {
-						var errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
-						main.append(errorSection);
-					}
-					if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
-						var redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
-						main.append(redirectSection);
-					}
-					if (biliHelper.cid && biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1 && biliHelper.playbackUrls[0].url.indexOf('m3u8') < 0 || biliHelper.replacePlayer && typeof biliHelper.cid !== "undefined") {
-						var switcherSection = $('<div class="section switcher"><h3>播放器切换</h3><p></p></div>');
-						switcherSection.find('p').append($('<a class="b-btn w" type="original">原始播放器</a><a class="b-btn w" type="bilimac">Bilibili Mac 客户端</a><a class="b-btn w" type="swf">SWF 播放器</a><a class="b-btn w" type="iframe">Iframe 播放器</a><a class="b-btn w" type="html5">HTML5 播放器</a>').click(function() {
-							$('.arc-tool-bar .helper .section.switcher a.b-btn').addClass('w');
-							biliHelper.switcher[$(this).attr('type')]();
-							$(this).removeClass('w');
-						}));
-						if (biliHelper.redirectUrl) {
-							switcherSection.find('a[type="original"]').remove();
-						}
-						if (!biliHelper.replacePlayer || !biliHelper.cid) {
-							switcherSection.find('a[type="iframe"],a[type="swf"]').remove();
-						}
-						if (!biliHelper.cid || !biliHelper.playbackUrls || biliHelper.playbackUrls.length != 1 || biliHelper.playbackUrls[0].url.indexOf('m3u8') >= 0) {
-							switcherSection.find('a[type="html5"]').remove();
-						}
-						if (!localStorage.getItem('bilimac_player_type')) {
-							switcherSection.find('a[type="bilimac"]').remove();
-						}
-						switcherSection.find('a.b-btn[type="' + biliHelper.switcher.current + '"]').removeClass('w');
-						main.append(switcherSection);
-					}
-					if (typeof biliHelper.downloadUrls !== "undefined" || biliHelper.error) {
-						if (typeof biliHelper.downloadUrls !== "object" || !biliHelper.downloadUrls.length) {
-							var errorMessage = biliHelper.error || "视频地址获取失败",
-								downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>' + errorMessage + '</p></div>');
-						} else {
-							var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p></p></div>');
-							for (i in biliHelper.downloadUrls) {
-								var segmentInfo = biliHelper.downloadUrls[i];
-								if (typeof segmentInfo == "object") downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
-							}
-						}
-					} else {
-						var downloaderSection = $('<div class="section downloder"><h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p></div>');
-					}
-					main.append(downloaderSection);
-					if (biliHelper.cid) {
-						var commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
-						main.append(commentSection);
-					}
-					var querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p></p></div>');
-					if (biliHelper.comments) {
-						var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
-						control.find('.b-input').keyup(function() {
-							var keyword = control.find('input').val(),
-								regex = new RegExp(parseSafe(keyword), 'gi');
-							control.find('ul.list').html('<li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li>');
-							for (var i = 0; i < biliHelper.comments.length; i++) {
-								var node = biliHelper.comments[i],
-									text = node.childNodes[0].nodeValue;
-								if (node && regex.test(text)) {
-									var commentData = node.getAttribute('p').split(','),
-										sender = commentData[6],
-										time = parseTime(parseInt(commentData[0]) * 1000);
-									control.find('ul.list').append($('<li></li>').data('sender', sender).html('[' + time + '] ' + (keyword.trim() == '' ? parseSafe(text) : parseSafe(text).replace(regex, function(kw) {
-										return '<span class="kw">' + kw + '</span>';
-									}))));
-								}
-							}
-						});
-						control.find('.b-input').keyup();
-						SelectModule.bind(control.find('div.b-slt'), {
-							onChange: function(item) {
-								var sender = $(item[0]).data('sender');
-								control.find('.result').text('查询中…');
-								if (sender.indexOf('D') == 0) {
-									control.find('.result').text('游客弹幕');
-									return;
-								}
-								$.get('http://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
-									if (!data || data.error != 0 || typeof data.data != 'object' || !data.data[0].id) {
-										control.find('.result').text('查询失败, 发送用户可能已被管理员删除.');
-									} else {
-										var uid = parseSafe(data.data[0].id);
-										control.find('.result').html('发送者 UID: <a href="http://space.bilibili.com/' + uid + '" target="_blank">' + uid + '</a>');
-										$.getJSON('http://api.bilibili.cn/userinfo?mid=' + uid + '&type=json', function(data) {
-											if (data.code == 0) {
-												control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
-												var s = document.createElement('script');
-												s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
-												document.body.appendChild(s);
-												s.parentNode.removeChild(s);
-											}
-										});
-									}
-								}, 'json').fail(function() {
-									control.find('.result').text('查询失败, 无法连接到服务器 :(');
-								});
-							}
-						});
-						querySection.find('p').append(control);
-					} else {
-						querySection.find('p').html('<span></span>正在加载全部弹幕, 请稍等…');
-					}
-					main.append(querySection);
-					blockInfo.addClass('active');
+					blockInfo.toggleClass('active');
 				});
+				biliHelper.switcher.set('original');
 				if (!biliHelper.genPage) $('.player-wrapper .arc-tool-bar').append(helperBlock);
 				biliHelper.originalPlayer = localStorage.getItem('bilimac_original_player') || $('#bofqi').html();
+				localStorage.removeItem('bilimac_original_player');
 				if (response.replace == "on" && localStorage.getItem('bilimac_player_type') != 'force' &&
 					(($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
 						($('#bofqi embed').length > 0 && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play.swf' && $('#bofqi embed').attr('src') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/letv.swf' && $('#bofqi embed').attr('src') != 'http://static.hdslb.com/play_old.swf') ||
 						($('#bofqi iframe').length > 0 && ($('#bofqi iframe').attr('src').indexOf('bilibili.com') < 0 || $('#bofqi iframe').attr('src').indexOf('iqiyi') > 0)) || ($('#bofqi object').length + $('#bofqi embed').length + $('#bofqi iframe').length == 0))) {
 					biliHelper.replacePlayer = true;
+					biliHelper.mainBlock.switcherSection.find('a[type="iframe"],a[type="swf"]').removeClass('hidden');
 				} else {
 					if (response.secureAvailable && $('#bofqi object').attr('data') == 'http://static.hdslb.com/play.swf') {
 						$('#bofqi object').attr('data', 'https://static-s.bilibili.com/play.swf');
 						biliHelper.originalPlayer = biliHelper.originalPlayer.replace('http://static.hdslb.com/play.swf', 'https://static-s.bilibili.com/play.swf');
 					}
 					biliHelper.replacePlayer = false;
+					biliHelper.mainBlock.switcherSection
 				}
 				if (response.html5 == "on") {
 					biliHelper.favorHTML5 = true;
+					$('#bofqi').html('<div id="player_placeholder" class="player"></div>');
+					$('#bofqi').find('#player_placeholder').css({
+						background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat',
+						'-webkit-filter': 'blur(20px)',
+						overflow: 'hidden',
+						visibility: 'visible'
+					});
 				} else {
 					biliHelper.favorHTML5 = false;
 				}
@@ -630,10 +568,74 @@
 							});
 						} else {
 							biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
+							biliHelper.mainBlock.errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
+							biliHelper.mainBlock.append(biliHelper.mainBlock.errorSection);
 							$('#loading-notice').fadeOut(300);
 						}
 					} else {
 						biliHelper.cid = videoInfo.cid;
+						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
+						biliHelper.mainBlock.commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
+						biliHelper.mainBlock.append(biliHelper.mainBlock.commentSection);
+						$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
+							biliHelper.comments = response.getElementsByTagName('d');
+							var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
+							control.find('.b-input').keyup(function() {
+								var keyword = control.find('input').val(),
+									regex = new RegExp(parseSafe(keyword), 'gi');
+								control.find('ul.list').html('<li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li>');
+								if (control.find('.b-slt .txt').text() != '请选择需要查询的弹幕' && keyword.trim() != '') control.find('.b-slt .txt').html(parseSafe(control.find('.b-slt .txt').text()).replace(regex, function(kw) {
+									return '<span class="kw">' + kw + '</span>';
+								}));
+								if (keyword.trim() != '') {
+									control.find('.b-slt .txt').text(control.find('.b-slt .txt').text());
+								}
+								for (var i = 0; i < biliHelper.comments.length; i++) {
+									var node = biliHelper.comments[i],
+										text = node.childNodes[0];
+									if (text && node && regex.test(text.nodeValue)) {
+										text = text.nodeValue;
+										var commentData = node.getAttribute('p').split(','),
+											sender = commentData[6],
+											time = parseTime(parseInt(commentData[0]) * 1000);
+										control.find('ul.list').append($('<li></li>').data('sender', sender).html('[' + time + '] ' + (keyword.trim() == '' ? parseSafe(text) : parseSafe(text).replace(regex, function(kw) {
+											return '<span class="kw">' + kw + '</span>';
+										}))));
+									}
+								}
+							});
+							control.find('.b-input').keyup();
+							SelectModule.bind(control.find('div.b-slt'), {
+								onChange: function(item) {
+									var sender = $(item[0]).data('sender');
+									control.find('.result').text('查询中…');
+									if (sender.indexOf('D') == 0) {
+										control.find('.result').text('游客弹幕');
+										return;
+									}
+									$.get('http://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
+										if (!data || data.error != 0 || typeof data.data != 'object' || !data.data[0].id) {
+											control.find('.result').text('查询失败, 发送用户可能已被管理员删除.');
+										} else {
+											var uid = parseSafe(data.data[0].id);
+											control.find('.result').html('发送者 UID: <a href="http://space.bilibili.com/' + uid + '" target="_blank">' + uid + '</a>');
+											$.getJSON('http://api.bilibili.cn/userinfo?mid=' + uid + '&type=json', function(data) {
+												if (data.code == 0) {
+													control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
+													var s = document.createElement('script');
+													s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
+													document.body.appendChild(s);
+													s.parentNode.removeChild(s);
+												}
+											});
+										}
+									}, 'json').fail(function() {
+										control.find('.result').text('查询失败, 无法连接到服务器 :(');
+									});
+								}
+							});
+							biliHelper.mainBlock.querySection.find('p').empty().append(control);
+						}, 'xml');
 					}
 					if (biliHelper.genPage) {
 						tagList = "";
@@ -658,12 +660,6 @@
 						}
 					}, 1000);
 
-					if (biliHelper.cid) {
-						$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
-							biliHelper.comments = response.getElementsByTagName('d');
-						}, 'xml');
-					}
-
 					if (biliHelper.cid && !biliHelper.favorHTML5 && localStorage.getItem('bilimac_player_type') != 'force') {
 						$('#loading-notice').fadeOut(300, function() {
 							biliHelper.switcher.swf();
@@ -672,6 +668,8 @@
 
 					if (!biliHelper.cid) {
 						biliHelper.error = '错误' + videoInfo.code + ': ' + videoInfo.error;
+						biliHelper.mainBlock.errorSection = $('<div class="section error"><h3>Cid 获取失败</h3><p><span></span><span>' + parseSafe(biliHelper.error) + '</span></p></div>');
+						biliHelper.mainBlock.append(biliHelper.mainBlock.errorSection);
 						return false;
 					}
 
