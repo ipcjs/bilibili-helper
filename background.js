@@ -162,8 +162,8 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4) {
-			var url = xmlhttp.responseURL || url,
-				videoHost = new URL(url).origin + '/*';
+			var url = xmlhttp.responseURL || avPlaybackLink.durl[0].url;
+			var videoHost = new URL(url).origin + '/*';
 			if (videoPlaybackHosts.indexOf(videoHost) < 0) {
 				videoPlaybackHosts.push(videoHost);
 				resetVideoHostList();
@@ -398,7 +398,9 @@ if (getOption("contextmenu") == "on") {
 
 checkDynamic();
 
-checkSecurePlayer();
+if (window.navigator.userAgent.indexOf('Windows') < 0) {
+	checkSecurePlayer();
+}
 
 chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1

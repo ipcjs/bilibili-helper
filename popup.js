@@ -83,7 +83,7 @@ $(document).ready(function() {
     	}
 	});
 	$('#go_video').click(function() {
-		var value = $('#video_id').val();
+		var value = $('#video_id').val().toLowerCase();
 		if (/av[0-9]+/g.test(value)) {
 			chrome.tabs.create({
 				url: 'http://www.bilibili.com/video/' + value
