@@ -99,12 +99,13 @@
 		});
 	}
 
-	function intilize_style() {
+	function intilize_style(callback) {
 		chrome.extension.sendMessage({
 			command: "getCSS",
 			url: document.URL
 		}, function(response) {
 			if (response.result == "ok") enable(response.css);
+			if (typeof callback === 'function') callback();
 		});
 	}
 
@@ -316,6 +317,7 @@
 		biliHelper.avid = urlResult[1];
 		biliHelper.page = urlResult[2];
 		biliHelper.cidHack = 0;
+		biliHelper.genPage = false;
 		biliHelper.videoPic = $('img.cover_image').attr('src');
 		if (typeof biliHelper.page === "undefined") {
 			biliHelper.page = 1;
@@ -333,132 +335,120 @@
 			biliHelper.replaceEnabled = response.replace == "on";
 			biliHelper.originalPlayer = localStorage.getItem('bilimac_original_player') || $('#bofqi').html();
 			localStorage.removeItem('bilimac_original_player');
-			$(document).ready(biliHelperFunc);
-		});
-	}
-	var biliHelperFunc = function() {
-		biliHelper.genPage = false;
-		biliHelper.copyright = false;
-		biliHelper.switcher = {
-			current: "original",
-			set: function(newMode) {
-				biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + this.current + '"]').addClass('w');
-				biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + newMode + '"]').removeClass('w');
-				this.current = newMode;
-			},
-			original: function() {
-				this.set('original');
-				notifyCidHack(function() {
-					$('#bofqi').html(biliHelper.originalPlayer);
-					if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
-				});
-			},
-			swf: function() {
-				this.set('swf');
-				notifyCidHack(function() {
-					$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="https://static-s.bilibili.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
-				});
-			},
-			iframe: function() {
-				this.set('iframe');
-				notifyCidHack(function() {
-					$('#bofqi').html('<iframe height="536" width="980" class="player" src="https://secure.bilibili.com/secure,cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" scrolling="no" border="0" frameborder="no" framespacing="0" onload="window.securePlayerFrameLoaded=true"></iframe>');
-				});
-			},
-			html5: function() {
-				this.set('html5');
-				$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
-				var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
-					src: {
-						playlist: [{
-							video: document.getElementById("bilibili_helper_html5_player_video"),
-							comments: "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
-						}]
-					},
-					width: "100%",
-					height: "100%",
-					config: biliHelper.playerConfig
-				});
-				abp.playerUnit.addEventListener("wide", function() {
-					$("#bofqi").addClass("wide");
-				});
-				abp.playerUnit.addEventListener("normal", function() {
-					$("#bofqi").removeClass("wide");
-				});
-				abp.playerUnit.addEventListener("sendcomment", function(e) {
-					var commentId = e.detail.id,
-						commentData = e.detail;
-					delete e.detail.id;
-					chrome.extension.sendMessage({
-						command: "sendComment",
-						avid: biliHelper.avid,
-						cid: biliHelper.cid,
-						page: biliHelper.page + biliHelper.pageOffset,
-						comment: commentData
-					}, function(response) {
-						response.tmp_id = commentId;
-						abp.commentCallback(response);
+			if (!$('.z').length) {
+				biliHelper.genPage = true;
+				biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
+				if (biliHelper.redirectUrl && biliHelper.redirectUrl.indexOf('mimi.gg/') > -1) {
+					biliHelper.cidHack = 2;
+					notifyCidHack();
+				}
+			}
+			if ($('.z .z-msg').length > 0 && $('.z .z-msg').text().indexOf('版权') > -1) {
+				biliHelper.genPage = true;
+				biliHelper.copyright = true;
+			}
+			if ($('#bofqi div') > 0 && $('#bofqi div').text().indexOf('版权') > -1) {
+				biliHelper.copyright = true;
+			}
+			biliHelper.copyright = false;
+			biliHelper.switcher = {
+				current: "original",
+				set: function(newMode) {
+					biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + this.current + '"]').addClass('w');
+					biliHelper.mainBlock.switcherSection.find('a.b-btn[type="' + newMode + '"]').removeClass('w');
+					this.current = newMode;
+				},
+				original: function() {
+					this.set('original');
+					notifyCidHack(function() {
+						$('#bofqi').html(biliHelper.originalPlayer);
+						if ($('#bofqi embed').attr('width') == 950) $('#bofqi embed').attr('width', 980);
 					});
-				});
-				abp.playerUnit.addEventListener("saveconfig", function(e) {
-					chrome.extension.sendMessage({
-						command: "savePlayerConfig",
-						config: e.detail
+				},
+				swf: function() {
+					this.set('swf');
+					notifyCidHack(function() {
+						$('#bofqi').html('<object type="application/x-shockwave-flash" class="player" data="https://static-s.bilibili.com/play.swf" id="player_placeholder" style="visibility: visible;"><param name="allowfullscreeninteractive" value="true"><param name="allowfullscreen" value="true"><param name="quality" value="high"><param name="allowscriptaccess" value="always"><param name="wmode" value="opaque"><param name="flashvars" value="cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '"></object>');
 					});
-				});
-				var bofqiHeight = 0;
-				$(window).scroll(function() {
-					if (bofqiHeight != $("#bofqi").width()) {
-						bofqiHeight = $("#bofqi").width();
-						if (abp && abp.cmManager) {
-							abp.cmManager.setBounds();
+				},
+				iframe: function() {
+					this.set('iframe');
+					notifyCidHack(function() {
+						$('#bofqi').html('<iframe height="536" width="980" class="player" src="https://secure.bilibili.com/secure,cid=' + biliHelper.cid + '&aid=' + biliHelper.avid + '" scrolling="no" border="0" frameborder="no" framespacing="0" onload="window.securePlayerFrameLoaded=true"></iframe>');
+					});
+				},
+				html5: function() {
+					this.set('html5');
+					$('#bofqi').html('<div id="bilibili_helper_html5_player" class="player"><video id="bilibili_helper_html5_player_video" poster="' + biliHelper.videoPic + '" autobuffer preload="auto" crossorigin="anonymous"><source src="' + biliHelper.playbackUrls[0].url + '" type="video/mp4"></video></div>');
+					var abp = ABP.create(document.getElementById("bilibili_helper_html5_player"), {
+						src: {
+							playlist: [{
+								video: document.getElementById("bilibili_helper_html5_player_video"),
+								comments: "http://comment.bilibili.com/" + biliHelper.cid + ".xml"
+							}]
+						},
+						width: "100%",
+						height: "100%",
+						config: biliHelper.playerConfig
+					});
+					abp.playerUnit.addEventListener("wide", function() {
+						$("#bofqi").addClass("wide");
+					});
+					abp.playerUnit.addEventListener("normal", function() {
+						$("#bofqi").removeClass("wide");
+					});
+					abp.playerUnit.addEventListener("sendcomment", function(e) {
+						var commentId = e.detail.id,
+							commentData = e.detail;
+						delete e.detail.id;
+						chrome.extension.sendMessage({
+							command: "sendComment",
+							avid: biliHelper.avid,
+							cid: biliHelper.cid,
+							page: biliHelper.page + biliHelper.pageOffset,
+							comment: commentData
+						}, function(response) {
+							response.tmp_id = commentId;
+							abp.commentCallback(response);
+						});
+					});
+					abp.playerUnit.addEventListener("saveconfig", function(e) {
+						chrome.extension.sendMessage({
+							command: "savePlayerConfig",
+							config: e.detail
+						});
+					});
+					var bofqiHeight = 0;
+					$(window).scroll(function() {
+						if (bofqiHeight != $("#bofqi").width()) {
+							bofqiHeight = $("#bofqi").width();
+							if (abp && abp.cmManager) {
+								abp.cmManager.setBounds();
+							}
 						}
-					}
-				});
-			},
-			bilimac: function() {
-				this.set('bilimac');
-				$('#bofqi').html('<div id="player_placeholder" class="player"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
-				$('#bofqi').find('#player_placeholder').css({
-					background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat',
-					'-webkit-filter': 'blur(20px)',
-					overflow: 'hidden',
-					visibility: 'visible'
-				});
-				$.post("http://localhost:23330/rpc", {
-					action: 'playVideoByCID',
-					data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
-				}, function() {
-					$('#bofqi').find('#loading-notice').text('已在 Bilibili Mac 客户端中加载');
-				}).fail(function() {
-					$('#bofqi').find('#loading-notice').text('调用 Bilibili Mac 客户端失败 :(');
-				});
-			}
-		};
-		if (!$('.z').length) {
-			biliHelper.genPage = true;
-			biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
-		}
-		if ($('.z .z-msg').length > 0 && $('.z .z-msg').text().indexOf('版权') > -1) {
-			biliHelper.genPage = true;
-			biliHelper.copyright = true;
-		}
-		if ($('#bofqi div') > 0 && $('#bofqi div').text().indexOf('版权') > -1) {
-			biliHelper.copyright = true;
-		}
-		if ($('meta[name="redirect"]').length) {
-			biliHelper.redirectUrl = $('meta[name="redirect"]').attr('content');
-			if (biliHelper.redirectUrl.indexOf('mimi.gg/') > -1) {
-				biliHelper.cidHack = 2;
-				notifyCidHack();
-			}
-		}
-		if (localStorage.getItem('bilimac_player_type') == 'force') {
-			biliHelper.switcher.set('bilimac');
-		}
-		if (!biliHelper.genPage) {
-			var helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>"),
-				blockInfo = helperBlock.find('.info');
+					});
+				},
+				bilimac: function() {
+					this.set('bilimac');
+					$('#bofqi').html('<div id="player_placeholder" class="player"></div><div id="loading-notice">正在加载 Bilibili Mac 客户端…</div>');
+					$('#bofqi').find('#player_placeholder').css({
+						background: 'url(' + biliHelper.videoPic + ') 50% 50% / cover no-repeat',
+						'-webkit-filter': 'blur(20px)',
+						overflow: 'hidden',
+						visibility: 'visible'
+					});
+					$.post("http://localhost:23330/rpc", {
+						action: 'playVideoByCID',
+						data: biliHelper.cid + '|' + window.location.href + '|' + document.title + '|' + (biliHelper.cidHack == 2 ? 2 : 1)
+					}, function() {
+						$('#bofqi').find('#loading-notice').text('已在 Bilibili Mac 客户端中加载');
+					}).fail(function() {
+						$('#bofqi').find('#loading-notice').text('调用 Bilibili Mac 客户端失败 :(');
+					});
+				}
+			};
+			biliHelper.helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
+			var blockInfo = biliHelper.helperBlock.find('.info');
 			biliHelper.mainBlock = blockInfo.find('.main');
 			biliHelper.mainBlock.infoSection = $('<div class="section video hidden"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
 			biliHelper.mainBlock.append(biliHelper.mainBlock.infoSection);
@@ -475,6 +465,7 @@
 			}));
 			if (biliHelper.redirectUrl) {
 				biliHelper.mainBlock.switcherSection.find('a[type="original"]').addClass('hidden');
+				biliHelper.mainBlock.switcherSection.find('a[type="swf"],a[type="iframe"]').removeClass('hidden');
 			}
 			if (localStorage.getItem('bilimac_player_type')) {
 				biliHelper.mainBlock.switcherSection.find('a[type="bilimac"]').removeClass('hidden');
@@ -484,13 +475,20 @@
 			biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
 			biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
 			biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
-			helperBlock.find('.title').click(function() {
+			biliHelper.helperBlock.find('.title').click(function() {
 				blockInfo.toggleClass('active');
 			});
 			biliHelper.switcher.set('original');
-			setTimeout(function() {
-				$('.player-wrapper .arc-tool-bar').append(helperBlock);
-			}, 100);
+			if (!biliHelper.genPage) {
+				$('.player-wrapper .arc-tool-bar').append(biliHelper.helperBlock);
+			}
+			$(document).ready(biliHelperFunc);
+		});
+	}
+
+	var biliHelperFunc = function() {
+		if (localStorage.getItem('bilimac_player_type') == 'force') {
+			biliHelper.switcher.set('bilimac');
 		}
 		if (!biliHelper.genPage && biliHelper.replaceEnabled && localStorage.getItem('bilimac_player_type') != 'force' &&
 			(($('#bofqi object').length > 0 && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play.swf' && $('#bofqi object').attr('data') != 'https://static-s.bilibili.com/play.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/letv.swf' && $('#bofqi object').attr('data') != 'http://static.hdslb.com/play_old.swf') ||
@@ -654,7 +652,10 @@
 						document.close();
 					});
 					setTimeout(function() {
-						intilize_style();
+						biliHelper.genPage = false;
+						intilize_style(function() {
+							$('.player-wrapper .arc-tool-bar').append(biliHelper.helperBlock);
+						});
 						biliHelperFunc();
 					}, 500);
 					return false;
