@@ -544,7 +544,6 @@
 				biliHelper.videoPic = videoInfo.pic;
 				if (typeof biliHelper.totalPage == 'number' && biliHelper.totalPage > videoInfo.pages &&
 					biliHelper.pageOffset > videoInfo.pages - biliHelper.totalPage) {
-					console.log(biliHelper.totalPage, videoInfo.pages);
 					biliHelper.pageOffset = videoInfo.pages - biliHelper.totalPage;
 					biliHelper.work();
 					return false;
