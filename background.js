@@ -183,13 +183,22 @@ function getVideoInfo(avid, page, callback) {
 		callback(viCache[avid + '-' + page], true);
 		return true;
 	}
-	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=" + page, function(avInfo) {
+	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=" + page + "&batch=true", function(avInfo) {
 		avInfo = JSON.parse(avInfo);
 		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
 			setTimeout(function() {
 				getVideoInfo(avid, page, callback);
 			}, 1000);
 		} else {
+			if (typeof avInfo.list == "object") {
+				avInfo.pages = avInfo.list.length;
+				for (var i = 0; i < avInfo.pages; i++) {
+					if (avInfo.list[i].page == page) {
+						avInfo.cid = avInfo.list[i].cid;
+						break;
+					}
+				}
+			}
 			if (typeof avInfo.cid == "number") {
 				viCache[avid + '-' + page] = {
 					mid: avInfo.mid,

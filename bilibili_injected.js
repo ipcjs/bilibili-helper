@@ -309,6 +309,10 @@
 		});
 	}
 
+	var prob = document.createElement("script");
+	prob.id = "page-prob";
+	prob.innerHTML = "$('.viewbox .alist').attr('length', window.nodedata.length);$('#page-prob').remove();";
+	document.head.appendChild(prob);
 	intilize_style();
 	$("html").addClass("bilibili-helper");
 	var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?.*?$/,
@@ -319,13 +323,13 @@
 		biliHelper.cidHack = 0;
 		biliHelper.genPage = false;
 		biliHelper.videoPic = $('img.cover_image').attr('src');
+		biliHelper.totalPage = $('#dedepagetitles option').length;
 		if (typeof biliHelper.page === "undefined") {
 			biliHelper.page = 1;
 		} else {
 			biliHelper.page = parseInt(biliHelper.page);
 		}
 		biliHelper.pageOffset = 0;
-
 		chrome.extension.sendMessage({
 			command: "init"
 		}, function(response) {
@@ -487,6 +491,8 @@
 	}
 
 	var biliHelperFunc = function() {
+		biliHelper.totalPage = $('.viewbox .alist').attr('length');
+		if (!isNaN(biliHelper.totalPage)) biliHelper.totalPage = parseInt(biliHelper.totalPage);
 		if (localStorage.getItem('bilimac_player_type') == 'force') {
 			biliHelper.switcher.set('bilimac');
 		}
@@ -536,22 +542,12 @@
 					biliHelper.copyright = true;
 				}
 				biliHelper.videoPic = videoInfo.pic;
-				if ($('#alist a').length) {
-					var maxPage = 0;
-					$('#alist a').each(function(i, e) {
-						var match = bili_reg.exec($(e).attr('href'));
-						if (match && match[2]) {
-							var page = parseInt(match[2]);
-							if (page > maxPage) {
-								maxPage = page;
-							}
-						}
-					});
-					if (maxPage > videoInfo.pages && biliHelper.pageOffset > videoInfo.pages - maxPage) {
-						biliHelper.pageOffset = videoInfo.pages - maxPage;
-						biliHelper.work();
-						return false;
-					}
+				if (typeof biliHelper.totalPage == 'number' && biliHelper.totalPage > videoInfo.pages &&
+					biliHelper.pageOffset > videoInfo.pages - biliHelper.totalPage) {
+					console.log(biliHelper.totalPage, videoInfo.pages);
+					biliHelper.pageOffset = videoInfo.pages - biliHelper.totalPage;
+					biliHelper.work();
+					return false;
 				}
 				if (typeof videoInfo.code !== "undefined") {
 					if (biliHelper.page != 1) {
