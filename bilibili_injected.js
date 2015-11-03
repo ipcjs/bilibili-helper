@@ -316,10 +316,12 @@
 	intilize_style();
 	$("html").addClass("bilibili-helper");
 	var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?.*?$/,
-		urlResult = bili_reg.exec(document.URL.split('#')[0].split('?')[0]);
+		urlResult = bili_reg.exec(document.location.pathname),
+		hashPage = (/page=([0-9]+)/).exec(document.location.hash);
+	if (typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
 	if (urlResult) {
 		biliHelper.avid = urlResult[1];
-		biliHelper.page = urlResult[2];
+		biliHelper.page = hashPage || urlResult[2];
 		biliHelper.cidHack = 0;
 		biliHelper.genPage = false;
 		biliHelper.videoPic = $('img.cover_image').attr('src');
@@ -456,8 +458,8 @@
 			biliHelper.mainBlock = blockInfo.find('.main');
 			biliHelper.mainBlock.infoSection = $('<div class="section video hidden"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
 			biliHelper.mainBlock.append(biliHelper.mainBlock.infoSection);
-			biliHelper.mainBlock.dblclick(function() {
-				biliHelper.mainBlock.infoSection.toggleClass('hidden');
+			biliHelper.mainBlock.dblclick(function(e) {
+				if (e.shiftKey) biliHelper.mainBlock.infoSection.toggleClass('hidden');
 			});
 			if (biliHelper.redirectUrl && biliHelper.redirectUrl != "undefined") {
 				biliHelper.mainBlock.redirectSection = $('<div class="section redirect"><h3>生成页选项</h3><p><a class="b-btn w" href="' + biliHelper.redirectUrl + '">前往原始跳转页</a></p></div>');
@@ -569,6 +571,7 @@
 						$('#loading-notice').fadeOut(300);
 					}
 				} else {
+					if(!isNaN(biliHelper.cid)) biliHelper.originalPlayer.replace('cid=' + biliHelper.cid, 'cid=' + videoInfo.cid);
 					biliHelper.cid = videoInfo.cid;
 					if (!biliHelper.genPage) {
 						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
@@ -581,9 +584,7 @@
 								var keyword = control.find('input').val(),
 									regex = new RegExp(parseSafe(keyword), 'gi');
 								control.find('ul.list').html('<li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li>');
-								if (control.find('.b-slt .txt').text() != '请选择需要查询的弹幕' && keyword.trim() != '') control.find('.b-slt .txt').html(parseSafe(control.find('.b-slt .txt').text()).replace(regex, function(kw) {
-									return '<span class="kw">' + kw + '</span>';
-								}));
+								if (control.find('.b-slt .txt').text() != '请选择需要查询的弹幕' && keyword.trim() != '') control.find('.b-slt .txt').html(parseSafe(control.find('.b-slt .txt').text()));
 								if (keyword.trim() != '') {
 									control.find('.b-slt .txt').text(control.find('.b-slt .txt').text());
 								}
@@ -687,5 +688,18 @@
 			});
 		}
 		biliHelper.work();
+		window.addEventListener("hashchange", function() {
+			var hashPage = (/page=([0-9]+)/).exec(document.location.hash);
+			if (typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
+			if (hashPage && hashPage != biliHelper.page) {
+				biliHelper.page = hashPage;
+				biliHelper.mainBlock.infoSection.html('<h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p>');
+				biliHelper.mainBlock.downloaderSection.html('<h3>视频下载</h3><p><span></span>视频地址获取中，请稍等…</p>');
+				biliHelper.mainBlock.querySection.html('<h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p>');
+				if (biliHelper.mainBlock.commentSection) biliHelper.mainBlock.commentSection.remove();
+				if (biliHelper.mainBlock.errorSection) biliHelper.mainBlock.errorSection.remove();
+				biliHelper.work();
+			}
+		}, false);
 	}
 })();
