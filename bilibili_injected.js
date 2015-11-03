@@ -318,7 +318,7 @@
 	var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?.*?$/,
 		urlResult = bili_reg.exec(document.location.pathname),
 		hashPage = (/page=([0-9]+)/).exec(document.location.hash);
-	if (typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
+	if (hashPage && typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
 	if (urlResult) {
 		biliHelper.avid = urlResult[1];
 		biliHelper.page = hashPage || urlResult[2];
@@ -690,7 +690,7 @@
 		biliHelper.work();
 		window.addEventListener("hashchange", function() {
 			var hashPage = (/page=([0-9]+)/).exec(document.location.hash);
-			if (typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
+			if (hashPage && typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
 			if (hashPage && hashPage != biliHelper.page) {
 				biliHelper.page = hashPage;
 				biliHelper.mainBlock.infoSection.html('<h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p>');
