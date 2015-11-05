@@ -286,7 +286,19 @@
 				biliHelper.mainBlock.downloaderSection.find('p').empty();
 				for (i in biliHelper.downloadUrls) {
 					var segmentInfo = biliHelper.downloadUrls[i];
-					if (typeof segmentInfo == "object") biliHelper.mainBlock.downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
+
+					if (typeof segmentInfo == "object"){
+						biliHelper.mainBlock.downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
+
+						// Tell extension background to remeber the URL-Filename map
+						chrome.extension.sendMessage({
+							command: 'linkFilenameInfo',
+							url: segmentInfo.url,
+							filename: getNiceSectionFilename(biliHelper.avid,
+															 biliHelper.page, biliHelper.totalPage,
+															 i, biliHelper.downloadUrls.length),
+						});
+					}
 				}
 			}
 			if (biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1) {
@@ -688,6 +700,7 @@
 			});
 		}
 		biliHelper.work();
+
 		window.addEventListener("hashchange", function() {
 			var hashPage = (/page=([0-9]+)/).exec(document.location.hash);
 			if (hashPage && typeof hashPage == "object" && !isNaN(hashPage[1])) hashPage = parseInt(hashPage[1]);
@@ -701,5 +714,24 @@
 				biliHelper.work();
 			}
 		}, false);
+
+	};
+
+	function getNiceSectionFilename(avid, page, totalPage, idx, numParts){
+		// TODO inspect the page to get better section name
+		var idName = 'av' + avid + '_',
+			// page/part name is only shown when there are more than one pages/parts
+			pageIdName = (totalPage && (totalPage > 1)) ? ('p' + page + '_') : "",
+			pageName = "",
+			partIdName = (numParts && (numParts > 1)) ? ('' + idx + '_') : "" ;
+
+		// try to find a good page name
+		if (pageIdName){
+			pageName = $('.viewbox #alist > span').text();
+			pageName = pageName.substr( pageName.indexOf('、') + 1 ) + '_';
+		}
+
+		// document.title contains other info feeling too much
+		return idName + pageIdName + pageName + partIdName + $('div.v-title').text();
 	}
 })();
