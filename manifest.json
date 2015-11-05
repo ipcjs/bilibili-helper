@@ -30,7 +30,7 @@
    "name": "__MSG_extName__",
    "short_name": "__MSG_extShortName__",
    "options_page": "options.html",
-   "permissions": [ "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
+   "permissions": [ "downloads", "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
    "version": "0.7.7",
    "web_accessible_resources": [ "bilibili-helper.woff", "template.html", "imgs/icon-32.png", "imgs/loading.gif", "imgs/loading.gif", "imgs/helper-neko.png" ]
