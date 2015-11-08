@@ -15,14 +15,6 @@
     "message": "一键前往bilibili.com",
     "description": "Popup Button: go_bili"
   },
-  "cssSwitchOff": {
-    "message": "开启美化功能",
-    "description": "Popup Button: css_switch_off"
-  },
-  "cssSwitchOn": {
-    "message": "关闭美化功能",
-    "description": "Popup Button: css_switch_on"
-  },
   "adModeOff": {
     "message": "进入点广告模式",
     "description": "Popup Button: ad_mode_off"

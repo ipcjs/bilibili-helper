@@ -15,14 +15,6 @@
     "message": "Go to bilibili.com",
     "description": "Popup Button: go_bili"
   },
-  "cssSwitchOff": {
-    "message": "Enable Beautifier",
-    "description": "Popup Button: css_switch_off"
-  },
-  "cssSwitchOn": {
-    "message": "Disable Beautifier",
-    "description": "Popup Button: css_switch_on"
-  },
   "adModeOff": {
     "message": "Enter AD Mode",
     "description": "Popup Button: ad_mode_off"
@@ -68,27 +60,27 @@
     "description": "Option Page: Title"
   },
   "noticeficationTitle": {
-    "message": "Bilibili Helper Noticefication",
-    "description": "Noticefication: Title"
+    "message": "Bilibili Helper Notification",
+    "description": "Notification: Title"
   },
   "noticeficationExtensionUpdate": {
     "message": "Bilibili Helper just auto updated to v%v!",
-    "description": "Noticefication: Extension Update"
+    "description": "Notification: Extension Update"
   },
   "noticeficationNewFeatures": {
     "message": "What's New",
-    "description": "Noticefication: New Features"
+    "description": "Notification: New Features"
   },
   "followingUpdateMessage": {
     "message": "Your bilibili followings updated (%n new)!\n%uploader just published '%title'!",
-    "description": "Noticefication: Following Update Message"
+    "description": "Notification: Following Update Message"
   },
   "notificationWatch": {
     "message": "Watch",
-    "description": "Noticefication: Watch"
+    "description": "Notification: Watch"
   },
   "notificationShowAll": {
     "message": "Show All",
-    "description": "Noticefication: Show All"
+    "description": "Notification: Show All"
   }
 }
