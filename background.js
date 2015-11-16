@@ -32,7 +32,7 @@ function getFileData(url, callback) {
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (typeof callback == "function") callback(xmlhttp.responseText);
-		} else if (xmlhttp.status > 400) {
+		} else if (xmlhttp.readyState == 4 && xmlhttp.status > 400) {
 			if (typeof callback == "function") callback("{}");
 		}
 	}
@@ -423,27 +423,31 @@ chrome.alarms.create("getLocale", {
 });
 
 function getLocale() {
-	getFileData("http://www.telize.com/geoip", function(result) {
-		result = JSON.parse(result);
-		if (result.country_code) {
-			switch (result.country_code) {
-				case "CN":
-					locale = 1;
-					break;
-				case "TW":
-				case "HK":
-				case "MO":
-					locale = 2;
-					break;
-				default:
-					locale = 0;
-					break;
+	getFileData("https://freegeoip.net/json/", function(result) {
+		try {
+			result = JSON.parse(result);
+			if (result.country_code) {
+				switch (result.country_code) {
+					case "CN":
+						locale = 1;
+						break;
+					case "TW":
+					case "HK":
+					case "MO":
+						locale = 2;
+						break;
+					default:
+						locale = 0;
+						break;
+				}
+				localeAcquired = true;
+			} else {
+				throw "locale undetermined";
 			}
-			localeAcquired = true;
-		} else {
+		} catch (e) {
 			localeTimeout = setTimeout(function() {
 				getLocale();
-			}, 5000);
+			}, 10000);
 		}
 	});
 }
@@ -470,7 +474,7 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 			checkDynamic();
 			return true;
 		case "getLocale":
-			if (!getLocale) {
+			if (!localeAcquired) {
 				clearTimeout(localeTimeout);
 				getLocale();
 			}
@@ -576,32 +580,33 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 // Set up downloaded file name
 chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
 	function suggest(filename, conflictAction) {
-		__suggest({filename: filename, conflictAction: conflictAction});
+		__suggest({
+			filename: filename,
+			conflictAction: conflictAction
+		});
 	}
 
 	var decentFn = sessionStorage.getItem(item.url),
-		fileExt = item.filename.substr( item.filename.lastIndexOf('.') + 1);
+		fileExt = item.filename.substr(item.filename.lastIndexOf('.') + 1);
 
 	// file extension auto conversion.
 	//
 	// Some sources are known to give weird file extensions, do our best to
 	// convert them.
-	switch(fileExt){
-	case "letv":
-		fileExt = "flv";
-		break;
-	default:
-		// remain the same, nothing;
+	switch (fileExt) {
+		case "letv":
+			fileExt = "flv";
+			break;
+		default:
+			// remain the same, nothing;
 	}
 
-	if (decentFn){
-		decentFn = filenameSanitize(decentFn,
-									{replacement: '_',
-									 max: 255 - fileExt.length - 1
-									})
-			+ '.' + fileExt;
-	}
-	else {
+	if (decentFn) {
+		decentFn = filenameSanitize(decentFn, {
+			replacement: '_',
+			max: 255 - fileExt.length - 1
+		}) + '.' + fileExt;
+	} else {
 		decentFn = item.filename;
 	}
 
