@@ -288,16 +288,32 @@
 					var segmentInfo = biliHelper.downloadUrls[i];
 
 					if (typeof segmentInfo == "object"){
-						biliHelper.mainBlock.downloaderSection.find('p').append($('<a class="b-btn w" rel="noreferrer"></a>').text('分段 ' + (parseInt(i) + 1)).attr('download', 'av' + biliHelper.avid + 'p' + biliHelper.page + '_' + i).attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB')).attr('href', segmentInfo.url));
+						var downloadOptions = getDownloadOptions(segmentInfo.url,
+																 getNiceSectionFilename(biliHelper.avid,
+																						biliHelper.page, biliHelper.totalPage,
+																						i, biliHelper.downloadUrls.length)),
+							$bhDownLink = biliHelper.mainBlock.downloaderSection.find('p')
+								.append($('<a class="b-btn w" rel="noreferrer"></a>')
+										.text('分段 ' + (parseInt(i) + 1))
+										// Set download attribute to better file name. When use "Save As" dialog, this value gets respected even the target is not from the same origin.
+										.attr('download', downloadOptions.filename)
+										.attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB'))
+										.attr('href', segmentInfo.url));
 
-						// Tell extension background to remeber the URL-Filename map
-						chrome.extension.sendMessage({
-							command: 'linkFilenameInfo',
-							url: segmentInfo.url,
-							filename: getNiceSectionFilename(biliHelper.avid,
-															 biliHelper.page, biliHelper.totalPage,
-															 i, biliHelper.downloadUrls.length),
-						});
+
+						// register a callback that can talk to extension background
+						$bhDownLink.on('click', null,
+									   downloadOptions, // pass downloadOptions as e.data
+									   function(e){
+										   chrome.extension.sendMessage({
+											   command: 'requestForDownload',
+											   url: e.data.url,
+											   filename: e.data.filename,
+										   });
+
+										   // no default action or other callbacks
+										   return false;
+									   });
 					}
 				}
 			}
@@ -733,5 +749,38 @@
 
 		// document.title contains other info feeling too much
 		return idName + pageIdName + pageName + partIdName + $('div.v-title').text();
+	}
+
+	// Helper function, return object {url, filename}, options object used by
+	// "chrome.downloads.download"
+	function getDownloadOptions(url, filename){
+		// TODO Improve file extension determination process.
+		//
+		// Parsing the url should be ok in most cases, but the best way should
+		// use MIME types and tentative file names returned by server. Not
+		// feasible at this stage.
+		var resFn = null,
+			fileExtMatch = url.match(/:\/\/.+\.(.*)\?/),
+			// arbitrarily default to "flv" for no better reason...
+			fileExt = (fileExtMatch && fileExtMatch[1]) || 'flv';
+
+		// file extension auto conversion.
+		//
+		// Some sources are known to give weird file extensions, do our best to
+		// convert them.
+		switch (fileExt) {
+		case "letv":
+			fileExt = "flv";
+			break;
+		default:
+			;// remain the same, nothing
+		}
+
+		resFn = filenameSanitize(filename, {
+			replacement: '_',
+			max: 255 - fileExt.length - 1
+		}) + '.' + fileExt;
+
+		return {"url": url, "filename": resFn};
 	}
 })();
