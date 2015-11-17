@@ -580,10 +580,14 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 // Set up downloaded file name
 chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
 	function suggest(filename, conflictAction) {
-		__suggest({
-			filename: filename,
-			conflictAction: conflictAction
-		});
+		if (filename === undefined){
+			__suggest();
+		} else {
+			__suggest({
+				filename: filename,
+				conflictAction: conflictAction
+			});
+		}
 	}
 
 	var decentFn = sessionStorage.getItem(item.url),
@@ -606,9 +610,8 @@ chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
 			replacement: '_',
 			max: 255 - fileExt.length - 1
 		}) + '.' + fileExt;
+		suggest(decentFn, 'uniquify');
 	} else {
-		decentFn = item.filename;
+		suggest();
 	}
-
-	suggest(decentFn, 'uniquify');
 });
