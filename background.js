@@ -385,9 +385,11 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 					}
 				});
 			return true;
-		case "linkFilenameInfo":
-			sessionStorage.setItem(request.url, request.filename);
+		case "requestForDownload":
+			chrome.downloads.download( {url: request.url, filename: request.filename} );
+
 			return true;
+
 		default:
 			sendResponse({
 				result: "unknown"
@@ -576,42 +578,3 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
 }, {
 	urls: ["http://www.bilibili.com/video/av*"]
 }, ["responseHeaders", "blocking"]);
-
-// Set up downloaded file name
-chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
-	function suggest(filename, conflictAction) {
-		if (filename === undefined){
-			__suggest();
-		} else {
-			__suggest({
-				filename: filename,
-				conflictAction: conflictAction
-			});
-		}
-	}
-
-	var decentFn = sessionStorage.getItem(item.url),
-		fileExt = item.filename.substr(item.filename.lastIndexOf('.') + 1);
-
-	// file extension auto conversion.
-	//
-	// Some sources are known to give weird file extensions, do our best to
-	// convert them.
-	switch (fileExt) {
-		case "letv":
-			fileExt = "flv";
-			break;
-		default:
-			// remain the same, nothing;
-	}
-
-	if (decentFn) {
-		decentFn = filenameSanitize(decentFn, {
-			replacement: '_',
-			max: 255 - fileExt.length - 1
-		}) + '.' + fileExt;
-		suggest(decentFn, 'uniquify');
-	} else {
-		suggest();
-	}
-});
