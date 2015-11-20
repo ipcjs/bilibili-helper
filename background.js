@@ -207,6 +207,7 @@ function getVideoInfo(avid, page, callback) {
 					pic: avInfo.pic,
 					pages: avInfo.pages,
 					title: avInfo.title,
+					list: avInfo.list,
 					sp_title: avInfo.sp_title,
 					spid: avInfo.spid,
 					season_id: avInfo.season_id,
@@ -386,8 +387,11 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 				});
 			return true;
 		case "requestForDownload":
-			chrome.downloads.download( {url: request.url, filename: request.filename} );
-
+			chrome.downloads.download({
+				url: request.url,
+				filename: "Bilibili Downloads/" + request.filename,
+				conflictAction: "prompt"
+			});
 			return true;
 
 		default:

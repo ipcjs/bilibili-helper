@@ -286,35 +286,34 @@
 				biliHelper.mainBlock.downloaderSection.find('p').empty();
 				for (i in biliHelper.downloadUrls) {
 					var segmentInfo = biliHelper.downloadUrls[i];
-
-					if (typeof segmentInfo == "object"){
+					if (typeof segmentInfo == "object") {
 						var downloadOptions = getDownloadOptions(segmentInfo.url,
-																 getNiceSectionFilename(biliHelper.avid,
-																						biliHelper.page, biliHelper.totalPage,
-																						i, biliHelper.downloadUrls.length)),
-							$bhDownLink = biliHelper.mainBlock.downloaderSection.find('p')
-								.append($('<a class="b-btn w" rel="noreferrer"></a>')
-										.text('分段 ' + (parseInt(i) + 1))
-										// Set download attribute to better file name. When use "Save As" dialog, this value gets respected even the target is not from the same origin.
-										.attr('download', downloadOptions.filename)
-										.attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB'))
-										.attr('href', segmentInfo.url));
-
-
+								getNiceSectionFilename(biliHelper.avid,
+									biliHelper.page, biliHelper.totalPage,
+									i, biliHelper.downloadUrls.length)),
+							$bhDownLink = $('<a class="b-btn w" rel="noreferrer"></a>')
+							.text('分段 ' + (parseInt(i) + 1))
+							// Set download attribute to better file name. When use "Save As" dialog, this value gets respected even the target is not from the same origin.
+							.data('download', downloadOptions.filename)
+							.attr('title', isNaN(parseInt(segmentInfo.filesize / 1048576 + 0.5)) ? ('长度: ' + parseTime(segmentInfo.length)) : ('长度: ' + parseTime(segmentInfo.length) + ' 大小: ' + parseInt(segmentInfo.filesize / 1048576 + 0.5) + ' MB'))
+							.attr('href', segmentInfo.url);
+						biliHelper.mainBlock.downloaderSection.find('p').append($bhDownLink);
 						// register a callback that can talk to extension background
-						$bhDownLink.on('click', null,
-									   downloadOptions, // pass downloadOptions as e.data
-									   function(e){
-										   chrome.extension.sendMessage({
-											   command: 'requestForDownload',
-											   url: e.data.url,
-											   filename: e.data.filename,
-										   });
-
-										   // no default action or other callbacks
-										   return false;
-									   });
+						$bhDownLink.click(function(e) {
+							chrome.extension.sendMessage({
+								command: 'requestForDownload',
+								url: $(e.target).attr('href'),
+								filename: $(e.target).data('download')
+							});
+						});
 					}
+				}
+				if (biliHelper.downloadUrls.length > 1) {
+					var $bhDownAllLink = $('<a class="b-btn" rel="noreferrer"></a>').text('下载全部共 ' + biliHelper.downloadUrls.length + ' 个分段');
+					biliHelper.mainBlock.downloaderSection.find('p').append($bhDownAllLink);
+					$bhDownAllLink.click(function(e) {
+						biliHelper.mainBlock.downloaderSection.find('p .b-btn.w').click();
+					});
 				}
 			}
 			if (biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1) {
@@ -599,7 +598,7 @@
 						$('#loading-notice').fadeOut(300);
 					}
 				} else {
-					if(!isNaN(biliHelper.cid) && biliHelper.originalPlayer) biliHelper.originalPlayer.replace('cid=' + biliHelper.cid, 'cid=' + videoInfo.cid);
+					if (!isNaN(biliHelper.cid) && biliHelper.originalPlayer) biliHelper.originalPlayer.replace('cid=' + biliHelper.cid, 'cid=' + videoInfo.cid);
 					biliHelper.cid = videoInfo.cid;
 					if (!biliHelper.genPage) {
 						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
@@ -666,11 +665,19 @@
 				}
 				if (biliHelper.genPage) {
 					tagList = "";
+					var alist = "";
+					if (videoInfo.list.length > 1) {
+						alist += "<select id='dedepagetitles' onchange='location.href=this.options[this.selectedIndex].value;'>";
+						videoInfo.list.forEach(function(vPart) {
+							alist += "<option value='/video/av" + biliHelper.avid + "/index_" + parseSafe(vPart.page) + ".html'>" + parseSafe(vPart.page) + "、" + (vPart.part ? vPart.part : ("P" + parseSafe(vPart.page))) + "</option>";
+						});
+						alist += "</select>";
+					}
 					videoInfo.tag.split(",").forEach(function(tag) {
 						tagList += '<li><a class="tag-val" href="/tag/' + encodeURIComponent(tag) + '/" title="' + tag + '" target="_blank">' + tag + '</a></li>';
 					});
 					$.get(chrome.extension.getURL("template.html"), function(template) {
-						var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%cid%/g, biliHelper.cid).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid).replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '').replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id).replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl).replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(","))).replace(/%tag_list%/g, tagList);
+						var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%cid%/g, biliHelper.cid).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid).replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '').replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id).replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl).replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(","))).replace(/%tag_list%/g, tagList).replace(/%alist%/g, alist);
 						document.open();
 						document.write(page);
 						document.close();
@@ -733,18 +740,18 @@
 
 	};
 
-	function getNiceSectionFilename(avid, page, totalPage, idx, numParts){
+	function getNiceSectionFilename(avid, page, totalPage, idx, numParts) {
 		// TODO inspect the page to get better section name
 		var idName = 'av' + avid + '_',
 			// page/part name is only shown when there are more than one pages/parts
 			pageIdName = (totalPage && (totalPage > 1)) ? ('p' + page + '_') : "",
 			pageName = "",
-			partIdName = (numParts && (numParts > 1)) ? ('' + idx + '_') : "" ;
+			partIdName = (numParts && (numParts > 1)) ? ('' + idx + '_') : "";
 
 		// try to find a good page name
-		if (pageIdName){
+		if (pageIdName) {
 			pageName = $('.viewbox #alist > span').text();
-			pageName = pageName.substr( pageName.indexOf('、') + 1 ) + '_';
+			pageName = pageName.substr(pageName.indexOf('、') + 1) + '_';
 		}
 
 		// document.title contains other info feeling too much
@@ -753,7 +760,7 @@
 
 	// Helper function, return object {url, filename}, options object used by
 	// "chrome.downloads.download"
-	function getDownloadOptions(url, filename){
+	function getDownloadOptions(url, filename) {
 		// TODO Improve file extension determination process.
 		//
 		// Parsing the url should be ok in most cases, but the best way should
@@ -769,11 +776,11 @@
 		// Some sources are known to give weird file extensions, do our best to
 		// convert them.
 		switch (fileExt) {
-		case "letv":
-			fileExt = "flv";
-			break;
-		default:
-			;// remain the same, nothing
+			case "letv":
+				fileExt = "flv";
+				break;
+			default:
+				; // remain the same, nothing
 		}
 
 		resFn = filenameSanitize(filename, {
@@ -781,6 +788,9 @@
 			max: 255 - fileExt.length - 1
 		}) + '.' + fileExt;
 
-		return {"url": url, "filename": resFn};
+		return {
+			"url": url,
+			"filename": resFn
+		};
 	}
 })();
