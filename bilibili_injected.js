@@ -87,8 +87,8 @@
 				if (str[i] == "】") break;
 				else if (str[i] == "【") return mathchedText;
 			}
-			var previous = str.substring(0, offset) + (parseInt(mathchedText) - 1).toString() + str.substring(offset + mathchedText.length, str.length),
-				next = str.substring(0, offset) + (parseInt(mathchedText) + 1).toString() + str.substring(offset + mathchedText.length, str.length);
+			var previous = str.substring(0, offset) + ((parseInt(mathchedText) - 1 >= 10 || (parseInt(mathchedText) - 1 < 0) ? ((parseInt(mathchedText) - 1).toString()) : ('0' + (parseInt(mathchedText) - 1).toString())) + str.substring(offset + mathchedText.length, str.length),
+				next = str.substring(0, offset) + ((parseInt(mathchedText) + 1 >= 10 || (parseInt(mathchedText) - 1 < 0) ? ((parseInt(mathchedText) + 1).toString()) : ('0' + (parseInt(mathchedText) + 1).toString())) + str.substring(offset + mathchedText.length, str.length);
 			previous = previous.replace(/(#)/g, " ");
 			next = next.replace(/(#)/g, " ");
 			if (mode == "without") {
