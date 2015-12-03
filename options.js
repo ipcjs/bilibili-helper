@@ -82,8 +82,50 @@ $(document).ready(function() {
 		bkg_page.setOption("rel_search", $(this).attr("option"));
 		updatepreview();
 	});
-	if (document.location.hash == '#update') {
-		alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
-		document.location = chrome.extension.getURL('options.html');
+
+	function getQueryVariable(variable) {
+		var query = window.location.search.substring(1);
+		var vars = query.split('&');
+		for (var i = 0; i < vars.length; i++) {
+			var pair = vars[i].split('=');
+			if (decodeURIComponent(pair[0]) == variable) {
+				return decodeURIComponent(pair[1]);
+			}
+		}
+	}
+
+	function formateDatetime(timestamp) {
+		if (timestamp == 0) {
+			return lang['oneDay'];
+		}
+		var date = new Date((parseInt(timestamp)) * 1000),
+			year, month, day, hour, minute, second;
+		year = String(date.getFullYear());
+		month = String(date.getMonth() + 1);
+		if (month.length == 1) month = "0" + month;
+		day = String(date.getDate());
+		if (day.length == 1) day = "0" + day;
+		hour = String(date.getHours());
+		if (hour.length == 1) hour = "0" + hour;
+		minute = String(date.getMinutes());
+		if (minute.length == 1) minute = "0" + minute;
+		second = String(date.getSeconds());
+		if (second.length == 1) second = "0" + second;
+		return String(year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second);
+	}
+
+	switch(getQueryVariable('mod')) {
+		case 'update':
+			alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
+			window.history.replaceState({}, document.title, '/' );
+			break;
+		case 'new':
+			var data = JSON.parse(getQueryVariable('data'));
+			$('#update').show();
+			$('#update .version').text(data.version);
+			$('#update .date').text(formateDatetime(data.update_time/1000));
+			$('#update .url').attr('href', data.link);
+			window.history.replaceState({}, document.title, '/' );
+			break;
 	}
 });

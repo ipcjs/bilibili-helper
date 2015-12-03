@@ -358,7 +358,7 @@
                 <div class="qr-code-box-inner">
                     <div class="qr-code" id="qr_code"></div>
                     <div class="qr-info">
-                        <div class="qr-info-head">【熟/生肉】童话高中 第二季【合集】</div>
+                        <div class="qr-info-head">%title%</div>
                         <div class="qr-info-description" id="qr_description"></div>
                     </div>
                     <div class="qr-bottom">用<a href="http://app.bilibili.com/" target="_blank">哔哩哔哩客户端</a>或其他应用扫描二维码</div>
@@ -387,10 +387,63 @@
 </div>
 
 <div class="main-inner">
-    <div class="bangumi-content">
-                <div class="ad ad-e1"></div>
-        <div class="ad ad-e2"></div>
+    <div class="bangumi-content v_large">
+	 	<div class="v_bgm_list">
+        <div class="bangumi-head">
+            	<a class="t" href="/sp/%sp_title_uri%" target="_blank">%sp_title%</a>
+            	<ul id="v_bgm_list_tab" class="b-slt-tab"></ul>
+        </div>
+        <div class="info">
+            <div class="preview"><img src="%bangumi_cover%" /></div>
+        </div>
+        <div class="bangumi-info" id="bangumi_info">
+        	<div class="info-head">
+                <ul class="b-tab normal">
+                    <li class="on" type="bgmlist">选集</li>
+                    <li type="description">信息</li>
+                </ul>
             </div>
+            <div class="info-wrapper">
+                    <div class="info-content bgmlist" type="bgmlist">
+                        <div id="v_bgm_list_page"></div>
+                        <div id="v_bgm_list_data"></div>
+                    </div>
+            </div>
+            <div class="info-content description" type="description"><div class="info-content-inner">%bangumi_desc%</div></div>
+            <div class="bangumi-order-btn">
+                    <i class="b-icon b-icon-love"></i>
+                    <span id="sp_dingyue"></span>
+                    <span id="subscribe_num" num="0">0</span>
+                </div>
+            </div>
+        </div>
+    	<script type="text/javascript">
+            var bangumiInfo = $("#bangumi_info");
+            bindTab({
+                item: bangumiInfo.find(".b-tab"),
+                onChange: function(tab) {
+                    var type = tab.attr("type");
+                    bangumiInfo.find(".info-content").hide();
+                    var panel = bangumiInfo.find('.info-content[type="'+type+'"]')
+                    panel.show();
+                    if(type != 'bgmlist' && panel.find('.b-btn').length === 0) {
+                        if(panel.find('.info-content-inner').height() > 88) {
+                            panel.addClass('static');
+                            var span_btn = $('<a class="b-btn">展开</a>').appendTo(panel).on('click', function(){
+                                if(panel.hasClass('static')) {
+                                    panel.removeClass('static');
+                                    span_btn.html('收起');
+                                } else {
+                                    panel.addClass('static');
+                                    span_btn.html('展开');
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        </script>
+    </div>
     <div class="v_small">
                 
     </div>

@@ -6,6 +6,7 @@ var notification = false,
 	locale = 0,
 	localeAcquired = false,
 	localeTimeout = null,
+	cvTimeout = null,
 	secureAvailable = false,
 	videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"];
 
@@ -180,7 +181,7 @@ function getVideoInfo(avid, page, callback) {
 	var currTime = parseInt(new Date().getTime() / 1000);
 	if (isNaN(page) || page < 1) page = 1;
 	if (typeof viCache[avid + '-' + page] != "undefined" && currTime - viCache[avid + '-' + page]['ts'] <= 3600) {
-		callback(viCache[avid + '-' + page], true);
+		callback(viCache[avid + '-' + page]);
 		return true;
 	}
 	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=" + page + "&batch=true", function(avInfo) {
@@ -214,10 +215,24 @@ function getVideoInfo(avid, page, callback) {
 					created_at: avInfo.created_at,
 					description: avInfo.description,
 					tag: avInfo.tag,
-					ts: currTime
+					ts: currTime,
+					bangumi: false
 				};
+				if (typeof avInfo.bangumi == "object") {
+					getFileData("http://api.bilibili.cn/sp?spid=" + avInfo.spid, function(spInfo) {
+						spInfo = JSON.parse(spInfo);
+						if (spInfo.isbangumi == 1) {
+							viCache[avid + '-' + page].bangumi = {
+								cover: spInfo.cover,
+								desc: spInfo.description
+							}
+						}
+						callback(viCache[avid + '-' + page]);
+					});
+				} else callback(viCache[avid + '-' + page]);
+			} else {
+				callback(avInfo);
 			}
-			callback(avInfo, false);
 		}
 	});
 	return true;
@@ -245,6 +260,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			});
 			return true;
 		case "cidHack":
+			if (isNaN(request.cid)) return false;
 			playerTabs[sender.tab.id] = request.cid;
 			cidHackType[request.cid] = request.type;
 			sendResponse();
@@ -424,6 +440,10 @@ chrome.alarms.create("checkDynamic", {
 	periodInMinutes: 1
 });
 
+chrome.alarms.create("checkVersion", {
+	periodInMinutes: 10
+});
+
 chrome.alarms.create("getLocale", {
 	periodInMinutes: 5
 });
@@ -447,13 +467,32 @@ function getLocale() {
 						break;
 				}
 				localeAcquired = true;
+				checkVersion();
 			} else {
 				throw "locale undetermined";
 			}
 		} catch (e) {
+			console.error('Failed to get locale', e);
 			localeTimeout = setTimeout(function() {
 				getLocale();
 			}, 10000);
+		}
+	});
+}
+
+function checkVersion() {
+	getFileData("https://bilihelper.guguke.net/version.json", function(result) {
+		try {
+			result = JSON.parse(result);
+			if (result.version > chrome.app.getDetails().version) {
+				if (!localeAcquired || locale == 1 || new Date().getTime() - result.update_time > 259200000) {
+					chrome.tabs.create({
+						url: chrome.extension.getURL("options.html?mod=new&data=" + encodeURI(JSON.stringify(result)))
+					});
+				}
+			}
+		} catch (e) {
+			console.error('Failed to check version', e);
 		}
 	});
 }
@@ -479,6 +518,9 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 		case "checkDynamic":
 			checkDynamic();
 			return true;
+		case "checkVersion":
+			checkVersion();
+			return true;
 		case "getLocale":
 			if (!localeAcquired) {
 				clearTimeout(localeTimeout);
@@ -493,7 +535,7 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 chrome.notifications.onButtonClicked.addListener(function(notificationId, index) {
 	if (notificationId == 'bh-update') {
 		chrome.tabs.create({
-			url: chrome.extension.getURL("options.html#update")
+			url: chrome.extension.getURL("options.html?mod=update")
 		});
 	} else if (index == 0 && notificationAvid[notificationId]) {
 		chrome.tabs.create({
@@ -550,7 +592,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 		requestHeaders: details.requestHeaders
 	};
 }, {
-	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*"]
+	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*", "http://www.bilibili.com/api_proxy*"]
 }, ['requestHeaders', 'blocking']);
 
 function receivedHeaderModifier(details) {

@@ -210,6 +210,7 @@
 						biliHelper.mainBlock.downloaderSection.find('p').append($bhDownLink);
 						// register a callback that can talk to extension background
 						$bhDownLink.click(function(e) {
+							e.preventDefault();
 							chrome.extension.sendMessage({
 								command: 'requestForDownload',
 								url: $(e.target).attr('href'),
@@ -430,6 +431,7 @@
 
 	var biliHelperFunc = function() {
 		biliHelper.totalPage = $('.player-wrapper .v-plist').attr('length');
+		console.log(biliHelper.totalPage);
 		if (!isNaN(biliHelper.totalPage)) biliHelper.totalPage = parseInt(biliHelper.totalPage);
 		if (localStorage.getItem('bilimac_player_type') == 'force') {
 			biliHelper.switcher.set('bilimac');
@@ -586,18 +588,30 @@
 						tagList += '<li><a class="tag-val" href="/tag/' + encodeURIComponent(tag) + '/" title="' + tag + '" target="_blank">' + tag + '</a></li>';
 					});
 					$.get(chrome.extension.getURL("template.html"), function(template) {
-						var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%cid%/g, biliHelper.cid).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid).replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '').replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id).replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl).replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(","))).replace(/%tag_list%/g, tagList).replace(/%alist%/g, alist);
+						var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%cid%/g, biliHelper.cid).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid)
+							.replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '')
+							.replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id)
+							.replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl)
+							.replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(","))).replace(/%tag_list%/g, tagList).replace(/%alist%/g, alist).replace(/%bangumi_cover%/g, videoInfo.bangumi ? videoInfo.bangumi.cover : '')
+							.replace(/%bangumi_desc%/g, videoInfo.bangumi ? videoInfo.bangumi.desc : '');
 						document.open();
 						document.write(page);
 						document.close();
+						var prob = document.createElement("script");
+						prob.id = "page-prob";
+						prob.innerHTML = "$('.player-wrapper .v-plist').attr('length', window.VideoPart.nodedata.length);$('#page-prob').remove();";
+						setTimeout(function() {
+							document.body.appendChild(prob);
+							biliHelper.genPage = false;
+							if (!videoInfo.bangumi) {
+								$('.bangumi-content .v_bgm_list').empty();
+							}
+							intilize_style(function() {
+								$('.player-wrapper .arc-toolbar').append(biliHelper.helperBlock);
+							});
+							biliHelperFunc();
+						}, 500);
 					});
-					setTimeout(function() {
-						biliHelper.genPage = false;
-						intilize_style(function() {
-							$('.player-wrapper .arc-toolbar').append(biliHelper.helperBlock);
-						});
-						biliHelperFunc();
-					}, 500);
 					return false;
 				}
 
@@ -659,10 +673,9 @@
 
 		// try to find a good page name
 		if (pageIdName) {
-			pageName = $('.viewbox #alist > span').text();
+			pageName = $('.player-wrapper #plist > span').text();
 			pageName = pageName.substr(pageName.indexOf('、') + 1) + '_';
 		}
-
 		// document.title contains other info feeling too much
 		return idName + pageIdName + pageName + partIdName + $('div.v-title').text();
 	}
