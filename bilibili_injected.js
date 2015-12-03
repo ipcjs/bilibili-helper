@@ -431,7 +431,6 @@
 
 	var biliHelperFunc = function() {
 		biliHelper.totalPage = $('.player-wrapper .v-plist').attr('length');
-		console.log(biliHelper.totalPage);
 		if (!isNaN(biliHelper.totalPage)) biliHelper.totalPage = parseInt(biliHelper.totalPage);
 		if (localStorage.getItem('bilimac_player_type') == 'force') {
 			biliHelper.switcher.set('bilimac');
