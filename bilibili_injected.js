@@ -109,96 +109,6 @@
 		});
 	}
 
-	function miniPlayer() {
-		var l = $("#bofqi"),
-			j = l.offset().top + l.height() + 100,
-			s = 0,
-			r = !1;
-		$('<input type="checkbox" id="checkbox_miniplayer" /><label class="no-select" for="checkbox_miniplayer">\u5f00\u542f\u8ff7\u4f60\u64ad\u653e\u5668</label>').appendTo(".common .b-head");
-		var q = $("#checkbox_miniplayer");
-		1 != ChatGetSettings("b_miniplayer") && null != ChatGetSettings("b_miniplayer") || q.attr("checked", !0);
-		q.change(function() {
-			var a = $(this).is(":checked") ? 1 : 0;
-			ChatSaveSettings("b_miniplayer", a);
-			0 == a ? (r = !0, o()) : (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j && (r = !1, p()))
-		});
-		var p = function() {
-				if (!l.hasClass("float") && !r && 0 != $(".comm").find("ul").length) {
-					var a = $('<div class="dami"></div>').insertBefore(l);
-					l.hasClass("wide") && a.addClass("wide");
-					$('<div class="move"><div class="gotop">\u56de\u5230\u9876\u90e8</div><div class="t">\u70b9\u51fb\u6309\u4f4f\u62d6\u52a8</div><div class="close">\u5173\u95ed</div></div>').prependTo(l);
-					0 < $(".huodong_bg").length && $(".huodong_bg").hide();
-					a = 0 < $(".rat").length ? $(".rat").offset().left : $(".v_small").offset().left;
-					l.addClass("float").css({
-						left: a,
-						opacity: 0
-					}).stop().animate({
-						opacity: 1
-					}, 300);
-					730 >= $(window).height() && l.css({
-						top: "inherit",
-						bottom: "5px"
-					})
-				}
-			},
-			o = function() {
-				n();
-				$(".move", l).remove();
-				$(".dami").remove();
-				l.removeClass("float");
-				l.css({
-					left: "",
-					top: "",
-					bottom: ""
-				});
-				0 < $(".huodong_bg").length && $(".huodong_bg").show()
-			},
-			n = function() {
-				s = 0;
-				$(".mmask").remove();
-				$(document).unbind("mousemove");
-				$("body,#bofqi").removeClass("noselect");
-				$(".move", l).removeClass("on")
-			};
-		$(document).scroll(function() {
-			0 != ChatGetSettings("b_miniplayer") && (j == l.offset().top + l.height() + 100 || l.hasClass("float") || (j = l.offset().top + l.height() + 100), $(window).scrollTop() > j ? p() : (r && (r = !1), l.hasClass("float") && o()))
-		});
-		l.hover(function() {
-			l.hasClass("float") && !s && $(".move", l).show()
-		}, function() {
-			s || $(".move", l).hide()
-		});
-		$(l).delegate(".move", "mousedown", function(a) {
-			s = 1;
-			$("body,#bofqi").addClass("noselect");
-			$(this).addClass("on");
-			$('<div class="mmask"></div>').appendTo("body");
-			var e = a.pageX - $(this).offset().left,
-				c = a.pageY - $(this).offset().top;
-			$(document).bind("mousemove", function(d) {
-				var g = d.clientX - e,
-					f = d.clientY - c <= $(window).height() - l.height() ? d.clientY - c : $(window).height() - l.height(),
-					f = d.clientY - c >= $(window).height() - l.height() - 5 ? $(window).height() - l.height() - 5 : 0 >= d.clientY - c ? 0 : d.clientY - c;
-				l.css({
-					left: g,
-					top: f
-				})
-			})
-		});
-		$(l).delegate(".move", "mouseup", function(b) {
-			n()
-		});
-		$(l).delegate(".move .close", "click", function(b) {
-			r = !0;
-			o()
-		});
-		$(l).delegate(".move .gotop", "click", function(b) {
-			$("html,body").animate({
-				scrollTop: $(".viewbox").offset().top
-			}, 300)
-		})
-	}
-
 	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 		switch (request.command) {
 			case "update":
@@ -335,11 +245,10 @@
 			}
 		});
 	}
-
 	var prob = document.createElement("script");
 	prob.id = "page-prob";
-	prob.innerHTML = "$('.viewbox .alist').attr('length', window.nodedata.length);$('#page-prob').remove();";
-	document.head.appendChild(prob);
+	prob.innerHTML = "$('.player-wrapper .v-plist').attr('length', window.VideoPart.nodedata.length);$('#page-prob').remove();";
+	document.body.appendChild(prob);
 	intilize_style();
 	$("html").addClass("bilibili-helper");
 	var bili_reg = /\/video\/av([0-9]+)\/(?:index_([0-9]+)\.html)?.*?$/,
@@ -368,7 +277,7 @@
 			biliHelper.replaceEnabled = response.replace == "on";
 			biliHelper.originalPlayer = localStorage.getItem('bilimac_original_player') || $('#bofqi').html();
 			localStorage.removeItem('bilimac_original_player');
-			if (!$('.z').length) {
+			if (!$('.b-page-body').length) {
 				biliHelper.genPage = true;
 				biliHelper.redirectUrl = decodeURIComponent(__GetCookie('redirectUrl'));
 				if (biliHelper.redirectUrl && biliHelper.redirectUrl.indexOf('mimi.gg/') > -1) {
@@ -376,7 +285,7 @@
 					notifyCidHack();
 				}
 			}
-			if ($('.z .z-msg').length > 0 && $('.z .z-msg').text().indexOf('版权') > -1) {
+			if ($('.b-page-body .z-msg').length > 0 && $('.b-page-body .z-msg').text().indexOf('版权') > -1) {
 				biliHelper.genPage = true;
 				biliHelper.copyright = true;
 			}
@@ -480,7 +389,7 @@
 					});
 				}
 			};
-			biliHelper.helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"title\"><div class=\"icon\"></div>哔哩哔哩助手</span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div></div></div>");
+			biliHelper.helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"t\"><div class=\"icon\"></div><div class=\"t-right\"><span class=\"t-right-top middle\">助手</span><span class=\"t-right-bottom\">扩展菜单</span></div></span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a><a class=\"setting b-btn w\" href=\"" + chrome.extension.getURL("options.html") + "\" target=\"_blank\">设置</a></div></div></div>");
 			var blockInfo = biliHelper.helperBlock.find('.info');
 			biliHelper.mainBlock = blockInfo.find('.main');
 			biliHelper.mainBlock.infoSection = $('<div class="section video hidden"><h3>视频信息</h3><p><span></span><span>aid: ' + biliHelper.avid + '</span><span>pg: ' + biliHelper.page + '</span></p></div>');
@@ -508,19 +417,19 @@
 			biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
 			biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
 			biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
-			biliHelper.helperBlock.find('.title').click(function() {
-				blockInfo.toggleClass('active');
+			biliHelper.helperBlock.find('.t').click(function() {
+				biliHelper.helperBlock.toggleClass('active');
 			});
 			biliHelper.switcher.set('original');
 			if (!biliHelper.genPage) {
-				$('.player-wrapper .arc-tool-bar').append(biliHelper.helperBlock);
+				$('.player-wrapper .arc-toolbar').append(biliHelper.helperBlock);
 			}
 			$(document).ready(biliHelperFunc);
 		});
 	}
 
 	var biliHelperFunc = function() {
-		biliHelper.totalPage = $('.viewbox .alist').attr('length');
+		biliHelper.totalPage = $('.player-wrapper .v-plist').attr('length');
 		if (!isNaN(biliHelper.totalPage)) biliHelper.totalPage = parseInt(biliHelper.totalPage);
 		if (localStorage.getItem('bilimac_player_type') == 'force') {
 			biliHelper.switcher.set('bilimac');
@@ -566,7 +475,7 @@
 			}, function(response) {
 				var videoInfo = response.videoInfo,
 					error = false;
-				if (typeof videoInfo.cid == 'number' && $('.z .viewbox').length == 0) {
+				if (typeof videoInfo.cid == 'number' && $('.b-page-body .viewbox').length == 0) {
 					biliHelper.genPage = true;
 					biliHelper.copyright = true;
 				}
@@ -685,7 +594,7 @@
 					setTimeout(function() {
 						biliHelper.genPage = false;
 						intilize_style(function() {
-							$('.player-wrapper .arc-tool-bar').append(biliHelper.helperBlock);
+							$('.player-wrapper .arc-toolbar').append(biliHelper.helperBlock);
 						});
 						biliHelperFunc();
 					}, 500);

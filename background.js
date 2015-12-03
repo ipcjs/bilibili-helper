@@ -7,7 +7,7 @@ var notification = false,
 	localeAcquired = false,
 	localeTimeout = null,
 	secureAvailable = false,
-	videoPlaybackHosts = ["http://*.hdslb.com/*"];
+	videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"];
 
 URL.prototype.__defineGetter__('query', function() {
 	var parsed = this.search.substr(1).split('&');
@@ -526,6 +526,14 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 	urls: ["http://static.hdslb.com/play.swf"]
 }, ["blocking"]);
 
+chrome.webRequest.onBeforeRequest.addListener(function(details) {
+	return {
+		cancel: true
+	}
+}, {
+	urls: ["http://tajs.qq.com/stats*"]
+}, ["blocking"]);
+
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 	var query = new URL(details.url).query;
 	var ip = randomIP(cidHackType[query['cid']] == 2 ? 2 : 1);
@@ -542,7 +550,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 		requestHeaders: details.requestHeaders
 	};
 }, {
-	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*"]
+	urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*"]
 }, ['requestHeaders', 'blocking']);
 
 function receivedHeaderModifier(details) {
