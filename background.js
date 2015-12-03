@@ -6,8 +6,8 @@ var notification = false,
 	locale = 0,
 	localeAcquired = false,
 	localeTimeout = null,
-	cvTimeout = null,
 	secureAvailable = false,
+	updateNotified = false,
 	videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"];
 
 URL.prototype.__defineGetter__('query', function() {
@@ -38,6 +38,44 @@ function getFileData(url, callback) {
 		}
 	}
 	xmlhttp.send();
+}
+
+// http://stackoverflow.com/questions/6832596/how-to-compare-software-version-number-using-js-only-number/6832706#6832706
+
+function compareVersion(a, b) {
+	if (a === b) {
+		return 0;
+	}
+
+	var a_components = a.split(".");
+	var b_components = b.split(".");
+
+	var len = Math.min(a_components.length, b_components.length);
+
+	// loop while the components are equal
+	for (var i = 0; i < len; i++) {
+		// A bigger than B
+		if (parseInt(a_components[i]) > parseInt(b_components[i])) {
+			return 1;
+		}
+
+		// B bigger than A
+		if (parseInt(a_components[i]) < parseInt(b_components[i])) {
+			return -1;
+		}
+	}
+
+	// If one's a prefix of the other, the longer one is greater.
+	if (a_components.length > b_components.length) {
+		return 1;
+	}
+
+	if (a_components.length < b_components.length) {
+		return -1;
+	}
+
+	// Otherwise they are the same.
+	return 0;
 }
 
 function postFileData(url, data, callback) {
@@ -481,13 +519,14 @@ function getLocale() {
 }
 
 function checkVersion() {
-	getFileData("https://bilihelper.guguke.net/version.json", function(result) {
+	getFileData("https://bilihelper.guguke.net/version.json?v=" + encodeURIComponent(chrome.app.getDetails().version), function(result) {
 		try {
 			result = JSON.parse(result);
-			if (result.version > chrome.app.getDetails().version) {
+			if (compareVersion(result.version, chrome.app.getDetails().version) > 0) {
 				if (!localeAcquired || locale == 1 || new Date().getTime() - result.update_time > 259200000) {
+					updateNotified = true;
 					chrome.tabs.create({
-						url: chrome.extension.getURL("options.html?mod=new&data=" + encodeURI(JSON.stringify(result)))
+						url: chrome.extension.getURL("options.html?mod=new&data=" + encodeURIComponent(JSON.stringify(result)))
 					});
 				}
 			}
@@ -499,7 +538,7 @@ function checkVersion() {
 
 getLocale();
 
-if (getOption("version") < chrome.app.getDetails().version) {
+if (compareVersion(getOption("version"), chrome.app.getDetails().version) < 0) {
 	setOption("version", chrome.app.getDetails().version);
 	chrome.notifications.create('bh-update', {
 		type: 'basic',
@@ -519,7 +558,9 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 			checkDynamic();
 			return true;
 		case "checkVersion":
-			checkVersion();
+			if (!updateNotified) {
+				checkVersion();
+			}
 			return true;
 		case "getLocale":
 			if (!localeAcquired) {
