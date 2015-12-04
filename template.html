@@ -3,8 +3,8 @@
 	<head>
 		
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<meta name="redirect" content="%redirectUrl%">
-		<title>%title%_bilibili_哔哩哔哩弹幕视频网</title>
+		<meta name="redirect" content="__bl_redirectUrl">
+		<title>__bl_title_bilibili_哔哩哔哩弹幕视频网</title>
 		
 		<link rel="shortcut icon" href="http://static.hdslb.com/images/favicon.ico">
 		<link rel="search" type="application/opensearchdescription+xml" href="http://static.hdslb.com/opensearch.xml" title="哔哩哔哩" />
@@ -258,16 +258,16 @@
 				</div>
 			</div>
 		</div>
-		<script type="text/javascript" src="/widget/getHeader?typeid=%tid%&is_article=1"></script>
+		<script type="text/javascript" src="/widget/getHeader?typeid=__bl_tid&is_article=1"></script>
 		<div class="b-page-body">
 		<script>$('.header .num .m-i[data-tid=13]').addClass('on');</script>
 		<div class="main-inner">
 			<div id="heimu"></div>
     <div class="viewbox">
         <div class="info">
-        <div class="v-title"><h1 title="%title%">%title%</h1></div><div class="arcrank"></div>
+        <div class="v-title"><h1 title="__bl_title">__bl_title</h1></div><div class="arcrank"></div>
         <div class="tminfo" xmlns:v="http://rdf.data-vocabulary.org/#"><a href="/" rel="v:url" property="v:title">主页</a> &gt; <span typeof="v:Breadcrumb"><a href='/video/bangumi.html' rel="v:url" property="v:title">番剧</a></span> &gt; <span typeof="v:Breadcrumb"><a href="/video/bangumi-two-1.html" class="on" rel="v:url" property="v:title">连载动画</a></span> 
-                        <time itemprop="startDate" datetime="%created_at%"><i>%created_at%</i></time></div>
+                        <time itemprop="startDate" datetime="__bl_created_at"><i>__bl_created_at</i></time></div>
         <div class="v-title-info">
             <div class="v-title-line"><i class="b-icon b-icon-a b-icon-play" title="播放"></i><span id="dianji"></span></div>
             <div class="v-title-line"><i class="b-icon b-icon-a b-icon-danmaku" title="弹幕"></i><span id="dm_count"></span></div>
@@ -298,11 +298,11 @@
 <div class="player-wrapper">
 	<div class="main-inner">
         <div class="v-plist">
-            <div id="plist">%alist%</div>
+            <div id="plist">__bl_alist</div>
         </div>
     </div>
     <div class="scontent" id="bofqi">
-    	<div id='player_placeholder' class='player' style="-webkit-filter: blur(20px); overflow: hidden; visibility: visible; background: url(%pic%) 50% 50% / cover no-repeat;">
+    	<div id='player_placeholder' class='player' style="-webkit-filter: blur(20px); overflow: hidden; visibility: visible; background: url(__bl_pic) 50% 50% / cover no-repeat;">
     	</div>
     </div>
     <div class="arc-toolbar">
@@ -358,7 +358,7 @@
                 <div class="qr-code-box-inner">
                     <div class="qr-code" id="qr_code"></div>
                     <div class="qr-info">
-                        <div class="qr-info-head">%title%</div>
+                        <div class="qr-info-head">__bl_title</div>
                         <div class="qr-info-description" id="qr_description"></div>
                     </div>
                     <div class="qr-bottom">用<a href="http://app.bilibili.com/" target="_blank">哔哩哔哩客户端</a>或其他应用扫描二维码</div>
@@ -390,11 +390,11 @@
     <div class="bangumi-content v_large">
 	 	<div class="v_bgm_list">
         <div class="bangumi-head">
-            	<a class="t" href="/sp/%sp_title_uri%" target="_blank">%sp_title%</a>
+            	<a class="t" href="/sp/__bl_sp_title_uri" target="_blank">__bl_sp_title</a>
             	<ul id="v_bgm_list_tab" class="b-slt-tab"></ul>
         </div>
         <div class="info">
-            <div class="preview"><img src="%bangumi_cover%" /></div>
+            <div class="preview"><img src="__bl_bangumi_cover" /></div>
         </div>
         <div class="bangumi-info" id="bangumi_info">
         	<div class="info-head">
@@ -409,7 +409,7 @@
                         <div id="v_bgm_list_data"></div>
                     </div>
             </div>
-            <div class="info-content description" type="description"><div class="info-content-inner">%bangumi_desc%</div></div>
+            <div class="info-content description" type="description"><div class="info-content-inner">__bl_bangumi_desc</div></div>
             <div class="bangumi-order-btn">
                     <i class="b-icon b-icon-love"></i>
                     <span id="sp_dingyue"></span>
@@ -450,25 +450,25 @@
     <div class="v_large">
         <div class="v_info">
             <div class="s_tag">
-                <ul class="tag-list">%tag_list%</ul>
+                <ul class="tag-list">__bl_tag_list</ul>
                 <span id="newtag">
                 </span>
             </div>
                         <div class="intro">
-                        <div id="v_desc">%description%</div>
+                        <div id="v_desc">__bl_description</div>
             </div>
                     </div>
         <!--评论-->
         <div class="common">
         	<div class="b-head"><span class="b-head-t">评论</span><span class="b-head-t results"></span></div>
         	<div class="comm">
-                <img id="load_comment" src="http://static.hdslb.com/images/v2images/morecomm.gif" border="0" class="comm_open_btn" onClick="var fb = new bbFeedback('.comm', 'arc');fb.show(%avid%, 1);" style="cursor:pointer" />
+                <img id="load_comment" src="http://static.hdslb.com/images/v2images/morecomm.gif" border="0" class="comm_open_btn" onClick="var fb = new bbFeedback('.comm', 'arc');fb.show(__bl_avid, 1);" style="cursor:pointer" />
             </div>
         </div>
     </div>
     
 
-<div itemprop="video" itemscope itemtype="http://schema.org/VideoObject" style="display:none"><meta itemprop="name" property="media:title" content="%title%" /><span property="media:type" content="application/x-shockwave-flash" /><meta itemprop="thumbnailUrl" rel="media:thumbnail" content="%pic%" /><meta itemprop="embedURL" content="http://static.hdslb.com/miniloader.swf?aid=%avid%&page=%page%" /><meta itemprop="uploadDate" content="%created_at%" /></div>
+<div itemprop="video" itemscope itemtype="http://schema.org/VideoObject" style="display:none"><meta itemprop="name" property="media:title" content="__bl_title" /><span property="media:type" content="application/x-shockwave-flash" /><meta itemprop="thumbnailUrl" rel="media:thumbnail" content="__bl_pic" /><meta itemprop="embedURL" content="http://static.hdslb.com/miniloader.swf?aid=__bl_avid&page=__bl_page" /><meta itemprop="uploadDate" content="__bl_created_at" /></div>
 </div>
 		
 		<div class="footer">
@@ -569,13 +569,13 @@ $(function(){
 
 <script type="text/javascript" src="http://static.hdslb.com/tag/js/tag.core.js"></script>
 <script type="text/javascript" src="http://static.hdslb.com/tag/js/manage.tag.js"></script>
-<script src="http://interface.bilibili.com/count?aid=%avid%&mid=%mid%" type="text/javascript" language="javascript"></script>
+<script src="http://interface.bilibili.com/count?aid=__bl_avid&mid=__bl_mid" type="text/javascript" language="javascript"></script>
 <script async src="http://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <script language="javascript">
-var aid='%avid%';var typeid='%tid%';var mid='%mid%';var pageno = '%page%';var totalpage = '1';var wb_title='%title%';var wb_desc = '%title% 分享自#哔哩哔哩助手#播放页';var wb_info='%title% 分享自#哔哩哔哩助手#播放页';var wb_url='http://www.bilibili.com/video/av%avid%/';var wb_full_url='http://www.bilibili.com/video/av%avid%/';var wb_img='%pic%';
+var aid='__bl_avid';var typeid='__bl_tid';var mid='__bl_mid';var pageno = '__bl_page';var totalpage = '1';var wb_title='__bl_title';var wb_desc = '__bl_title 分享自#哔哩哔哩助手#播放页';var wb_info='__bl_title 分享自#哔哩哔哩助手#播放页';var wb_url='http://www.bilibili.com/video/av__bl_avid/';var wb_full_url='http://www.bilibili.com/video/av__bl_avid/';var wb_img='__bl_pic';
 
-var spid = parseInt('%spid%');
+var spid = __bl_spid;
 var isSpFav="0";
 var isSpAtt="0";
 
@@ -585,8 +585,8 @@ $(function(){
         upUid: mid,
         allowAdd: 1
     });
-    loadHTML5(parseInt(aid),parseInt(pageno));
-    kwtags(JSON.parse('%tags%'),[]);
+    loadHTML5(__bl_avid,__bl_page);
+    kwtags(__bl_tags);
     lrurl();  
     if (spid) {
     	if (window.AttentionList) {
@@ -599,7 +599,7 @@ $(function(){
     		}
     	}
     	showSpAdbtn();
-    	new bbBangumiSp(aid, spid, parseInt('%season_id%'), "%sp_title_uri%", pageno, 1);
+    	new bbBangumiSp(aid, spid, __bl_season_id, "__bl_sp_title_uri", pageno, 1);
     	showSpAdbtn(isSpFav);
     	VideoPart.collapse(pageno);
     	lrurl();

@@ -587,12 +587,12 @@
 						tagList += '<li><a class="tag-val" href="/tag/' + encodeURIComponent(tag) + '/" title="' + tag + '" target="_blank">' + tag + '</a></li>';
 					});
 					$.get(chrome.extension.getURL("template.html"), function(template) {
-						var page = template.replace(/%avid%/g, biliHelper.avid).replace(/%page%/g, biliHelper.page).replace(/%cid%/g, biliHelper.cid).replace(/%tid%/g, videoInfo.tid).replace(/%mid%/g, videoInfo.mid)
-							.replace(/%pic%/g, videoInfo.pic).replace(/%title%/g, parseSafe(videoInfo.title)).replace(/%sp_title%/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '')
-							.replace(/%sp_title_uri%/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '').replace(/%spid%/g, videoInfo.spid).replace(/%season_id%/g, videoInfo.season_id)
-							.replace(/%created_at%/g, videoInfo.created_at).replace(/%description%/g, parseSafe(videoInfo.description)).replace(/%redirectUrl%/g, biliHelper.redirectUrl)
-							.replace(/%tags%/g, JSON.stringify(videoInfo.tag.split(","))).replace(/%tag_list%/g, tagList).replace(/%alist%/g, alist).replace(/%bangumi_cover%/g, videoInfo.bangumi ? videoInfo.bangumi.cover : '')
-							.replace(/%bangumi_desc%/g, videoInfo.bangumi ? videoInfo.bangumi.desc : '');
+						var page = template.replace(/__bl_avid/g, biliHelper.avid).replace(/__bl_page/g, biliHelper.page).replace(/__bl_cid/g, biliHelper.cid).replace(/__bl_tid/g, videoInfo.tid).replace(/__bl_mid/g, videoInfo.mid)
+							.replace(/__bl_pic/g, videoInfo.pic).replace(/__bl_title/g, parseSafe(videoInfo.title)).replace(/__bl_sp_title_uri/g, videoInfo.sp_title ? encodeURIComponent(videoInfo.sp_title) : '')
+							.replace(/__bl_sp_title/g, videoInfo.sp_title ? parseSafe(videoInfo.sp_title) : '').replace(/__bl_spid/g, videoInfo.spid).replace(/__bl_season_id/g, videoInfo.season_id)
+							.replace(/__bl_created_at/g, videoInfo.created_at).replace(/__bl_description/g, parseSafe(videoInfo.description)).replace(/__bl_redirectUrl/g, biliHelper.redirectUrl)
+							.replace(/__bl_tags/g, JSON.stringify(videoInfo.tag.split(","))).replace(/__bl_tag_list/g, tagList).replace(/__bl_alist/g, alist).replace(/__bl_bangumi_cover/g, videoInfo.bangumi ? videoInfo.bangumi.cover : '')
+							.replace(/__bl_bangumi_desc/g, videoInfo.bangumi ? videoInfo.bangumi.desc : '');
 						document.open();
 						document.write(page);
 						document.close();
