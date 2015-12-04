@@ -198,9 +198,9 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 		return false;
 	}
 	var xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
+	xmlhttp.open("GET", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4) {
+		if (xmlhttp.readyState == 2) {
 			var url = xmlhttp.responseURL || avPlaybackLink.durl[0].url;
 			var videoHost = new URL(url).origin + '/*';
 			if (videoPlaybackHosts.indexOf(videoHost) < 0) {
@@ -209,6 +209,7 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 			}
 			avPlaybackLink.durl[0].url = url;
 			if (typeof callback == "function") callback(avPlaybackLink);
+			xmlhttp.abort();
 		}
 	}
 	xmlhttp.send();
