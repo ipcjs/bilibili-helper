@@ -114,18 +114,29 @@ $(document).ready(function() {
 		return String(year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second);
 	}
 
+	var updateInfo = JSON.parse(bkg_page.getOption('crx_update'));
+
+	if (updateInfo.version && bkg_page.compareVersion(updateInfo.version, chrome.app.getDetails().version) > 0) {
+		$('#update').show();
+		$('#update .version').text(updateInfo.version);
+		$('#update .date').text(formateDatetime(updateInfo.update_time/1000));
+		if (updateInfo.detail) {
+			$('#update .detail').text(updateInfo.detail);
+		} else {
+			$('#update .detail').parent().hide();
+		}
+		$('#update .url').attr('href', updateInfo.link);
+	}
+
 	switch(getQueryVariable('mod')) {
 		case 'update':
-			alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
-			window.history.replaceState({}, document.title, '/' );
+			alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
+			window.history.replaceState({}, document.title, '/options.html');
 			break;
 		case 'new':
-			var data = JSON.parse(getQueryVariable('data'));
-			$('#update').show();
-			$('#update .version').text(data.version);
-			$('#update .date').text(formateDatetime(data.update_time/1000));
-			$('#update .url').attr('href', data.link);
-			window.history.replaceState({}, document.title, '/' );
+			if (updateInfo.version) alert("发现新版哔哩哔哩助手: v" + updateInfo.version + "\n您当前使用的版本是: v" + chrome.app.getDetails().version + "\n如果您不能通过 Google 自动更新扩展或者在使用上遇到严重的问题，建议您参阅右侧信息，手动更新。\n\n作者：@啾咕咕www");
+			$('#about #update p').addClass('highlight');
+			window.history.replaceState({}, document.title, '/options.html');
 			break;
 	}
 });

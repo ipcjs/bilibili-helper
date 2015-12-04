@@ -523,10 +523,12 @@ function checkVersion() {
 		try {
 			result = JSON.parse(result);
 			if (compareVersion(result.version, chrome.app.getDetails().version) > 0) {
+				setOption("crx_update", JSON.stringify(result));
 				if (!localeAcquired || locale == 1 || new Date().getTime() - result.update_time > 259200000) {
 					updateNotified = true;
+
 					chrome.tabs.create({
-						url: chrome.extension.getURL("options.html?mod=new&data=" + encodeURIComponent(JSON.stringify(result)))
+						url: chrome.extension.getURL("options.html?mod=new")
 					});
 				}
 			}
@@ -637,10 +639,18 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
 }, ['requestHeaders', 'blocking']);
 
 function receivedHeaderModifier(details) {
-	details.responseHeaders.push({
-		name: "Access-Control-Allow-Origin",
-		value: "http://www.bilibili.com"
+	var hasCORS = false;
+	details.responseHeaders.forEach(function(v) {
+		if (v.name.toLowerCase() == "access-control-allow-origin") {
+			hasCORS = true;
+		}
 	});
+	if (!hasCORS) {
+		details.responseHeaders.push({
+			name: "Access-Control-Allow-Origin",
+			value: "http://www.bilibili.com"
+		});
+	}
 	return {
 		responseHeaders: details.responseHeaders
 	};

@@ -18,6 +18,7 @@ var defaultOptions = {
 	"rel_search": "without",
 	"updates": 0,
 	"version": 0,
+	"crx_update": "{}",
 	"playerConfig": "{\"volume\":1,\"opacity\":0.8,\"scale\":1,\"prop\":true}"
 };
 var cidCache = {};
