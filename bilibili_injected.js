@@ -512,9 +512,38 @@
 					biliHelper.cid = videoInfo.cid;
 					if (!biliHelper.genPage) {
 						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
-						biliHelper.mainBlock.commentSection = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av ' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>');
+						var commentDiv = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>'),
+							downloadFileName = getDownloadOptions('http://comment.bilibili.com/' + biliHelper.cid + '.xml',
+								getNiceSectionFilename(biliHelper.avid,
+									biliHelper.page, biliHelper.totalPage, 1, 1)).filename;
+						commentDiv.find('a[download]').data('download', downloadFileName).click(function(e) {
+							e.preventDefault();
+							chrome.extension.sendMessage({
+								command: 'requestForDownload',
+								url: $(e.target).attr('href'),
+								filename: $(e.target).data('download')
+							});
+						});
+						biliHelper.mainBlock.commentSection = commentDiv;
 						biliHelper.mainBlock.append(biliHelper.mainBlock.commentSection);
 						$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
+							var assData = '\ufeff' + generateASS(setPosition(parseXML('', response)), {
+									'title': getNiceSectionFilename(biliHelper.avid, biliHelper.page, biliHelper.totalPage, 1, 1),
+									'ori': location.href
+								}),
+								assBlob = new Blob([assData], {
+									type: 'application/octet-stream'
+								}),
+								assUrl = window.URL.createObjectURL(assBlob),
+								assBtn = $('<a download="av' + biliHelper.avid + 'p' + biliHelper.page + '.ass" class="b-btn w">下载 ASS 格式弹幕</a>').attr('href', assUrl).click(function(e) {
+									e.preventDefault();
+									chrome.extension.sendMessage({
+										command: 'requestForDownload',
+										url: $(e.target).attr('href'),
+										filename: $(e.target).data('download')
+									});
+								}).data('download', downloadFileName.replace('.xml', '.ass'));
+							biliHelper.mainBlock.commentSection.find('p').append(assBtn);
 							biliHelper.comments = response.getElementsByTagName('d');
 							var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
 							control.find('.b-input').keyup(function() {
@@ -688,9 +717,9 @@
 		// use MIME types and tentative file names returned by server. Not
 		// feasible at this stage.
 		var resFn = null,
-			fileExtMatch = url.match(/:\/\/.+\.(.*)\?/),
-			// arbitrarily default to "flv" for no better reason...
-			fileExt = (fileExtMatch && fileExtMatch[1]) || 'flv';
+			fileBaseName = url.split(/[\\/]/).pop().split('?')[0],
+			// arbitrarily default to "mp4" for no better reason...
+			fileExt = fileBaseName.match(/[.]/) ? fileBaseName.match(/[^.]+$/) : 'mp4';
 
 		// file extension auto conversion.
 		//

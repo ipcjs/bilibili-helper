@@ -197,10 +197,17 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 		if (typeof callback == "function") callback(avPlaybackLink);
 		return false;
 	}
-	var xmlhttp = new XMLHttpRequest();
-	xmlhttp.open("GET", avPlaybackLink.durl[0].url, true);
-	xmlhttp.onreadystatechange = function() {
+	var xmlhttp = new XMLHttpRequest(),
+		xmlChange = function() {
 		if (xmlhttp.readyState == 2) {
+			if (!retry && xmlhttp.status !== 200) {
+				retry = true;
+				xmlhttp.abort();
+				xmlhttp = new XMLHttpRequest();
+				xmlhttp.open("GET", avPlaybackLink.durl[0].url, true);
+				xmlhttp.onreadystatechange = xmlChange;
+				xmlhttp.send();
+			}
 			var url = xmlhttp.responseURL || avPlaybackLink.durl[0].url;
 			var videoHost = new URL(url).origin + '/*';
 			if (videoPlaybackHosts.indexOf(videoHost) < 0) {
@@ -211,7 +218,9 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 			if (typeof callback == "function") callback(avPlaybackLink);
 			xmlhttp.abort();
 		}
-	}
+	}, retry = false;
+	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
+	xmlhttp.onreadystatechange = xmlChange;
 	xmlhttp.send();
 }
 
@@ -443,8 +452,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "requestForDownload":
 			chrome.downloads.download({
+				saveAs: true,
 				url: request.url,
-				filename: "Bilibili Downloads/" + request.filename,
+				filename: "Bilibili/" + request.filename,
 				conflictAction: "prompt"
 			});
 			return true;
@@ -541,19 +551,27 @@ function checkVersion() {
 
 getLocale();
 
-if (compareVersion(getOption("version"), chrome.app.getDetails().version) < 0) {
+chrome.runtime.onInstalled.addListener(function(details) {
 	setOption("version", chrome.app.getDetails().version);
-	chrome.notifications.create('bh-update', {
-		type: 'basic',
-		iconUrl: "imgs/icon-256.png",
-		title: chrome.i18n.getMessage('noticeficationTitle'),
-		message: chrome.i18n.getMessage('noticeficationExtensionUpdate').replace('%v', chrome.app.getDetails().version),
-		isClickable: false,
-		buttons: [{
-			title: chrome.i18n.getMessage('noticeficationNewFeatures')
-		}]
-	}, function() {});
-}
+	if (details.reason == "install") {
+		chrome.tabs.create({
+			url: chrome.extension.getURL("options.html?mod=install")
+		});
+	} else if (details.reason == "update") {
+		if (compareVersion(getOption("version"), chrome.app.getDetails().version) < 0) {
+			chrome.notifications.create('bh-update', {
+				type: 'basic',
+				iconUrl: "imgs/icon-256.png",
+				title: chrome.i18n.getMessage('noticeficationTitle'),
+				message: chrome.i18n.getMessage('noticeficationExtensionUpdate').replace('%v', chrome.app.getDetails().version),
+				isClickable: false,
+				buttons: [{
+					title: chrome.i18n.getMessage('noticeficationNewFeatures')
+				}]
+			}, function() {});
+		}
+	}
+});
 
 chrome.alarms.onAlarm.addListener(function(alarm) {
 	switch (alarm.name) {
@@ -665,6 +683,18 @@ function resetVideoHostList() {
 		urls: videoPlaybackHosts
 	}, ["responseHeaders", "blocking"]);
 }
+
+/*function checkVigLink(tab) {
+	if (getOption("support") == "on" && tab.url.indexOf('http://') === 0 && !/(secure|password|bank|pay|login|register|local|127\.0\.0\.1)/.test(tab.url)) { // http only && exclude secure keywords
+		chrome.tabs.executeScript(tab.id, {
+			code: '!function(){if(document.querySelector("script.viglink"))return!1;var e=document.createElement("script");e.className="viglink",e.src="//cdn.viglink.com/api/vglnk.js",document.body.appendChild(e)}();window.vglnk={key:'ddf667f52d88dc2b3878f5f0c146a04d'};'
+		})
+	}
+}
+
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+	if (changeInfo.status == 'complete') checkVigLink(tab);
+});*/
 
 chrome.webRequest.onHeadersReceived.addListener(function(details) {
 	var headers = details.responseHeaders;

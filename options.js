@@ -8,6 +8,7 @@ $(document).ready(function() {
 	$("div[option=\"" + bkg_page.getOption("html5") + "\"].html5").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("contextmenu") + "\"].contextmenu").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("dynamic") + "\"].dynamic").addClass("on");
+	// $("div[option=\"" + bkg_page.getOption("support") + "\"].support").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("dlquality") + "\"].dlquality").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("rel_search") + "\"].rel_search").addClass("on");
@@ -28,6 +29,12 @@ $(document).ready(function() {
 		bkg_page.setOption("ad_opacity", $(this).val(), true);
 		updatepreview();
 	});
+	/*$('.support').click(function() {
+		if ($(this).hasClass('on')) return false;
+		$('.support').removeClass('on');
+		$(this).addClass('on');
+		bkg_page.setOption("support", $(this).attr("option"));
+	});*/
 	$('.dynamic').click(function() {
 		if ($(this).hasClass('on')) return false;
 		$('.dynamic').removeClass('on');
@@ -128,15 +135,56 @@ $(document).ready(function() {
 		$('#update .url').attr('href', updateInfo.link);
 	}
 
+	/*$('#support_qm').click(function() {
+		swal({
+			title: "通过 VigLink 支持扩展开发",
+			text: "通过在非 https 域网页参与合作商家的链接中加入合作信息等不影响原网页内容或安全性的方式, 为扩展项目获得盈利以支持解析服务器等相关开销. 您可以随时选择退出该项目.",
+			type: "info",
+			confirmButtonText: "参与",
+			cancelButtonText: "之后再说",
+			showCancelButton: true,
+			html: true
+		}, function(confirm) {
+			if (confirm) $('.button.support[option="on"]').click();
+		});
+	});*/
+
 	switch(getQueryVariable('mod')) {
 		case 'update':
-			alert("您已成功安装/升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！\n\n请根据您的需要在左侧更改扩展的选项。请参阅右侧有关扩展的相关介绍和说明。\n感谢您对哔哩哔哩助手项目的支持！\n\n作者：@啾咕咕www");
-			window.history.replaceState({}, document.title, '/options.html');
+			swal({
+				title: "升级成功",
+				text: "您已成功升级至哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！请参阅右侧有关扩展更新内容，再次感谢您对哔哩哔哩助手项目的支持。",
+				type: "success",
+				confirmButtonText: "好的",
+				html: true
+			});
+			break;
+		case 'install':
+			swal({
+				title: "安装成功",
+				text: "感谢您安装哔哩哔哩助手版本 v" + chrome.app.getDetails().version + "！请根据您的需要在左侧更改扩展的选项，右侧为有关扩展的相关介绍和说明。使用此扩展前请您阅读相关<a href=\"http://addons-privacy.com/\" target=\"_blank\">使用协议和隐私策略</a>。",
+				type: "success",
+				confirmButtonText: "同意并开始使用扩展",
+				html: true,
+				closeOnConfirm: false
+			}, function() {
+				//$('#support_qm').click();
+			});
 			break;
 		case 'new':
-			if (updateInfo.version) alert("发现新版哔哩哔哩助手: v" + updateInfo.version + "\n您当前使用的版本是: v" + chrome.app.getDetails().version + "\n如果您不能通过 Google 自动更新扩展或者在使用上遇到严重的问题，建议您参阅右侧信息，手动更新。\n\n作者：@啾咕咕www");
-			$('#about #update p').addClass('highlight');
-			window.history.replaceState({}, document.title, '/options.html');
+			if (updateInfo.version) {
+				swal({
+					title: "发现新版本",
+					text: "发现新版哔哩哔哩助手: v" + updateInfo.version + "<br/>您当前使用的版本是: v" + chrome.app.getDetails().version + "<br/>如果您不能通过 Google 自动更新扩展或者在使用上遇到严重的问题，建议您参阅右侧信息，手动更新。",
+					type: "warning",
+					confirmButtonText: "好的",
+					html: true
+				}, function() {
+					$('#about #update p').addClass('highlight');
+				});
+			}
 			break;
 	}
+
+	window.history.replaceState({}, document.title, '/options.html');
 });

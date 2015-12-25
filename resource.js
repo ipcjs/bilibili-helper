@@ -8,10 +8,11 @@ var ad_mode = ".scontent{padding:0px!important;height:0px}.player-wrapper,.v_inf
 var defaultOptions = {
 	"ad": "keep",
 	"ad_opacity": 0.1,
-	"dlquality": "flv",
+	"dlquality": "mp4",
 	"indexversion": "new",
 	"dynamic": "on",
 	"enabled": false,
+	"support": "off",
 	"replace": "on",
 	"html5": "off",
 	"contextmenu": "on",
