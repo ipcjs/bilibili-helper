@@ -220,12 +220,13 @@
 					}
 				}
 				if (biliHelper.downloadUrls.length > 1) {
-					var $bhDownAllLink = $('<a class="b-btn" rel="noreferrer"></a>').text('下载全部共 ' + biliHelper.downloadUrls.length + ' 个分段');
+					var $bhDownAllLink = $('<a class="b-btn"></a>').text('下载全部共 ' + biliHelper.downloadUrls.length + ' 个分段');
 					biliHelper.mainBlock.downloaderSection.find('p').append($bhDownAllLink);
 					$bhDownAllLink.click(function(e) {
 						biliHelper.mainBlock.downloaderSection.find('p .b-btn.w').click();
 					});
 				}
+				biliHelper.mainBlock.downloaderSection.find('p').append($('<a class="b-btn" target="_blank" href="https://bilibili.audio/' + biliHelper.avid + '/' + biliHelper.page + '"></a>').text('抽出并下载音频'));
 			}
 			if (biliHelper.playbackUrls && biliHelper.playbackUrls.length == 1) {
 				biliHelper.mainBlock.switcherSection.find('a[type="html5"]').removeClass('hidden');
@@ -512,16 +513,16 @@
 					biliHelper.cid = videoInfo.cid;
 					if (!biliHelper.genPage) {
 						biliHelper.mainBlock.infoSection.find('p').append($('<span>cid: ' + biliHelper.cid + '</span>'));
-						var commentDiv = $('<div class="section comment"><h3>弹幕下载</h3><p><a download="av' + biliHelper.cid + 'p' + biliHelper.page + '.xml" class="b-btn w" rel="noreferrer" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>'),
+						var commentDiv = $('<div class="section comment"><h3>弹幕下载</h3><p><a class="b-btn w" href="http://comment.bilibili.com/' + biliHelper.cid + '.xml">下载 XML 格式弹幕</a></p></div>'),
 							downloadFileName = getDownloadOptions('http://comment.bilibili.com/' + biliHelper.cid + '.xml',
 								getNiceSectionFilename(biliHelper.avid,
 									biliHelper.page, biliHelper.totalPage, 1, 1)).filename;
-						commentDiv.find('a[download]').data('download', downloadFileName).click(function(e) {
+						commentDiv.find('a').attr('download', downloadFileName).click(function(e) {
 							e.preventDefault();
 							chrome.extension.sendMessage({
 								command: 'requestForDownload',
 								url: $(e.target).attr('href'),
-								filename: $(e.target).data('download')
+								filename: $(e.target).attr('download')
 							});
 						});
 						biliHelper.mainBlock.commentSection = commentDiv;
@@ -535,14 +536,14 @@
 									type: 'application/octet-stream'
 								}),
 								assUrl = window.URL.createObjectURL(assBlob),
-								assBtn = $('<a download="av' + biliHelper.avid + 'p' + biliHelper.page + '.ass" class="b-btn w">下载 ASS 格式弹幕</a>').attr('href', assUrl).click(function(e) {
+								assBtn = $('<a class="b-btn w">下载 ASS 格式弹幕</a>').attr('download', downloadFileName.replace('.xml', '.ass')).attr('href', assUrl).click(function(e) {
 									e.preventDefault();
 									chrome.extension.sendMessage({
 										command: 'requestForDownload',
 										url: $(e.target).attr('href'),
-										filename: $(e.target).data('download')
+										filename: $(e.target).attr('download')
 									});
-								}).data('download', downloadFileName.replace('.xml', '.ass'));
+								});
 							biliHelper.mainBlock.commentSection.find('p').append(assBtn);
 							biliHelper.comments = response.getElementsByTagName('d');
 							var control = $('<div><input type="text" class="b-input" placeholder="根据关键词筛选弹幕"><div class="b-slt"><span class="txt">请选择需要查询的弹幕…</span><div class="b-slt-arrow"></div><ul class="list"><li disabled="disabled" class="disabled" selected="selected">请选择需要查询的弹幕</li></ul></div><span></span><span class="result">选择弹幕查看发送者…</span></div>');
@@ -577,19 +578,33 @@
 										control.find('.result').text('游客弹幕');
 										return;
 									}
-									$.get('http://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
+									var displayUserInfo = function(uid, data) {
+										control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
+										var s = document.createElement('script');
+										s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
+										document.body.appendChild(s);
+										s.parentNode.removeChild(s);
+									}
+									$.get('https://biliquery.typcn.com/api/user/hash/' + sender, function(data) {
 										if (!data || data.error != 0 || typeof data.data != 'object' || !data.data[0].id) {
 											control.find('.result').text('查询失败, 发送用户可能已被管理员删除.');
 										} else {
 											var uid = parseSafe(data.data[0].id);
 											control.find('.result').html('发送者 UID: <a href="http://space.bilibili.com/' + uid + '" target="_blank">' + uid + '</a>');
+											var data = sessionStorage.getItem('user/' + uid);
+											if (data) {
+												displayUserInfo(uid, JSON.parse(data));
+												return false;
+											}
 											$.getJSON('http://api.bilibili.cn/userinfo?mid=' + uid + '&type=json', function(data) {
 												if (data.code == 0) {
-													control.find('.result').html('发送者: <a href="http://space.bilibili.com/' + uid + '" target="_blank" card="' + parseSafe(data.name) + '">' + parseSafe(data.name) + '</a><div target="_blank" class="user-info-level l' + parseSafe(data.level_info.current_level) + '"></div>');
-													var s = document.createElement('script');
-													s.appendChild(document.createTextNode('UserCard.bind($("#bilibili_helper .query .result"));'));
-													document.body.appendChild(s);
-													s.parentNode.removeChild(s);
+													sessionStorage.setItem('user/' + uid, JSON.stringify({
+														name: data.name,
+														level_info: {
+															current_level: data.level_info.current_level
+														}
+													}));
+													displayUserInfo(uid, data);
 												}
 											});
 										}
