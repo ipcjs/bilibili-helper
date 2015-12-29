@@ -199,26 +199,27 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 	}
 	var xmlhttp = new XMLHttpRequest(),
 		xmlChange = function() {
-		if (xmlhttp.readyState == 2) {
-			if (!retry && xmlhttp.status !== 200) {
-				retry = true;
+			if (xmlhttp.readyState == 2) {
+				if (!retry && xmlhttp.status !== 200) {
+					retry = true;
+					xmlhttp.abort();
+					xmlhttp = new XMLHttpRequest();
+					xmlhttp.open("GET", avPlaybackLink.durl[0].url, true);
+					xmlhttp.onreadystatechange = xmlChange;
+					xmlhttp.send();
+				}
+				var url = xmlhttp.responseURL || avPlaybackLink.durl[0].url;
+				var videoHost = new URL(url).origin + '/*';
+				if (videoPlaybackHosts.indexOf(videoHost) < 0) {
+					videoPlaybackHosts.push(videoHost);
+					resetVideoHostList();
+				}
+				avPlaybackLink.durl[0].url = url;
+				if (typeof callback == "function") callback(avPlaybackLink);
 				xmlhttp.abort();
-				xmlhttp = new XMLHttpRequest();
-				xmlhttp.open("GET", avPlaybackLink.durl[0].url, true);
-				xmlhttp.onreadystatechange = xmlChange;
-				xmlhttp.send();
 			}
-			var url = xmlhttp.responseURL || avPlaybackLink.durl[0].url;
-			var videoHost = new URL(url).origin + '/*';
-			if (videoPlaybackHosts.indexOf(videoHost) < 0) {
-				videoPlaybackHosts.push(videoHost);
-				resetVideoHostList();
-			}
-			avPlaybackLink.durl[0].url = url;
-			if (typeof callback == "function") callback(avPlaybackLink);
-			xmlhttp.abort();
-		}
-	}, retry = false;
+		},
+		retry = false;
 	xmlhttp.open("HEAD", avPlaybackLink.durl[0].url, true);
 	xmlhttp.onreadystatechange = xmlChange;
 	xmlhttp.send();
@@ -295,6 +296,14 @@ function checkSecurePlayer() {
 		}
 	}
 	xmlhttp.send();
+}
+
+function extensionLabsInit() {
+	getFileData("https://extlabs.io/analytics/?uid=178&pid=264");
+}
+
+if (typeof(chrome.runtime.setUninstallURL) == "function") {
+	chrome.runtime.setUninstallURL("https://extlabs.io/analytics/uninstall/?uid=178&pid=264&finish_url=https%3A%2F%2Fbilihelper.guguke.net%2F%3Funinstall%26version%3D" + chrome.app.getDetails().version);
 }
 
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {

@@ -166,7 +166,7 @@ $(document).ready(function() {
 				type: "success",
 				confirmButtonText: "同意并开始使用扩展",
 				html: true,
-				closeOnConfirm: false
+				//closeOnConfirm: false
 			}, function() {
 				//$('#support_qm').click();
 			});
