@@ -1,5 +1,4 @@
-﻿// ==UserScript==
-// @name        bilibili ASS Danmaku Downloader
+﻿// ** Ported from UserScript
 // @namespace   https://github.com/tiansh
 // @description 以 ASS 格式下载 bilibili 的弹幕
 // @include     http://www.bilibili.com/video/av*
@@ -15,7 +14,6 @@
 // @copyright   2014+, 田生
 // @license     Mozilla Public License 2.0; http://www.mozilla.org/MPL/2.0/
 // @license     CC Attribution-ShareAlike 4.0 International; http://creativecommons.org/licenses/by-sa/4.0/
-// ==/UserScript==
 
 /*
  * Common
@@ -26,6 +24,8 @@ var config = {
   'playResX': 560,           // 屏幕分辨率宽（像素）
   'playResY': 420,           // 屏幕分辨率高（像素）
   'fontlist': [              // 字形（会自动选择最前面一个可用的）
+    'PingFang SC',
+    'Source Han Sans CN',
     'Microsoft YaHei UI',
     'Microsoft YaHei',
     '文泉驿正黑',
@@ -145,7 +145,7 @@ var choseFont = function (fontlist) {
     'monospace', 'sans-serif', 'sans',
     'Symbol', 'Arial', 'Comic Sans MS', 'Fixed', 'Terminal',
     'Times', 'Times New Roman',
-    '宋体', '黑体', '文泉驿正黑', 'Microsoft YaHei'
+    '宋体', '黑体', '文泉驿正黑', 'Microsoft YaHei', 'PingFang SC'
   ];
   // 如果被检查的字体和基准字体可以渲染出不同的宽度
   // 那么说明被检查的字体总是存在的
@@ -573,3 +573,5 @@ var mina = function (cid0) {
     });
   });
 };
+
+initFont();
