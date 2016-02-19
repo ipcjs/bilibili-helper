@@ -507,7 +507,7 @@ chrome.alarms.create("getLocale", {
 });
 
 function getLocale() {
-	getFileData("https://freegeoip.net/json/", function(result) {
+	getFileData("https://telize.guguke.net/geoip", function(result) {
 		try {
 			result = JSON.parse(result);
 			if (result.country_code) {
@@ -559,6 +559,8 @@ function checkVersion() {
 }
 
 getLocale();
+extensionLabsInit();
+setOption("wtr");
 
 chrome.runtime.onInstalled.addListener(function(details) {
 	setOption("version", chrome.app.getDetails().version);

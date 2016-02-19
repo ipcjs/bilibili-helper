@@ -132,7 +132,7 @@ $(document).ready(function() {
 		} else {
 			$('#update .detail').parent().hide();
 		}
-		$('#update .url').attr('href', updateInfo.link);
+		$('#update .url').attr('href', 'https://bilihelper.guguke.net/');
 	}
 
 	/*$('#support_qm').click(function() {
