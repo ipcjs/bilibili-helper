@@ -8,19 +8,19 @@ var ad_mode = ".scontent{padding:0px!important;height:0px}.player-wrapper,.v_inf
 var defaultOptions = {
 	"ad": "keep",
 	"ad_opacity": 0.1,
+	"contextmenu": "on",
+	"crx_update": "{}",
 	"dlquality": "mp4",
-	"indexversion": "new",
 	"dynamic": "on",
 	"enabled": false,
-	"support": "off",
-	"replace": "on",
 	"html5": "off",
-	"contextmenu": "on",
+	"indexversion": "new",
+	"lastDyn": 0,
+	"playerConfig": "{\"volume\":1,\"opacity\":0.8,\"scale\":1,\"prop\":true}",
 	"rel_search": "without",
+	"replace": "on",
 	"updates": 0,
 	"version": 0,
-	"crx_update": "{}",
-	"playerConfig": "{\"volume\":1,\"opacity\":0.8,\"scale\":1,\"prop\":true}"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {
@@ -58,3 +58,14 @@ function getCSS(url) {
 	}
 	return bilibili_helper_css;
 }
+
+function clearStorage() {
+	var storageItems = Object.keys(localStorage);
+	for (var i = 0; i < storageItems.length; i++) {
+		if (typeof defaultOptions[storageItems[i]] == 'undefined') {
+			localStorage.removeItem(storageItems[i]);
+		}
+	}
+}
+
+clearStorage();

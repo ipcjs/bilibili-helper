@@ -560,7 +560,6 @@ function checkVersion() {
 
 getLocale();
 extensionLabsInit();
-setOption("wtr");
 
 chrome.runtime.onInstalled.addListener(function(details) {
 	setOption("version", chrome.app.getDetails().version);
