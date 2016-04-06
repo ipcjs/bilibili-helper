@@ -1,0 +1,86 @@
+{
+  "extName": {
+    "message": "嗶哩嗶哩助手：bilibili.com 綜合輔助擴展",
+    "description": "Extension: Name"
+  },
+  "extShortName": {
+    "message": "嗶哩嗶哩助手",
+    "description": "Extension: Short Name"
+  },
+  "extDescription": {
+    "message": "嗶哩嗶哩彈幕網輔助擴展，可以替換HTML5播放器、繞過區域限制、推送通知並進行一些快捷操作",
+    "description": "Extension: Description"
+  },
+  "goBili": {
+    "message": "一鍵前往bilibili.com",
+    "description": "Popup Button: go_bili"
+  },
+  "adModeOff": {
+    "message": "進入點廣告模式",
+    "description": "Popup Button: ad_mode_off"
+  },
+  "adModeOn": {
+    "message": "離開點廣告模式",
+    "description": "Popup Button: ad_mode_on"
+  },
+  "goVideo": {
+    "message": "跳轉",
+    "description": "Popup Button: go_video"
+  },
+  "goDynamic": {
+    "message": "我的關注",
+    "description": "Popup Button: go_dynamic"
+  },
+  "goFavorite": {
+    "message": "我的收藏",
+    "description": "Popup Button: go_favorite"
+  },
+  "notLogged": {
+    "message": "(未登入)",
+    "description": "Popup Button: not_logged"
+  },
+  "nNewUpdate": {
+    "message": "(%n個更新)",
+    "description": "Popup Button: new_update"
+  },
+  "goSubscription": {
+    "message": "我訂閱的",
+    "description": "Popup Button: go_subscription"
+  },
+  "goOption": {
+    "message": "更多選項",
+    "description": "Popup Button: go_option"
+  },
+  "searchBili": {
+    "message": "用 嗶哩嗶哩 搜尋 “%s”",
+    "description": "Context Menu: Title"
+  },
+  "optionPage": {
+    "message": "選項頁",
+    "description": "Option Page: Title"
+  },
+  "noticeficationTitle": {
+    "message": "嗶哩嗶哩助手提醒",
+    "description": "Noticefication: Title"
+  },
+  "noticeficationExtensionUpdate": {
+    "message": "嗶哩嗶哩助手已自動更新到 v%v!",
+    "description": "Noticefication: Extension Update"
+  },
+  "noticeficationNewFeatures": {
+    "message": "查看更新內容",
+    "description": "Noticefication: New Features"
+  },
+  "followingUpdateMessage": {
+    "message": "您的嗶哩嗶哩關注更新了(%n 個新動態)!\n%uploader 剛剛發布了「%title」!",
+    "description": "Noticefication: Following Update Message"
+  },
+  "notificationWatch": {
+    "message": "觀看",
+    "description": "Noticefication: Watch"
+  },
+  "notificationShowAll": {
+    "message": "顯示全部",
+    "description": "Noticefication: Show All"
+  }
+}
