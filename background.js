@@ -149,42 +149,49 @@ function disableAll() {
 
 function checkDynamic() {
 	if (getOption("dynamic") == "on") {
-		getFileData("http://interface.bilibili.com/widget/getDynamic?pagesize=1", function(data) {
+		getFileData("http://api.bilibili.com/x/feed/unread/count?type=0", function(data) {
 			var dynamic = JSON.parse(data);
-			if (typeof dynamic === "object" && typeof dynamic.num === "number") {
-				var content = dynamic.list[0];
-				if (content.dyn_id != parseInt(getOption("lastDyn"))) {
-					if (notification) chrome.notifications.clear("bh-" + notification, function() {});
-					notification = (new Date()).getTime();
-					var message = chrome.i18n.getMessage('followingUpdateMessage')
-						.replace('%n', dynamic.num)
-						.replace('%uploader', content.dyn_type == 'SPECIAL_ADDBANGUMI' ? '搬' : content.uname)
-						.replace('%title', content.dyn_type == 'SPECIAL_ADDBANGUMI' ? content.stitle : content.title),
-						icon = content.cover ? content.cover : "imgs/icon-256.png";
-					notificationAvid["bh-" + notification] = content.aid;
-					chrome.notifications.create("bh-" + notification, {
-						type: "basic",
-						iconUrl: icon,
-						title: chrome.i18n.getMessage('noticeficationTitle'),
-						message: message,
-						isClickable: false,
-						buttons: [{
-							title: chrome.i18n.getMessage('notificationWatch')
-						}, {
-							title: chrome.i18n.getMessage('notificationShowAll')
-						}]
-					}, function() {});
-					setOption("lastDyn", content.dyn_id);
-				}
-				if (content.dyn_id == parseInt(getOption("lastDyn"))) {
+			if (typeof dynamic === "object" && dynamic.code == 0 && typeof dynamic.data === "object" &&
+				typeof dynamic.data.all === "number") {
+				if (dynamic.data.all > 0) {
+					setOption("updates", dynamic.data.all);
+					chrome.browserAction.setBadgeText({
+						text: getOption("updates")
+					});
+					getFileData("http://api.bilibili.com/x/feed/pull?ps=1&type=0", function(data) {
+						var feed = JSON.parse(data);
+						if (typeof feed === "object" && feed.code == 0 && typeof feed.data === "object" &&
+							typeof feed.data.feeds === "object" && feed.data.feeds.length > 0) {
+							var content = feed.data.feeds[0];
+							if (content.ctime != parseInt(getOption("lastDyn"))) {
+								if (notification) chrome.notifications.clear("bh-" + notification, function() {});
+								notification = content.ctime;
+								var message = chrome.i18n.getMessage('followingUpdateMessage')
+									.replace('%n', dynamic.data.all)
+									.replace('%uploader', content.source.uname)
+									.replace('%title', content.addition.title),
+									icon = content.addition.pic ? content.addition.pic : "imgs/icon-256.png";
+								notificationAvid["bh-" + notification] = content.addition.aid;
+								chrome.notifications.create("bh-" + notification, {
+									type: "basic",
+									iconUrl: icon,
+									title: chrome.i18n.getMessage('noticeficationTitle'),
+									message: message,
+									isClickable: false,
+									buttons: [{
+										title: chrome.i18n.getMessage('notificationWatch')
+									}, {
+										title: chrome.i18n.getMessage('notificationShowAll')
+									}]
+								}, function() {});
+								setOption("lastDyn", content.ctime);
+							}
+						}
+					});
+				} else {
 					setOption("updates", 0);
 					chrome.browserAction.setBadgeText({
 						text: ""
-					});
-				} else {
-					setOption("updates", dynamic.num);
-					chrome.browserAction.setBadgeText({
-						text: getOption("updates")
 					});
 				}
 			}
