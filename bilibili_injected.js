@@ -419,7 +419,7 @@
 			biliHelper.mainBlock.append(biliHelper.mainBlock.downloaderSection);
 			biliHelper.mainBlock.querySection = $('<div class="section query"><h3>弹幕发送者查询</h3><p><span></span>正在加载全部弹幕, 请稍等…</p></div>');
 			biliHelper.mainBlock.append(biliHelper.mainBlock.querySection);
-			biliHelper.helperBlock.find('.t').click(function() {
+			biliHelper.helperBlock.find('.t').hover(function() {
 				biliHelper.helperBlock.toggleClass('active');
 			});
 			biliHelper.switcher.set('original');
