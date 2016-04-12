@@ -1,0 +1,12 @@
+#quiz-control-panel{
+
+}
+#quiz-control-panel input{
+    width: 100%;
+    display: block;
+    border: 1px solid #aaa;
+    border-radius: 7px;
+    margin: 0 0 10px;
+    padding: 5px;
+    box-sizing: border-box;
+}
