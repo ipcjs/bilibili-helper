@@ -69,68 +69,53 @@
                 }
             }
         };
+
         Live.bet = {
+            autoMode: Live.get('autoMode') | false,
             times: 0,
             stop: false,
             rate: undefined,
             number: undefined,
-            interval:undefined,
+            interval: undefined,
             init: function () {
                 var bet = Live.bet.getBet();
-                console.log(bet);
                 if (bet.isBet == false) return;//none bet permission
                 if (bet.betStatus == false) return;//bet is not on
+                if (!parseInt(Live.bet.autoMode)) return;
 
                 /*create quiz helper*/
                 Live.bet.quiz_panel = $('#quiz-control-panel');
-                Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
-                //var quiz_helper_title = $('<h4 class="section-title"><span style="font-size: 13px;margin:30px 0 10px;display: block;">下注预约</span></h4>');
-                Live.bet.quiz_rate = $('<input class="rate" type="text"  placeholder="赔率" maxlength="3" required="required" />');
-                Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" maxlength="8" required="required" />');
-                Live.bet.quiz_btns = $('<div class="bet-buy-btns p-relative clear-float"></div>');
-                Live.bet.quiz_cancel_btn = $('<button class="cancel hide">取消下注</button>');
-                Live.bet.quiz_success_btn = $('<button class="success hide">下注成功 - 点击继续下注</button>');
-                Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="a" data-type="silver">填坑</button>');
-                Live.bet.quiz_red_btn = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
-                Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
-                Live.bet.quiz_helper.append(
-                    Live.bet.quiz_success_btn,
-                    Live.bet.quiz_cancel_btn,
-                    $('<div class="quiz_helper">').append($('<span class="rate_title">').text('赔率'), Live.bet.quiz_rate),
-                    $('<div class="quiz_helper">').append($('<span class="number_title">').text('   数额'), Live.bet.quiz_number),
-                    Live.bet.quiz_btns
-                )
-                Live.bet.quiz_panel.append(Live.bet.quiz_helper);
-
-                /*delete default button*/
-                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').hide();
+                if (Live.bet.quiz_panel.children('#quiz_helper').length == 0) {
+                    Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
+                    //var quiz_helper_title = $('<h4 class="section-title"><span style="font-size: 13px;margin:30px 0 10px;display: block;">下注预约</span></h4>');
+                    Live.bet.quiz_rate = $('<input class="rate" type="text"  placeholder="赔率" maxlength="3" required="required" />');
+                    Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" maxlength="8" required="required" />');
+                    Live.bet.quiz_btns = $('<div class="bet-buy-btns p-relative clear-float"></div>');
+                    Live.bet.quiz_cancel_btn = $('<button class="cancel hide" title="点击取消预约下注">取消下注</button>');
+                    Live.bet.quiz_success_btn = $('<button class="success hide">下注成功 - 点击继续下注</button>');
+                    Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="0" data-type="silver">填坑</button>');
+                    Live.bet.quiz_red_btn = $('<button class="bet-buy-btn pink float-right" data-target="1" data-type="silver">填坑</button>');
+                    Live.bet.description = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
+                    Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
+                    Live.bet.quiz_helper.append(
+                        Live.bet.quiz_success_btn,
+                        Live.bet.quiz_cancel_btn,
+                        $('<div class="quiz_helper">').append($('<span class="rate_title">').text('赔率'), Live.bet.quiz_rate),
+                        $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number),
+                        Live.bet.quiz_btns
+                    )
+                    Live.bet.quiz_panel.append(Live.bet.quiz_helper);
+                }
+                /*change default style*/
+                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').addClass('hide');
+                $('#quiz-control-panel .section-title').append(Live.bet.description);
+                Live.bet.quiz_toggle_btn.addClass('on');
+                Live.bet.quiz_helper.removeClass('hide');
 
                 /*add listener*/
-                Live.bet.quiz_blue_btn.click(function () {
-                    Live.bet.stop = false;
+                $(document).on('click', '#quiz_helper .bet-buy-btns button', function () {
+                    var which = $(this).attr('data-target');
 
-                    if (Live.bet.quiz_rate.val() == '') {
-                        Live.bet.quiz_rate.addClass('error');
-                        return;
-                    } else Live.bet.quiz_rate.removeClass('error');
-                    if (Live.bet.quiz_number.val() == '') {
-                        Live.bet.quiz_number.addClass('error');
-                        return;
-                    } else Live.bet.quiz_number.removeClass('error');
-
-                    Live.bet.rate = parseFloat(Live.bet.quiz_rate.val());
-                    if (Live.bet.rate.length > 3) Live.bet.rate = Live.bet.rate.toFixed(1);
-                    Live.bet.number = parseFloat(Live.bet.quiz_number.val());
-
-                    Live.bet.which = 0;
-
-                    Live.bet.quiz_cancel_btn.text('取消下注 ' + Live.bet.rate + ' / ' + Live.bet.number + ' 买蓝');
-
-                    Live.bet.startInterval();
-                    Live.bet.quiz_helper.children('input,div').addClass('hide');
-                    Live.bet.quiz_helper.children('.cancel').removeClass('hide');
-                });
-                Live.bet.quiz_red_btn.click(function () {
                     Live.bet.stop = false;
                     if (Live.bet.quiz_rate.val() == '') {
                         Live.bet.quiz_rate.addClass('error');
@@ -145,9 +130,9 @@
                     if (Live.bet.rate.length > 3) Live.bet.rate = Live.bet.rate.toFixed(1);
                     Live.bet.number = parseFloat(Live.bet.quiz_number.val());
 
-                    Live.bet.which = 1;
+                    Live.bet.which = parseInt(which);
 
-                    Live.bet.quiz_cancel_btn.text('取消下注 ' + Live.bet.rate + ' / ' + Live.bet.number + ' 买红');
+                    Live.bet.quiz_cancel_btn.text('返' + Live.bet.rate + ' 买' + (Live.bet.which ? '红 ' : '蓝 ') + Live.bet.number + '注');
 
                     Live.bet.startInterval();
                     Live.bet.quiz_helper.children('input,div').addClass('hide');
@@ -160,7 +145,7 @@
                 });
                 Live.bet.quiz_success_btn.click(function () {
                     Live.bet.quiz_cancel_btn.click();
-                })
+                });
             },
             getBet: function () {
                 var bet =
@@ -174,7 +159,7 @@
                 return JSON.parse(bet).data;
             },
             startInterval: function () {
-               Live.bet.interval = setInterval(function () {
+                Live.bet.interval = setInterval(function () {
                     var bet = Live.bet.getBet();
                     var bankerId = Live.bet.which ? bet.silver.b.id : bet.silver.a.id;
                     var times = Live.bet.which ? bet.silver.b.times : bet.silver.a.times;
@@ -200,8 +185,20 @@
                 }, 2000);
             }
         }
-        Live.bet.init();
-        Live.bet.getBet();
+        Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
+        $('#quiz-control-panel .section-title').append(Live.bet.quiz_toggle_btn);
+        Live.bet.quiz_toggle_btn.click(function () {
+            if ($(this).hasClass('on')) {
+                $(this).removeClass('on');
+                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
+                $('#quiz-control-panel .section-title').children('.description').remove();
+                Live.bet.quiz_helper.addClass('hide');
+                Live.set('autoMode', 0);
+            } else {
+                Live.bet.init();
+                Live.set('autoMode', 1);
+            }
+        });
         setInterval(function () {
             Live.doSign.sign();
         }, 300000); //doSign per 5 min
