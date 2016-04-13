@@ -92,13 +92,12 @@
                 }//none bet permission
                 if (bet.betStatus == false) {
                     if (Live.get('autoMode' + Live.bet.getRoomId()) == 1) {
-                        Live.bet.disable();
+                        Live.bet.hide();
                         Live.set('autoMode' + Live.bet.getRoomId(), 0);
                     }
                     return false;
                 }//bet is not on
                 return true;
-                //Live.set('autoMode'+Live.bet.getRoomId(), 1);
             },
             init: function () {
                 if (!parseInt(Live.get('autoMode' + Live.bet.getRoomId()))) return;
@@ -173,7 +172,6 @@
             },
             getBet: function () {
                 var roomId = Live.bet.getRoomId();
-                //console.log(roomId);
                 var bet =
                     $.ajax({
                         url: 'http://live.bilibili.com/bet/getRoomBet',
@@ -189,11 +187,6 @@
                 var w = Live.get('which' + Live.bet.getRoomId()) == '"a"' ? 'a' : 'b';
                 var bankerId = bet.silver[w].id;
                 var rate = bet.silver[w].times;
-                //console.log('Times:', rate, w, Live.get('which' + Live.bet.getRoomId()));
-                if (!rate) {
-                    Live.bet.error('无法买入');
-                    return;
-                }
                 if (Live.bet.stop) clearInterval(Live.get('setBet' + Live.bet.getRoomId()));
                 if (rate >= Live.get('rate' + Live.bet.getRoomId())) {
                     var number = Live.get('number' + Live.bet.getRoomId());
@@ -227,7 +220,6 @@
                 Live.set('setBet' + Live.bet.getRoomId(), setInterval(function () {
                     Live.bet.do();
                 }, 2000));
-                //console.log(Live.get('setBet' + Live.bet.getRoomId()));
 
             },
             success: function () {
@@ -237,7 +229,6 @@
                     Live.bet.quiz_success_btn.removeClass('hide');
                 }
                 clearInterval(Live.get('setBet' + Live.bet.getRoomId()));
-                Live.bet.check();
             },
             error: function (msg) {
                 Live.bet.stop = true;
@@ -247,7 +238,6 @@
                     Live.bet.quiz_cancel_btn.text(msg);
                 }
                 clearInterval(Live.get('setBet' + Live.bet.getRoomId()));
-                //Live.bet.check();
             },
             cancel: function (check) {
                 Live.bet.stop = true;
@@ -257,7 +247,14 @@
                     Live.bet.quiz_success_btn.addClass('hide');
                     clearInterval(Live.get('setBet' + Live.bet.getRoomId()));
                 }
-                //if (check)Live.bet.check();
+                if (check)Live.bet.check();
+            },
+            hide:function(){
+                Live.bet.quiz_toggle_btn.removeClass('on');
+                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
+                $('#quiz-control-panel .section-title').children('.description').remove();
+                if (Live.bet.quiz_helper != undefined)
+                    Live.bet.quiz_helper.addClass('hide');
             },
             disable: function () {
                 Live.bet.cancel(false);
