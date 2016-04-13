@@ -1,6 +1,9 @@
 /**
  * Created by Ruo on 4/12/2016.
  */
+d=document.createElement('script');
+d.innerHTML='window.localStorage.live'+location.pathname.substr(1)+'=ROOMID;';
+document.body.appendChild(d);
 (function () {
     if (location.hostname == 'live.bilibili.com') {
         var Live = {};
@@ -77,13 +80,20 @@
             rate: undefined,
             number: undefined,
             interval: undefined,
-            checkBetStatus:function(){
+            checkBetStatus: function () {
                 var bet = Live.bet.getBet();
-                if (bet.isBet == false) return false;//none bet permission
-                if (bet.betStatus == false) return false;//bet is not on
+                if (bet.isBet == false){
+                    Live.set('autoMode', 0);
+                    return;
+                }//none bet permission
+                if (bet.betStatus == false) {
+                    Live.set('autoMode', 0);
+                    return;
+                }//bet is not on
+                Live.set('autoMode', 1);
             },
             init: function () {
-                if (!parseInt(Live.bet.autoMode)) return;
+                if (!parseInt(Live.get('autoMode'))) return;
 
                 /*create quiz helper*/
                 Live.bet.quiz_panel = $('#quiz-control-panel');
@@ -150,13 +160,14 @@
                 });
             },
             getBet: function () {
+
                 var bet =
                     $.ajax({
                         url: 'http://live.bilibili.com/bet/getRoomBet',
                         type: 'POST',
                         dataType: 'json',
                         async: false,
-                        data: {roomid: location.pathname.substr(1)}
+                        data: {roomid: window.localStorage['live'+location.pathname.substr(1)]}
                     }).responseText;
                 return JSON.parse(bet).data;
             },
@@ -191,23 +202,27 @@
         $('#quiz-control-panel .section-title').append(Live.bet.quiz_toggle_btn);
         Live.bet.quiz_toggle_btn.click(function () {
             if ($(this).hasClass('on')) {
-                $(this).removeClass('on');
-                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
-                $('#quiz-control-panel .section-title').children('.description').remove();
-                Live.bet.quiz_helper.addClass('hide');
-                Live.set('autoMode', 0);
+                disable_bet();
             } else {
-                if(Live.bet.checkBetStatus()==false) Live.set('autoMode', 0);
-                else {
-                    Live.set('autoMode', 1);
-                    Live.bet.init();
-                }
+                Live.bet.checkBetStatus();
+                Live.bet.init();
             }
         });
+        function disable_bet(){
+            Live.bet.quiz_toggle_btn.removeClass('on');
+            $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
+            $('#quiz-control-panel .section-title').children('.description').remove();
+            Live.bet.quiz_helper.addClass('hide');
+            Live.set('autoMode', 0);
+        };
         setInterval(function () {
             Live.doSign.sign();
         }, 300000); //doSign per 5 min
-
+        setInterval(function(){
+            if($('#quiz-control-panel .quiz-control-panel').length==0) disable_bet();
+        },1000);
+        Live.bet.checkBetStatus();
+        Live.bet.init();
         Notification.requestPermission();
     }
 })();
