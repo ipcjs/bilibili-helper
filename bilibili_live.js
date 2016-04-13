@@ -77,10 +77,12 @@
             rate: undefined,
             number: undefined,
             interval: undefined,
-            init: function () {
+            checkBetStatus:function(){
                 var bet = Live.bet.getBet();
-                if (bet.isBet == false) return;//none bet permission
-                if (bet.betStatus == false) return;//bet is not on
+                if (bet.isBet == false) return false;//none bet permission
+                if (bet.betStatus == false) return false;//bet is not on
+            },
+            init: function () {
                 if (!parseInt(Live.bet.autoMode)) return;
 
                 /*create quiz helper*/
@@ -195,8 +197,11 @@
                 Live.bet.quiz_helper.addClass('hide');
                 Live.set('autoMode', 0);
             } else {
-                Live.bet.init();
-                Live.set('autoMode', 1);
+                if(Live.bet.checkBetStatus()==false) Live.set('autoMode', 0);
+                else {
+                    Live.set('autoMode', 1);
+                    Live.bet.init();
+                }
             }
         });
         setInterval(function () {
