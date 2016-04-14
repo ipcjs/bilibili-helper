@@ -170,7 +170,7 @@
                 Live.bet.quiz_helper.removeClass('hide');
 
                 /*add listener*/
-                $(Live.bet.quiz_blue_btn,Live.bet.quiz_red_btn).unbind('click').click(function () {
+                $('#quiz_helper .bet-buy-btns button').unbind('click').click(function () {
                     var which = $(this).attr('data-target');
 
                     /*rate*/
