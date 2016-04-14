@@ -10,17 +10,20 @@
         var Live = {};
         Live.set = function (k, v) {
             if (!window.localStorage) return;
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
             var l = JSON.parse(window.localStorage.live);
             l[k] = JSON.stringify(v);
             window.localStorage.live = JSON.stringify(l);
         };
         Live.get = function (k) {
             if (!window.localStorage) return;
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
             var l = JSON.parse(window.localStorage.live);
             return l[k];
         };
         Live.del = function (k) {
             if (!window.localStorage) return;
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
             var l = JSON.parse(window.localStorage.live);
             delete l[k];
             window.localStorage.live = JSON.stringify(l);
