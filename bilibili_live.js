@@ -10,17 +10,25 @@
         var Live = {};
         Live.set = function (k, v) {
             if (!window.localStorage) return;
+
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({});
             var l = JSON.parse(window.localStorage.live);
             l[k] = JSON.stringify(v);
             window.localStorage.live = JSON.stringify(l);
         };
         Live.get = function (k) {
             if (!window.localStorage) return;
+
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({});
+
             var l = JSON.parse(window.localStorage.live);
             return l[k];
         };
         Live.del = function (k) {
             if (!window.localStorage) return;
+
+            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({});
+
             var l = JSON.parse(window.localStorage.live);
             delete l[k];
             window.localStorage.live = JSON.stringify(l);
@@ -59,8 +67,8 @@
         Live.set('checkInterval' + Live.getRoomId(), undefined);
         Live.set('setBet' + Live.getRoomId(), undefined);
         Live.set('login', false);
-        Live.initUserInfo();
 
+        Live.initUserInfo();
 
         Live.doSign = {
             sign: function () {
@@ -284,6 +292,7 @@
                 Live.bet.do();
                 Live.set('setBet' + Live.getRoomId(),setInterval(Live.bet.do, 2000));
 
+                Live.bet.check();
             },
             success: function () {
                 Live.bet.stop = true;
@@ -354,19 +363,16 @@
             Live.bet.quiz_toggle_btn.click(function () {
                 if ($(this).hasClass('on')) {
                     Live.bet.disable();
-                } else if (Live.bet.check()) {
+                } else if (Live.bet.checkBetStatus()) {
                     Live.set('autoMode' + Live.getRoomId(), 1);
                     Live.bet.init();
                 }
             });
             setInterval(Live.doSign.sign, 300000); //doSign per 5 min
-            if (Live.get('autoMode' + Live.getRoomId()) == 1)
-                Live.bet.check();
+
 
             Live.bet.init();
             Notification.requestPermission();
         }
-
-
     }
 })();
