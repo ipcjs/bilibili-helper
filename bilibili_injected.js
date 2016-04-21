@@ -762,13 +762,13 @@
 (function(){
 	if(location.href=="http://www.bilibili.com/video/bgm_calendar.html"){
 		var l = $('#bangumi');
-		var d= new Date().getDay();
+		var d= new Date().getDay()-1;
 		for(var i = 0;i<7;++i){
-			if(l.children()[0].getAttribute('weekday')!=d-1){
+			if(l.children()[0].getAttribute('weekday')!=d){
 				var c = l.children()[0];
 				l.children()[0].remove();
 				l.append(c);
-			}
+			}else break;
 		}
 	}
 })();

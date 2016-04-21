@@ -5,89 +5,87 @@
 (function () {
     if (location.hostname == 'live.bilibili.com') {
         d = document.createElement('script');
-        d.innerHTML = 'window.localStorage.live' + location.pathname.substr(1) + '=ROOMID;';
+        d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);}';
         document.body.appendChild(d);
         var Live = {};
-        Live.set = function (k, v) {
-            if (!window.localStorage) return;
+        Live.set = function (n, k, v) {
+            if (!window.localStorage || !n) return;
 
-            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
-
-            var l = JSON.parse(window.localStorage.live);
-            l[k] = JSON.stringify(v);
-            window.localStorage.live = JSON.stringify(l);
+            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
+            var l = JSON.parse(window.localStorage[n]);
+            if (!k) window.localStorage[n] = JSON.stringify(v);
+            else {
+                l[k] = JSON.stringify(v);
+                window.localStorage[n] = JSON.stringify(l);
+            }
         };
-        Live.get = function (k) {
-            if (!window.localStorage) return;
+        Live.get = function (n, k) {
+            if (!window.localStorage || !n) return;
 
-
-            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
-
-            var l = JSON.parse(window.localStorage.live);
+            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
+            var l = JSON.parse(window.localStorage[n]);
+            if (!k) return l;
             return l[k];
         };
-        Live.del = function (k) {
-            if (!window.localStorage) return;
+        Live.del = function (n, k) {
+            if (!window.localStorage || !n || !k) return;
 
-            if(window.localStorage.live==undefined)window.localStorage.live=JSON.stringify({})
+            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
 
-            var l = JSON.parse(window.localStorage.live);
+            var l = JSON.parse(window.localStorage[n]);
             delete l[k];
-            window.localStorage.live = JSON.stringify(l);
+            window.localStorage[n] = JSON.stringify(l);
         };
         Live.getUser = function () {
-            var user = $.ajax({
+            return $.ajax({
                 url: 'http://live.bilibili.com/user/getuserinfo',
                 type: 'GET',
                 dataType: 'json',
-                async: false
-            }).responseText;
-            user = JSON.parse(user);
-
-            if (user.code == 'REPONSE_OK')return user.data;
-            else return false;
+                //async: false
+            }).promise();
         };
         Live.initUserInfo = function () {
-            var user = Live.getUser();
-            if (user == false) {
-                //Live.bet.error('未登录');
-                return false;
-            } else {
-                Live.set('username', user.uname);
-                Live.set('userLevel', user.user_level);
-                Live.set('silver', user.silver);
-                Live.set('gold', user.gold);
-                Live.set('face', user.face);
-                Live.set('login', true);
+            var pro = Live.getUser();
+            return pro.done(function (user) {
+                if (user.code == 'REPONSE_OK') {
+                    user = user.data;
+                    Live.set('helper_userInfo', 'username', user.uname);
+                    Live.set('helper_userInfo', 'userLevel', user.user_level);
+                    Live.set('helper_userInfo', 'silver', user.silver);
+                    Live.set('helper_userInfo', 'gold', user.gold);
+                    Live.set('helper_userInfo', 'face', user.face);
+                    Live.set('helper_userInfo', 'login', true);
 
-                return true;
-            }
+                    return true;
+                } else return true;
+            });
+
         };
         Live.getRoomId = function () {
-            return window.localStorage['live' + location.pathname.substr(1)];
+            return Live.get('helper_live_roomId', location.pathname.substr(1));
         }
-        Live.set('checkInterval' + Live.getRoomId(), undefined);
-        Live.set('setBet' + Live.getRoomId(), undefined);
-        Live.set('login', false);
+        Live.set('helper_live_check', Live.getRoomId(), null);
+        Live.set('helper_live_bet', Live.getRoomId(), null);
+        Live.set('helper_userInfo', 'login', false);
 
         Live.initUserInfo();
 
         Live.doSign = {
             sign: function () {
                 /*check login*/
-                if (!Live.get('login')) return;
+                if (!Live.get('helper_userInfo', 'login')) return;
 
                 var date = new Date().getDate();
-                if (Live.get('today') == false || Live.get('signDate') != date) {
+                if (Live.get('helper_doSign', 'today') == false || Live.get('helper_doSign', 'signDate') != date) {
                     $.get("/sign/doSign", function (data) {
                         var e = JSON.parse(data);
                         if (e.code == 0) {
                             var msg = new Notification(eval("'" + e.msg + "'"), {
-                                body: "获得" + e.data.silver + "瓜子~",
+                                body: "签到成功",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
-                            Live.set('today', true);
-                            Live.set('signDate', date);
+                            Live.set('helper_doSign', 'today', true);
+                            Live.set('helper_doSign', 'signDate', date);
                             setTimeout(function () {
                                 msg.close();
                             }, 1000);
@@ -96,8 +94,8 @@
                                 body: "不能重复签到",
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-1.gif"
                             });
-                            Live.set('today', true);
-                            Live.set('signDate', date);
+                            Live.set('helper_doSign', 'today', true);
+                            Live.set('helper_doSign', 'signDate', date);
                             setTimeout(function () {
                                 msg.close()
                             }, 5000);
@@ -119,36 +117,45 @@
         Live.bet = {
             times: 0,
             stop: false,
-            checkBetStatus: function () {
-                /*check login*/
-                var bet = Live.bet.getBet();
-                if (!Live.get('login') && bet.betStatus == false) {
-                    Live.bet.cancelCheck();
-                    return;
-                }
+            checkBetStatus: function (callback) {
+                /*check bet*/
+                var r = false;
+                Live.bet.getBet().done(function (bet) {
+                    bet = bet.data;
+                    if (!Live.get('helper_userInfo', 'login') && bet.betStatus == false) {
+                        Live.bet.cancelCheck();
+                        return
+                    }
 
+                    if (!Live.bet.canBet(bet)) return;//none bet permission
+                    if (!Live.bet.betOn(bet)) return;//bet is not on
+                    if (typeof callback == 'function') callback();
+                });
+            },
+            canBet: function (bet) {
                 if (bet.isBet == false) {
-                    if (Live.get('autoMode' + Live.getRoomId()) == 1) {
+                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.disable();
-                        Live.set('autoMode' + Live.getRoomId(), 0);
+                        Live.set('helper_live_autoMode', Live.getRoomId(), 0);
                     }
                     return false;
-                }//none bet permission
+                } else return true;
+            },
+            betOn: function (bet) {
                 if (bet.betStatus == false) {
-                    if (Live.get('autoMode' + Live.getRoomId()) == 1) {
+                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.hide();
-                        Live.set('autoMode' + Live.getRoomId(), 0);
+                        Live.set('helper_live_autoMode', Live.getRoomId(), 0);
                     }
                     return false;
-                }//bet is not on
-                return true;
+                } else return true;
             },
             init: function () {
                 /*check login*/
-                if (!Live.get('login')) return;
+                if (!Live.get('helper_userInfo', 'login')) return;
 
                 /*auto mode*/
-                if (!parseInt(Live.get('autoMode' + Live.getRoomId()))) return;
+                if (!parseInt(Live.get('helper_live_autoMode', Live.getRoomId()))) return;
 
                 /*create quiz helper DOM*/
                 Live.bet.quiz_panel = $('#quiz-control-panel');
@@ -164,6 +171,7 @@
                     Live.bet.quiz_red_btn = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
                     Live.bet.description = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
                     Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
+                    Live.bet.version = $("<div class=\"version\">哔哩哔哩助手 " + chrome.runtime.getManifest().version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div>");
                     Live.bet.quiz_helper.append(
                         Live.bet.quiz_success_btn,
                         Live.bet.quiz_cancel_btn,
@@ -171,13 +179,15 @@
                         $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number),
                         Live.bet.quiz_btns
                     )
-                    Live.bet.quiz_panel.append(Live.bet.quiz_helper);
+                    Live.bet.quiz_panel.append(Live.bet.quiz_helper,Live.bet.version);
                 }
                 /*change default style*/
                 $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').addClass('hide');
                 $('#quiz-control-panel .section-title').append(Live.bet.description);
                 Live.bet.quiz_toggle_btn.addClass('on');
                 Live.bet.quiz_helper.removeClass('hide');
+
+                Live.bet.check();
 
                 /*add listener*/
                 $('#quiz_helper .bet-buy-btns button').unbind('click').click(function () {
@@ -186,13 +196,13 @@
                     /*rate*/
                     var rate = parseFloat(Live.bet.quiz_rate.val());
                     if (rate.length > 3) rate = rate.toFixed(1);
-                    Live.set('rate' + Live.getRoomId(), rate)
+                    Live.set('helper_live_rate', Live.getRoomId(), rate)
 
                     /*number*/
-                    var number = parseFloat(Live.bet.quiz_number.val());
-                    Live.set('number' + Live.getRoomId(), number)
+                    var number = parseInt(Live.bet.quiz_number.val());
+                    Live.set('helper_live_number', Live.getRoomId(), number)
 
-                    Live.set('which' + Live.getRoomId(), which)
+                    Live.set('helper_live_which', Live.getRoomId(), which)
 
                     Live.bet.quiz_cancel_btn.text('返' + rate + ' 买' + (which == 'a' ? '蓝 ' : '红 ') + number + '注');
 
@@ -203,19 +213,20 @@
                 });
                 Live.bet.quiz_number.keyup(function () {
                     var v = $(this).val();
-                    var silver = Live.get('silver');
-                    if (v != '' && isNaN(v)) {
+                    var silver = parseInt(Live.get('helper_userInfo', 'silver'));
+                    while (v != '' && isNaN(v)) {
                         $(this).val(v.substr(0, v.length - 1));
-                        return;
+                        v = $(this).val();
                     }
-                    if (v > silver)
+                    if (parseInt(v) > silver) {
                         $(this).val(silver);
+                    }
                 })
                 Live.bet.quiz_rate.keyup(function () {
                     var v = $(this).val();
-                    if (v != '' && isNaN(v)) {
+                    while (v != '' && isNaN(v)) {
                         $(this).val(v.substr(0, v.length - 1));
-                        return;
+                        v = $(this).val();
                     }
                 });
                 Live.bet.quiz_cancel_btn.click(function () {
@@ -227,54 +238,54 @@
             },
             getBet: function () {
                 var roomId = Live.getRoomId();
-                var bet =
-                    $.ajax({
-                        url: 'http://live.bilibili.com/bet/getRoomBet',
-                        type: 'POST',
-                        dataType: 'json',
-                        async: false,
-                        data: {roomid: roomId}
-                    }).responseText;
-                return JSON.parse(bet).data;
+                return $.ajax({
+                    url: 'http://live.bilibili.com/bet/getRoomBet',
+                    type: 'POST',
+                    dataType: 'json',
+                    //async: false,
+                    data: {roomid: roomId}
+                }).promise();
+                //return JSON.parse(bet).data;
             },
             do: function () {
-                var bet = Live.bet.getBet();
-                var w = Live.get('which' + Live.getRoomId()) == '"a"' ? 'a' : 'b';
-                var bankerId = bet.silver[w].id;
-                var rate = bet.silver[w].times;
-                if (Live.bet.stop) clearInterval(Live.get('setBet' + Live.getRoomId()));
-                if (rate >= Live.get('rate' + Live.getRoomId())) {
-                    var number = Live.get('number' + Live.getRoomId());
-                    $.ajax({
-                        url: 'http://live.bilibili.com/bet/addBettor',
-                        type: 'POST',
-                        dataType: 'json',
-                        data: {
-                            bankerId: bankerId,
-                            amount: number,
-                            token: __GetCookie('LIVE_LOGIN_DATA')
-                        },
-                        complete: function (data, ts) {
+                Live.bet.getBet().done(function (bet) {
+                    bet = bet.data;
 
-                            b = JSON.parse(data.responseText);
-                            if (b.code == -400) {//error
-                                Live.bet.error(b.msg);
-                            } else if (b.code == 0) {//success
-                                Live.bet.success();
+                    if (!Live.bet.canBet(bet)) return;//none bet permission
+                    if (!Live.bet.betOn(bet)) return;//bet is not on
+
+                    var w = Live.get('helper_live_which', Live.getRoomId()) == '"a"' ? 'a' : 'b';
+                    var bankerId = bet.silver[w].id;
+                    var rate = bet.silver[w].times;
+                    if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
+                    if (rate >= Live.get('helper_live_rate', Live.getRoomId())) {
+                        var number = eval(Live.get('helper_live_number', Live.getRoomId()));
+                        $.ajax({
+                            url: 'http://live.bilibili.com/bet/addBettor',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                bankerId: bankerId,
+                                amount: number,
+                                token: __GetCookie('LIVE_LOGIN_DATA')
+                            },
+                            complete: function (data, ts) {
+                                b = JSON.parse(data.responseText);
+                                if (b.code == -400) {//error
+                                    Live.bet.error(b.msg);
+                                } else if (b.code == 0) {//success
+                                    Live.bet.success();
+                                }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             },
             startInterval: function () {
                 Live.bet.cancelCheck();
                 Live.bet.stop = false;
 
                 /*Style*/
-                Live.bet.quiz_helper.children('input,div').addClass('hide');
-                Live.bet.quiz_cancel_btn.removeClass('hide');
-                Live.bet.quiz_success_btn.addClass('hide');
-
                 if (Live.bet.quiz_rate.val() == '') {
                     Live.bet.quiz_rate.addClass('error');
                     return;
@@ -284,17 +295,15 @@
                     return;
                 } else Live.bet.quiz_number.removeClass('error');
 
-                /*bet number > user's silver*/
-                var userSilver = Live.get('silver' + Live.getRoomId());
-                if (Live.bet.quiz_number.val() > userSilver)
-                    Live.set('number' + Live.getRoomId(), userSilver);
+                Live.bet.quiz_helper.children('input,div').addClass('hide');
+                Live.bet.quiz_cancel_btn.removeClass('hide');
+                Live.bet.quiz_success_btn.addClass('hide');
 
+                Live.set('helper_live_number', Live.getRoomId(), Live.bet.quiz_number.val());
 
                 /*Action*/
                 Live.bet.do();
-                Live.set('setBet' + Live.getRoomId(),setInterval(Live.bet.do, 2000));
-
-                Live.bet.check();
+                Live.set('helper_live_bet', Live.getRoomId(), setInterval(Live.bet.do, 2000));
             },
             success: function () {
                 Live.bet.stop = true;
@@ -302,8 +311,8 @@
                     Live.bet.quiz_cancel_btn.addClass('hide');
                     Live.bet.quiz_success_btn.removeClass('hide');
                 }
-                clearInterval(Live.get('setBet' + Live.getRoomId()));
-                Live.set('setBet' + Live.getRoomId(), undefined);
+                clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
+                Live.set('helper_live_bet', Live.getRoomId(), undefined);
             },
             error: function (msg) {
                 Live.bet.stop = true;
@@ -312,8 +321,8 @@
                     Live.bet.quiz_success_btn.addClass('hide');
                     Live.bet.quiz_cancel_btn.text(msg);
                 }
-                clearInterval(Live.get('setBet' + Live.getRoomId()));
-                Live.set('setBet' + Live.getRoomId(), undefined);
+                clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
+                Live.set('helper_live_bet', Live.getRoomId(), undefined);
             },
             cancel: function (check) {
                 Live.bet.stop = true;
@@ -321,8 +330,8 @@
                     Live.bet.quiz_helper.children('input,div').removeClass('hide');
                     Live.bet.quiz_cancel_btn.addClass('hide');
                     Live.bet.quiz_success_btn.addClass('hide');
-                    clearInterval(Live.get('setBet' + Live.getRoomId()));
-                    Live.set('setBet' + Live.getRoomId(), undefined);
+                    clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
+                    Live.set('helper_live_bet', Live.getRoomId(), undefined);
                 }
                 if (check)Live.bet.check();
             },
@@ -343,35 +352,35 @@
                     $('#quiz-control-panel .section-title').children('.description').remove();
                     if (Live.bet.quiz_helper != undefined)
                         Live.bet.quiz_helper.addClass('hide');
-                    Live.set('autoMode' + Live.getRoomId(), 0);
+                    Live.set('helper_live_autoMode', Live.getRoomId(), 0);
                 })
             },
             check: function () {
-                var status = Live.bet.checkBetStatus();
-                if (Live.get('checkInterval' + Live.getRoomId()) == undefined)
-                    Live.set('checkInterval' + Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
-                if (status) return true;
+                Live.bet.checkBetStatus();
+                if (Live.get('helper_live_check', Live.getRoomId()) == undefined)
+                    Live.set('helper_live_check', Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
             },
             cancelCheck: function () {
-                clearInterval(Live.get('checkInterval' + Live.getRoomId()));
-                Live.set('checkInterval' + Live.getRoomId(), undefined);
+                clearInterval(Live.get('helper_live_check', Live.getRoomId()));
+                Live.set('helper_live_check', Live.getRoomId(), undefined);
             }
         }
 
         /*toggle btn*/
-        if (Live.get('login')) {
+        if (Live.get('helper_userInfo', 'login')) {
             Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
             $('#quiz-control-panel .section-title').append(Live.bet.quiz_toggle_btn);
             Live.bet.quiz_toggle_btn.click(function () {
                 if ($(this).hasClass('on')) {
                     Live.bet.disable();
-                } else if (Live.bet.checkBetStatus()) {
-                    Live.set('autoMode' + Live.getRoomId(), 1);
-                    Live.bet.init();
+                } else {
+                    Live.bet.checkBetStatus(function () {
+                        Live.set('helper_live_autoMode', Live.getRoomId(), 1);
+                        Live.bet.init();
+                    });
                 }
             });
             setInterval(Live.doSign.sign, 300000); //doSign per 5 min
-
 
             Live.bet.init();
             Notification.requestPermission();
