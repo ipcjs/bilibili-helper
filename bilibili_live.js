@@ -1,7 +1,6 @@
 /**
  * Created by Ruo on 4/12/2016.
  */
-
 (function () {
     if (location.hostname == 'live.bilibili.com') {
         d = document.createElement('script');
@@ -11,7 +10,7 @@
         Live.set = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
-            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
+            if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
             var l = JSON.parse(window.localStorage[n]);
             if (!k) window.localStorage[n] = JSON.stringify(v);
             else {
@@ -22,7 +21,10 @@
         Live.get = function (n, k) {
             if (!window.localStorage || !n) return;
 
-            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
+            if (!window.localStorage[n]) {
+                window.localStorage[n] = JSON.stringify({});
+                return null;
+            }
             var l = JSON.parse(window.localStorage[n]);
             if (!k) return l;
             return l[k];
@@ -30,8 +32,10 @@
         Live.del = function (n, k) {
             if (!window.localStorage || !n || !k) return;
 
-            if (window.localStorage[n] == 'undefined')window.localStorage[n] = JSON.stringify({});
-
+            if (!window.localStorage[n]) {
+                window.localStorage[n] = JSON.stringify({});
+                return;
+            }
             var l = JSON.parse(window.localStorage[n]);
             delete l[k];
             window.localStorage[n] = JSON.stringify(l);
@@ -40,8 +44,7 @@
             return $.ajax({
                 url: 'http://live.bilibili.com/user/getuserinfo',
                 type: 'GET',
-                dataType: 'json',
-                //async: false
+                dataType: 'json'
             }).promise();
         };
         Live.initUserInfo = function () {
@@ -61,13 +64,19 @@
             });
 
         };
+        Live.clearLocalStorage = function () {
+            Live.del('helper_live_bet', Live.getRoomId());
+            Live.del('helper_live_check', Live.getRoomId());
+            Live.del('helper_live_number', Live.getRoomId());
+            Live.del('helper_live_rate', Live.getRoomId());
+            Live.del('helper_live_which', Live.getRoomId());
+        };
         Live.getRoomId = function () {
             return Live.get('helper_live_roomId', location.pathname.substr(1));
-        }
-        Live.set('helper_live_check', Live.getRoomId(), null);
-        Live.set('helper_live_bet', Live.getRoomId(), null);
-        Live.set('helper_userInfo', 'login', false);
+        };
 
+        Live.set('helper_userInfo', 'login', false);
+        Live.clearLocalStorage();
         Live.initUserInfo();
 
         Live.doSign = {
@@ -79,9 +88,20 @@
                 if (Live.get('helper_doSign', 'today') == false || Live.get('helper_doSign', 'signDate') != date) {
                     $.get("/sign/doSign", function (data) {
                         var e = JSON.parse(data);
+                        //    {
+                        //    "code": 0,
+                        //    "msg": "ok",
+                        //    "data": {
+                        //        "text": "200\u94f6\u74dc\u5b50,3000\u7528\u6237\u7ecf\u9a8c\u503c",
+                        //        "lottery": {"status": false, "lottery": {"id": "", "data": ""}},
+                        //        "allDays": "30",
+                        //        "hadSignDays": 22,
+                        //        "remindDays": 8
+                        //    }
+                        //};
                         if (e.code == 0) {
                             var msg = new Notification(eval("'" + e.msg + "'"), {
-                                body: "签到成功",
+                                body: "您获得了" + e.data.text,
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
                             Live.set('helper_doSign', 'today', true);
@@ -97,7 +117,7 @@
                             Live.set('helper_doSign', 'today', true);
                             Live.set('helper_doSign', 'signDate', date);
                             setTimeout(function () {
-                                msg.close()
+                                msg.close();
                             }, 5000);
                         }
                         else {
@@ -106,7 +126,7 @@
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-1.gif"
                             });
                             setTimeout(function () {
-                                msg.close()
+                                msg.close();
                             }, 5000);
                         }
                     });
@@ -129,6 +149,7 @@
 
                     if (!Live.bet.canBet(bet)) return;//none bet permission
                     if (!Live.bet.betOn(bet)) return;//bet is not on
+                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.init();
                     if (typeof callback == 'function') callback();
                 });
             },
@@ -143,10 +164,7 @@
             },
             betOn: function (bet) {
                 if (bet.betStatus == false) {
-                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
-                        Live.bet.hide();
-                        Live.set('helper_live_autoMode', Live.getRoomId(), 0);
-                    }
+                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.hide();
                     return false;
                 } else return true;
             },
@@ -178,8 +196,8 @@
                         $('<div class="quiz_helper">').append($('<span class="rate_title">').text('赔率'), Live.bet.quiz_rate),
                         $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number),
                         Live.bet.quiz_btns
-                    )
-                    Live.bet.quiz_panel.append(Live.bet.quiz_helper,Live.bet.version);
+                    );
+                    Live.bet.quiz_panel.append(Live.bet.quiz_helper, Live.bet.version);
                 }
                 /*change default style*/
                 $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').addClass('hide');
@@ -192,26 +210,25 @@
                 /*add listener*/
                 $('#quiz_helper .bet-buy-btns button').unbind('click').click(function () {
                     var which = $(this).attr('data-target');
-
                     /*rate*/
                     var rate = parseFloat(Live.bet.quiz_rate.val());
                     if (rate.length > 3) rate = rate.toFixed(1);
-                    Live.set('helper_live_rate', Live.getRoomId(), rate)
+                    Live.set('helper_live_rate', Live.getRoomId(), rate);
 
                     /*number*/
                     var number = parseInt(Live.bet.quiz_number.val());
-                    Live.set('helper_live_number', Live.getRoomId(), number)
+                    Live.set('helper_live_number', Live.getRoomId(), number);
 
-                    Live.set('helper_live_which', Live.getRoomId(), which)
+                    Live.set('helper_live_which', Live.getRoomId(), which);
 
                     Live.bet.quiz_cancel_btn.text('返' + rate + ' 买' + (which == 'a' ? '蓝 ' : '红 ') + number + '注');
 
                     Live.bet.startInterval();
                 });
-                Live.bet.quiz_number.focus(function () {
+                Live.bet.quiz_number.unbind('focus').focus(function () {
                     Live.initUserInfo();
                 });
-                Live.bet.quiz_number.keyup(function () {
+                Live.bet.quiz_number.unbind('keyup').keyup(function () {
                     var v = $(this).val();
                     var silver = parseInt(Live.get('helper_userInfo', 'silver'));
                     while (v != '' && isNaN(v)) {
@@ -221,18 +238,18 @@
                     if (parseInt(v) > silver) {
                         $(this).val(silver);
                     }
-                })
-                Live.bet.quiz_rate.keyup(function () {
+                });
+                Live.bet.quiz_rate.unbind('keyup').keyup(function () {
                     var v = $(this).val();
                     while (v != '' && isNaN(v)) {
                         $(this).val(v.substr(0, v.length - 1));
                         v = $(this).val();
                     }
                 });
-                Live.bet.quiz_cancel_btn.click(function () {
+                Live.bet.quiz_cancel_btn.unbind('click').click(function () {
                     Live.bet.cancel(true);
                 });
-                Live.bet.quiz_success_btn.click(function () {
+                Live.bet.quiz_success_btn.unbind('click').click(function () {
                     Live.bet.cancel(true);
                 });
             },
@@ -251,10 +268,11 @@
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
 
-                    if (!Live.bet.canBet(bet)) return;//none bet permission
-                    if (!Live.bet.betOn(bet)) return;//bet is not on
-
-                    var w = Live.get('helper_live_which', Live.getRoomId()) == '"a"' ? 'a' : 'b';
+                    if (!Live.bet.canBet(bet) || !Live.bet.betOn(bet)) {
+                        Live.bet.cancel(true);
+                        return;
+                    }//none bet permission ||bet is not on
+                    var w = eval(Live.get('helper_live_which', Live.getRoomId()));
                     var bankerId = bet.silver[w].id;
                     var rate = bet.silver[w].times;
                     if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
@@ -269,8 +287,8 @@
                                 amount: number,
                                 token: __GetCookie('LIVE_LOGIN_DATA')
                             },
-                            complete: function (data, ts) {
-                                b = JSON.parse(data.responseText);
+                            complete: function (data) {
+                                var b = JSON.parse(data.responseText);
                                 if (b.code == -400) {//error
                                     Live.bet.error(b.msg);
                                 } else if (b.code == 0) {//success
@@ -312,59 +330,60 @@
                     Live.bet.quiz_success_btn.removeClass('hide');
                 }
                 clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-                Live.set('helper_live_bet', Live.getRoomId(), undefined);
+                Live.clearLocalStorage();
+                Live.bet.check();
             },
             error: function (msg) {
                 Live.bet.stop = true;
                 if (Live.bet.quiz_helper != undefined) {
-                    Live.bet.quiz_cancel_btn.removeClass('hide');
                     Live.bet.quiz_success_btn.addClass('hide');
-                    Live.bet.quiz_cancel_btn.text(msg);
+                    Live.bet.quiz_cancel_btn.removeClass('hide').text(msg);
                 }
                 clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-                Live.set('helper_live_bet', Live.getRoomId(), undefined);
+                Live.clearLocalStorage();
             },
             cancel: function (check) {
                 Live.bet.stop = true;
-                if (Live.bet.quiz_helper != undefined) {
+                if (Live.bet.quiz_helper) {
                     Live.bet.quiz_helper.children('input,div').removeClass('hide');
                     Live.bet.quiz_cancel_btn.addClass('hide');
                     Live.bet.quiz_success_btn.addClass('hide');
                     clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-                    Live.set('helper_live_bet', Live.getRoomId(), undefined);
+                    Live.clearLocalStorage();
                 }
                 if (check)Live.bet.check();
             },
             hide: function () {
-                Live.bet.quiz_toggle_btn.removeClass('on');
-                $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
-                $('#quiz-control-panel .section-title').children('.description').remove();
-                if (Live.bet.quiz_helper != undefined)
+                if (Live.bet.quiz_helper) {
+                    Live.bet.quiz_toggle_btn.removeClass('on');
+                    $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
+                    $('#quiz-control-panel .section-title').children('.description').remove();
                     Live.bet.quiz_helper.addClass('hide');
+                }
             },
             disable: function () {
                 Live.bet.cancel(false);
                 Live.bet.cancelCheck();
-                $(document).ready(function () {
-
+                if (Live.bet.quiz_helper) {
                     Live.bet.quiz_toggle_btn.removeClass('on');
                     $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
                     $('#quiz-control-panel .section-title').children('.description').remove();
-                    if (Live.bet.quiz_helper != undefined)
-                        Live.bet.quiz_helper.addClass('hide');
+                    Live.bet.quiz_helper.addClass('hide');
                     Live.set('helper_live_autoMode', Live.getRoomId(), 0);
-                })
+                    Live.clearLocalStorage();
+                }
             },
             check: function () {
-                Live.bet.checkBetStatus();
-                if (Live.get('helper_live_check', Live.getRoomId()) == undefined)
+                if (!Live.get('helper_live_check', Live.getRoomId())) {
+                    Live.bet.checkBetStatus();
                     Live.set('helper_live_check', Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
+                }
             },
             cancelCheck: function () {
                 clearInterval(Live.get('helper_live_check', Live.getRoomId()));
                 Live.set('helper_live_check', Live.getRoomId(), undefined);
             }
-        }
+        };
 
         /*toggle btn*/
         if (Live.get('helper_userInfo', 'login')) {
@@ -374,13 +393,17 @@
                 if ($(this).hasClass('on')) {
                     Live.bet.disable();
                 } else {
-                    Live.bet.checkBetStatus(function () {
-                        Live.set('helper_live_autoMode', Live.getRoomId(), 1);
-                        Live.bet.init();
-                    });
+                    Live.set('helper_live_autoMode', Live.getRoomId(), 1);
+                    Live.bet.checkBetStatus();
                 }
             });
-            setInterval(Live.doSign.sign, 300000); //doSign per 5 min
+            chrome.extension.sendMessage({
+                command: "getOption",
+                key: 'doSign',
+            }, function (response) {
+                if (response['value'] == 'on') setInterval(Live.doSign.sign, 300000); //doSign per 5 min
+            });
+
 
             Live.bet.init();
             Notification.requestPermission();

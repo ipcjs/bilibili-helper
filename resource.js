@@ -21,6 +21,7 @@ var defaultOptions = {
 	"replace": "on",
 	"updates": 0,
 	"version": 0,
+	"doSign":"on"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {
