@@ -301,6 +301,7 @@
             },
             startInterval: function () {
                 Live.bet.cancelCheck();
+                clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 Live.bet.stop = false;
 
                 /*Style*/
@@ -362,8 +363,8 @@
                 }
             },
             disable: function () {
-                Live.bet.cancel(false);
                 Live.bet.cancelCheck();
+                Live.bet.cancel(false);
                 if (Live.bet.quiz_helper) {
                     Live.bet.quiz_toggle_btn.removeClass('on');
                     $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
