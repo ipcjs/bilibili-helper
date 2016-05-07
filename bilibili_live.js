@@ -576,7 +576,7 @@
                     bet = bet.data;
                     /*no bet permission or bet is not on*/
                     if (!Live.bet.canBet(bet) || !Live.bet.betOn(bet)) {
-                        Live.be.stopBet();
+                        Live.bet.stopBet();
                         Live.bet.cancel(true);
                         return;
                     }
