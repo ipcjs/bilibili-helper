@@ -663,7 +663,7 @@
                 command: "getOption",
                 key: 'doSign',
             }, function (response) {
-                //if (response['value'] == 'on') setInterval(Live.doSign.sign, 300000); //doSign per 5 min
+                if (response['value'] == 'on') setInterval(Live.doSign.sign, 300000); //doSign per 5 min
             });
             if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)
                 Live.bet.check();
