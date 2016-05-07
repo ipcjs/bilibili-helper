@@ -232,7 +232,6 @@
                 return o;
             };
             o.updateMenu = function () {
-                console.log(o.state);
                 o.menu.empty();
                 o.menu_delete = $('<span class="delete"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].remove(o);
@@ -267,25 +266,24 @@
                 if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
 
                 if (rate >= o.rate) {
-                    //$.ajax({
-                    //    url: 'http://live.bilibili.com/bet/addBettor',
-                    //    type: 'POST',
-                    //    dataType: 'json',
-                    //    data: {
-                    //        bankerId: bankerId,
-                    //        amount: o.number,
-                    //        token: __GetCookie('LIVE_LOGIN_DATA')
-                    //    },
-                    //    complete: function (data) {
-                    //        var b = JSON.parse(data.responseText);
-                    //        if (b.code == -400) {//error
-                    //            o.error(b);
-                    //        } else if (b.code == 0) {//success
-                    //            o.success();
-                    //        }
-                    //    }
-                    //});
-                    console.log('do');
+                    $.ajax({
+                        url: 'http://live.bilibili.com/bet/addBettor',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            bankerId: bankerId,
+                            amount: o.number,
+                            token: __GetCookie('LIVE_LOGIN_DATA')
+                        },
+                        complete: function (data) {
+                            var b = JSON.parse(data.responseText);
+                            if (b.code == -400) {//error
+                                o.error(b);
+                            } else if (b.code == 0) {//success
+                                o.success();
+                            }
+                        }
+                    });
                     o.success();
                 }
                 return o;
@@ -411,15 +409,12 @@
                 if (Live.bet.blue_queue.wait.length == 0 && Live.bet.red_queue.wait.length == 0 && Live.bet.blue_queue.run.length == 0 && Live.bet.red_queue.run.length == 0) {
                     Live.bet.stopBet();
                     Live.bet.check();
-                    console.log(1);
                 }
                 /*if run queue is not empty*/
                 else if (!Live.get('helper_live_bet', Live.getRoomId())) {
                     Live.bet.do();
-                    console.log(2);
                     Live.set('helper_live_bet', Live.getRoomId(), setInterval(Live.bet.do, 2000));
                 }
-                //console.log(Live.bet.blue_queue.run, Live.bet.blue_queue.wait, Live.bet.red_queue.run, Live.bet.red_queue.wait, Live.get('helper_live_bet', Live.getRoomId()))
             },
             hide_quiz_helper: function () {
                 Live.bet.hasShow = false;
@@ -562,7 +557,6 @@
                     //async: false,
                     data: {roomid: roomId}
                 }).promise();
-                //return JSON.parse(bet).data;
             },
             do: function () {
                 Live.bet.getBet().done(function (bet) {
@@ -581,46 +575,8 @@
                     if (blue)blue.dealWith(bet);
                     if (red) red.dealWith(bet);
                     Live.bet.checkQueue();
-                    //var w = eval(Live.get('helper_live_which', Live.getRoomId()));
-                    //var bankerId = bet.silver[w].id;
-                    //var rate = bet.silver[w].times;
-                    //if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-                    //if (rate >= Live.get('helper_live_rate', Live.getRoomId())) {
-                    //    var number = eval(Live.get('helper_live_number', Live.getRoomId()));
-                    //    $.ajax({
-                    //        url: 'http://live.bilibili.com/bet/addBettor',
-                    //        type: 'POST',
-                    //        dataType: 'json',
-                    //        data: {
-                    //            bankerId: bankerId,
-                    //            amount: number,
-                    //            token: __GetCookie('LIVE_LOGIN_DATA')
-                    //        },
-                    //        complete: function (data) {
-                    //            var b = JSON.parse(data.responseText);
-                    //            if (b.code == -400) {//error
-                    //                Live.bet.error(b.msg);
-                    //            } else if (b.code == 0) {//success
-                    //                Live.bet.success();
-                    //            }
-                    //        }
-                    //    });
-                    //}
                 });
             },
-            //checkQueue: function () {
-            //    if (Live.bet.blue_queue.wait.length == 0 && Live.bet.red_queue.wait.length == 0) return false;
-            //    Live.bet.cancelCheck();
-
-            //clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-            //Live.bet.stop = false;
-            //
-            //Live.bet.quiz_helper.children('input,div').addClass('hide');
-            //Live.bet.quiz_cancel_btn.removeClass('hide');
-            //Live.bet.quiz_success_btn.addClass('hide');
-
-            //Live.set('helper_live_number', Live.getRoomId(), Live.bet.quiz_number.val());
-
             success: function () {
                 if (Live.bet.hasInit) {
                 }
@@ -671,6 +627,7 @@
             },
             disable: function () {
                 if (Live.bet.hasInit) {
+                    Live.bet.stopBet();
                     Live.bet.cancelCheck();
                     Live.bet.cancel(false);
                     Live.bet.hide(true);
@@ -684,7 +641,6 @@
                 if (!Live.get('helper_live_check', Live.getRoomId())) {
                     Live.bet.checkBetStatus();
                     var index = setInterval(Live.bet.checkBetStatus, 3000);
-                    console.log(index);
                     Live.set('helper_live_check', Live.getRoomId(), index);
                 }
             },
