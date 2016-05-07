@@ -252,7 +252,6 @@
             o.run = function (bet) {
                 if (!bet) return false;
                 o.state = 'run';
-
                 /*deal style class*/
                 o.dom.removeClass('cancel wait error success');
                 if (!o.dom.hasClass('run')) o.dom.addClass('run');
@@ -261,10 +260,10 @@
                 var w = (o.which == 'blue') ? 'a' : 'b';
                 var bankerId = bet.silver[w].id;
                 var rate = bet.silver[w].times;
-
+                //var amount = bet.silver[w].amount;
+                //Live.bet.quiz_msg.text(amount);
                 /*be canceled*/
                 if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
-
                 if (rate >= o.rate) {
                     $.ajax({
                         url: 'http://live.bilibili.com/bet/addBettor',
@@ -284,33 +283,28 @@
                             }
                         }
                     });
-                    o.success();
                 }
                 return o;
             };
             o.error = function (data) {
                 if (!data) return false;
-
                 o.state = 'error';
-
                 /*deal style class*/
                 o.dom.removeClass('cancel wait run success');
                 if (!o.dom.hasClass('error')) o.dom.addClass('error');
+                Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'error');
                 return o;
             };
             o.success = function () {
                 o.updateMenu();
                 /*deal style class*/
                 o.dom.removeClass('cancel wait error run');
-
                 if (!o.dom.hasClass('success')) o.dom.addClass('success');
-
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'success');
                 return o;
             };
             o.wait = function () {
                 o.state = 'wait';
-
                 /*deal style class*/
                 o.dom.removeClass('cancel success error run');
                 if (!o.dom.hasClass('wait')) o.dom.addClass('wait');
@@ -318,10 +312,10 @@
             };
             o.cancel = function () {
                 o.state = 'cancel';
-
                 /*deal style class*/
                 o.dom.removeClass('wait success error run');
                 if (!o.dom.hasClass('cancel')) o.dom.addClass('cancel');
+                Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'cancel');
                 return o;
             };
             o.destory = function () {
@@ -442,7 +436,8 @@
                     //var quiz_helper_title = $('<h4 class="section-title"><span style="font-size: 13px;margin:30px 0 10px;display: block;">下注预约</span></h4>');
                     Live.bet.quiz_rate = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
                     Live.bet.quiz_rate_n = $('<span class="rate_n">1</span>');
-                    Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" maxlength="8" required="required" />');
+                    Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
+                    Live.bet.quiz_msg = $('<span class="msg"></span>');
                     Live.bet.quiz_btns = $('<div class="bet-buy-btns p-relative clear-float"></div>');
                     //Live.bet.quiz_cancel_btn = $('<button class="cancel hide" title="点击取消预约下注">取消下注</button>');
                     //Live.bet.quiz_success_btn = $('<button class="success hide">下注成功 - 点击继续下注</button>');
@@ -484,7 +479,7 @@
                         //Live.bet.quiz_success_btn,
                         //Live.bet.quiz_cancel_btn,
                         $('<div class="quiz_helper">').append($('<span class="rate_title">').text('赔率'), Live.bet.quiz_rate, Live.bet.quiz_rate_n),
-                        $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number),
+                        $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number, Live.bet.quiz_msg),
                         Live.bet.quiz_btns
                     );
 
@@ -512,6 +507,12 @@
                             Live.bet.quiz_number.addClass('error');
                             return;
                         } else Live.bet.quiz_number.removeClass('error');
+                        Live.bet.quiz_msg.text('');
+                        if (Live.bet.quiz_number.val() < 1) {
+                            Live.bet.quiz_number.addClass('error');
+                            Live.bet.quiz_msg.text('下注数量不可小于1');
+                            return;
+                        }
 
                         Live.set('helper_live_number', Live.getRoomId(), number);
 
@@ -561,7 +562,6 @@
             do: function () {
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
-
                     /*no bet permission or bet is not on*/
                     if (!Live.bet.canBet(bet) || !Live.bet.betOn(bet)) {
 
