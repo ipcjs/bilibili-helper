@@ -141,6 +141,7 @@
             var o = new Object();
             o.id = new Date().getTime();
             o.which = which;
+            o.total = 0;
             o.run = [];
             o.wait = [];
             o.error = [];
@@ -169,7 +170,10 @@
                 if (appoint.state != state) {
                     state = state == undefined ? 'wait' : state;
                     o.remove(appoint);
-                    if (state != 'run') {
+                    if (state == 'success') {
+                        o.total += appoint.number;
+                        //o.updateTotal();
+                    } else if (state != 'run') {
                         appoint.state = state;
                         o.add(appoint, state);
                         appoint.create_dom().updateMenu();
@@ -185,6 +189,9 @@
                     }
 
                 }
+            };
+            o.updateTotal = function () {
+                Live.bet[o.which + '_sum_number'].text(o.total);
             };
             return o;
         };
@@ -278,8 +285,9 @@
                             var b = JSON.parse(data.responseText);
                             if (b.code == -400) {//error
                                 o.error(b);
-                            } else if (b.code == 0) {//success
+                            } else if (b.msg == 'ok') {//success
                                 o.success();
+
                             }
                         }
                     });
@@ -289,6 +297,7 @@
             o.error = function (data) {
                 if (!data) return false;
                 o.state = 'error';
+                console.log(data.msg);
                 /*deal style class*/
                 o.dom.removeClass('cancel wait run success');
                 if (!o.dom.hasClass('error')) o.dom.addClass('error');
@@ -358,8 +367,11 @@
                         Live.bet.cancelCheck();
                         return;
                     }
-                    if (!Live.bet.canBet(bet)) return;//none bet permission
-                    if (!Live.bet.betOn(bet)) return;//bet is not on
+                    /*none bet permission or bet is not on*/
+                    if (!Live.bet.canBet(bet) || !Live.bet.betOn(bet)) {
+                        Live.bet.stopBet();
+                        return;
+                    }
                     if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         if (Live.bet.hasInit && !Live.bet.hasShow) Live.bet.show();
                         else if (!Live.bet.hasInit) Live.bet.init();
@@ -456,8 +468,8 @@
                     Live.bet.sum_box = $('<div>').addClass('sum-sbox');
                     Live.bet.blue_sum_number = $('<div>').addClass('blue-sum-number');
                     Live.bet.blue_sum_income = $('<div>').addClass('blue-sum-income');
-                    Live.bet.red_sum_number = $('<div>').addClass('blue-sum-number');
-                    Live.bet.red_sum_income = $('<div>').addClass('blue-sum-income');
+                    Live.bet.red_sum_number = $('<div>').addClass('red-sum-number');
+                    Live.bet.red_sum_income = $('<div>').addClass('red-sum-income');
                     Live.bet.blue_sum_box = $('<div>').addClass('blue-sum-sbox');
                     Live.bet.red_sum_box = $('<div>').addClass('red-sum-box');
 
@@ -564,7 +576,7 @@
                     bet = bet.data;
                     /*no bet permission or bet is not on*/
                     if (!Live.bet.canBet(bet) || !Live.bet.betOn(bet)) {
-
+                        Live.be.stopBet();
                         Live.bet.cancel(true);
                         return;
                     }
@@ -640,8 +652,7 @@
             check: function () {
                 if (!Live.get('helper_live_check', Live.getRoomId())) {
                     Live.bet.checkBetStatus();
-                    var index = setInterval(Live.bet.checkBetStatus, 3000);
-                    Live.set('helper_live_check', Live.getRoomId(), index);
+                    Live.set('helper_live_check', Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
                 }
             },
             cancelCheck: function () {
