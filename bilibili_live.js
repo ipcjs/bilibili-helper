@@ -202,7 +202,7 @@
             o.id = new Date().getTime();
             o.which = which;
             o.rate = rate;
-            o.number = number = Live.numFormat(number);
+            o.number = number;
             /*0:cancel,1:success,2:error,3:wait,4:run*/
             o.state = state == undefined ? 'wait' : state;
             o.emit = function (which, state) {
@@ -219,13 +219,13 @@
             o.create_dom = function (top) {
                 if (o.dom == undefined) {
                     var rate_dom = $('<span>').addClass('rate').text(rate);
-                    var number_dom = $('<h4>').addClass('number').text(number);
+                    var number_dom = $('<h4>').addClass('number').text(Live.numFormat(o.number));
                     o.menu = $('<div>').addClass('menu');
 
                     var count_dom = $('<div>').addClass('count').addClass(o.state).attr({
                         id: o.id,
                         rate: rate,
-                        number: number
+                        number: o.number
                     }).append(number_dom, rate_dom, $('<a>').addClass('close'), o.menu);
                     o.dom = count_dom;
                     o.updateMenu();
