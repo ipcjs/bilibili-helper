@@ -3,23 +3,23 @@
  */
 (function () {
     if (location.hostname == 'live.bilibili.com') {
-        d = document.createElement('script');
+        d           = document.createElement('script');
         d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);}';
         document.body.appendChild(d);
 
-        var Live = {};
-        Live.set = function (n, k, v) {
+        var Live               = {};
+        Live.set               = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
             var l = JSON.parse(window.localStorage[n]);
             if (!k) window.localStorage[n] = JSON.stringify(v);
             else {
-                l[k] = JSON.stringify(v);
+                l[k]                   = JSON.stringify(v);
                 window.localStorage[n] = JSON.stringify(l);
             }
         };
-        Live.get = function (n, k) {
+        Live.get               = function (n, k) {
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n]) {
@@ -30,7 +30,7 @@
             if (!k) return l;
             return l[k];
         };
-        Live.del = function (n, k) {
+        Live.del               = function (n, k) {
             if (!window.localStorage || !n || !k) return;
 
             if (!window.localStorage[n]) {
@@ -41,14 +41,14 @@
             delete l[k];
             window.localStorage[n] = JSON.stringify(l);
         };
-        Live.getUser = function () {
+        Live.getUser           = function () {
             return $.ajax({
-                url: 'http://live.bilibili.com/user/getuserinfo',
-                type: 'GET',
+                url     : 'http://live.bilibili.com/user/getuserinfo',
+                type    : 'GET',
                 dataType: 'json'
             }).promise();
         };
-        Live.initUserInfo = function () {
+        Live.initUserInfo      = function () {
             var pro = Live.getUser();
             return pro.done(function (user) {
                 if (user.code == 'REPONSE_OK') {
@@ -58,6 +58,7 @@
                     Live.set('helper_userInfo', 'silver', user.silver);
                     Live.set('helper_userInfo', 'gold', user.gold);
                     Live.set('helper_userInfo', 'face', user.face);
+                    Live.set('helper_userInfo', 'vip', user.vip);
                     Live.set('helper_userInfo', 'login', true);
 
                     return true;
@@ -72,16 +73,16 @@
             Live.del('helper_live_rate', Live.getRoomId());
             Live.del('helper_live_which', Live.getRoomId());
         };
-        Live.getRoomId = function () {
+        Live.getRoomId         = function () {
             return Live.get('helper_live_roomId', location.pathname.substr(1));
         };
-        Live.numFormat = function (num) {
+        Live.numFormat         = function (num) {
             var number = num;
             if (num >= 10000) number = (num / 10000).toFixed(1) + '万';
             return number;
         };
 
-        Live.doSign = {
+        Live.doSign   = {
             sign: function () {
                 /*check login*/
                 if (!Live.get('helper_userInfo', 'login')) return;
@@ -136,37 +137,37 @@
                 }
             }
         };
-        Live.Queue = function (which) {
+        Live.Queue    = function (which) {
             if (arguments.length < 1) return false;
-            var o = new Object();
-            o.id = new Date().getTime();
-            o.which = which;
-            o.total = 0;
-            o.run = [];
-            o.wait = [];
-            o.error = [];
-            o.success = [];
-            o.cancel = [];
-            o.add = function (appoint, state) {
+            var o         = new Object();
+            o.id          = new Date().getTime();
+            o.which       = which;
+            o.total       = 0;
+            o.run         = [];
+            o.wait        = [];
+            o.error       = [];
+            o.success     = [];
+            o.cancel      = [];
+            o.add         = function (appoint, state) {
                 state = state == undefined ? 'wait' : state;
                 o[state].push(appoint);
             };
-            o.empty = function () {
+            o.empty       = function () {
                 $('#quiz_helper .' + o.which + '-box').children().addClass('hide');
-                o.run = [];
-                o.wait = [];
-                o.error = [];
-                o.cancel = [];
+                o.run     = [];
+                o.wait    = [];
+                o.error   = [];
+                o.cancel  = [];
                 o.success = [];
             };
-            o.remove = function (appoint) {
+            o.remove      = function (appoint) {
                 var index = o[appoint.state].indexOf(appoint);
                 if (index != -1) {
                     o[appoint.state].splice(index, 1);
                     appoint.destory();
                 }
             };
-            o.pushQueue = function (appoint, state) {
+            o.pushQueue   = function (appoint, state) {
                 if (appoint.state != state) {
                     state = state == undefined ? 'wait' : state;
                     o.remove(appoint);
@@ -195,17 +196,17 @@
             };
             return o;
         };
-        Live.Appoint = function (which, rate, number, state) {
+        Live.Appoint  = function (which, rate, number, state) {
             if (arguments.length < 3) return false;
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
-            var o = new Object();
-            o.id = new Date().getTime();
-            o.which = which;
-            o.rate = rate;
+            var o    = new Object();
+            o.id     = new Date().getTime();
+            o.which  = which;
+            o.rate   = rate;
             o.number = number;
             /*0:cancel,1:success,2:error,3:wait,4:run*/
-            o.state = state == undefined ? 'wait' : state;
-            o.emit = function (which, state) {
+            o.state      = state == undefined ? 'wait' : state;
+            o.emit       = function (which, state) {
                 /*set state*/
                 o.state = state == undefined ? o.state : state;
                 o.create_dom();
@@ -218,16 +219,16 @@
             };
             o.create_dom = function (top) {
                 if (o.dom == undefined) {
-                    var rate_dom = $('<span>').addClass('rate').text(rate);
+                    var rate_dom   = $('<span>').addClass('rate').text(rate);
                     var number_dom = $('<h4>').addClass('number').text(Live.numFormat(o.number));
-                    o.menu = $('<div>').addClass('menu');
+                    o.menu         = $('<div>').addClass('menu');
 
                     var count_dom = $('<div>').addClass('count').addClass(o.state).attr({
-                        id: o.id,
-                        rate: rate,
+                        id    : o.id,
+                        rate  : rate,
                         number: o.number
                     }).append(number_dom, rate_dom, $('<a>').addClass('close'), o.menu);
-                    o.dom = count_dom;
+                    o.dom         = count_dom;
                     o.updateMenu();
                     var success_dom = Live.bet[which + '_box'].children('.success:last');
                     if (top) {
@@ -243,10 +244,10 @@
                 o.menu_delete = $('<span class="delete"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].remove(o);
                 });
-                o.menu_reset = $('<span class="reset"></span>').off('click').click(function () {
+                o.menu_reset  = $('<span class="reset"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].pushQueue(o, 'wait');
                 });
-                o.menu_run = $('<span class="run"></span>').off('click').click(function () {
+                o.menu_run    = $('<span class="run"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].pushQueue(o, 'run');
                 });
                 if (o.state == 'run' || o.state == 'success' || o.state == 'error' || o.state == 'cancel') {
@@ -256,7 +257,7 @@
                 }
                 return o;
             };
-            o.run = function (bet) {
+            o.run        = function (bet) {
                 if (!bet) return false;
                 o.state = 'run';
                 /*deal style class*/
@@ -264,22 +265,22 @@
                 if (!o.dom.hasClass('run')) o.dom.addClass('run');
 
                 /*get data*/
-                var w = (o.which == 'blue') ? 'a' : 'b';
+                var w        = (o.which == 'blue') ? 'a' : 'b';
                 var bankerId = bet.silver[w].id;
-                var rate = bet.silver[w].times;
+                var rate     = bet.silver[w].times;
                 //var amount = bet.silver[w].amount;
                 //Live.bet.quiz_msg.text(amount);
                 /*be canceled*/
                 if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 if (rate >= o.rate) {
                     $.ajax({
-                        url: 'http://live.bilibili.com/bet/addBettor',
-                        type: 'POST',
+                        url     : 'http://live.bilibili.com/bet/addBettor',
+                        type    : 'POST',
                         dataType: 'json',
-                        data: {
+                        data    : {
                             bankerId: bankerId,
-                            amount: o.number,
-                            token: __GetCookie('LIVE_LOGIN_DATA')
+                            amount  : o.number,
+                            token   : __GetCookie('LIVE_LOGIN_DATA')
                         },
                         complete: function (data) {
                             var b = JSON.parse(data.responseText);
@@ -294,7 +295,7 @@
                 }
                 return o;
             };
-            o.error = function (data) {
+            o.error      = function (data) {
                 if (!data) return false;
                 o.state = 'error';
                 console.log(data.msg);
@@ -304,7 +305,7 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'error');
                 return o;
             };
-            o.success = function () {
+            o.success    = function () {
                 o.updateMenu();
                 /*deal style class*/
                 o.dom.removeClass('cancel wait error run');
@@ -312,14 +313,14 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'success');
                 return o;
             };
-            o.wait = function () {
+            o.wait       = function () {
                 o.state = 'wait';
                 /*deal style class*/
                 o.dom.removeClass('cancel success error run');
                 if (!o.dom.hasClass('wait')) o.dom.addClass('wait');
                 return o;
             };
-            o.cancel = function () {
+            o.cancel     = function () {
                 o.state = 'cancel';
                 /*deal style class*/
                 o.dom.removeClass('wait success error run');
@@ -327,11 +328,11 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'cancel');
                 return o;
             };
-            o.destory = function () {
+            o.destory    = function () {
                 o.dom.remove();
                 o.dom = undefined;
             };
-            o.dealWith = function (data) {
+            o.dealWith   = function (data) {
                 switch (o.state) {
                     case 'cancel':
                         o.cancel();
@@ -352,14 +353,14 @@
             };
             return o;
         };
-        Live.bet = {
-            times: 0,
-            stop: false,
-            hasInit: false,
-            hasShow: false,
-            blue_queue: new Live.Queue('blue'),
-            red_queue: new Live.Queue('red'),
-            checkBetStatus: function (callback) {
+        Live.bet      = {
+            times           : 0,
+            stop            : false,
+            hasInit         : false,
+            hasShow         : false,
+            blue_queue      : new Live.Queue('blue'),
+            red_queue       : new Live.Queue('red'),
+            checkBetStatus  : function (callback) {
                 /*check bet*/
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
@@ -379,7 +380,7 @@
                     if (typeof callback == 'function') callback();
                 });
             },
-            canBet: function (bet) {
+            canBet          : function (bet) {
                 if (bet.isBet == false) {
                     if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.disable();
@@ -388,7 +389,7 @@
                     return false;
                 } else return true;
             },
-            betOn: function (bet) {
+            betOn           : function (bet) {
                 if (bet.betStatus == false) {
                     if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.hide();
@@ -398,7 +399,7 @@
                     return false;
                 } else return true;
             },
-            checkQueue: function () {
+            checkQueue      : function () {
                 Live.bet.cancelCheck();
                 if (Live.bet.stop) Live.bet.stopBet();
                 /*check wait queue*/
@@ -423,7 +424,7 @@
                 }
             },
             hide_quiz_helper: function () {
-                Live.bet.hasShow = false;
+                Live.bet.hasShow            = false;
                 Live.bet.quiz_helper_height = Live.bet.quiz_helper.height();
                 Live.bet.quiz_helper.animate({"height": "0px"});
             },
@@ -434,7 +435,7 @@
                     Live.bet.quiz_helper.css('height', 'auto');
                 });
             },
-            init: function () {
+            init            : function () {
                 /*check login*/
                 if (!Live.get('helper_userInfo', 'login')) return;
 
@@ -443,35 +444,35 @@
 
                 /*create quiz helper DOM*/
                 if (!Live.bet.hasInit) {
-                    Live.bet.quiz_panel = $('#quiz-control-panel');
+                    Live.bet.quiz_panel  = $('#quiz-control-panel');
                     Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
                     //var quiz_helper_title = $('<h4 class="section-title"><span style="font-size: 13px;margin:30px 0 10px;display: block;">下注预约</span></h4>');
-                    Live.bet.quiz_rate = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
+                    Live.bet.quiz_rate   = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
                     Live.bet.quiz_rate_n = $('<span class="rate_n">1</span>');
                     Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
-                    Live.bet.quiz_msg = $('<span class="msg"></span>');
-                    Live.bet.quiz_btns = $('<div class="bet-buy-btns p-relative clear-float"></div>');
+                    Live.bet.quiz_msg    = $('<span class="msg"></span>');
+                    Live.bet.quiz_btns   = $('<div class="bet-buy-btns p-relative clear-float"></div>');
                     //Live.bet.quiz_cancel_btn = $('<button class="cancel hide" title="点击取消预约下注">取消下注</button>');
                     //Live.bet.quiz_success_btn = $('<button class="success hide">下注成功 - 点击继续下注</button>');
                     Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="a" data-type="silver">填坑</button>');
-                    Live.bet.quiz_red_btn = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
-                    Live.bet.description = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
+                    Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
+                    Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
                     Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
                     Live.bet.version = $("<div class=\"version\">哔哩哔哩助手 " + chrome.runtime.getManifest().version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div>");
 
 
                     /*count panel*/
                     Live.bet.count_panel = $('<div>').addClass('quiz-panel');
-                    Live.bet.blue_box = $('<div>').addClass('blue-box');
-                    Live.bet.red_box = $('<div>').addClass('red-box');
+                    Live.bet.blue_box    = $('<div>').addClass('blue-box');
+                    Live.bet.red_box     = $('<div>').addClass('red-box');
 
-                    Live.bet.sum_box = $('<div>').addClass('sum-sbox');
+                    Live.bet.sum_box         = $('<div>').addClass('sum-sbox');
                     Live.bet.blue_sum_number = $('<div>').addClass('blue-sum-number');
                     Live.bet.blue_sum_income = $('<div>').addClass('blue-sum-income');
-                    Live.bet.red_sum_number = $('<div>').addClass('red-sum-number');
-                    Live.bet.red_sum_income = $('<div>').addClass('red-sum-income');
-                    Live.bet.blue_sum_box = $('<div>').addClass('blue-sum-sbox');
-                    Live.bet.red_sum_box = $('<div>').addClass('red-sum-box');
+                    Live.bet.red_sum_number  = $('<div>').addClass('red-sum-number');
+                    Live.bet.red_sum_income  = $('<div>').addClass('red-sum-income');
+                    Live.bet.blue_sum_box    = $('<div>').addClass('blue-sum-sbox');
+                    Live.bet.red_sum_box     = $('<div>').addClass('red-sum-box');
 
                     Live.bet.blue_sum_box.append(Live.bet.blue_sum_number, Live.bet.blue_sum_income);
                     Live.bet.red_sum_box.append(Live.bet.red_sum_number, Live.bet.red_sum_income);
@@ -538,7 +539,7 @@
                         Live.initUserInfo();
                     });
                     Live.bet.quiz_number.keyup(function () {
-                        var v = $(this).val();
+                        var v      = $(this).val();
                         var silver = parseInt(Live.get('helper_userInfo', 'silver'));
                         while (v != '' && isNaN(v)) {
                             $(this).val(v.substr(0, v.length - 1));
@@ -561,17 +562,17 @@
                 Live.bet.hasInit = true;
                 Live.bet.show();
             },
-            getBet: function () {
+            getBet          : function () {
                 var roomId = Live.getRoomId();
                 return $.ajax({
-                    url: 'http://live.bilibili.com/bet/getRoomBet',
-                    type: 'POST',
+                    url     : 'http://live.bilibili.com/bet/getRoomBet',
+                    type    : 'POST',
                     dataType: 'json',
                     //async: false,
-                    data: {roomid: roomId}
+                    data    : {roomid: roomId}
                 }).promise();
             },
-            do: function () {
+            do              : function () {
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
                     /*no bet permission or bet is not on*/
@@ -583,33 +584,33 @@
 
                     /*deal with run queue*/
                     var blue = Live.bet.blue_queue.run[0];
-                    var red = Live.bet.red_queue.run[0];
+                    var red  = Live.bet.red_queue.run[0];
                     if (blue)blue.dealWith(bet);
                     if (red) red.dealWith(bet);
                     Live.bet.checkQueue();
                 });
             },
-            success: function () {
+            success         : function () {
                 if (Live.bet.hasInit) {
                 }
                 Live.clearLocalStorage();
                 Live.bet.check();
             },
-            error: function (msg) {
+            error           : function (msg) {
                 if (Live.bet.hasInit) {
                     //Live.bet.quiz_success_btn.addClass('hide');
                     //Live.bet.quiz_cancel_btn.removeClass('hide').text(msg);
                 }
                 Live.clearLocalStorage();
             },
-            cancel: function (check) {
+            cancel          : function (check) {
                 if (Live.bet.hasInit) {
                     Live.bet.quiz_helper.children('input,div').removeClass('hide');
                     Live.clearLocalStorage();
                 }
                 if (check)Live.bet.check();
             },
-            hide: function (all) {
+            hide            : function (all) {
                 if (Live.bet.hasInit) {
                     if (all) {
                         Live.bet.quiz_toggle_btn.removeClass('on');
@@ -619,7 +620,7 @@
                     Live.bet.hide_quiz_helper();
                 }
             },
-            show: function () {
+            show            : function () {
                 if (Live.bet.hasInit) {
                     $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').addClass('hide');
                     $('#quiz-control-panel .section-title').append(Live.bet.description);
@@ -627,17 +628,17 @@
                     Live.bet.show_quiz_helper();
                 }
             },
-            stopBet: function () {
+            stopBet         : function () {
                 clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 Live.del('helper_live_bet', Live.getRoomId());
             },
-            able: function () {
+            able            : function () {
                 Live.bet.stop = false;
                 Live.set('helper_live_autoMode', Live.getRoomId(), 1);
                 if (Live.bet.hasInit) Live.bet.show();
                 Live.bet.check();
             },
-            disable: function () {
+            disable         : function () {
                 if (Live.bet.hasInit) {
                     Live.bet.stopBet();
                     Live.bet.cancelCheck();
@@ -649,17 +650,108 @@
                     Live.bet.red_queue.empty();
                 }
             },
-            check: function () {
+            check           : function () {
                 if (!Live.get('helper_live_check', Live.getRoomId())) {
                     Live.bet.checkBetStatus();
                     Live.set('helper_live_check', Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
                 }
             },
-            cancelCheck: function () {
+            cancelCheck     : function () {
                 clearInterval(Live.get('helper_live_check', Live.getRoomId()));
                 Live.set('helper_live_check', Live.getRoomId(), undefined);
             }
         };
+        Live.treasure = {
+            vote          : -1,
+            minute        : 0,
+            silver        : 0,
+            totalTimes    : 3,
+            init          : function () {
+                Live.treasure.canvas        = document.createElement('canvas');
+                Live.treasure.canvas.width  = 120;
+                Live.treasure.canvas.height = 40;
+                document.body.appendChild(Live.treasure.canvas);
+                Live.treasure.context              = Live.treasure.canvas.getContext('2d');
+                Live.treasure.context.font         = '40px agencyfbbold'; // 字体
+                Live.treasure.context.textBaseline = 'top';
+                if (!window.OCRAD) {
+                    var d = document.createElement('script');
+                    d.src = 'http://s.0w0.be/bsc/ocrad.js';
+                    document.body.appendChild(d);
+                }
+                $('.treasure-box').click(function () {
+                    if ($('.treasure-count-down').text() != '00:00') {
+                        $('.acknowledge-btn').click();
+                    }
+                });
+                var vip                 = Live.get('helper_userInfo', 'vip');
+                Live.treasure.totalTime = (vip == 1) ? 3 : 5;
+            },
+            getCurrentTask: function () {
+                return $.ajax({
+                    url     : 'http://live.bilibili.com/FreeSilver/getCurrentTask',
+                    type    : 'POST',
+                    dataType: 'json',
+                    data    : {r: Math.random}
+                }).promise();
+            },
+            do            : function () {
+                if (Live.treasure.vote == 0 && Live.treasure.times == Live.treasure.totalTime)clearInterval(Live.treasure.interval);
+                if (Live.treasure.vote == -1) {
+                    var currentTask = Live.treasure.getCurrentTask();
+                    currentTask.done(function (data) {
+                        Live.treasure.vote   = data.data.vote;
+                        Live.treasure.times  = data.data.times;
+                        Live.treasure.minute = data.data.minute;
+                        Live.treasure.silver = data.data.silver;
+                    });
+                }
+                var res = false;
+                if ($('.treasure-count-down').text() == '00:00') {
+                    clearInterval(Live.treasure.interval);
+                    $('.treasure-box').click();
+                    $('.acknowledge-btn').click();
+                    var img    = document.getElementById('captchaImg');
+                    img.onload = function () {
+                        Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                        Live.treasure.context.drawImage(img, 0, 0);
+                        var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
+                        q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
+                        res   = eval(q);
+                        $('#freeSilverCaptchaInput').val(res);
+                        $("#getFreeSilverAward").click();
+                        var c = Live.treasure.getCurrentTask();
+                        c.done(function (data) {
+                            if (Live.treasure.minute != data.data.minute) {
+                                Live.treasure.interval = setInterval(Live.treasure.do, 1000);
+                            }
+                        });
+                        console.log(q, res);
+                    };
+                }
+                return res;
+            }
+        };
+        //Live.chat     = {
+        //    maxLength: 20,
+        //    text     : '',
+        //    init     : function () {
+        //        Live.chat.maxLength = $('#danmu-textbox').attr('maxlength');
+        //        $('#danmu-textbox').removeAttr('maxlength');
+        //        $('#danmu-textbox').keyup(function () {
+        //            $('#danmu-textbox').removeAttr('maxlength');
+        //        });
+        //        $('#danmu-send-btn').click(function () {
+        //            Live.chat.text = $('#danmu-textbox').text();
+        //            $('#danmu-textbox').text(Live.chat.text.substr(0, 30));
+        //            Live.chat.text = Live.chat.text.substr(30);
+        //            while (Live.chat.text.length != 0) {
+        //                $('#danmu-textbox').text(Live.chat.text);
+        //                $('#danmu-send-btn').click();
+        //            }
+        //        });
+        //    }
+        //};
         Live.set('helper_userInfo', 'login', false);
         Live.clearLocalStorage();
         Live.initUserInfo();
@@ -672,12 +764,15 @@
             });
             chrome.extension.sendMessage({
                 command: "getOption",
-                key: 'doSign',
+                key    : 'doSign',
             }, function (response) {
                 if (response['value'] == 'on') setInterval(Live.doSign.sign, 300000); //doSign per 5 min
             });
-            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)
-                Live.bet.check();
+            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
+
+            Live.treasure.init();
+            Live.treasure.interval = setInterval(Live.treasure.do, 1000);
+            //Live.chat.init();
             Notification.requestPermission();
         }
     }
