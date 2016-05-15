@@ -696,10 +696,17 @@
                 }).promise();
             },
             do            : function () {
-                if (Live.treasure.vote == 0 && Live.treasure.times == Live.treasure.totalTime)clearInterval(Live.treasure.interval);
+                if (Live.treasure.vote == 0 && Live.treasure.times == Live.treasure.totalTime) {
+                    clearInterval(Live.treasure.interval);
+                    return;
+                }
                 if (Live.treasure.vote == -1) {
                     var currentTask = Live.treasure.getCurrentTask();
                     currentTask.done(function (data) {
+                        if (data.code == ' -10017') {
+                            clearInterval(Live.treasure.interval);
+                            return;
+                        }
                         Live.treasure.vote   = data.data.vote;
                         Live.treasure.times  = data.data.times;
                         Live.treasure.minute = data.data.minute;
@@ -733,23 +740,36 @@
             }
         };
         //Live.chat     = {
-        //    maxLength: 20,
+        //    maxLength: undefined,
         //    text     : '',
         //    init     : function () {
-        //        Live.chat.maxLength = $('#danmu-textbox').attr('maxlength');
-        //        $('#danmu-textbox').removeAttr('maxlength');
-        //        $('#danmu-textbox').keyup(function () {
-        //            $('#danmu-textbox').removeAttr('maxlength');
+        //        $('#danmu-textbox').focus(function () {
+        //            if (!Live.chat.maxLength)
+        //                Live.chat.maxLength = 10;
+        //            $(this).removeAttr('maxlength');
         //        });
-        //        $('#danmu-send-btn').click(function () {
-        //            Live.chat.text = $('#danmu-textbox').text();
-        //            $('#danmu-textbox').text(Live.chat.text.substr(0, 30));
-        //            Live.chat.text = Live.chat.text.substr(30);
-        //            while (Live.chat.text.length != 0) {
-        //                $('#danmu-textbox').text(Live.chat.text);
+        //        $('#danmu-textbox').focus();
+        //        $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'))
+        //        $('#helper-send-btn').click(function () {
+        //            Live.chat.text = $('#danmu-textbox').val();
+        //            if (Live.chat.text.length > 0) {
+        //                $('#danmu-textbox').val();
+        //                $('#danmu-textbox').val(Live.chat.text.substr(0, Live.chat.maxLength));
+        //                Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+        //                console.log(Live.chat.text, Live.chat.maxLength);
         //                $('#danmu-send-btn').click();
+        //                if (Live.chat.text.length > 0) Live.chat.check();
         //            }
         //        });
+        //    },
+        //    check    : function () {
+        //        $('#danmu-textbox').val(Live.chat.text);
+        //        setTimeout(function () {
+        //            Live.chat.text = Live.chat.text.substr(0, Live.chat.maxLength);
+        //            $('#danmu-send-btn').click();
+        //            Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+        //            if (Live.chat.text != '')Live.chat.check();
+        //        }, 1000);
         //    }
         //};
         Live.set('helper_userInfo', 'login', false);
