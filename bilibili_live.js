@@ -7,6 +7,7 @@
         d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);var r = JSON.parse(window.localStorage.helper_live_rnd);l[' + location.pathname.substr(1) + '] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
+
         var Live               = {};
         Live.set               = function (n, k, v) {
             if (!window.localStorage || !n) return;
@@ -80,6 +81,20 @@
             var number = num;
             if (num >= 10000) number = (num / 10000).toFixed(1) + '万';
             return number;
+        };
+        Live.rgb2hex           = function (rgb) {
+            function zero_fill_hex(num, digits) {
+                var s = num.toString(16);
+                while (s.length < digits)
+                    s = "0" + s;
+                return s;
+            }
+
+            if (rgb.charAt(0) == '#') return rgb;
+
+            var ds      = rgb.split(/\D+/);
+            var decimal = Number(ds[1]) * 65536 + Number(ds[2]) * 256 + Number(ds[3]);
+            return "#" + zero_fill_hex(decimal, 6);
         };
 
         Live.doSign   = {
@@ -171,10 +186,11 @@
                 if (appoint.state != state) {
                     state = state == undefined ? 'wait' : state;
                     o.remove(appoint);
-                    if (state == 'success') {
-                        o.total += appoint.number;
-                        //o.updateTotal();
-                    } else if (state != 'run') {
+                    if (state != 'run') {
+                        if (state == 'success') {
+                            o.total += appoint.number;
+                            //o.updateTotal();
+                        }
                         appoint.state = state;
                         o.add(appoint, state);
                         appoint.create_dom().updateMenu();
@@ -188,7 +204,6 @@
                         o.run.push(appoint);
                         appoint.create_dom(true).updateMenu();
                     }
-
                 }
             };
             o.updateTotal = function () {
@@ -768,7 +783,8 @@
                 }, 500);
             },
             send     : function (danmu) {
-                $("#player_object")[0].sendMsg(danmu, '0xffffff');
+                var color = Live.rgb2hex($('.color-select-panel .active').css('color'));
+                $("#player_object")[0].sendMsg(danmu, '0x' + color.substr(1));
             }
         };
 
