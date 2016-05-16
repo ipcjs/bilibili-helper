@@ -681,6 +681,7 @@
             minute        : 0,
             silver        : 0,
             totalTimes    : 3,
+            can           : false,
             init          : function () {
                 chrome.extension.sendMessage({
                     command: "getTreasure"
@@ -708,7 +709,7 @@
                                 }
                             });
                             Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
-                            Live.treasure.interval  = setInterval(Live.treasure.do, 1000);
+                            Live.treasure.interval  = setInterval(Live.treasure.do, 2000);
 
                             $(window).on('beforeunload', function () {
                                 chrome.extension.sendMessage({
@@ -749,27 +750,33 @@
                 }
                 var res = false;
                 if ($('.treasure-count-down').text() == '00:00') {
+                    Live.treasure.can = true;
                     clearInterval(Live.treasure.interval);
+                    Live.treasure.interval = undefined;
                     $('.treasure-box').click();
-                    $('.acknowledge-btn').click();
-                    var img    = document.getElementById('captchaImg');
-                    img.onload = function () {
-                        Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
-                        Live.treasure.context.drawImage(img, 0, 0);
-                        var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
-                        q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
-                        res   = eval(q);
-                        $('#freeSilverCaptchaInput').val(res);
-                        $("#getFreeSilverAward").click();
-                        var c = Live.treasure.getCurrentTask();
-                        c.done(function (data) {
-                            if (Live.treasure.minute != data.data.minute) {
-                                Live.treasure.interval = setInterval(Live.treasure.do, 1000);
-                            }
-                        });
-                        console.log(q, res);
-                    };
-                }
+                    var img = document.getElementById('captchaImg');
+                    if (img.src == '')
+                        img.src = 'http://live.bilibili.com/FreeSilver/getCaptcha?t=' + Math.random;
+                    if (img)
+                        img.onload = function () {
+                            Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                            Live.treasure.context.drawImage(img, 0, 0);
+                            var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
+                            q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
+                            res   = eval(q);
+                            $('#freeSilverCaptchaInput').val(res);
+                            $("#getFreeSilverAward").click();
+                            setTimeout(function () {
+                                var c = Live.treasure.getCurrentTask();
+                                c.done(function (data) {
+                                    if (!Live.treasure.can) {
+                                        Live.treasure.interval = setInterval(Live.treasure.do, 2000);
+                                    }
+                                });
+                            }, 2000);
+                            console.log(q, res);
+                        };
+                } else Live.treasure.can = false;
                 return res;
             }
         };
