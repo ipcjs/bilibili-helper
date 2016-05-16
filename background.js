@@ -240,7 +240,7 @@ function getVideoInfo(avid, page, callback) {
 		callback(viCache[avid + '-' + page]);
 		return true;
 	}
-	getFileData("http://api.bilibili.com/view?type=json&appkey=95acd7f6cc3392f3&id=" + avid + "&page=" + page + "&batch=true", function(avInfo) {
+	getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function(avInfo) {
 		avInfo = JSON.parse(avInfo);
 		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
 			setTimeout(function() {
@@ -364,8 +364,8 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "getDownloadLink":
 			var url = {
-				download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
-				playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=95acd7f6cc3392f3&cid=" + request.cid + "&quality=4&type=mp4"
+				download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
+				playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=4&type=mp4"
 			};
 			if (request.cidHack && request.cidHack != locale) {
 				cidHackType[request.cid] = request.cidHack;
@@ -409,7 +409,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 			return true;
 		case "searchVideo":
 			var keyword = request.keyword;
-			getFileData("http://api.bilibili.com/search?type=json&appkey=95acd7f6cc3392f3&keyword=" + encodeURIComponent(keyword) + "&page=1&order=ranklevel", function(searchResult) {
+			getFileData("http://api.bilibili.com/search?type=json&appkey=8e9fc618fbd41e28&keyword=" + encodeURIComponent(keyword) + "&page=1&order=ranklevel", function(searchResult) {
 				searchResult = JSON.parse(searchResult);
 				if (searchResult.code == 0) {
 					sendResponse({
