@@ -4,7 +4,7 @@
 (function () {
     if (location.hostname == 'live.bilibili.com') {
         d           = document.createElement('script');
-        d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);}';
+        d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);var r = JSON.parse(window.localStorage.helper_live_rnd);l[' + location.pathname.substr(1) + '] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
         var Live               = {};
@@ -684,8 +684,7 @@
                         $('.acknowledge-btn').click();
                     }
                 });
-                var vip                 = Live.get('helper_userInfo', 'vip');
-                Live.treasure.totalTime = (vip == 1) ? 3 : 5;
+                Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
             },
             getCurrentTask: function () {
                 return $.ajax({
@@ -739,39 +738,40 @@
                 return res;
             }
         };
-        //Live.chat     = {
-        //    maxLength: undefined,
-        //    text     : '',
-        //    init     : function () {
-        //        $('#danmu-textbox').focus(function () {
-        //            if (!Live.chat.maxLength)
-        //                Live.chat.maxLength = 10;
-        //            $(this).removeAttr('maxlength');
-        //        });
-        //        $('#danmu-textbox').focus();
-        //        $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'))
-        //        $('#helper-send-btn').click(function () {
-        //            Live.chat.text = $('#danmu-textbox').val();
-        //            if (Live.chat.text.length > 0) {
-        //                $('#danmu-textbox').val();
-        //                $('#danmu-textbox').val(Live.chat.text.substr(0, Live.chat.maxLength));
-        //                Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-        //                console.log(Live.chat.text, Live.chat.maxLength);
-        //                $('#danmu-send-btn').click();
-        //                if (Live.chat.text.length > 0) Live.chat.check();
-        //            }
-        //        });
-        //    },
-        //    check    : function () {
-        //        $('#danmu-textbox').val(Live.chat.text);
-        //        setTimeout(function () {
-        //            Live.chat.text = Live.chat.text.substr(0, Live.chat.maxLength);
-        //            $('#danmu-send-btn').click();
-        //            Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-        //            if (Live.chat.text != '')Live.chat.check();
-        //        }, 1000);
-        //    }
-        //};
+        Live.chat     = {
+            maxLength: undefined,
+            text     : '',
+            init     : function () {
+                $('#danmu-textbox').focus(function () {
+                    if (!Live.chat.maxLength)
+                        Live.chat.maxLength = $(this).attr('maxlength');
+                    $(this).removeAttr('maxlength');
+                });
+                $('#danmu-textbox').focus();
+                $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'))
+                $('#helper-send-btn').click(function (e) {
+                    e.preventDefault();
+                    Live.chat.text = $('#danmu-textbox').val();
+                    $('#danmu-textbox').val('');
+                    if (Live.chat.text.length > 0) {
+                        Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
+                        Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+                        if (Live.chat.text.length > 0) Live.chat.check();
+                    }
+                });
+            },
+            check    : function () {
+                setTimeout(function () {
+                    Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
+                    Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+                    if (Live.chat.text != '')Live.chat.check();
+                }, 500);
+            },
+            send     : function (danmu) {
+                $("#player_object")[0].sendMsg(danmu, '0xffffff');
+            }
+        };
+
         Live.set('helper_userInfo', 'login', false);
         Live.clearLocalStorage();
         Live.initUserInfo();
@@ -792,7 +792,7 @@
 
             Live.treasure.init();
             Live.treasure.interval = setInterval(Live.treasure.do, 1000);
-            //Live.chat.init();
+            Live.chat.init();
             Notification.requestPermission();
         }
     }
