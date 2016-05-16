@@ -7,7 +7,6 @@
         d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);var r = JSON.parse(window.localStorage.helper_live_rnd);l[' + location.pathname.substr(1) + '] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
-
         var Live               = {};
         Live.set               = function (n, k, v) {
             if (!window.localStorage || !n) return;
@@ -97,7 +96,7 @@
             return "#" + zero_fill_hex(decimal, 6);
         };
 
-        Live.doSign   = {
+        Live.doSign      = {
             sign: function () {
                 /*check login*/
                 if (!Live.get('helper_userInfo', 'login')) return;
@@ -152,7 +151,7 @@
                 }
             }
         };
-        Live.Queue    = function (which) {
+        Live.Queue       = function (which) {
             if (arguments.length < 1) return false;
             var o         = new Object();
             o.id          = new Date().getTime();
@@ -211,7 +210,7 @@
             };
             return o;
         };
-        Live.Appoint  = function (which, rate, number, state) {
+        Live.Appoint     = function (which, rate, number, state) {
             if (arguments.length < 3) return false;
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
             var o    = new Object();
@@ -368,7 +367,7 @@
             };
             return o;
         };
-        Live.bet      = {
+        Live.bet         = {
             times           : 0,
             stop            : false,
             hasInit         : false,
@@ -676,30 +675,51 @@
                 Live.set('helper_live_check', Live.getRoomId(), undefined);
             }
         };
-        Live.treasure = {
+        Live.currentRoom = [];
+        Live.treasure    = {
             vote          : -1,
             minute        : 0,
             silver        : 0,
             totalTimes    : 3,
             init          : function () {
-                Live.treasure.canvas        = document.createElement('canvas');
-                Live.treasure.canvas.width  = 120;
-                Live.treasure.canvas.height = 40;
-                document.body.appendChild(Live.treasure.canvas);
-                Live.treasure.context              = Live.treasure.canvas.getContext('2d');
-                Live.treasure.context.font         = '40px agencyfbbold'; // 字体
-                Live.treasure.context.textBaseline = 'top';
-                if (!window.OCRAD) {
-                    var d = document.createElement('script');
-                    d.src = 'http://s.0w0.be/bsc/ocrad.js';
-                    document.body.appendChild(d);
-                }
-                $('.treasure-box').click(function () {
-                    if ($('.treasure-count-down').text() != '00:00') {
-                        $('.acknowledge-btn').click();
+                chrome.extension.sendMessage({
+                    command: "getTreasure"
+                }, function (response) {
+                    if (!response['value']) {
+                        chrome.extension.sendMessage({
+                            command: "setTreasure",
+                            key    : Live.getRoomId()
+                        }, function (response) {
+                            Live.treasure.canvas        = document.createElement('canvas');
+                            Live.treasure.canvas.width  = 120;
+                            Live.treasure.canvas.height = 40;
+                            document.body.appendChild(Live.treasure.canvas);
+                            Live.treasure.context              = Live.treasure.canvas.getContext('2d');
+                            Live.treasure.context.font         = '40px agencyfbbold'; // 字体
+                            Live.treasure.context.textBaseline = 'top';
+                            if (!window.OCRAD) {
+                                var d = document.createElement('script');
+                                d.src = 'http://s.0w0.be/bsc/ocrad.js';
+                                document.body.appendChild(d);
+                            }
+                            $('.treasure-box').click(function () {
+                                if ($('.treasure-count-down').text() != '00:00') {
+                                    $('.acknowledge-btn').click();
+                                }
+                            });
+                            Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
+                            Live.treasure.interval  = setInterval(Live.treasure.do, 1000);
+
+                            $(window).on('beforeunload', function () {
+                                chrome.extension.sendMessage({
+                                    command: "delTreasure",
+                                    key    : Live.getRoomId()
+                                });
+                                console.log(0)
+                            });
+                        });
                     }
                 });
-                Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
             },
             getCurrentTask: function () {
                 return $.ajax({
@@ -753,7 +773,7 @@
                 return res;
             }
         };
-        Live.chat     = {
+        Live.chat        = {
             maxLength: undefined,
             text     : '',
             init     : function () {
@@ -767,11 +787,14 @@
                 $('#helper-send-btn').click(function (e) {
                     e.preventDefault();
                     Live.chat.text = $('#danmu-textbox').val();
-                    $('#danmu-textbox').val('');
-                    if (Live.chat.text.length > 0) {
-                        Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
-                        Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-                        if (Live.chat.text.length > 0) Live.chat.check();
+                    if (Live.chat.text.length == 0) $('#danmu-send-btn').click();
+                    else {
+                        $('#danmu-textbox').val('');
+                        if (Live.chat.text.length > 0) {
+                            Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
+                            Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+                            if (Live.chat.text.length > 0) Live.chat.check();
+                        }
                     }
                 });
             },
@@ -807,7 +830,6 @@
             if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
 
             Live.treasure.init();
-            Live.treasure.interval = setInterval(Live.treasure.do, 1000);
             Live.chat.init();
             Notification.requestPermission();
         }
