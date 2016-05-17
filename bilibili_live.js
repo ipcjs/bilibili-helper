@@ -753,30 +753,41 @@
                     Live.treasure.can = true;
                     clearInterval(Live.treasure.interval);
                     Live.treasure.interval = undefined;
-                    $('.treasure-box').click();
-                    var img = document.getElementById('captchaImg');
-                    if (img.src == '')
-                        img.src = 'http://live.bilibili.com/FreeSilver/getCaptcha?t=' + Math.random;
-                    if (img)
-                        img.onload = function () {
-                            Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
-                            Live.treasure.context.drawImage(img, 0, 0);
-                            var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
-                            q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
-                            res   = eval(q);
-                            $('#freeSilverCaptchaInput').val(res);
-                            $("#getFreeSilverAward").click();
-                            setTimeout(function () {
-                                var c = Live.treasure.getCurrentTask();
-                                c.done(function (data) {
-                                    if (!Live.treasure.can) {
-                                        Live.treasure.interval = setInterval(Live.treasure.do, 2000);
-                                    }
-                                });
-                            }, 2000);
-                            console.log(q, res);
-                        };
-                } else Live.treasure.can = false;
+                    setTimeout(function () {
+                        $('.treasure-box').click();
+                        var img = document.getElementById('captchaImg');
+                        if (img)
+                            img.onload = function () {
+                                Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                                Live.treasure.context.drawImage(img, 0, 0);
+                                var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
+                                q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
+                                res   = eval(q);
+                                $('#freeSilverCaptchaInput').val(res);
+                                var o = document.createEvent("MouseEvent");
+                                o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
+                                $("#getFreeSilverAward")[0].dispatchEvent(o);
+                                setTimeout(function () {
+                                    var c = Live.treasure.getCurrentTask();
+                                    c.done(function (data) {
+                                        if (!Live.treasure.can) {
+                                            Live.treasure.interval = setInterval(Live.treasure.do, 2000);
+                                            if (data.data.vote == 3) {
+                                                data.data.vote = 0;
+                                                Live.treasure.times += 1;
+                                            } else data.data.vote += 1;
+                                        }
+                                    });
+                                }, 2000);
+                                console.log(q, res);
+                            };
+                    }, 2000);
+                } else {
+                    var o = document.createEvent("MouseEvent");
+                    o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
+                    $(".acknowledge-btn")[0].dispatchEvent(o);
+                    Live.treasure.can = false;
+                }
                 return res;
             }
         };
@@ -797,24 +808,29 @@
                     if (Live.chat.text.length == 0) $('#danmu-send-btn').click();
                     else {
                         $('#danmu-textbox').val('');
-                        if (Live.chat.text.length > 0) {
-                            Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
-                            Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-                            if (Live.chat.text.length > 0) Live.chat.check();
-                        }
+                        Live.chat.do();
                     }
                 });
+                $('#danmu-textbox').keyup(function (e) {
+                    e.preventDefault();
+                    if (e.keyCode === 13) {
+                        $('#helper-send-btn').click();
+                    }
+                    return false;
+                })
             },
             check    : function () {
                 setTimeout(function () {
-                    Live.chat.send(Live.chat.text.substr(0, Live.chat.maxLength));
-                    Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-                    if (Live.chat.text != '')Live.chat.check();
+                    Live.chat.do();
                 }, 500);
-            },
-            send     : function (danmu) {
-                var color = Live.rgb2hex($('.color-select-panel .active').css('color'));
-                $("#player_object")[0].sendMsg(danmu, '0x' + color.substr(1));
+        },
+            do       : function () {
+                if (Live.chat.text.length > 0) {
+                    var color = Live.rgb2hex($('.color-select-panel .active').css('color'));
+                    $("#player_object")[0].sendMsg(Live.chat.text.substr(0, Live.chat.maxLength), '0x' + color.substr(1));
+                    Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
+                    if (Live.chat.text.length > 0)Live.chat.check();
+                }
             }
         };
 
