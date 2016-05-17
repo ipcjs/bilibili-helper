@@ -283,7 +283,6 @@
                 var bankerId = bet.silver[w].id;
                 var rate     = bet.silver[w].times;
                 //var amount = bet.silver[w].amount;
-                //Live.bet.quiz_msg.text(amount);
                 /*be canceled*/
                 if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 if (rate >= o.rate) {
@@ -460,14 +459,11 @@
                 if (!Live.bet.hasInit) {
                     Live.bet.quiz_panel  = $('#quiz-control-panel');
                     Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
-                    //var quiz_helper_title = $('<h4 class="section-title"><span style="font-size: 13px;margin:30px 0 10px;display: block;">下注预约</span></h4>');
                     Live.bet.quiz_rate   = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
                     Live.bet.quiz_rate_n = $('<span class="rate_n">1</span>');
                     Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
                     Live.bet.quiz_msg    = $('<span class="msg"></span>');
                     Live.bet.quiz_btns   = $('<div class="bet-buy-btns p-relative clear-float"></div>');
-                    //Live.bet.quiz_cancel_btn = $('<button class="cancel hide" title="点击取消预约下注">取消下注</button>');
-                    //Live.bet.quiz_success_btn = $('<button class="success hide">下注成功 - 点击继续下注</button>');
                     Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="a" data-type="silver">填坑</button>');
                     Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
                     Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
@@ -503,16 +499,12 @@
                     Live.bet.quiz_helper.append(
                         Live.bet.count_panel,
                         Live.bet.sum_box,
-                        //Live.bet.quiz_success_btn,
-                        //Live.bet.quiz_cancel_btn,
                         $('<div class="quiz_helper">').append($('<span class="rate_title">').text('赔率'), Live.bet.quiz_rate, Live.bet.quiz_rate_n),
                         $('<div class="quiz_helper">').append($('<span class="number_title">').text('数额'), Live.bet.quiz_number, Live.bet.quiz_msg),
                         Live.bet.quiz_btns
                     );
 
-
                     Live.bet.quiz_panel.append(Live.bet.quiz_helper, Live.bet.version);
-
 
                     /*add listener*/
                     $('#quiz_helper .bet-buy-btns button').click(function () {
@@ -542,10 +534,8 @@
                         }
 
                         Live.set('helper_live_number', Live.getRoomId(), number);
-
                         Live.set('helper_live_which', Live.getRoomId(), which);
 
-                        //Live.bet.quiz_cancel_btn.text('返' + rate + ' 买' + (which == 'a' ? '蓝 ' : '红 ') + number + '注');
                         which = which == 'a' ? 'blue' : 'red';
                         new Live.Appoint(which, rate, number).emit(which);
                     });
@@ -566,12 +556,6 @@
                     Live.bet.quiz_rate.on('input change', function () {
                         Live.bet.quiz_rate_n.text($(this).val());
                     });
-                    //Live.bet.quiz_cancel_btn.click(function () {
-                    //    Live.bet.cancel(true);
-                    //});
-                    //Live.bet.quiz_success_btn.click(function () {
-                    //    Live.bet.cancel(true);
-                    //});
                 }
                 Live.bet.hasInit = true;
                 Live.bet.show();
@@ -582,7 +566,6 @@
                     url     : 'http://live.bilibili.com/bet/getRoomBet',
                     type    : 'POST',
                     dataType: 'json',
-                    //async: false,
                     data    : {roomid: roomId}
                 }).promise();
             },
@@ -595,7 +578,6 @@
                         Live.bet.cancel(true);
                         return;
                     }
-
                     /*deal with run queue*/
                     var blue = Live.bet.blue_queue.run[0];
                     var red  = Live.bet.red_queue.run[0];
@@ -603,19 +585,6 @@
                     if (red) red.dealWith(bet);
                     Live.bet.checkQueue();
                 });
-            },
-            success         : function () {
-                if (Live.bet.hasInit) {
-                }
-                Live.clearLocalStorage();
-                Live.bet.check();
-            },
-            error           : function (msg) {
-                if (Live.bet.hasInit) {
-                    //Live.bet.quiz_success_btn.addClass('hide');
-                    //Live.bet.quiz_cancel_btn.removeClass('hide').text(msg);
-                }
-                Live.clearLocalStorage();
             },
             cancel          : function (check) {
                 if (Live.bet.hasInit) {
@@ -691,6 +660,7 @@
                             command: "setTreasure",
                             key    : Live.getRoomId()
                         }, function (response) {
+                            console.log("自动领瓜子房间ID："+response['value']);
                             Live.treasure.canvas        = document.createElement('canvas');
                             Live.treasure.canvas.width  = 120;
                             Live.treasure.canvas.height = 40;
@@ -703,14 +673,8 @@
                                 d.src = 'http://s.0w0.be/bsc/ocrad.js';
                                 document.body.appendChild(d);
                             }
-                            $('.treasure-box').click(function () {
-                                if ($('.treasure-count-down').text() != '00:00') {
-                                    $('.acknowledge-btn').click();
-                                }
-                            });
                             Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
                             Live.treasure.interval  = setInterval(Live.treasure.do, 2000);
-
                             $(window).on('beforeunload', function () {
                                 chrome.extension.sendMessage({
                                     command: "delTreasure",
@@ -719,7 +683,7 @@
                                 console.log(0)
                             });
                         });
-                    }
+                    }else console.log("自动领瓜子房间ID："+response['value']);
                 });
             },
             getCurrentTask: function () {
@@ -730,31 +694,36 @@
                     data    : {r: Math.random}
                 }).promise();
             },
+            checkTask:function(){
+                var currentTask = Live.treasure.getCurrentTask();
+                currentTask.done(function (data) {
+                    if (data.code == ' -10017') {
+                        clearInterval(Live.treasure.interval);
+                        return;
+                    }
+                    Live.treasure.vote   = data.data.vote;
+                    Live.treasure.times  = data.data.times;
+                    Live.treasure.minute = data.data.minute;
+                    Live.treasure.silver = data.data.silver;
+                });
+            },
             do            : function () {
-                if (Live.treasure.vote == 0 && Live.treasure.times == Live.treasure.totalTime) {
+                if (Live.treasure.times == undefined) {
                     clearInterval(Live.treasure.interval);
                     return;
                 }
-                if (Live.treasure.vote == -1) {
-                    var currentTask = Live.treasure.getCurrentTask();
-                    currentTask.done(function (data) {
-                        if (data.code == ' -10017') {
-                            clearInterval(Live.treasure.interval);
-                            return;
-                        }
-                        Live.treasure.vote   = data.data.vote;
-                        Live.treasure.times  = data.data.times;
-                        Live.treasure.minute = data.data.minute;
-                        Live.treasure.silver = data.data.silver;
-                    });
-                }
+                if (Live.treasure.vote == -1){Live.treasure.checkTask();return;}
+
                 var res = false;
                 if ($('.treasure-count-down').text() == '00:00') {
-                    Live.treasure.can = true;
-                    clearInterval(Live.treasure.interval);
-                    Live.treasure.interval = undefined;
+
                     setTimeout(function () {
-                        $('.treasure-box').click();
+                        Live.treasure.can = true;
+                        clearInterval(Live.treasure.interval);
+                        var o = document.createEvent("MouseEvent");
+                        o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
+                        $(".treasure-box")[0].dispatchEvent(o);
+                        Live.treasure.interval = undefined;
                         var img = document.getElementById('captchaImg');
                         if (img)
                             img.onload = function () {
@@ -772,14 +741,11 @@
                                     c.done(function (data) {
                                         if (!Live.treasure.can) {
                                             Live.treasure.interval = setInterval(Live.treasure.do, 2000);
-                                            if (data.data.vote == 3) {
-                                                data.data.vote = 0;
-                                                Live.treasure.times += 1;
-                                            } else data.data.vote += 1;
+                                            console.log(q+'='+res+"，成功领取"+Live.treasure.silver+"个瓜子！");
+                                            Live.treasure.checkTask();
                                         }
                                     });
                                 }, 2000);
-                                console.log(q, res);
                             };
                     }, 2000);
                 } else {
@@ -804,7 +770,7 @@
                 $('#helper-send-btn').click(function (e) {
                     e.preventDefault();
                     Live.chat.text = $('#danmu-textbox').val();
-                    if (Live.chat.text.length == 0) $('#danmu-send-btn').click();
+                    if (Live.chat.text.length >0 && Live.chat.text.length<=30) $('#danmu-send-btn').click();
                     else {
                         $('#danmu-textbox').val('');
                         Live.chat.do();
@@ -812,7 +778,7 @@
                 });
                 $('#danmu-textbox').keyup(function (e) {
                     e.preventDefault();
-                    if (e.keyCode === 13) $('#helper-send-btn').click();
+                    if (e.keyCode === 13&&$('#danmu-textbox').val().length>0) $('#helper-send-btn').click();
                     return false;
                 })
             },
