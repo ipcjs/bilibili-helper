@@ -72,7 +72,8 @@
             Live.del('helper_live_number', Live.getRoomId());
             Live.del('helper_live_rate', Live.getRoomId());
             Live.del('helper_live_which', Live.getRoomId());
-            Live.del('helper_doSign', Live.getRoomId());
+            Live.del('helper_doSign_today', Live.getRoomId());
+            Live.del('helper_doSign_date', Live.getRoomId());
             Live.del('helper_userInfo', Live.getRoomId());
         };
         Live.getRoomId         = function () {
@@ -143,8 +144,8 @@
                                 body: "不能重复签到",
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-1.gif"
                             });
-                            Live.set('helper_doSign', 'today', true);
-                            Live.set('helper_doSign', 'signDate', date);
+                            Live.set('helper_doSign_today', username, true);
+                            Live.set('helper_doSign_date', username, date);
                             setTimeout(function () {
                                 msg.close();
                             }, 5000);
