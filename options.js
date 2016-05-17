@@ -13,6 +13,8 @@ $(document).ready(function() {
 	$("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("rel_search") + "\"].rel_search").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("doSign") + "\"].doSign").addClass("on");
+	$("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
+	$("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
 	var adOption = bkg_page.getOption("ad");
 	$("div[option=\"" + adOption + "\"].ad").addClass("on");
 	if (adOption == "fade") $("#ad_opacity_opt").show();
@@ -95,6 +97,20 @@ $(document).ready(function() {
 		$('.doSign').removeClass('on');
 		$(this).addClass('on');
 		bkg_page.setOption("doSign", $(this).attr("option"));
+		//updatepreview();
+	});
+	$('.autoTreasure').click(function() {
+		if ($(this).hasClass('on')) return false;
+		$('.autoTreasure').removeClass('on');
+		$(this).addClass('on');
+		bkg_page.setOption("autoTreasure", $(this).attr("option"));
+		//updatepreview();
+	});
+	$('.danmu').click(function() {
+		if ($(this).hasClass('on')) return false;
+		$('.danmu').removeClass('on');
+		$(this).addClass('on');
+		bkg_page.setOption("danmu", $(this).attr("option"));
 		//updatepreview();
 	});
 

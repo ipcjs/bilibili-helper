@@ -799,8 +799,7 @@
                     if (!Live.chat.maxLength)
                         Live.chat.maxLength = $(this).attr('maxlength');
                     $(this).removeAttr('maxlength');
-                });
-                $('#danmu-textbox').focus();
+                }).focus();
                 $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'))
                 $('#helper-send-btn').click(function (e) {
                     e.preventDefault();
@@ -813,23 +812,18 @@
                 });
                 $('#danmu-textbox').keyup(function (e) {
                     e.preventDefault();
-                    if (e.keyCode === 13) {
-                        $('#helper-send-btn').click();
-                    }
+                    if (e.keyCode === 13) $('#helper-send-btn').click();
                     return false;
                 })
             },
-            check    : function () {
-                setTimeout(function () {
-                    Live.chat.do();
-                }, 500);
-        },
             do       : function () {
                 if (Live.chat.text.length > 0) {
                     var color = Live.rgb2hex($('.color-select-panel .active').css('color'));
                     $("#player_object")[0].sendMsg(Live.chat.text.substr(0, Live.chat.maxLength), '0x' + color.substr(1));
                     Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-                    if (Live.chat.text.length > 0)Live.chat.check();
+                    if (Live.chat.text.length > 0)setTimeout(function () {
+                        Live.chat.do();
+                    }, 500);
                 }
             }
         };
@@ -844,16 +838,28 @@
                 if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
                 else Live.bet.able();
             });
+            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
+
             chrome.extension.sendMessage({
                 command: "getOption",
                 key    : 'doSign',
             }, function (response) {
-                if (response['value'] == 'on') setInterval(Live.doSign.sign, 300000); //doSign per 5 min
+                if (response['value'] == 'on') setInterval(Live.doSign.sign, 60000); //doSign per 1 min
             });
-            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
 
-            Live.treasure.init();
-            Live.chat.init();
+            chrome.extension.sendMessage({
+                command: "getOption",
+                key    : 'autoTreasure',
+            }, function (response) {
+                if (response['value'] == 'on') Live.treasure.init();
+            });
+            chrome.extension.sendMessage({
+                command: "getOption",
+                key    : 'danmu',
+            }, function (response) {
+                if (response['value'] == 'on') Live.chat.init();
+            });
+
             Notification.requestPermission();
         }
     }
