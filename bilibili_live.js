@@ -72,6 +72,8 @@
             Live.del('helper_live_number', Live.getRoomId());
             Live.del('helper_live_rate', Live.getRoomId());
             Live.del('helper_live_which', Live.getRoomId());
+            Live.del('helper_doSign', Live.getRoomId());
+            Live.del('helper_userInfo', Live.getRoomId());
         };
         Live.getRoomId         = function () {
             return Live.get('helper_live_roomId', location.pathname.substr(1));
@@ -97,12 +99,21 @@
         };
 
         Live.doSign      = {
-            sign: function () {
+            getSignInfo: function () {
+                return $.get("/sign/GetSignInfo", function (data) {
+                }).promise();
+            },
+            init       : function () {
+                var signInfo = Live.doSign.getSignInfo();
+                signInfo.done(function(data){
+                    if(data.code ==0 &&data.data.status==0) setInterval(Live.doSign.sign, 60000);//doSign per 1 min
+                });
+            },
+            sign       : function () {
                 /*check login*/
-                if (!Live.get('helper_userInfo', 'login')) return;
-
                 var date = new Date().getDate();
-                if (Live.get('helper_doSign', 'today') == false || Live.get('helper_doSign', 'signDate') != date) {
+                var username = Live.get('helper_userInfo', 'username');
+                if (Live.get('helper_doSign_today', username) == false || Live.get('helper_doSign_date', username) != date) {
                     $.get("/sign/doSign", function (data) {
                         var e = JSON.parse(data), msg = undefined;
                         //    {
@@ -122,8 +133,8 @@
                                 body: "您获得了" + e.data.text,
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
-                            Live.set('helper_doSign', 'today', true);
-                            Live.set('helper_doSign', 'signDate', date);
+                            Live.set('helper_doSign_today',  username, true);
+                            Live.set('helper_doSign_date', username, date);
                             setTimeout(function () {
                                 msg.close();
                             }, 1000);
@@ -137,8 +148,7 @@
                             setTimeout(function () {
                                 msg.close();
                             }, 5000);
-                        }
-                        else {
+                        } else {
                             msg = new Notification(eval("'" + e.msg + "'"), {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-1.gif"
@@ -655,7 +665,7 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    if (response['value']==false||response['value']==Live.getRoomId()) {
+                    if (response['value'] == false || response['value'] == Live.getRoomId()) {
                         chrome.extension.sendMessage({
                             command: "setTreasure",
                             key    : Live.getRoomId()
@@ -702,11 +712,11 @@
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
-                        }else{
-                            Live.treasure.vote   = data.data.vote;
-                            Live.treasure.times  = data.data.times;
-                            Live.treasure.minute = data.data.minute;
-                            Live.treasure.silver = data.data.silver;
+                        } else {
+                            Live.treasure.vote     = data.data.vote;
+                            Live.treasure.times    = data.data.times;
+                            Live.treasure.minute   = data.data.minute;
+                            Live.treasure.silver   = data.data.silver;
                             Live.treasure.interval = setInterval(Live.treasure.do, 2000);
                         }
                     }
@@ -714,8 +724,8 @@
             },
             do            : function () {
                 if ($('.treasure-count-down').text() == '00:00') {
-                    $(".treasure-box").click(function(){
-                        var img = document.getElementById('captchaImg');
+                    $(".treasure-box").click(function () {
+                        var img    = document.getElementById('captchaImg');
                         img.onload = function () {
                             clearInterval(Live.treasure.interval);
                             Live.treasure.interval = undefined;
@@ -729,7 +739,7 @@
                             Live.treasure.checkTask();
                         };
                     }).click();
-                } else if($('.treasure-box-panel').css('display')!='none'){
+                } else if ($('.treasure-box-panel').css('display') != 'none') {
                     $(".acknowledge-btn").click();
                 }
             }
@@ -787,7 +797,7 @@
                 command: "getOption",
                 key    : 'doSign',
             }, function (response) {
-                if (response['value'] == 'on') setInterval(Live.doSign.sign, 60000); //doSign per 1 min
+                if (response['value'] == 'on') Live.doSign.init();
             });
 
             chrome.extension.sendMessage({
