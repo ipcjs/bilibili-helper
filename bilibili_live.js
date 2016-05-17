@@ -311,10 +311,10 @@
             o.error      = function (data) {
                 if (!data) return false;
                 o.state = 'error';
-                console.log(o.id+':'+data.msg);
+                console.log(o.id + ':' + data.msg);
                 /*deal style class*/
                 o.dom.removeClass('cancel wait run success');
-                if (!o.dom.hasClass('error')) o.dom.addClass('error').attr('title',data.msg);
+                if (!o.dom.hasClass('error')) o.dom.addClass('error').attr('title', data.msg);
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'error');
                 return o;
             };
@@ -457,13 +457,13 @@
 
                 /*create quiz helper DOM*/
                 if (!Live.bet.hasInit) {
-                    Live.bet.quiz_panel  = $('#quiz-control-panel');
-                    Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
-                    Live.bet.quiz_rate   = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
-                    Live.bet.quiz_rate_n = $('<span class="rate_n">1</span>');
-                    Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
-                    Live.bet.quiz_msg    = $('<span class="msg"></span>');
-                    Live.bet.quiz_btns   = $('<div class="bet-buy-btns p-relative clear-float"></div>');
+                    Live.bet.quiz_panel    = $('#quiz-control-panel');
+                    Live.bet.quiz_helper   = $('<div id="quiz_helper"></div>');
+                    Live.bet.quiz_rate     = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
+                    Live.bet.quiz_rate_n   = $('<span class="rate_n">1</span>');
+                    Live.bet.quiz_number   = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
+                    Live.bet.quiz_msg      = $('<span class="msg"></span>');
+                    Live.bet.quiz_btns     = $('<div class="bet-buy-btns p-relative clear-float"></div>');
                     Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="a" data-type="silver">填坑</button>');
                     Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
                     Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
@@ -655,12 +655,11 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    if (!response['value']) {
+                    if (response['value']==false||response['value']==Live.getRoomId()) {
                         chrome.extension.sendMessage({
                             command: "setTreasure",
                             key    : Live.getRoomId()
                         }, function (response) {
-                            console.log("自动领瓜子房间ID："+response['value']);
                             Live.treasure.canvas        = document.createElement('canvas');
                             Live.treasure.canvas.width  = 120;
                             Live.treasure.canvas.height = 40;
@@ -674,7 +673,7 @@
                                 document.body.appendChild(d);
                             }
                             Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
-                            Live.treasure.interval  = setInterval(Live.treasure.do, 2000);
+                            Live.treasure.checkTask();
                             $(window).on('beforeunload', function () {
                                 chrome.extension.sendMessage({
                                     command: "delTreasure",
@@ -683,7 +682,7 @@
                                 console.log(0)
                             });
                         });
-                    }else console.log("自动领瓜子房间ID："+response['value']);
+                    } else console.log("自动领瓜子房间ID：" + response['value']);
                 });
             },
             getCurrentTask: function () {
@@ -694,67 +693,45 @@
                     data    : {r: Math.random}
                 }).promise();
             },
-            checkTask:function(){
+            checkTask     : function () {
                 var currentTask = Live.treasure.getCurrentTask();
                 currentTask.done(function (data) {
                     if (data.code == ' -10017') {
                         clearInterval(Live.treasure.interval);
                         return;
+                    } else if (data.code == 0) {
+                        if (data.data.times == undefined) {
+                            clearInterval(Live.treasure.interval);
+                        }else{
+                            Live.treasure.vote   = data.data.vote;
+                            Live.treasure.times  = data.data.times;
+                            Live.treasure.minute = data.data.minute;
+                            Live.treasure.silver = data.data.silver;
+                            Live.treasure.interval = setInterval(Live.treasure.do, 2000);
+                        }
                     }
-                    Live.treasure.vote   = data.data.vote;
-                    Live.treasure.times  = data.data.times;
-                    Live.treasure.minute = data.data.minute;
-                    Live.treasure.silver = data.data.silver;
                 });
             },
             do            : function () {
-                if (Live.treasure.times == undefined) {
-                    clearInterval(Live.treasure.interval);
-                    return;
-                }
-                if (Live.treasure.vote == -1){Live.treasure.checkTask();return;}
-
-                var res = false;
                 if ($('.treasure-count-down').text() == '00:00') {
-
-                    setTimeout(function () {
-                        Live.treasure.can = true;
-                        clearInterval(Live.treasure.interval);
-                        var o = document.createEvent("MouseEvent");
-                        o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
-                        $(".treasure-box")[0].dispatchEvent(o);
-                        Live.treasure.interval = undefined;
+                    $(".treasure-box").click(function(){
                         var img = document.getElementById('captchaImg');
-                        if (img)
-                            img.onload = function () {
-                                Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
-                                Live.treasure.context.drawImage(img, 0, 0);
-                                var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
-                                q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
-                                res   = eval(q);
-                                $('#freeSilverCaptchaInput').val(res);
-                                var o = document.createEvent("MouseEvent");
-                                o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
-                                $("#getFreeSilverAward")[0].dispatchEvent(o);
-                                setTimeout(function () {
-                                    var c = Live.treasure.getCurrentTask();
-                                    c.done(function (data) {
-                                        if (!Live.treasure.can) {
-                                            Live.treasure.interval = setInterval(Live.treasure.do, 2000);
-                                            console.log(q+'='+res+"，成功领取"+Live.treasure.silver+"个瓜子！");
-                                            Live.treasure.checkTask();
-                                        }
-                                    });
-                                }, 2000);
-                            };
-                    }, 2000);
-                } else {
-                    var o = document.createEvent("MouseEvent");
-                    o.initEvent("click", !0, !0, window, 1, 0, 0, 0, 0, !1, !1, !1, !1, 0, null);
-                    $(".acknowledge-btn")[0].dispatchEvent(o);
-                    Live.treasure.can = false;
+                        img.onload = function () {
+                            clearInterval(Live.treasure.interval);
+                            Live.treasure.interval = undefined;
+                            Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                            Live.treasure.context.drawImage(img, 0, 0);
+                            var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
+                            q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
+                            res   = eval(q);
+                            $('#freeSilverCaptchaInput').val(res);
+                            $("#getFreeSilverAward").click();
+                            Live.treasure.checkTask();
+                        };
+                    }).click();
+                } else if($('.treasure-box-panel').css('display')!='none'){
+                    $(".acknowledge-btn").click();
                 }
-                return res;
             }
         };
         Live.chat        = {
@@ -770,7 +747,7 @@
                 $('#helper-send-btn').click(function (e) {
                     e.preventDefault();
                     Live.chat.text = $('#danmu-textbox').val();
-                    if (Live.chat.text.length >0 && Live.chat.text.length<=30) $('#danmu-send-btn').click();
+                    if (Live.chat.text.length > 0 && Live.chat.text.length <= 30) $('#danmu-send-btn').click();
                     else {
                         $('#danmu-textbox').val('');
                         Live.chat.do();
@@ -778,7 +755,7 @@
                 });
                 $('#danmu-textbox').keyup(function (e) {
                     e.preventDefault();
-                    if (e.keyCode === 13&&$('#danmu-textbox').val().length>0) $('#helper-send-btn').click();
+                    if (e.keyCode === 13 && $('#danmu-textbox').val().length > 0) $('#helper-send-btn').click();
                     return false;
                 })
             },

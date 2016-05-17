@@ -345,7 +345,7 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             return true;
         case "delTreasure":
             sendResponse({
-                value: treasure
+                value: treasure = false
             });
             return true;
         case "enableAll":
