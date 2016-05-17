@@ -311,10 +311,10 @@
             o.error      = function (data) {
                 if (!data) return false;
                 o.state = 'error';
-                console.log(data.msg);
+                console.log(o.id+':'+data.msg);
                 /*deal style class*/
                 o.dom.removeClass('cancel wait run success');
-                if (!o.dom.hasClass('error')) o.dom.addClass('error');
+                if (!o.dom.hasClass('error')) o.dom.addClass('error').attr('title',data.msg);
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'error');
                 return o;
             };
