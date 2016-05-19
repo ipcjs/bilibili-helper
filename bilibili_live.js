@@ -8,6 +8,7 @@
         document.body.appendChild(d);
 
         var Live               = {};
+        Live.version = '0.1.0';
         Live.set               = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
@@ -42,15 +43,10 @@
             window.localStorage[n] = JSON.stringify(l);
         };
         Live.getUser           = function () {
-            return $.ajax({
-                url     : 'http://live.bilibili.com/user/getuserinfo',
-                type    : 'GET',
-                dataType: 'json'
-            }).promise();
+            return $.getJSON("/user/getuserinfo").promise();
         };
         Live.initUserInfo      = function () {
-            var pro = Live.getUser();
-            return pro.done(function (user) {
+            return Live.getUser().done(function (user) {
                 if (user.code == 'REPONSE_OK') {
                     user = user.data;
                     Live.set('helper_userInfo', 'username', user.uname);
@@ -79,6 +75,9 @@
         Live.getRoomId         = function () {
             return Live.get('helper_live_roomId', location.pathname.substr(1));
         };
+        Live.getRoomInfo       = function () {
+            return $.getJSON("/live/getInfo?roomid=" + Live.getRoomId()).promise();
+        };
         Live.numFormat         = function (num) {
             var number = num;
             if (num >= 10000) number = (num / 10000).toFixed(1) + '万';
@@ -101,18 +100,19 @@
 
         Live.doSign      = {
             getSignInfo: function () {
-                return $.get("/sign/GetSignInfo", function (data) {
-                }).promise();
+                return $.getJSON("/sign/GetSignInfo").promise();
             },
             init       : function () {
-                var signInfo = Live.doSign.getSignInfo();
-                signInfo.done(function(data){
-                    if(data.code ==0 &&data.data.status==0) setInterval(Live.doSign.sign, 60000);//doSign per 1 min
+                Live.doSign.getSignInfo().done(function (data) {
+                    if (data.code == 0 && data.data.status == 0) {
+                        Live.doSign.sign();
+                        setInterval(Live.doSign.sign, 60000);
+                    }//doSign per 1 min
                 });
             },
             sign       : function () {
                 /*check login*/
-                var date = new Date().getDate();
+                var date     = new Date().getDate();
                 var username = Live.get('helper_userInfo', 'username');
                 if (Live.get('helper_doSign_today', username) == false || Live.get('helper_doSign_date', username) != date) {
                     $.get("/sign/doSign", function (data) {
@@ -134,7 +134,7 @@
                                 body: "您获得了" + e.data.text,
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
-                            Live.set('helper_doSign_today',  username, true);
+                            Live.set('helper_doSign_today', username, true);
                             Live.set('helper_doSign_date', username, date);
                             setTimeout(function () {
                                 msg.close();
@@ -163,8 +163,7 @@
             }
         };
         Live.Queue       = function (which) {
-            if (arguments.length < 1) return false;
-            var o         = new Object();
+            var o         = {};
             o.id          = new Date().getTime();
             o.which       = which;
             o.total       = 0;
@@ -222,9 +221,8 @@
             return o;
         };
         Live.Appoint     = function (which, rate, number, state) {
-            if (arguments.length < 3) return false;
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
-            var o    = new Object();
+            var o    = {};
             o.id     = new Date().getTime();
             o.which  = which;
             o.rate   = rate;
@@ -247,13 +245,11 @@
                     var rate_dom   = $('<span>').addClass('rate').text(rate);
                     var number_dom = $('<h4>').addClass('number').text(Live.numFormat(o.number));
                     o.menu         = $('<div>').addClass('menu');
-
-                    var count_dom = $('<div>').addClass('count').addClass(o.state).attr({
+                    o.dom          = $('<div>').addClass('count').addClass(o.state).attr({
                         id    : o.id,
                         rate  : rate,
                         number: o.number
                     }).append(number_dom, rate_dom, $('<a>').addClass('close'), o.menu);
-                    o.dom         = count_dom;
                     o.updateMenu();
                     var success_dom = Live.bet[which + '_box'].children('.success:last');
                     if (top) {
@@ -309,7 +305,9 @@
                         complete: function (data) {
                             var b = JSON.parse(data.responseText);
                             if (b.code == -400) {//error
-                                o.error(b);
+                                if (b.msg == '手慢了,剩余可购数量不足！') {
+                                }
+                                else o.error(b);
                             } else if (b.msg == 'ok') {//success
                                 o.success();
 
@@ -479,7 +477,7 @@
                     Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
                     Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
                     Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
-                    Live.bet.version = $("<div class=\"version\">哔哩哔哩助手 " + chrome.runtime.getManifest().version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a></div>");
+                    Live.bet.version = $("<div class=\"version\">哔哩哔哩助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
 
 
                     /*count panel*/
@@ -518,7 +516,7 @@
                     Live.bet.quiz_panel.append(Live.bet.quiz_helper, Live.bet.version);
 
                     /*add listener*/
-                    $('#quiz_helper .bet-buy-btns button').click(function () {
+                    $('#quiz_helper').find('.bet-buy-btns button').click(function () {
                         var which = $(this).attr('data-target');
                         /*rate*/
                         var rate = parseFloat(Live.bet.quiz_rate.val());
@@ -572,13 +570,8 @@
                 Live.bet.show();
             },
             getBet          : function () {
-                var roomId = Live.getRoomId();
-                return $.ajax({
-                    url     : 'http://live.bilibili.com/bet/getRoomBet',
-                    type    : 'POST',
-                    dataType: 'json',
-                    data    : {roomid: roomId}
-                }).promise();
+                return $.post('http://live.bilibili.com/bet/getRoomBet', {roomid: Live.getRoomId()}, function () {
+                }, 'json').promise();
             },
             do              : function () {
                 Live.bet.getBet().done(function (bet) {
@@ -608,16 +601,16 @@
                 if (Live.bet.hasInit) {
                     if (all) {
                         Live.bet.quiz_toggle_btn.removeClass('on');
-                        $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').removeClass('hide');
-                        $('#quiz-control-panel .section-title').children('.description').remove();
+                        $('.bet-buy-ctnr.dp-none').find('.bet-buy-btns').removeClass('hide');
+                        $('#quiz-control-panel').find('.section-title .description').remove();
                     }
                     Live.bet.hide_quiz_helper();
                 }
             },
             show            : function () {
                 if (Live.bet.hasInit) {
-                    $('.bet-buy-ctnr.dp-none').children('.bet-buy-btns').addClass('hide');
-                    $('#quiz-control-panel .section-title').append(Live.bet.description);
+                    $('.bet-buy-ctnr.dp-none').find('.bet-buy-btns').addClass('hide');
+                    $('#quiz-control-panel').find('.section-title').append(Live.bet.description);
                     Live.bet.quiz_toggle_btn.addClass('on');
                     Live.bet.show_quiz_helper();
                 }
@@ -670,13 +663,13 @@
                         chrome.extension.sendMessage({
                             command: "setTreasure",
                             key    : Live.getRoomId()
-                        }, function (response) {
+                        }, function () {
                             Live.treasure.canvas        = document.createElement('canvas');
                             Live.treasure.canvas.width  = 120;
                             Live.treasure.canvas.height = 40;
                             document.body.appendChild(Live.treasure.canvas);
                             Live.treasure.context              = Live.treasure.canvas.getContext('2d');
-                            Live.treasure.context.font         = '40px agencyfbbold'; // 字体
+                            Live.treasure.context.font         = '40px agencyfbbold';
                             Live.treasure.context.textBaseline = 'top';
                             if (!window.OCRAD) {
                                 var d = document.createElement('script');
@@ -697,23 +690,47 @@
                 });
             },
             getCurrentTask: function () {
-                return $.ajax({
-                    url     : 'http://live.bilibili.com/FreeSilver/getCurrentTask',
-                    type    : 'POST',
-                    dataType: 'json',
-                    data    : {r: Math.random}
-                }).promise();
+                return $.post('http://live.bilibili.com/FreeSilver/getCurrentTask', {r: Math.random}, function () {
+                }, 'json').promise();
             },
             checkTask     : function () {
-                var currentTask = Live.treasure.getCurrentTask();
-                currentTask.done(function (data) {
+                Live.treasure.getCurrentTask().done(function (data) {
                     if (data.code == ' -10017') {
                         clearInterval(Live.treasure.interval);
-                        return;
+                        if (Live.treasure.times != undefined) {
+                            var msg = new Notification("今天所有的宝箱已经领完!", {
+                                body: "",
+                                icon: "//static.hdslb.com/live-static/images/7.png"
+                            });
+                            setTimeout(function () {
+                                msg.close();
+                            }, 2000);
+                        }
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
                         } else {
+                            if (Live.treasure.times == undefined)
+                                Live.getRoomInfo().done(function (data) {
+                                    if (data.code == 0) {
+                                        var msg = new Notification("自动领瓜子功能已经启动", {
+                                            body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
+                                            icon: "//static.hdslb.com/live-static/images/7.png"
+                                        });
+                                        setTimeout(function () {
+                                            msg.close();
+                                        }, 10000);
+                                    }
+                                });
+                            if (Live.treasure.times != data.data.times && Live.treasure.times != undefined) {
+                                var msg = new Notification("自动领取成功", {
+                                    body: "领取了" + Live.treasure.silver + "个瓜子",
+                                    icon: "//static.hdslb.com/live-static/images/7.png"
+                                });
+                                setTimeout(function () {
+                                    msg.close();
+                                }, 10000);
+                            }
                             Live.treasure.vote     = data.data.vote;
                             Live.treasure.times    = data.data.times;
                             Live.treasure.minute   = data.data.minute;
@@ -726,19 +743,18 @@
             do            : function () {
                 if ($('.treasure-count-down').text() == '00:00') {
                     $(".treasure-box").click(function () {
-                        var img    = document.getElementById('captchaImg');
-                        img.onload = function () {
-                            clearInterval(Live.treasure.interval);
-                            Live.treasure.interval = undefined;
-                            Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
-                            Live.treasure.context.drawImage(img, 0, 0);
-                            var q = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
-                            q     = q.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
-                            res   = eval(q);
-                            $('#freeSilverCaptchaInput').val(res);
-                            $("#getFreeSilverAward").click();
-                            Live.treasure.checkTask();
-                        };
+                        document.getElementById('captchaImg').onload = img.onload || function () {
+                                clearInterval(Live.treasure.interval);
+                                Live.treasure.interval = undefined;
+                                Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                                Live.treasure.context.drawImage(img, 0, 0);
+                                Live.treasure.question = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
+                                Live.treasure.question = Live.treasure.question.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
+                                Live.treasure.answer   = eval(Live.treasure.question);
+                                $('#freeSilverCaptchaInput').val(Live.treasure.answer);
+                                $("#getFreeSilverAward").click();
+                                Live.treasure.checkTask();
+                            };
                     }).click();
                 } else if ($('.treasure-box-panel').css('display') != 'none') {
                     $(".acknowledge-btn").click();
@@ -749,26 +765,26 @@
             maxLength: undefined,
             text     : '',
             init     : function () {
-                $('#danmu-textbox').focus(function () {
+                var danmu_text_box = $('#danmu-textbox');
+                danmu_text_box.keydown(function () {
                     if (!Live.chat.maxLength)
                         Live.chat.maxLength = $(this).attr('maxlength');
                     $(this).removeAttr('maxlength');
-                }).focus();
-                $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'))
+                }).keyup(function (e) {
+                    e.preventDefault();
+                    if (e.keyCode === 13 && danmu_text_box.val().length > 0) $('#helper-send-btn').click();
+                    return false;
+                });
+                $('.danmu-sender').append($('<button id="helper-send-btn" class="danmu-send-btn float-right live-btn default" style="position:absolute;" role="button" aria-label="点击发送弹幕">发送</button>'));
                 $('#helper-send-btn').click(function (e) {
                     e.preventDefault();
-                    Live.chat.text = $('#danmu-textbox').val();
+                    Live.chat.text = danmu_text_box.val();
                     if (Live.chat.text.length > 0 && Live.chat.text.length <= 30) $('#danmu-send-btn').click();
                     else {
-                        $('#danmu-textbox').val('');
+                        danmu_text_box.val('');
                         Live.chat.do();
                     }
                 });
-                $('#danmu-textbox').keyup(function (e) {
-                    e.preventDefault();
-                    if (e.keyCode === 13 && $('#danmu-textbox').val().length > 0) $('#helper-send-btn').click();
-                    return false;
-                })
             },
             do       : function () {
                 if (Live.chat.text.length > 0) {
@@ -787,7 +803,7 @@
         Live.initUserInfo();
         if (Live.get('helper_userInfo', 'login')) {
             Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
-            $('#quiz-control-panel .section-title').append(Live.bet.quiz_toggle_btn);
+            $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
             Live.bet.quiz_toggle_btn.click(function () {
                 if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
                 else Live.bet.able();
