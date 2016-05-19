@@ -743,7 +743,8 @@
             do            : function () {
                 if ($('.treasure-count-down').text() == '00:00') {
                     $(".treasure-box").click(function () {
-                        document.getElementById('captchaImg').onload = img.onload || function () {
+                        var img = document.getElementById('captchaImg');
+                        img.onload = img.onload || function () {
                                 clearInterval(Live.treasure.interval);
                                 Live.treasure.interval = undefined;
                                 Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
