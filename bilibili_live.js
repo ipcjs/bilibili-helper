@@ -783,7 +783,6 @@
             text     : '',
             init     : function () {
                 var danmu_text_box = $('#danmu-textbox');
-                $('.room-silent-merge').remove();
                 danmu_text_box.keydown(function () {
                     if (!Live.chat.maxLength)
                         Live.chat.maxLength = $(this).attr('maxlength');
