@@ -7,9 +7,11 @@
         d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);var r = JSON.parse(window.localStorage.helper_live_rnd);l[' + location.pathname.substr(1) + '] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
-        var Live               = {};
+        var Live = {};
+
         Live.version = '0.1.0';
-        Live.set               = function (n, k, v) {
+
+        Live.set = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
@@ -20,7 +22,8 @@
                 window.localStorage[n] = JSON.stringify(l);
             }
         };
-        Live.get               = function (n, k) {
+
+        Live.get = function (n, k) {
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n]) {
@@ -31,7 +34,8 @@
             if (!k) return l;
             return l[k];
         };
-        Live.del               = function (n, k) {
+
+        Live.del = function (n, k) {
             if (!window.localStorage || !n || !k) return;
 
             if (!window.localStorage[n]) {
@@ -42,10 +46,12 @@
             delete l[k];
             window.localStorage[n] = JSON.stringify(l);
         };
-        Live.getUser           = function () {
+
+        Live.getUser = function () {
             return $.getJSON("/user/getuserinfo").promise();
         };
-        Live.initUserInfo      = function () {
+
+        Live.initUserInfo = function () {
             return Live.getUser().done(function (user) {
                 if (user.code == 'REPONSE_OK') {
                     user = user.data;
@@ -62,6 +68,7 @@
             });
 
         };
+
         Live.clearLocalStorage = function () {
             Live.del('helper_live_bet', Live.getRoomId());
             Live.del('helper_live_check', Live.getRoomId());
@@ -72,18 +79,22 @@
             Live.del('helper_doSign_date', Live.getRoomId());
             Live.del('helper_userInfo', Live.getRoomId());
         };
-        Live.getRoomId         = function () {
+
+        Live.getRoomId = function () {
             return Live.get('helper_live_roomId', location.pathname.substr(1));
         };
-        Live.getRoomInfo       = function () {
+
+        Live.getRoomInfo = function () {
             return $.getJSON("/live/getInfo?roomid=" + Live.getRoomId()).promise();
         };
-        Live.numFormat         = function (num) {
+
+        Live.numFormat = function (num) {
             var number = num;
             if (num >= 10000) number = (num / 10000).toFixed(1) + '万';
             return number;
         };
-        Live.rgb2hex           = function (rgb) {
+
+        Live.rgb2hex = function (rgb) {
             function zero_fill_hex(num, digits) {
                 var s = num.toString(16);
                 while (s.length < digits)
@@ -98,7 +109,7 @@
             return "#" + zero_fill_hex(decimal, 6);
         };
 
-        Live.doSign      = {
+        Live.doSign = {
             getSignInfo: function () {
                 return $.getJSON("/sign/GetSignInfo").promise();
             },
@@ -162,7 +173,8 @@
                 }
             }
         };
-        Live.Queue       = function (which) {
+
+        Live.Queue = function (which) {
             var o         = {};
             o.id          = new Date().getTime();
             o.which       = which;
@@ -177,7 +189,7 @@
                 o[state].push(appoint);
             };
             o.empty       = function () {
-                $('#quiz_helper .' + o.which + '-box').children().addClass('hide');
+                $('#quiz_helper').find(o.which + '-box *').addClass('hide');
                 o.run     = [];
                 o.wait    = [];
                 o.error   = [];
@@ -208,7 +220,7 @@
                         if (o.run.length > 0) {
                             var a = o.run.shift();
                             a.wait().updateMenu();
-                            o.wait = [a].concat(o.wait);
+                            o.wait.unshift(a);
                         }
                         o.run.push(appoint);
                         appoint.create_dom(true).updateMenu();
@@ -220,7 +232,8 @@
             };
             return o;
         };
-        Live.Appoint     = function (which, rate, number, state) {
+
+        Live.Appoint = function (which, rate, number, state) {
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
             var o    = {};
             o.id     = new Date().getTime();
@@ -375,7 +388,8 @@
             };
             return o;
         };
-        Live.bet         = {
+
+        Live.bet = {
             times           : 0,
             stop            : false,
             hasInit         : false,
@@ -648,8 +662,10 @@
                 Live.set('helper_live_check', Live.getRoomId(), undefined);
             }
         };
+
         Live.currentRoom = [];
-        Live.treasure    = {
+
+        Live.treasure = {
             vote          : -1,
             minute        : 0,
             silver        : 0,
@@ -659,7 +675,7 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    if (response['value'] == false || response['value'] == Live.getRoomId()) {
+                    if (response['value'] == false) {
                         chrome.extension.sendMessage({
                             command: "setTreasure",
                             key    : Live.getRoomId()
@@ -678,6 +694,7 @@
                             }
                             Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
                             Live.treasure.checkTask();
+
                             $(window).on('beforeunload', function () {
                                 chrome.extension.sendMessage({
                                     command: "delTreasure",
@@ -686,7 +703,7 @@
                                 console.log(0)
                             });
                         });
-                    } else console.log("自动领瓜子房间ID：" + response['value']);
+                    } else if(response['value']) console.log("自动领瓜子房间ID：" + response['value']);
                 });
             },
             getCurrentTask: function () {
@@ -695,16 +712,13 @@
             },
             checkTask     : function () {
                 Live.treasure.getCurrentTask().done(function (data) {
-                    if (data.code == ' -10017') {
+                    if (data.code == '-10017') {//领完
                         clearInterval(Live.treasure.interval);
                         if (Live.treasure.times != undefined) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
-                            setTimeout(function () {
-                                msg.close();
-                            }, 2000);
                         }
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
@@ -744,7 +758,8 @@
                 if ($('.treasure-count-down').text() == '00:00') {
                     $(".treasure-box").click(function () {
                         var img = document.getElementById('captchaImg');
-                        img.onload = img.onload || function () {
+                        if (img.onload == undefined)
+                            img.onload = function () {
                                 clearInterval(Live.treasure.interval);
                                 Live.treasure.interval = undefined;
                                 Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
@@ -762,11 +777,13 @@
                 }
             }
         };
-        Live.chat        = {
+
+        Live.chat = {
             maxLength: undefined,
             text     : '',
             init     : function () {
                 var danmu_text_box = $('#danmu-textbox');
+                $('.room-silent-merge').remove();
                 danmu_text_box.keydown(function () {
                     if (!Live.chat.maxLength)
                         Live.chat.maxLength = $(this).attr('maxlength');
