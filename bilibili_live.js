@@ -491,8 +491,6 @@
                     Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
                     Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
                     Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
-                    Live.bet.version = $("<div class=\"version\">哔哩哔哩助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
-
 
                     /*count panel*/
                     Live.bet.count_panel = $('<div>').addClass('quiz-panel');
@@ -527,7 +525,7 @@
                         Live.bet.quiz_btns
                     );
 
-                    Live.bet.quiz_panel.append(Live.bet.quiz_helper, Live.bet.version);
+                    Live.bet.quiz_panel.append(Live.bet.quiz_helper);
 
                     /*add listener*/
                     $('#quiz_helper').find('.bet-buy-btns button').click(function () {
@@ -815,39 +813,44 @@
             }
         };
 
-        Live.set('helper_userInfo', 'login', false);
-        Live.clearLocalStorage();
-        Live.initUserInfo();
-        if (Live.get('helper_userInfo', 'login')) {
-            Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
-            $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
-            Live.bet.quiz_toggle_btn.click(function () {
-                if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
-                else Live.bet.able();
-            });
-            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
+        Live.init = function(){
+            $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
+            Live.set('helper_userInfo', 'login', false);
+            Live.clearLocalStorage();
+            Live.initUserInfo();
+            if (Live.get('helper_userInfo', 'login')) {
+                Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
+                $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
+                Live.bet.quiz_toggle_btn.click(function () {
+                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
+                    else Live.bet.able();
+                });
+                if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
 
-            chrome.extension.sendMessage({
-                command: "getOption",
-                key    : 'doSign',
-            }, function (response) {
-                if (response['value'] == 'on') Live.doSign.init();
-            });
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'doSign',
+                }, function (response) {
+                    if (response['value'] == 'on') Live.doSign.init();
+                });
 
-            chrome.extension.sendMessage({
-                command: "getOption",
-                key    : 'autoTreasure',
-            }, function (response) {
-                if (response['value'] == 'on') Live.treasure.init();
-            });
-            chrome.extension.sendMessage({
-                command: "getOption",
-                key    : 'danmu',
-            }, function (response) {
-                if (response['value'] == 'on') Live.chat.init();
-            });
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'autoTreasure',
+                }, function (response) {
+                    if (response['value'] == 'on') Live.treasure.init();
+                });
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'danmu',
+                }, function (response) {
+                    if (response['value'] == 'on') Live.chat.init();
+                });
 
-            Notification.requestPermission();
-        }
+                Notification.requestPermission();
+            }
+        };
+
+        Live.init();
     }
 })();
