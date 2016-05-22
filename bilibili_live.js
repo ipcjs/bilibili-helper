@@ -673,6 +673,10 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
+                    if (response['data'].finish == true) {
+                        $('#head-info-panel').append('<div class="room-info treasure-info">今天的瓜子已经领完</div>');
+                        return;
+                    }
                     if (response['data'].roomId == undefined) {
                         Live.treasure.canvas        = document.createElement('canvas');
                         Live.treasure.canvas.width  = 120;
@@ -710,11 +714,19 @@
                 Live.treasure.getCurrentTask().done(function (data) {
                     if (data.code == '-10017') {//领完
                         clearInterval(Live.treasure.interval);
-                        if (data.data.times == undefined)
+                        if (data.data.times == undefined) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
+                            chrome.extension.sendMessage({
+                                command: "setTreasure",
+                                data   : {
+                                    finish: true
+                                }
+                            });
+                            $('#head-info-panel').find('.treasure-info').text('今天的瓜子已经领完');
+                        }
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
@@ -821,7 +833,7 @@
             }
         };
 
-        Live.init = function(){
+        Live.init = function () {
             $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
             Live.set('helper_userInfo', 'login', false);
             Live.clearLocalStorage();
