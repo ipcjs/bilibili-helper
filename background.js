@@ -312,7 +312,14 @@ function extensionLabsInit() {
 if (typeof(chrome.runtime.setUninstallURL) == "function") {
     chrome.runtime.setUninstallURL("https://extlabs.io/analytics/uninstall/?uid=178&pid=264&finish_url=https%3A%2F%2Fbilihelper.guguke.net%2F%3Funinstall%26version%3D" + chrome.app.getDetails().version);
 }
-var treasure = false;
+var treasure = {};
+function setTreasure(data){
+    if (Object.prototype.toString.call(data) === '[object Object]'){
+        for(var index in data){
+            treasure[index] = data[index];
+        }
+    }
+}
 chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.command) {
         case "init":
@@ -336,17 +343,18 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             return true;
         case "getTreasure":
             sendResponse({
-                value: treasure
+                data: treasure
             });
             return true;
         case "setTreasure":
+            setTreasure(request.data);
             sendResponse({
-                value: treasure = request.key
+                data: treasure
             });
             return true;
         case "delTreasure":
             sendResponse({
-                value: treasure = false
+                data: treasure = {}
             });
             return true;
         case "enableAll":

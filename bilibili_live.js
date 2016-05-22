@@ -673,35 +673,33 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    if (response['value'] == false) {
-                        chrome.extension.sendMessage({
-                            command: "setTreasure",
-                            key    : Live.getRoomId()
-                        }, function () {
-                            Live.treasure.canvas        = document.createElement('canvas');
-                            Live.treasure.canvas.width  = 120;
-                            Live.treasure.canvas.height = 40;
-                            document.body.appendChild(Live.treasure.canvas);
-                            Live.treasure.context              = Live.treasure.canvas.getContext('2d');
-                            Live.treasure.context.font         = '40px agencyfbbold';
-                            Live.treasure.context.textBaseline = 'top';
-                            if (!window.OCRAD) {
-                                var d = document.createElement('script');
-                                d.src = 'http://s.0w0.be/bsc/ocrad.js';
-                                document.body.appendChild(d);
-                            }
-                            Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
-                            Live.treasure.checkTask();
-
-                            $(window).on('beforeunload', function () {
-                                chrome.extension.sendMessage({
-                                    command: "delTreasure",
-                                    key    : Live.getRoomId()
-                                });
-                                console.log(0)
+                    if (response['data'].roomId == undefined) {
+                        Live.treasure.canvas        = document.createElement('canvas');
+                        Live.treasure.canvas.width  = 120;
+                        Live.treasure.canvas.height = 40;
+                        document.body.appendChild(Live.treasure.canvas);
+                        Live.treasure.context              = Live.treasure.canvas.getContext('2d');
+                        Live.treasure.context.font         = '40px agencyfbbold';
+                        Live.treasure.context.textBaseline = 'top';
+                        if (!window.OCRAD) {
+                            var d = document.createElement('script');
+                            d.src = 'http://s.0w0.be/bsc/ocrad.js';
+                            document.body.appendChild(d);
+                        }
+                        Live.treasure.totalTime = (Live.get('helper_userInfo', 'vip') == 1) ? 3 : 5;
+                        Live.treasure.checkTask();
+                        $(window).on('beforeunload', function () {
+                            chrome.extension.sendMessage({
+                                command: "delTreasure"
                             });
+                            console.log(0);
                         });
-                    } else if(response['value']) console.log("自动领瓜子房间ID：" + response['value']);
+                        $('#head-info-panel').append('<div class="room-info treasure-info">已开始在本直播间自动领瓜子</div>');
+                    } else if (response['data'].roomId != Live.getRoomId()) {
+                        $('#head-info-panel').append('<div class="room-info treasure-info">已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子</div>');
+                    } else if (response['data'].roomId == Live.getRoomId()) {
+                        $('#head-info-panel').append('<div class="room-info treasure-info">本直播间页面已经被打开过</div>');
+                    }
                 });
             },
             getCurrentTask: function () {
@@ -712,12 +710,11 @@
                 Live.treasure.getCurrentTask().done(function (data) {
                     if (data.code == '-10017') {//领完
                         clearInterval(Live.treasure.interval);
-                        if (Live.treasure.times != undefined) {
+                        if (data.data.times == undefined)
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
-                        }
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
@@ -725,6 +722,17 @@
                             if (Live.treasure.times == undefined)
                                 Live.getRoomInfo().done(function (data) {
                                     if (data.code == 0) {
+                                        chrome.extension.sendMessage({
+                                            command: "setTreasure",
+                                            data   : {
+                                                uid        : data.data.UID,
+                                                roomId     : data.data.ROOMID,
+                                                roomShortId: location.pathname.substr(1),
+                                                roomTitle  : data.data.ROOMTITLE,
+                                                upName     : data.data.ANCHOR_NICK_NAME,
+                                                url        : location.href
+                                            }
+                                        });
                                         var msg = new Notification("自动领瓜子功能已经启动", {
                                             body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                             icon: "//static.hdslb.com/live-static/images/7.png"
@@ -833,7 +841,6 @@
                 }, function (response) {
                     if (response['value'] == 'on') Live.doSign.init();
                 });
-
                 chrome.extension.sendMessage({
                     command: "getOption",
                     key    : 'autoTreasure',
