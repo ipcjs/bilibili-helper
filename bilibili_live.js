@@ -673,6 +673,7 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
+                    $('#head-info-panel').append('<div class="room-info treasure-info"></div>');
                     if (response['data'].finish != undefined && response['data'].finish == true) {
                         $('#head-info-panel').append('<div class="room-info treasure-info">今天的瓜子已经领完</div>');
                         return;
@@ -698,11 +699,10 @@
                             });
                             console.log(0);
                         });
-                        $('#head-info-panel').append('<div class="room-info treasure-info">已开始在本直播间自动领瓜子</div>');
                     } else if (response['data'].roomId != Live.getRoomId()) {
-                        $('#head-info-panel').append('<div class="room-info treasure-info">已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子</div>');
+                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子</div>');
                     } else if (response['data'].roomId == Live.getRoomId()) {
-                        $('#head-info-panel').append('<div class="room-info treasure-info">本直播间页面已经被打开过</div>');
+                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">本直播间页面已经被打开过</div>');
                     }
                 });
             },
@@ -712,7 +712,10 @@
             },
             checkTask     : function () {
                 Live.treasure.getCurrentTask().done(function (data) {
-                    if (data.code == '-10017') {//领完
+                    if (data.code == -101) {
+                        clearInterval(Live.treasure.interval);
+                        $('#head-info-panel').find('.treasure-info').text('没有登录');
+                    } else if (data.code == -10017) {//领完
                         clearInterval(Live.treasure.interval);
                         if (data.data.times == undefined) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
@@ -749,6 +752,7 @@
                                             body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                             icon: "//static.hdslb.com/live-static/images/7.png"
                                         });
+                                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">已开始在本直播间自动领瓜子</div>');
                                         setTimeout(function () {
                                             msg.close();
                                         }, 10000);
