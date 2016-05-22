@@ -673,7 +673,7 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    if (response['data'].finish == true) {
+                    if (response['data'].finish != undefined && response['data'].finish == true) {
                         $('#head-info-panel').append('<div class="room-info treasure-info">今天的瓜子已经领完</div>');
                         return;
                     }
