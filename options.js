@@ -15,6 +15,7 @@ $(document).ready(function() {
 	$("div[option=\"" + bkg_page.getOption("doSign") + "\"].doSign").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
 	$("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
+	$("div[option=\"" + bkg_page.getOption("liveNotification") + "\"].liveNotification").addClass("on");
 	var adOption = bkg_page.getOption("ad");
 	$("div[option=\"" + adOption + "\"].ad").addClass("on");
 	if (adOption == "fade") $("#ad_opacity_opt").show();
@@ -111,6 +112,13 @@ $(document).ready(function() {
 		$('.danmu').removeClass('on');
 		$(this).addClass('on');
 		bkg_page.setOption("danmu", $(this).attr("option"));
+		//updatepreview();
+	});
+	$('.liveNotification').click(function() {
+		if ($(this).hasClass('on')) return false;
+		$('.liveNotification').removeClass('on');
+		$(this).addClass('on');
+		bkg_page.setOption("liveNotification", $(this).attr("option"));
 		//updatepreview();
 	});
 

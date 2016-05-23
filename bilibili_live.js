@@ -673,9 +673,9 @@
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
-                    $('#head-info-panel').append('<div class="room-info treasure-info"></div>');
+                    $('#head-info-panel').append($('<div class="room-info treasure-info"></div>'));
                     if (response['data'].finish != undefined && response['data'].finish == true) {
-                        $('#head-info-panel').append('<div class="room-info treasure-info">今天的瓜子已经领完</div>');
+                        $('#head-info-panel').find('.treasure-info').append('今天的瓜子已经领完');
                         return;
                     }
                     if (response['data'].roomId == undefined) {
@@ -700,9 +700,9 @@
                             console.log(0);
                         });
                     } else if (response['data'].roomId != Live.getRoomId()) {
-                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子</div>');
+                        $('#head-info-panel').find('.treasure-info').html('已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子');
                     } else if (response['data'].roomId == Live.getRoomId()) {
-                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">本直播间页面已经被打开过</div>');
+                        $('#head-info-panel').find('.treasure-info').html('本直播间页面已经被打开过');
                     }
                 });
             },
@@ -714,7 +714,7 @@
                 Live.treasure.getCurrentTask().done(function (data) {
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
-                        $('#head-info-panel').find('.treasure-info').text('没有登录');
+                        $('#head-info-panel').find('.treasure-info').html('没有登录');
                     } else if (data.code == -10017) {//领完
                         clearInterval(Live.treasure.interval);
                         if (data.data.times == undefined) {
@@ -722,13 +722,16 @@
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
+                            setTimeout(function () {
+                                msg.close();
+                            }, 5000);
                             chrome.extension.sendMessage({
                                 command: "setTreasure",
                                 data   : {
                                     finish: true
                                 }
                             });
-                            $('#head-info-panel').find('.treasure-info').text('今天的瓜子已经领完');
+                            $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                         }
                     } else if (data.code == 0) {
                         if (data.data.times == undefined) {
@@ -752,10 +755,10 @@
                                             body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                             icon: "//static.hdslb.com/live-static/images/7.png"
                                         });
-                                        $('#head-info-panel').find('.treasure-info').text('<div class="room-info treasure-info">已开始在本直播间自动领瓜子</div>');
+                                        $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
                                         setTimeout(function () {
                                             msg.close();
-                                        }, 10000);
+                                        }, 5000);
                                     }
                                 });
                             if (Live.treasure.times != data.data.times && Live.treasure.times != undefined) {
@@ -765,7 +768,7 @@
                                 });
                                 setTimeout(function () {
                                     msg.close();
-                                }, 10000);
+                                }, 5000);
                             }
                             Live.treasure.vote     = data.data.vote;
                             Live.treasure.times    = data.data.times;
@@ -837,6 +840,7 @@
             }
         };
 
+
         Live.init = function () {
             $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
             Live.set('helper_userInfo', 'login', false);
@@ -857,23 +861,24 @@
                 }, function (response) {
                     if (response['value'] == 'on') Live.doSign.init();
                 });
-                chrome.extension.sendMessage({
-                    command: "getOption",
-                    key    : 'autoTreasure',
-                }, function (response) {
-                    if (response['value'] == 'on') Live.treasure.init();
-                });
-                chrome.extension.sendMessage({
-                    command: "getOption",
-                    key    : 'danmu',
-                }, function (response) {
-                    if (response['value'] == 'on') Live.chat.init();
-                });
+                if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {
+                    chrome.extension.sendMessage({
+                        command: "getOption",
+                        key    : 'autoTreasure',
+                    }, function (response) {
+                        if (response['value'] == 'on') Live.treasure.init();
+                    });
+                    chrome.extension.sendMessage({
+                        command: "getOption",
+                        key    : 'danmu',
+                    }, function (response) {
+                        if (response['value'] == 'on') Live.chat.init();
+                    });
+                }
 
                 Notification.requestPermission();
             }
         };
-
         Live.init();
     }
 })();

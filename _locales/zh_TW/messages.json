@@ -82,5 +82,9 @@
   "notificationShowAll": {
     "message": "顯示全部",
     "description": "Noticefication: Show All"
+  },
+  "notificationLiveOn": {
+    "message": "開播啦",
+    "description": "Noticefication: Live On"
   }
 }

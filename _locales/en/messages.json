@@ -82,5 +82,9 @@
   "notificationShowAll": {
     "message": "Show All",
     "description": "Notification: Show All"
+  },
+  "notificationLiveOn": {
+    "message": "Is Live",
+    "description": "Noticefication: Live On"
   }
 }
