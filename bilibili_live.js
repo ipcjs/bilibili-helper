@@ -4,7 +4,7 @@
 (function () {
     if (location.hostname == 'live.bilibili.com') {
         d           = document.createElement('script');
-        d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[' + location.pathname.substr(1) + '] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);var r = JSON.parse(window.localStorage.helper_live_rnd);l[' + location.pathname.substr(1) + '] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
+        d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[ROOMURL] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);if(!window.localStorage.helper_live_rnd){window.localStorage.helper_live_rnd=JSON.stringify({});}var r = JSON.parse(window.localStorage.helper_live_rnd);r[ROOMURL] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
         var Live = {};
@@ -16,7 +16,7 @@
 
             if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
             var l = JSON.parse(window.localStorage[n]);
-            if (!k) window.localStorage[n] = JSON.stringify(v);
+            if (v==undefined) window.localStorage[n] = JSON.stringify(k);
             else {
                 l[k]                   = JSON.stringify(v);
                 window.localStorage[n] = JSON.stringify(l);
@@ -840,6 +840,40 @@
             }
         };
 
+        Live.notise = {
+            init: function () {
+                var notiseBtn = $('<div>').addClass('mid-part').append('<i class="live-icon-small favourite p-relative" style="top: 1px"></i><span>特别关注</span>').click(function () {
+                    if ($(this).find('i').hasClass('favourited')) {
+                        chrome.extension.sendMessage({
+                            command: "setNotFavourite",
+                            id:Live.getRoomId()
+                        }, function (response) {
+                            if (response.data) {
+                                notiseBtn.find('span').html('特别关注');
+                                notiseBtn.find('i').removeClass('favourited');
+                            }
+                        });
+                    } else {
+                        chrome.extension.sendMessage({
+                            command: "setFavourite",
+                            id     : Live.getRoomId()
+                        }, function (response) {
+                            if (response.data)notiseBtn.find('span').html('已特别关注')
+                            notiseBtn.find('i').addClass('favourited');
+                        });
+                    }
+                });
+                chrome.extension.sendMessage({
+                    command: "getFavourite"
+                }, function (response) {
+                    if (response.data.indexOf(Live.getRoomId()) != -1) {
+                        notiseBtn.find('span').html('已特别关注');
+                        notiseBtn.find('i').addClass('favourited');
+                    }
+                });
+                $('.attend-button').find('.left-part').after(notiseBtn);
+            }
+        };
 
         Live.init = function () {
             $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
@@ -861,6 +895,7 @@
                 }, function (response) {
                     if (response['value'] == 'on') Live.doSign.init();
                 });
+
                 if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {
                     chrome.extension.sendMessage({
                         command: "getOption",
@@ -874,6 +909,7 @@
                     }, function (response) {
                         if (response['value'] == 'on') Live.chat.init();
                     });
+                    Live.notise.init();
                 }
 
                 Notification.requestPermission();

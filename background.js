@@ -10,6 +10,45 @@ var notification       = false,
     updateNotified     = false,
     videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"],
     Live               = {};
+var bkg_page = chrome.extension.getBackgroundPage();
+
+Live.set = function (n, k, v) {
+    if (!window.localStorage || !n) return;
+
+    if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
+    var l = JSON.parse(window.localStorage[n]);
+    if (v==undefined) window.localStorage[n] = JSON.stringify(k);
+    else {
+        l[k]                   = JSON.stringify(v);
+        window.localStorage[n] = JSON.stringify(l);
+    }
+};
+
+Live.get = function (n, k, v) {
+    if (!window.localStorage || !n) return;
+
+    if (!window.localStorage[n]) {
+        window.localStorage[n] = JSON.stringify(v || {});
+        return null;
+    }
+    var l = JSON.parse(window.localStorage[n]);
+    if (!k) return l;
+    return l[k];
+};
+Live.del = function (n, k) {
+    if (!window.localStorage || !n || !k) return;
+
+    if (!window.localStorage[n]) {
+        window.localStorage[n] = JSON.stringify({});
+        return;
+    }
+    var l = JSON.parse(window.localStorage[n]);
+    delete l[k];
+    window.localStorage[n] = JSON.stringify(l);
+};
+
+Live.notisesIdList    = {};
+Live.favouritesIdList = Live.get('favouritesIdList',false,[]);
 
 URL.prototype.__defineGetter__('query', function () {
     var parsed    = this.search.substr(1).split('&');
@@ -360,6 +399,39 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                 data: Live.treasure = {}
             });
             return true;
+        case "setFavourite":
+            if (Live.favouritesIdList.indexOf(request.id)==-1) {
+                Live.favouritesIdList.push(request.id);
+                Live.set('favouritesIdList', Live.favouritesIdList);
+                sendResponse({
+                    data: true
+                });
+            } else {
+                sendResponse({
+                    data: false
+                });
+            }
+
+            return true;
+        case "setNotFavourite":
+            var index = Live.favouritesIdList.indexOf(request.id)
+            if (index != -1) {
+                Live.favouritesIdList.splice(index, 1);
+                Live.set('favouritesIdList', Live.favouritesIdList);
+                sendResponse({
+                    data: true
+                });
+            } else {
+                sendResponse({
+                    data: false
+                });
+            }
+            return true;
+        case "getFavourite":
+            sendResponse({
+                data: Live.get('favouritesIdList')
+            });
+            return true;
         case "enableAll":
             enableAll();
             sendResponse({
@@ -649,7 +721,7 @@ chrome.notifications.onButtonClicked.addListener(function (notificationId, index
                 url: 'http://live.bilibili.com/i/following'
             });
         }
-    }else if (notificationId == 'bh-update') {
+    } else if (notificationId == 'bh-update') {
         chrome.tabs.create({
             url: chrome.extension.getURL("options.html?mod=update")
         });
@@ -793,8 +865,7 @@ function each(obj, fn) {
         }
     }
 }
-Live.notisesIdList = {};
-Live.notise        = {
+Live.notise = {
     page       : 1,
     userMode   : function () {
         return getCookie("DedeUserID")
@@ -822,34 +893,35 @@ Live.notise        = {
                 });
             }
             Live.notise.hasMore = (t.data.count > 10 && t.data.list.length == 10 && Live.notise.userMode);
-            if (!Live.notise.hasMore||d.has_new) {
+
+            if (!Live.notise.hasMore || d.has_new) {
                 for (var q in Live.notise.cacheList)
                     if (Live.notise.roomIdList[q] == undefined) newList.push(Live.notise.cacheList[q]);
 
-                if (newList.length && Object.getOwnPropertyNames(Live.notise.roomIdList).length) {
-                    for (var i in newList) {
-                        var data = newList[i], myNotificationID = null;
-                        var msg = chrome.notifications.create(data.nickname + "开播啦!", {
-                            type       : "basic",
-                            iconUrl    : data.face,
-                            title      : data.nickname + chrome.i18n.getMessage('notificationLiveOn'),
-                            message    : data.roomname,
-                            isClickable: false,
-                            buttons    : [{
-                                title: chrome.i18n.getMessage('notificationWatch')
-                            }, {
-                                title: chrome.i18n.getMessage('notificationShowAll')
-                            }]
-
-                        }, function (id) {
-                            Live.notisesIdList[id]=data;
-                            setTimeout(function(){
-                                chrome.notifications.clear(id);
-                                delete Live.notisesIdList[id];
-                            },10000);
-                        });
-
-                    }
+                if (newList.length) {
+                    each(newList, function (i) {
+                        if(Live.favouritesIdList.indexOf(newList[i].roomid)!=-1||Live.favouritesIdList.length==0){
+                            var data = newList[i], myNotificationID = null;
+                            chrome.notifications.create(data.roomid, {
+                                type       : "basic",
+                                iconUrl    : data.face,
+                                title      : data.nickname + chrome.i18n.getMessage('notificationLiveOn'),
+                                message    : data.roomname,
+                                isClickable: false,
+                                buttons    : [{
+                                    title: chrome.i18n.getMessage('notificationWatch')
+                                }, {
+                                    title: chrome.i18n.getMessage('notificationShowAll')
+                                }]
+                            }, function (id) {
+                                Live.notisesIdList[id] = data;
+                                setTimeout(function () {
+                                    chrome.notifications.clear(id);
+                                    delete Live.notisesIdList[id];
+                                }, 10000);
+                            });
+                        }
+                    })
                 }
                 Live.notise.roomIdList = Live.notise.cacheList;
                 Live.notise.cacheList  = {};
