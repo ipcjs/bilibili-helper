@@ -900,7 +900,7 @@ Live.notise = {
 
                 if (newList.length) {
                     each(newList, function (i) {
-                        if(Live.favouritesIdList.indexOf(newList[i].roomid)!=-1||Live.favouritesIdList.length==0){
+                        if(Live.favouritesIdList.indexOf(parseInt(newList[i].roomid))!=-1||Live.favouritesIdList.length==0){
                             var data = newList[i], myNotificationID = null;
                             chrome.notifications.create(data.roomid, {
                                 type       : "basic",
