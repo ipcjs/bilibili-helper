@@ -715,22 +715,20 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017 || !Live.get('noTreasure', Live.getRoomId())) {//领完
+                    } else if (data.code == -10017 && data.data.times == undefined) {//领完
                         clearInterval(Live.treasure.interval);
-                        if (data.data.times == undefined) {
-                            if (!Live.get('noTreasure', Live.getRoomId())) {
-                                var msg = new Notification("今天所有的宝箱已经领完!", {
-                                    body: "",
-                                    icon: "//static.hdslb.com/live-static/images/7.png"
-                                });
-                                setTimeout(function () {
-                                    msg.close();
-                                }, 5000);
-                            }
-                            Live.set('noTreasure', Live.getRoomId(), true);
-                            $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
+                        if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))!='true') {
+                            var msg = new Notification("今天所有的宝箱已经领完!", {
+                                body: "",
+                                icon: "//static.hdslb.com/live-static/images/7.png"
+                            });
+                            setTimeout(function () {
+                                msg.close();
+                            }, 5000);
                         }
-                    } else if (data.code == 0 && !Live.get('noTreasure', Live.getRoomId())) {
+                        Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
+                        $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
+                    } else if (data.code == 0 && !Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
                         } else {
@@ -752,6 +750,8 @@
                                             body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                             icon: "//static.hdslb.com/live-static/images/7.png"
                                         });
+                                        if(Live.get('noTreasure', Live.get('helper_userInfo', 'username'))=='true')
+                                            Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
                                         $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
                                         setTimeout(function () {
                                             msg.close();
