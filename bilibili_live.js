@@ -16,7 +16,7 @@
 
             if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
             var l = JSON.parse(window.localStorage[n]);
-            if (v==undefined) window.localStorage[n] = JSON.stringify(k);
+            if (v == undefined) window.localStorage[n] = JSON.stringify(k);
             else {
                 l[k]                   = JSON.stringify(v);
                 window.localStorage[n] = JSON.stringify(l);
@@ -715,20 +715,22 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017 || Live.get('noTreasure',Live.getRoomId())) {//领完
+                    } else if (data.code == -10017 || !Live.get('noTreasure', Live.getRoomId())) {//领完
                         clearInterval(Live.treasure.interval);
                         if (data.data.times == undefined) {
-                            var msg = new Notification("今天所有的宝箱已经领完!", {
-                                body: "",
-                                icon: "//static.hdslb.com/live-static/images/7.png"
-                            });
-                            setTimeout(function () {
-                                msg.close();
-                            }, 5000);
-                            Live.set('noTreasure',Live.getRoomId(),true);
+                            if (!Live.get('noTreasure', Live.getRoomId())) {
+                                var msg = new Notification("今天所有的宝箱已经领完!", {
+                                    body: "",
+                                    icon: "//static.hdslb.com/live-static/images/7.png"
+                                });
+                                setTimeout(function () {
+                                    msg.close();
+                                }, 5000);
+                            }
+                            Live.set('noTreasure', Live.getRoomId(), true);
                             $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                         }
-                    } else if (data.code == 0 && !Live.get('noTreasure',Live.getRoomId())) {
+                    } else if (data.code == 0 && !Live.get('noTreasure', Live.getRoomId())) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
                         } else {
@@ -764,8 +766,8 @@
                                 setTimeout(function () {
                                     msg.close();
                                 }, 5000);
-                                if(Live.get('silverSum',Live.get('helper_userInfo','username'))){
-                                    Live.set('silverSum',Live.get('silverSum',Live.get('helper_userInfo','username'))+Live.treasure.silver);
+                                if (Live.get('silverSum', Live.get('helper_userInfo', 'username'))) {
+                                    Live.set('silverSum', Live.get('silverSum', Live.get('helper_userInfo', 'username')) + Live.treasure.silver);
                                 }
                             }
                             Live.treasure.vote     = data.data.vote;
@@ -844,7 +846,7 @@
                     if ($(this).find('i').hasClass('favourited')) {
                         chrome.extension.sendMessage({
                             command: "setNotFavourite",
-                            id:Live.getRoomId()
+                            id     : Live.getRoomId()
                         }, function (response) {
                             if (response.data) {
                                 notiseBtn.find('span').html('特别关注');
