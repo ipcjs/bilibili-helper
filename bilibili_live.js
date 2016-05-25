@@ -715,7 +715,7 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017) {//领完
+                    } else if (data.code == -10017 || Live.get('noTreasure',Live.getRoomId())) {//领完
                         clearInterval(Live.treasure.interval);
                         if (data.data.times == undefined) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
@@ -725,15 +725,10 @@
                             setTimeout(function () {
                                 msg.close();
                             }, 5000);
-                            chrome.extension.sendMessage({
-                                command: "setTreasure",
-                                data   : {
-                                    finish: true
-                                }
-                            });
+                            Live.set('noTreasure',Live.getRoomId(),true);
                             $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                         }
-                    } else if (data.code == 0) {
+                    } else if (data.code == 0 && !Live.get('noTreasure',Live.getRoomId())) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
                         } else {
@@ -769,12 +764,15 @@
                                 setTimeout(function () {
                                     msg.close();
                                 }, 5000);
+                                if(Live.get('silverSum',Live.get('helper_userInfo','username'))){
+                                    Live.set('silverSum',Live.get('silverSum',Live.get('helper_userInfo','username'))+Live.treasure.silver);
+                                }
                             }
                             Live.treasure.vote     = data.data.vote;
                             Live.treasure.times    = data.data.times;
                             Live.treasure.minute   = data.data.minute;
                             Live.treasure.silver   = data.data.silver;
-                            Live.treasure.interval = setInterval(Live.treasure.do, 2000);
+                            Live.treasure.interval = setInterval(Live.treasure.do, 3000);
                         }
                     }
                 });
