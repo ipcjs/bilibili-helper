@@ -9,8 +9,6 @@
 
         var Live = {};
 
-        Live.version = '0.1.0';
-
         Live.set = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
@@ -883,7 +881,14 @@
         };
 
         Live.init = function () {
-            $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 " + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
+            chrome.extension.sendMessage({
+                command: "getOption",
+                key    : 'version',
+            }, function (response) {
+                Live.version = response.value;
+                $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 v"+Live.version+" by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
+            });
+
             Live.set('helper_userInfo', 'login', false);
             Live.clearLocalStorage();
             Live.initUserInfo();
