@@ -715,7 +715,7 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017 && data.data.times == undefined) {//领完
+                    } else if (data.code == -10017 && Live.get('noTreasure', Live.get('helper_userInfo', 'username'))!='true') {//领完
                         clearInterval(Live.treasure.interval);
                         if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))!='true') {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
@@ -728,13 +728,12 @@
                         }
                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
-                    } else if (data.code == 0 && !Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
+                    } else if (data.code == 0) {
                         if (data.data.times == undefined) {
                             clearInterval(Live.treasure.interval);
                         } else {
                             if (Live.treasure.times == undefined)
                                 Live.getRoomInfo().done(function (data) {
-                                    if (data.code == 0) {
                                         chrome.extension.sendMessage({
                                             command: "setTreasure",
                                             data   : {
@@ -756,7 +755,6 @@
                                         setTimeout(function () {
                                             msg.close();
                                         }, 5000);
-                                    }
                                 });
                             if (Live.treasure.times != data.data.times && Live.treasure.times != undefined) {
                                 var msg = new Notification("自动领取成功", {
