@@ -10,14 +10,14 @@ var notification       = false,
     updateNotified     = false,
     videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"],
     Live               = {};
-var bkg_page = chrome.extension.getBackgroundPage();
+var bkg_page           = chrome.extension.getBackgroundPage();
 
 Live.set = function (n, k, v) {
     if (!window.localStorage || !n) return;
 
     if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
     var l = JSON.parse(window.localStorage[n]);
-    if (v==undefined) window.localStorage[n] = JSON.stringify(k);
+    if (v == undefined) window.localStorage[n] = JSON.stringify(k);
     else {
         l[k]                   = JSON.stringify(v);
         window.localStorage[n] = JSON.stringify(l);
@@ -29,7 +29,7 @@ Live.get = function (n, k, v) {
 
     if (!window.localStorage[n]) {
         window.localStorage[n] = JSON.stringify(v || {});
-        return null;
+        return v;
     }
     var l = JSON.parse(window.localStorage[n]);
     if (!k) return l;
@@ -48,7 +48,8 @@ Live.del = function (n, k) {
 };
 
 Live.notisesIdList    = {};
-Live.favouritesIdList = Live.get('favouritesIdList',false,[]);
+Live.favouritesIdList = Live.get('favouritesIdList', false, []);
+Live.favouritesList   = Live.get('favouritesList', false, {});
 
 URL.prototype.__defineGetter__('query', function () {
     var parsed    = this.search.substr(1).split('&');
@@ -362,6 +363,27 @@ function setTreasure(data) {
         }
     }
 }
+function setFavourite(upInfo) {
+    if (Live.favouritesIdList.indexOf(upInfo.roomId) == -1) {
+        Live.favouritesIdList.push(upInfo.roomId);
+        Live.favouritesList[upInfo.roomId] = upInfo;
+        Live.set('favouritesIdList', Live.favouritesIdList);
+        Live.set('favouritesList', Live.favouritesList);
+        return true;
+    }
+    return false;
+}
+function setNotFavourite(id) {
+    var index = Live.favouritesIdList.indexOf(id)
+    if (index != -1) {
+        Live.favouritesIdList.splice(index, 1);
+        delete Live.favouritesList[id];
+        Live.set('favouritesIdList', Live.favouritesIdList);
+        Live.set('favouritesList', Live.favouritesList);
+        return true;
+    }
+    return false;
+}
 chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.command) {
         case "init":
@@ -400,32 +422,14 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             });
             return true;
         case "setFavourite":
-            if (Live.favouritesIdList.indexOf(request.id)==-1) {
-                Live.favouritesIdList.push(request.id);
-                Live.set('favouritesIdList', Live.favouritesIdList);
-                sendResponse({
-                    data: true
-                });
-            } else {
-                sendResponse({
-                    data: false
-                });
-            }
-
+            sendResponse({
+                data: setFavourite(request.upInfo)
+            });
             return true;
         case "setNotFavourite":
-            var index = Live.favouritesIdList.indexOf(request.id)
-            if (index != -1) {
-                Live.favouritesIdList.splice(index, 1);
-                Live.set('favouritesIdList', Live.favouritesIdList);
-                sendResponse({
-                    data: true
-                });
-            } else {
-                sendResponse({
-                    data: false
-                });
-            }
+            sendResponse({
+                data: setNotFavourite(request.id)
+            });
             return true;
         case "getFavourite":
             sendResponse({
@@ -900,7 +904,7 @@ Live.notise = {
 
                 if (newList.length) {
                     each(newList, function (i) {
-                        if(Live.favouritesIdList.indexOf(parseInt(newList[i].roomid))!=-1||Live.favouritesIdList.length==0){
+                        if (Live.favouritesIdList.indexOf(parseInt(newList[i].roomid)) != -1 || Live.favouritesIdList.length == 0) {
                             var data = newList[i], myNotificationID = null;
                             chrome.notifications.create(data.roomid, {
                                 type       : "basic",

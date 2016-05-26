@@ -25,7 +25,8 @@ var defaultOptions = {
 	"autoTreasure":"on",
 	"danmu":"on",
 	"liveNotification":"on",
-	"favouritesIdList":"[]"
+	"favouritesIdList":"[]",
+	"favouritesList":{}
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {

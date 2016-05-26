@@ -23,12 +23,12 @@
             }
         };
 
-        Live.get = function (n, k) {
+        Live.get = function (n, k, v) {
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n]) {
-                window.localStorage[n] = JSON.stringify({});
-                return null;
+                window.localStorage[n] = JSON.stringify(v || {});
+                return v;
             }
             var l = JSON.parse(window.localStorage[n]);
             if (!k) return l;
@@ -715,9 +715,9 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017 && Live.get('noTreasure', Live.get('helper_userInfo', 'username'))!='true') {//领完
+                    } else if (data.code == -10017 && !eval(Live.get('noTreasure', Live.get('helper_userInfo', 'username')))) {//领完
                         clearInterval(Live.treasure.interval);
-                        if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))!='true') {
+                        if (Live.get('noTreasure', Live.get('helper_userInfo', 'username')) != 'true') {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
@@ -734,27 +734,27 @@
                         } else {
                             if (Live.treasure.times == undefined)
                                 Live.getRoomInfo().done(function (data) {
-                                        chrome.extension.sendMessage({
-                                            command: "setTreasure",
-                                            data   : {
-                                                uid        : data.data.UID,
-                                                roomId     : data.data.ROOMID,
-                                                roomShortId: location.pathname.substr(1),
-                                                roomTitle  : data.data.ROOMTITLE,
-                                                upName     : data.data.ANCHOR_NICK_NAME,
-                                                url        : location.href
-                                            }
-                                        });
-                                        var msg = new Notification("自动领瓜子功能已经启动", {
-                                            body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
-                                            icon: "//static.hdslb.com/live-static/images/7.png"
-                                        });
-                                        if(Live.get('noTreasure', Live.get('helper_userInfo', 'username'))=='true')
-                                            Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
-                                        $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
-                                        setTimeout(function () {
-                                            msg.close();
-                                        }, 5000);
+                                    chrome.extension.sendMessage({
+                                        command: "setTreasure",
+                                        data   : {
+                                            uid        : data.data.UID,
+                                            roomId     : data.data.ROOMID,
+                                            roomShortId: location.pathname.substr(1),
+                                            roomTitle  : data.data.ROOMTITLE,
+                                            upName     : data.data.ANCHOR_NICK_NAME,
+                                            url        : location.href
+                                        }
+                                    });
+                                    var msg = new Notification("自动领瓜子功能已经启动", {
+                                        body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
+                                        icon: "//static.hdslb.com/live-static/images/7.png"
+                                    });
+                                    if (Live.get('noTreasure', Live.get('helper_userInfo', 'username')) == 'true')
+                                        Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
+                                    $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
+                                    setTimeout(function () {
+                                        msg.close();
+                                    }, 5000);
                                 });
                             if (Live.treasure.times != data.data.times && Live.treasure.times != undefined) {
                                 var msg = new Notification("自动领取成功", {
@@ -840,36 +840,45 @@
 
         Live.notise = {
             init: function () {
-                var notiseBtn = $('<div>').addClass('mid-part').append('<i class="live-icon-small favourite p-relative" style="top: 1px"></i><span>特别关注</span>').click(function () {
-                    if ($(this).find('i').hasClass('favourited')) {
-                        chrome.extension.sendMessage({
-                            command: "setNotFavourite",
-                            id     : Live.getRoomId()
-                        }, function (response) {
-                            if (response.data) {
-                                notiseBtn.find('span').html('特别关注');
-                                notiseBtn.find('i').removeClass('favourited');
-                            }
-                        });
-                    } else {
-                        chrome.extension.sendMessage({
-                            command: "setFavourite",
-                            id     : Live.getRoomId()
-                        }, function (response) {
-                            if (response.data)notiseBtn.find('span').html('已特别关注')
+                var upInfo = {};
+                Live.getRoomInfo().done(function (data) {
+                    upInfo.uid        = data.data.UID;
+                    upInfo.roomId     = data.data.ROOMID;
+                    upInfo.roomShortI = location.pathname.substr(1);
+                    upInfo.roomTitle  = data.data.ROOMTITLE;
+                    upInfo.upName     = data.data.ANCHOR_NICK_NAME;
+                    upInfo.url        = location.href;
+                    var notiseBtn = $('<div>').addClass('mid-part').append('<i class="live-icon-small favourite p-relative" style="top: 1px"></i><span>特别关注</span>').click(function () {
+                        if ($(this).find('i').hasClass('favourited')) {
+                            chrome.extension.sendMessage({
+                                command: "setNotFavourite",
+                                id : upInfo.roomId
+                            }, function (response) {
+                                if (response.data) {
+                                    notiseBtn.find('span').html('特别关注');
+                                    notiseBtn.find('i').removeClass('favourited');
+                                }
+                            });
+                        } else {
+                            chrome.extension.sendMessage({
+                                command: "setFavourite",
+                                upInfo : upInfo
+                            }, function (response) {
+                                if (response.data)notiseBtn.find('span').html('已特别关注')
+                                notiseBtn.find('i').addClass('favourited');
+                            });
+                        }
+                    });
+                    chrome.extension.sendMessage({
+                        command: "getFavourite"
+                    }, function (response) {
+                        if (response.data.indexOf(Live.getRoomId()) != -1) {
+                            notiseBtn.find('span').html('已特别关注');
                             notiseBtn.find('i').addClass('favourited');
-                        });
-                    }
+                        }
+                    });
+                    $('.attend-button').find('.left-part').after(notiseBtn);
                 });
-                chrome.extension.sendMessage({
-                    command: "getFavourite"
-                }, function (response) {
-                    if (response.data.indexOf(Live.getRoomId()) != -1) {
-                        notiseBtn.find('span').html('已特别关注');
-                        notiseBtn.find('i').addClass('favourited');
-                    }
-                });
-                $('.attend-button').find('.left-part').after(notiseBtn);
             }
         };
 
@@ -913,6 +922,6 @@
                 Notification.requestPermission();
             }
         };
-        Live.init();
     }
+    Live.init();
 })();
