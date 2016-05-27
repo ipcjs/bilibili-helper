@@ -713,9 +713,9 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if (data.code == -10017 && !eval(Live.get('noTreasure', Live.get('helper_userInfo', 'username')))) {//领完
+                    } else if (data.code == -10017) {//领完
                         clearInterval(Live.treasure.interval);
-                        if (Live.get('noTreasure', Live.get('helper_userInfo', 'username')) != 'true') {
+                        if (!eval(Live.get('noTreasure', Live.get('helper_userInfo', 'username')))) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
