@@ -747,7 +747,7 @@
                                         body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                         icon: "//static.hdslb.com/live-static/images/7.png"
                                     });
-                                    if (Live.get('noTreasure', Live.get('helper_userInfo', 'username')) == 'true')
+                                    if (Live.get('noTreasure', eval(Live.get('helper_userInfo', 'username'))))
                                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
                                     $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
                                     setTimeout(function () {
