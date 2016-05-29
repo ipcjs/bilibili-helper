@@ -710,6 +710,7 @@
             },
             checkTask     : function () {
                 Live.treasure.getCurrentTask().done(function (data) {
+                    console.log(data);
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
@@ -727,7 +728,7 @@
                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     } else if (data.code == 0) {
-                        if (data.data.times == undefined) {
+                        if (data.data.silver) {
                             clearInterval(Live.treasure.interval);
                         } else {
                             if (Live.treasure.times == undefined)
@@ -747,8 +748,7 @@
                                         body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
                                         icon: "//static.hdslb.com/live-static/images/7.png"
                                     });
-                                    if (Live.get('noTreasure', eval(Live.get('helper_userInfo', 'username'))))
-                                        Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
+                                    Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
                                     $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
                                     setTimeout(function () {
                                         msg.close();
