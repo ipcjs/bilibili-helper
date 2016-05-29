@@ -728,7 +728,7 @@
                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     } else if (data.code == 0) {
-                        if (data.data.silver) {
+                        if (!data.data.silver) {
                             clearInterval(Live.treasure.interval);
                         } else {
                             if (Live.treasure.times == undefined)
