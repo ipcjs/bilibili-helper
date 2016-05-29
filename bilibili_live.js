@@ -787,7 +787,7 @@
                                 Live.treasure.context.drawImage(img, 0, 0);
                                 Live.treasure.question = OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40));
                                 Live.treasure.question = Live.treasure.question.replace(/[Zz]/g, "2").replace(/[Oo]/g, "0").replace(/g/g, "9").replace(/[lI]/g, "1").replace(/[Ss]/g, "5").replace(/_/g, "4").replace(/B/g, "8").replace(/b/g, "6");
-                                Live.treasure.answer   = eval(Live.treasure.question);
+                                Live.treasure.answer   = eval(Live.treasure.question); 
                                 $('#freeSilverCaptchaInput').val(Live.treasure.answer);
                                 $("#getFreeSilverAward").click();
                                 Live.treasure.checkTask();
