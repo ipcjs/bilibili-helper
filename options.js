@@ -51,7 +51,7 @@ $(document).ready(function () {
 
         if (!window.localStorage[n]) {
             window.localStorage[n] = JSON.stringify(v || {});
-            return v;
+            return eval(v);
         }
         var l = JSON.parse(window.localStorage[n]);
         if (!k) return l;
