@@ -36,13 +36,14 @@ $(document).ready(function () {
     });
     Live.set = function (n, k, v) {
         if (!window.localStorage || !n) return;
-
-        if (!window.localStorage[n])window.localStorage[n] = JSON.stringify({});
-        var l = JSON.parse(window.localStorage[n]);
-        if (v == undefined) window.localStorage[n] = JSON.stringify(k);
-        else {
-            l[k]                   = JSON.stringify(v);
-            window.localStorage[n] = JSON.stringify(l);
+        var storage = window.localStorage;
+        if (!storage[n])storage[n] = JSON.stringify({});
+        var l = JSON.parse(storage[n]);
+        if (v == undefined) {
+            storage[n] = typeof k == 'string'? k.trim():JSON.stringify(k);
+        } else {
+            l[k] = typeof v == 'string'?v.trim():JSON.stringify(v);
+            storage[n] = JSON.stringify(l);
         }
     };
 
@@ -55,8 +56,7 @@ $(document).ready(function () {
         }
         var l = JSON.parse(window.localStorage[n]);
         if (!k) return l;
-        if(typeof l[k] == 'string' && l[k][0]=='"')l[k] = l[k].substr(1,l[k].length-1);
-        else if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
+        if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
         return l[k];
     };
     Live.del = function (n, k) {
