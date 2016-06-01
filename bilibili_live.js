@@ -107,6 +107,67 @@
             return "#" + zero_fill_hex(decimal, 6);
         };
 
+        Live.getDomType = function(t){
+            var e = Object.prototype.toString.call(t), n = /HTML.*.Element/;
+            return "[object Object]" === e && t.jquery ? "jQuery Object" : "[object Object]" === e ? "Object" : "[object Number]" === e ? "Number" : "[object String]" === e ? "String" : "[object Array]" === e ? "Array" : "[object Boolean]" === e ? "Boolean" : "[object Function]" === e ? "Function" : "[object Null]" === e ? "null" : "[object Undefined]" === e ? "undefined" : e.match(n) ? "HTML Element" : "[object HTMLCollection]" === e ? "HTML Elements Collection" : null
+        };
+
+        Live.random_emoji = {
+            list    : {
+                happy   : ["(｀･ω･´)", "=‿=✧", "●ω●", "(/ ▽ \\)", "(=・ω・=)", "(●'◡'●)ﾉ♥", "<(▰˘◡˘▰)>", "(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "(ง,,• ᴗ •,,)ง ✧"],
+                shock   : [",,Ծ‸Ծ,,", "(｀･д･´)", "Σ( ° △ °|||)︴", "┌( ಠ_ಠ)┘", "(ﾟДﾟ≡ﾟдﾟ)!?"],
+                sad     : ["∑(っ °Д °;)っ", "＞︿＜", "＞△＜", "●︿●", "(´；ω；`)"],
+                helpless: ["◐▽◑", "ʅ（´◔౪◔）ʃ", "_(:3 」∠)_", "_(┐「ε:)_", "(/・ω・＼)", "(°▽°)ﾉ"]
+            },
+            happy      : function () {
+                return Live.random_emoji.list.happy[Math.floor(Math.random() * Live.random_emoji.list.happy.length)]
+            }, sad     : function () {
+                return Live.random_emoji.list.sad[Math.floor(Math.random() * Live.random_emoji.list.sad.length)]
+            }, shock   : function () {
+                return Live.random_emoji.list.shock[Math.floor(Math.random() * Live.random_emoji.list.shock.length)]
+            }, helpless: function () {
+                return Live.random_emoji.list.helpless[Math.floor(Math.random() * Live.random_emoji.list.helpless.length)]
+            }
+        };
+
+        Live.send_msg   = function(dom,type,msg){
+            if (n = type || "info", "success" !== n && "caution" !== n && "error" !== n && "info" !== n) return;
+            var c = document.createDocumentFragment();
+            var u = document.createElement("div");
+            u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>"+msg+Live.random_emoji.helpless()+"</span>", u.className = "live-toast "+n;
+            var d = null;
+            switch (Live.getDomType(dom)) {
+                case"HTML Element":
+                    d = dom;
+                    break;
+                case"jQuery Object":
+                    d = dom[0];
+                    break;
+                default:
+                    throw new Error(a.consoleText.error + "在使用 Live Toast 时请传入正确的原生 Dom 对象或节点的 jQuery 对象.")
+            }
+            function o(t) {
+                var e = t.offsetLeft;
+                return null !== t.offsetParent ? e += o(t.offsetParent) : void 0, e
+            }
+
+            function i(t) {
+                var e = t.offsetTop;
+                return null !== t.offsetParent ? e += i(t.offsetParent) : void 0, e
+            }
+
+            var f = {width: $(d).width(), height: $(d).height()}, p = o(d), m = i(d);
+            $(u).css({left: p + f.width});
+            var v = 0;
+            v = document.body.scrollTop, $(u).css({top: m + f.height}), setTimeout(function () {
+                $(u).addClass("out"), setTimeout(function () {
+                    $(u).remove(), c = u = d = f = p = m = v = null
+                }, 400)
+            }, 2e3), c.appendChild(u), document.body.appendChild(c);
+            var h = $(window).width(), g = u.offsetWidth, y = u.offsetLeft;
+            0 > h - g - y && $(u).css({left: h - g - 10}), h = g = y = null
+        };
+
         Live.doSign = {
             getSignInfo: function () {
                 return $.getJSON("/sign/GetSignInfo").promise();
@@ -820,6 +881,7 @@
                     if($('#danmu-textbox').attr('maxlength')){
                         clearInterval(init_interval);
 
+
                         var chat_ctrl_panel = $('#chat-ctrl-panel');
                         //init & hide original ui
                         chat_ctrl_panel.find('.danmu-length-count').hide();
@@ -834,7 +896,7 @@
                         var original_text_area = chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
                         Live.chat.maxLength = original_text_area.attr('maxlength');
                         var helper_text_area   = original_text_area.clone().addClass('helper_text_area').removeAttr('maxlength');
-                        original_text_area.before(helper_text_area).remove();
+                        original_text_area.before(helper_text_area).hide();
 
                         var original_send_btn = chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
                         var helper_send_btn   = original_send_btn.clone().addClass('helper_send_btn');
@@ -862,7 +924,7 @@
                                 Live.chat.text = helper_text_area.val();
                                 helper_text_area.val('');
                                 Live.chat.do();
-                            }else original_send_btn.click();
+                            }else Live.send_msg(helper_send_btn,'info','请输入弹幕后再发送~');
                         });
                         helper_text_area.on('keyup',function (e) {
                             e.preventDefault();
@@ -870,7 +932,7 @@
                             if (e.keyCode === 13 && text.length > 0) {
                                 helper_text_area.val(helper_text_area.val().substr(0,text.length-1));
                                 helper_send_btn.click();
-                            }else if(text.length == 0) original_send_btn.click();
+                            }else if(text.length == 0) Live.send_msg(helper_send_btn,'info','请输入弹幕后再发送~');
                             return false;
                         });
                         helper_emoji_list.on('click','a',function(){
