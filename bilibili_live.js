@@ -870,7 +870,7 @@
                             if (e.keyCode === 13 && text.length > 0) {
                                 helper_text_area.val(helper_text_area.val().substr(0,text.length-1));
                                 helper_send_btn.click();
-                            }else original_send_btn.click();
+                            }else if(text.length == 0) original_send_btn.click();
                             return false;
                         });
                         helper_emoji_list.on('click','a',function(){
