@@ -60,7 +60,7 @@
                     Live.set('helper_userInfo', 'face', user.face);
                     Live.set('helper_userInfo', 'vip', user.vip);
                     Live.set('helper_userInfo', 'login', true);
-                    if(callback && typeof callback == 'function')callback(user);
+                    if (callback && typeof callback == 'function')callback(user);
                     return true;
                 } else return true;
             });
@@ -107,13 +107,13 @@
             return "#" + zero_fill_hex(decimal, 6);
         };
 
-        Live.getDomType = function(t){
+        Live.getDomType = function (t) {
             var e = Object.prototype.toString.call(t), n = /HTML.*.Element/;
             return "[object Object]" === e && t.jquery ? "jQuery Object" : "[object Object]" === e ? "Object" : "[object Number]" === e ? "Number" : "[object String]" === e ? "String" : "[object Array]" === e ? "Array" : "[object Boolean]" === e ? "Boolean" : "[object Function]" === e ? "Function" : "[object Null]" === e ? "null" : "[object Undefined]" === e ? "undefined" : e.match(n) ? "HTML Element" : "[object HTMLCollection]" === e ? "HTML Elements Collection" : null
         };
 
         Live.random_emoji = {
-            list    : {
+            list       : {
                 happy   : ["(｀･ω･´)", "=‿=✧", "●ω●", "(/ ▽ \\)", "(=・ω・=)", "(●'◡'●)ﾉ♥", "<(▰˘◡˘▰)>", "(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "(ง,,• ᴗ •,,)ง ✧"],
                 shock   : [",,Ծ‸Ծ,,", "(｀･д･´)", "Σ( ° △ °|||)︴", "┌( ಠ_ಠ)┘", "(ﾟДﾟ≡ﾟдﾟ)!?"],
                 sad     : ["∑(っ °Д °;)っ", "＞︿＜", "＞△＜", "●︿●", "(´；ω；`)"],
@@ -130,11 +130,11 @@
             }
         };
 
-        Live.send_msg   = function(dom,type,msg){
+        Live.send_msg = function (dom, type, msg) {
             if (n = type || "info", "success" !== n && "caution" !== n && "error" !== n && "info" !== n) return;
             var c = document.createDocumentFragment();
             var u = document.createElement("div");
-            u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>"+msg+Live.random_emoji.helpless()+"</span>", u.className = "live-toast "+n;
+            u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>" + msg + Live.random_emoji.helpless() + "</span>", u.className = "live-toast " + n;
             var d = null;
             switch (Live.getDomType(dom)) {
                 case"HTML Element":
@@ -176,15 +176,19 @@
                 Live.doSign.getSignInfo().done(function (data) {
                     if (data.code == 0 && data.data.status == 0) {
                         Live.doSign.sign();
-                        setInterval(Live.doSign.sign, 60000);
-                    }//doSign per 1 min
+                        setInterval(Live.doSign.sign, 60000);//doSign per 1 min
+                    } else if (data.code == 0 && data.data.status == 1) {
+                        var username = Live.get('helper_userInfo', 'username');
+                        Live.set('helper_doSign_today', username, true);
+                        Live.set('helper_doSign_date', username, new Date().getDate());
+                    }
                 });
             },
             sign       : function () {
                 /*check login*/
                 var date     = new Date().getDate();
                 var username = Live.get('helper_userInfo', 'username');
-                if (Live.get('helper_doSign_today', username) == false || Live.get('helper_doSign_date', username) != date) {
+                if (Live.get('helper_doSign_today', username) != 'true' || Live.get('helper_doSign_date', username) != date) {
                     $.get("/sign/doSign", function (data) {
                         var e = JSON.parse(data), msg = undefined;
                         //    {
@@ -209,6 +213,8 @@
                             setTimeout(function () {
                                 msg.close();
                             }, 1000);
+                            var spans = $('.body-container').find('.room-left-sidebar .sign-and-mission .sign-up-btn .dp-inline-block span');
+                            $(spans[0]).hide(), $(spans[1]).show();
                         } else if (e.code == -500) {
                             msg = new Notification(eval("'" + e.msg + "'"), {
                                 body: "不能重复签到",
@@ -768,15 +774,12 @@
                 });
             },
             correctQuestion: function (question) {
-                console.log(question)
-                question = question.trim();
+                var q = '', question = question.trim();
                 for (var i in question) {
-                    var a       = Live.treasure.correctStr[question[i]];
-                    console.log(a,question[i]);
-                    question[i] = (a != undefined ? Live.treasure.correctStr[question[i]] : question[i]);
+                    var a = Live.treasure.correctStr[question[i]];
+                    q += (a != undefined ? a : question[i]);
                 }
-                console.log(question)
-                return question;
+                return q;
             },
             getCurrentTask : function () {
                 return $.post('http://live.bilibili.com/FreeSilver/getCurrentTask', {r: Math.random}, function () {
@@ -873,12 +876,12 @@
         };
 
         Live.chat = {
-            maxLength: 20,
-            text     : '',
-            colorValue:{'white':'0xffffff','red':'0xff6868','blue':'0x66ccff','blue-2':'0x006098','cyan':'0x00fffc','green':'0x7eff00','yellow':'0xffed4f','orange':'0xff9800'},
-            init     : function () {
-                var init_interval = setInterval(function(){
-                    if($('#danmu-textbox').attr('maxlength')){
+            maxLength : 20,
+            text      : '',
+            colorValue: {'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800'},
+            init      : function () {
+                var init_interval = setInterval(function () {
+                    if ($('#danmu-textbox').attr('maxlength')) {
                         clearInterval(init_interval);
 
 
@@ -894,7 +897,7 @@
                         original_emoji_list.before(helper_emoji_list).remove();
 
                         var original_text_area = chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
-                        Live.chat.maxLength = original_text_area.attr('maxlength');
+                        Live.chat.maxLength    = original_text_area.attr('maxlength');
                         var helper_text_area   = original_text_area.clone().addClass('helper_text_area').removeAttr('maxlength');
                         original_text_area.before(helper_text_area).hide();
 
@@ -903,7 +906,7 @@
                         original_send_btn.before(helper_send_btn).hide();
 
                         //init event
-                        helper_emoji_btn.on('click',function () {
+                        helper_emoji_btn.on('click', function () {
                             if (helper_emoji_list.css('display') == 'none') {
                                 helper_emoji_list.show();
                                 function n(t) {
@@ -918,36 +921,39 @@
                                 }, 1);
                             }
                         });
-                        helper_send_btn.on('click',function (e) {
+                        helper_send_btn.on('click', function (e) {
                             e.preventDefault();
-                            if(helper_text_area.val()!='') {
+                            if (helper_text_area.val() != '') {
                                 Live.chat.text = helper_text_area.val();
                                 helper_text_area.val('');
                                 Live.chat.do();
-                            }else Live.send_msg(helper_send_btn,'info','请输入弹幕后再发送~');
+                            } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
-                        helper_text_area.on('keyup',function (e) {
+                        helper_text_area.on('keyup', function (e) {
                             e.preventDefault();
                             var text = helper_text_area.val();
+                            console.log(e.keyCode)
                             if (e.keyCode === 13 && text.length > 0) {
-                                helper_text_area.val(helper_text_area.val().substr(0,text.length-1));
+                                helper_text_area.val(helper_text_area.val().substr(0, text.length - 1));
                                 helper_send_btn.click();
-                            }else if(text.length == 0) Live.send_msg(helper_send_btn,'info','请输入弹幕后再发送~');
+                            }else if(e.keyCode === 8 || e.keyCode === 46){
+                                return false;
+                            } else if (text.length == 0) Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                             return false;
                         });
-                        helper_emoji_list.on('click','a',function(){
+                        helper_emoji_list.on('click', 'a', function () {
                             var text = helper_text_area.val();
-                            helper_text_area.val(text+$(this).text());
+                            helper_text_area.val(text + $(this).text());
                             helper_text_area.focus();
                         });
 
                         //init has finished
                         chat_ctrl_panel.find('.help_chat_shade').hide('middle');
                     }
-                },350);
+                }, 350);
 
             },
-            do       : function () {
+            do        : function () {
                 if (Live.chat.text.length > 0) {
                     var colorStr = $('.color-select-panel').find('a.active').attr('class').split(' ')[1];
                     $("#player_object")[0].sendMsg(Live.chat.text.substr(0, Live.chat.maxLength), Live.chat.colorValue[colorStr]);
@@ -1014,8 +1020,8 @@
 
             Live.set('helper_userInfo', 'login', false);
             Live.clearLocalStorage();
-            Live.initUserInfo(function(){
-                if (Live.get('helper_userInfo', 'login')=='true') {
+            Live.initUserInfo(function () {
+                if (Live.get('helper_userInfo', 'login') == 'true') {
                     Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
                     $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
                     Live.bet.quiz_toggle_btn.click(function () {
