@@ -55,6 +55,8 @@ $(document).ready(function () {
         }
         var l = JSON.parse(window.localStorage[n]);
         if (!k) return l;
+        if(typeof l[k] == 'string' && l[k][0]=='"')l[k] = l[k].substr(1,l[k].length-1);
+        else if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
         return l[k];
     };
     Live.del = function (n, k) {

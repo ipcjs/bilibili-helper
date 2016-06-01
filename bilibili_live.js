@@ -30,6 +30,8 @@
             }
             var l = JSON.parse(window.localStorage[n]);
             if (!k) return l;
+            if(typeof l[k] == 'string' && l[k][0]=='"')l[k] = l[k].substr(1,l[k].length-1);
+            else if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
             return l[k];
         };
 
@@ -188,7 +190,7 @@
                 /*check login*/
                 var date     = new Date().getDate();
                 var username = Live.get('helper_userInfo', 'username');
-                if (Live.get('helper_doSign_today', username) != 'true' || Live.get('helper_doSign_date', username) != date) {
+                if (!Live.get('helper_doSign_today', username) || Live.get('helper_doSign_date', username) != date) {
                     $.get("/sign/doSign", function (data) {
                         var e = JSON.parse(data), msg = undefined;
                         //    {
@@ -722,7 +724,7 @@
             },
             cancelCheck     : function () {
                 clearInterval(Live.get('helper_live_check', Live.getRoomId()));
-                Live.set('helper_live_check', Live.getRoomId(), undefined);
+                Live.del('helper_live_check', Live.getRoomId());
             }
         };
 
@@ -793,7 +795,7 @@
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
                     } else if (data.code == -10017) {//领完
                         clearInterval(Live.treasure.interval);
-                        if (!Live.get('noTreasure', eval(Live.get('helper_userInfo', 'username')))) {
+                        if (!Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
                                 body: "",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
@@ -930,16 +932,18 @@
                             } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
                         helper_text_area.on('keyup', function (e) {
-                            e.preventDefault();
-                            var text = helper_text_area.val();
-                            console.log(e.keyCode)
-                            if (e.keyCode === 13 && text.length > 0) {
+                            var text = helper_text_area.val().trim();
+                            if (e.keyCode === 13 && text != '') {
                                 helper_text_area.val(helper_text_area.val().substr(0, text.length - 1));
                                 helper_send_btn.click();
-                            }else if(e.keyCode === 8 || e.keyCode === 46){
-                                return false;
-                            } else if (text.length == 0) Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
-                            return false;
+                            }
+                        }).on('keydown',function(e){
+                            var text = helper_text_area.val().trim();
+                            if (e.keyCode === 13 && text == '') {
+                                e.preventDefault();
+                                Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                                helper_text_area.val('');
+                            }
                         });
                         helper_emoji_list.on('click', 'a', function () {
                             var text = helper_text_area.val();
@@ -1021,7 +1025,7 @@
             Live.set('helper_userInfo', 'login', false);
             Live.clearLocalStorage();
             Live.initUserInfo(function () {
-                if (Live.get('helper_userInfo', 'login') == 'true') {
+                if (Live.get('helper_userInfo', 'login')) {
                     Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
                     $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
                     Live.bet.quiz_toggle_btn.click(function () {
