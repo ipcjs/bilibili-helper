@@ -15,9 +15,9 @@
             if (!storage[n])storage[n] = JSON.stringify({});
             var l = JSON.parse(storage[n]);
             if (v == undefined) {
-                storage[n] = typeof k == 'string'? k.trim():JSON.stringify(k);
+                storage[n] = typeof k == 'string' ? k.trim() : JSON.stringify(k);
             } else {
-                l[k] = typeof v == 'string'?v.trim():JSON.stringify(v);
+                l[k]       = typeof v == 'string' ? v.trim() : JSON.stringify(v);
                 storage[n] = JSON.stringify(l);
             }
         };
@@ -31,15 +31,14 @@
             }
             var l = JSON.parse(window.localStorage[n]);
             if (!k) return l;
-            if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
+            if (l[k] == 'true' || l[k] == 'false')l[k] = eval(l[k]);
             return l[k];
         };
 
         Live.del = function (n, k) {
-            if (!window.localStorage || !n || !k) return;
-
-            if (!window.localStorage[n]) {
-                window.localStorage[n] = JSON.stringify({});
+            if (!window.localStorage || n == undefined || window.localStorage[n] == undefined) return;
+            if (k == undefined) {
+                window.localStorage.removeItem(n);
                 return;
             }
             var l = JSON.parse(window.localStorage[n]);
@@ -64,7 +63,7 @@
                     Live.set('helper_userInfo', 'login', true);
                     if (callback && typeof callback == 'function')callback(user);
                     return true;
-                } else return true;
+                } else if (user.code == -101)Live.del('helper_userInfo');
             });
 
         };
@@ -731,7 +730,7 @@
         Live.currentRoom = [];
 
         Live.treasure = {
-            vote           : -1,
+            vote           : undefined,
             minute         : undefined,
             silver         : undefined,
             totalTimes     : 3,
@@ -766,7 +765,7 @@
                             });
                             console.log(0);
                         });
-                    }else if(Live.get('noTreasure', Live.get('helper_userInfo', 'username'))){
+                    } else if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     } else if (response['data'].roomId != Live.getRoomId()) {
                         $('#head-info-panel').find('.treasure-info').html('已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子');
@@ -791,7 +790,6 @@
             },
             checkTask      : function () {
                 Live.treasure.getCurrentTask().done(function (data) {
-                    console.log(data);
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
@@ -809,10 +807,10 @@
                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     } else if (data.code == 0) {
-                        if (!data.data.silver || !data.data.times) {
+                        if (!data.data.silver) {
                             clearInterval(Live.treasure.interval);
                         } else {
-                            if (Live.treasure.times == undefined && Live.treasure.silver == undefined)
+                            if (Live.treasure.vote == undefined)
                                 Live.getRoomInfo().done(function (data) {
                                     chrome.extension.sendMessage({
                                         command: "setTreasure",
@@ -835,7 +833,7 @@
                                         msg.close();
                                     }, 5000);
                                 });
-                            if (Live.treasure.times != data.data.times && Live.treasure.times != undefined) {
+                            if (Live.treasure.vote != data.data.vote && Live.treasure.vote != undefined) {
                                 var msg = new Notification("自动领取成功", {
                                     body: "领取了" + Live.treasure.silver + "个瓜子",
                                     icon: "//static.hdslb.com/live-static/images/7.png"
@@ -936,10 +934,11 @@
                         helper_text_area.on('keyup', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text != '') {
-                                helper_text_area.val(helper_text_area.val().substr(0, text.length - 1));
+                                e.preventDefault();
+                                helper_text_area.val(text.substr(0,text.length));
                                 helper_send_btn.click();
                             }
-                        }).on('keydown',function(e){
+                        }).on('keydown', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
                                 e.preventDefault();

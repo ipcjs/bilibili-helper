@@ -60,10 +60,9 @@ $(document).ready(function () {
         return l[k];
     };
     Live.del = function (n, k) {
-        if (!window.localStorage || !n || !k) return;
-
-        if (!window.localStorage[n]) {
-            window.localStorage[n] = JSON.stringify({});
+        if (!window.localStorage || n==undefined || window.localStorage[n]==undefined) return;
+        if(k == undefined) {
+            window.localStorage.removeItem(n);
             return;
         }
         var l = JSON.parse(window.localStorage[n]);
