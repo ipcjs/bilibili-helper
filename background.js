@@ -8,7 +8,49 @@ var notification       = false,
     localeTimeout      = null,
     secureAvailable    = false,
     updateNotified     = false,
-    videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"];
+    videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"],
+    Live               = {};
+var bkg_page           = chrome.extension.getBackgroundPage();
+
+Live.set = function (n, k, v) {
+    if (!window.localStorage || !n) return;
+    var storage = window.localStorage;
+    if (!storage[n])storage[n] = JSON.stringify({});
+    var l = JSON.parse(storage[n]);
+    if (v == undefined) {
+        storage[n] = typeof k == 'string'? k.trim():JSON.stringify(k);
+    } else {
+        l[k] = typeof v == 'string'?v.trim():JSON.stringify(v);
+        storage[n] = JSON.stringify(l);
+    }
+};
+
+Live.get = function (n, k, v) {
+    if (!window.localStorage || !n) return;
+
+    if (!window.localStorage[n]) {
+        window.localStorage[n] = JSON.stringify(v || {});
+        return eval(v);
+    }
+    var l = JSON.parse(window.localStorage[n]);
+    if (!k) return l;
+    if (l[k] == 'true' || l[k] == 'false')l[k] = eval(l[k]);
+    return l[k];
+};
+Live.del = function (n, k) {
+    if (!window.localStorage || n==undefined || window.localStorage[n]==undefined) return;
+    if(k == undefined) {
+        window.localStorage.removeItem(n);
+        return;
+    }
+    var l = JSON.parse(window.localStorage[n]);
+    delete l[k];
+    window.localStorage[n] = JSON.stringify(l);
+};
+
+Live.notisesIdList    = {};
+Live.favouritesIdList = Live.get('favouritesIdList', false, []);
+Live.favouritesList   = Live.get('favouritesList', false, {});
 
 URL.prototype.__defineGetter__('query', function () {
     var parsed    = this.search.substr(1).split('&');
@@ -27,9 +69,11 @@ var randomIP = function (fakeip) {
     return ip_addr;
 }
 
-function getFileData(url, callback) {
+function getFileData(url, callback, method) {
+    var m = 'GET';
+    if (method && (method == 'POST'.toLowerCase() || method == 'GET'.toLowerCase()))m = method;
     var xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", url, true);
+    xmlhttp.open(m, url, true);
     xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             if (typeof callback == "function") callback(xmlhttp.responseText);
@@ -233,65 +277,65 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
 
 function getVideoInfo(avid, page, callback) {
 
-	page = parseInt(page);
-	var currTime = parseInt(new Date().getTime() / 1000);
-	if (isNaN(page) || page < 1) page = 1;
-	if (typeof viCache[avid + '-' + page] != "undefined" && currTime - viCache[avid + '-' + page]['ts'] <= 3600) {
-		callback(viCache[avid + '-' + page]);
-		return true;
-	}
-	getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function(avInfo) {
-		avInfo = JSON.parse(avInfo);
-		if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
-			setTimeout(function() {
-				getVideoInfo(avid, page, callback);
-			}, 1000);
-		} else {
-			if (typeof avInfo.list == "object") {
-				avInfo.pages = avInfo.list.length;
-				for (var i = 0; i < avInfo.pages; i++) {
-					if (avInfo.list[i].page == page) {
-						avInfo.cid = avInfo.list[i].cid;
-						break;
-					}
-				}
-			}
-			if (typeof avInfo.cid == "number") {
-				viCache[avid + '-' + page] = {
-					mid: avInfo.mid,
-					tid: avInfo.tid,
-					cid: avInfo.cid,
-					pic: avInfo.pic,
-					pages: avInfo.pages,
-					title: avInfo.title,
-					list: avInfo.list,
-					sp_title: avInfo.sp_title,
-					spid: avInfo.spid,
-					season_id: avInfo.season_id,
-					created_at: avInfo.created_at,
-					description: avInfo.description,
-					tag: avInfo.tag,
-					ts: currTime,
-					bangumi: false
-				};
-				if (typeof avInfo.bangumi == "object") {
-					getFileData("http://api.bilibili.cn/sp?spid=" + avInfo.spid, function(spInfo) {
-						spInfo = JSON.parse(spInfo);
-						if (spInfo.isbangumi == 1) {
-							viCache[avid + '-' + page].bangumi = {
-								cover: spInfo.cover,
-								desc: spInfo.description
-							}
-						}
-						callback(viCache[avid + '-' + page]);
-					});
-				} else callback(viCache[avid + '-' + page]);
-			} else {
-				callback(avInfo);
-			}
-		}
-	});
-	return true;
+    page         = parseInt(page);
+    var currTime = parseInt(new Date().getTime() / 1000);
+    if (isNaN(page) || page < 1) page = 1;
+    if (typeof viCache[avid + '-' + page] != "undefined" && currTime - viCache[avid + '-' + page]['ts'] <= 3600) {
+        callback(viCache[avid + '-' + page]);
+        return true;
+    }
+    getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function (avInfo) {
+        avInfo = JSON.parse(avInfo);
+        if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
+            setTimeout(function () {
+                getVideoInfo(avid, page, callback);
+            }, 1000);
+        } else {
+            if (typeof avInfo.list == "object") {
+                avInfo.pages = avInfo.list.length;
+                for (var i = 0; i < avInfo.pages; i++) {
+                    if (avInfo.list[i].page == page) {
+                        avInfo.cid = avInfo.list[i].cid;
+                        break;
+                    }
+                }
+            }
+            if (typeof avInfo.cid == "number") {
+                viCache[avid + '-' + page] = {
+                    mid        : avInfo.mid,
+                    tid        : avInfo.tid,
+                    cid        : avInfo.cid,
+                    pic        : avInfo.pic,
+                    pages      : avInfo.pages,
+                    title      : avInfo.title,
+                    list       : avInfo.list,
+                    sp_title   : avInfo.sp_title,
+                    spid       : avInfo.spid,
+                    season_id  : avInfo.season_id,
+                    created_at : avInfo.created_at,
+                    description: avInfo.description,
+                    tag        : avInfo.tag,
+                    ts         : currTime,
+                    bangumi    : false
+                };
+                if (typeof avInfo.bangumi == "object") {
+                    getFileData("http://api.bilibili.cn/sp?spid=" + avInfo.spid, function (spInfo) {
+                        spInfo = JSON.parse(spInfo);
+                        if (spInfo.isbangumi == 1) {
+                            viCache[avid + '-' + page].bangumi = {
+                                cover: spInfo.cover,
+                                desc : spInfo.description
+                            }
+                        }
+                        callback(viCache[avid + '-' + page]);
+                    });
+                } else callback(viCache[avid + '-' + page]);
+            } else {
+                callback(avInfo);
+            }
+        }
+    });
+    return true;
 }
 
 function checkSecurePlayer() {
@@ -312,7 +356,35 @@ function extensionLabsInit() {
 if (typeof(chrome.runtime.setUninstallURL) == "function") {
     chrome.runtime.setUninstallURL("https://extlabs.io/analytics/uninstall/?uid=178&pid=264&finish_url=https%3A%2F%2Fbilihelper.guguke.net%2F%3Funinstall%26version%3D" + chrome.app.getDetails().version);
 }
-var treasure = false;
+Live.treasure = {};
+function setTreasure(data) {
+    if (Object.prototype.toString.call(data) === '[object Object]') {
+        for (var index in data) {
+            Live.treasure[index] = data[index];
+        }
+    }
+}
+function setFavourite(upInfo) {
+    if (Live.favouritesIdList.indexOf(upInfo.roomId) == -1) {
+        Live.favouritesIdList.push(upInfo.roomId);
+        Live.favouritesList[upInfo.roomId] = upInfo;
+        Live.set('favouritesIdList', Live.favouritesIdList);
+        Live.set('favouritesList', Live.favouritesList);
+        return true;
+    }
+    return false;
+}
+function setNotFavourite(id) {
+    var index = Live.favouritesIdList.indexOf(id)
+    if (index != -1) {
+        Live.favouritesIdList.splice(index, 1);
+        delete Live.favouritesList[id];
+        Live.set('favouritesIdList', Live.favouritesIdList);
+        Live.set('favouritesList', Live.favouritesList);
+        return true;
+    }
+    return false;
+}
 chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.command) {
         case "init":
@@ -336,17 +408,33 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             return true;
         case "getTreasure":
             sendResponse({
-                value: treasure
+                data: Live.treasure
             });
             return true;
         case "setTreasure":
+            setTreasure(request.data);
             sendResponse({
-                value: treasure = request.key
+                data: Live.treasure
             });
             return true;
         case "delTreasure":
             sendResponse({
-                value: treasure = false
+                data: Live.treasure = {}
+            });
+            return true;
+        case "setFavourite":
+            sendResponse({
+                data: setFavourite(request.upInfo)
+            });
+            return true;
+        case "setNotFavourite":
+            sendResponse({
+                data: setNotFavourite(request.id)
+            });
+            return true;
+        case "getFavourite":
+            sendResponse({
+                data: Live.get('favouritesIdList')
             });
             return true;
         case "enableAll":
@@ -628,7 +716,17 @@ chrome.alarms.onAlarm.addListener(function (alarm) {
 });
 
 chrome.notifications.onButtonClicked.addListener(function (notificationId, index) {
-    if (notificationId == 'bh-update') {
+    if (Live.notisesIdList[notificationId] != undefined) {
+        if (index === 0) {
+            chrome.tabs.create({
+                url: Live.notisesIdList[notificationId].link
+            });
+        } else if (index === 1) {
+            chrome.tabs.create({
+                url: 'http://live.bilibili.com/i/following'
+            });
+        }
+    } else if (notificationId == 'bh-update') {
         chrome.tabs.create({
             url: chrome.extension.getURL("options.html?mod=update")
         });
@@ -748,3 +846,131 @@ chrome.webRequest.onHeadersReceived.addListener(function (details) {
 }, {
     urls: ["http://www.bilibili.com/video/av*"]
 }, ["responseHeaders", "blocking"]);
+
+function getCookie(name) {
+    var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+    if (arr = document.cookie.match(reg))
+        return unescape(arr[2]);
+    else
+        return null;
+}
+function each(obj, fn) {
+    if (!fn) return;
+    if (obj instanceof Array) {
+        var i = 0, len = obj.length;
+        for (; i < len; i++) {
+            if (fn.call(obj[i], i) == false)
+                break;
+        }
+    } else if (typeof obj === 'object') {
+        var j = null;
+        for (j in obj) {
+            if (fn.call(obj[j], j) == false)
+                break;
+        }
+    }
+}
+Live.notise = {
+    page       : 1,
+    userMode   : function () {
+        return getCookie("DedeUserID")
+    }(),
+    hasMore    : !1,
+    list       : [],
+    count      : 0,
+    intervalNum: undefined,
+    heart      : {},
+    roomIdList : {},
+    cacheList  : {},
+    getList    : function (d) {
+        var url      = "http://live.bilibili.com/feed/getList/" + Live.notise.page;
+        var callback = function (t) {
+            t              = JSON.parse(t);
+            var roomIdList = {}, newList = [];
+            each(t.data.list, function (i) {
+                roomIdList[t.data.list[i].roomid] = t.data.list[i];
+            });
+
+            if (1 == Live.notise.page) Live.notise.cacheList = roomIdList;
+            else {
+                each(roomIdList, function (i) {
+                    Live.notise.cacheList[i] = roomIdList[i];
+                });
+            }
+            Live.notise.hasMore = (t.data.count > 10 && t.data.list.length == 10 && Live.notise.userMode);
+
+            if (!Live.notise.hasMore || d.has_new) {
+                for (var q in Live.notise.cacheList)
+                    if (Live.notise.roomIdList[q] == undefined) newList.push(Live.notise.cacheList[q]);
+
+                if (newList.length) {
+                    each(newList, function (i) {
+                        if (Live.favouritesIdList.indexOf(parseInt(newList[i].roomid)) != -1 || Live.favouritesIdList.length == 0) {
+                            var data = newList[i], myNotificationID = null;
+                            chrome.notifications.create(data.roomid, {
+                                type       : "basic",
+                                iconUrl    : data.face,
+                                title      : data.nickname + chrome.i18n.getMessage('notificationLiveOn'),
+                                message    : data.roomname,
+                                isClickable: false,
+                                buttons    : [{
+                                    title: chrome.i18n.getMessage('notificationWatch')
+                                }, {
+                                    title: chrome.i18n.getMessage('notificationShowAll')
+                                }]
+                            }, function (id) {
+                                Live.notisesIdList[id] = data;
+                                setTimeout(function () {
+                                    chrome.notifications.clear(id);
+                                    delete Live.notisesIdList[id];
+                                }, 10000);
+                            });
+                        }
+                    })
+                }
+                Live.notise.roomIdList = Live.notise.cacheList;
+                Live.notise.cacheList  = {};
+            }
+        }
+        var type     = Live.notise.userMode ? "POST" : "GET";
+
+        getFileData(url, callback, type);
+
+
+    },
+    heartBeat  : function () {
+        getFileData("http://live.bilibili.com/feed/heartBeat/heartBeat", function (data) {
+            data = JSON.parse(data);
+            Live.notise.do(data);
+        }, 'POST');
+    },
+    do         : function (data) {
+        Live.notise.feedMode = data.data.open;
+        if (0 == data.code) {
+            Live.notise.count = data.data.count;
+            if (data.data.open && data.data.has_new) {
+                Live.notise.count = 0;
+                Live.notise.page  = 1;
+                Live.notise.open  = !0;
+                Live.notise.getList(data.data);
+            }
+        } else {
+            clearInterval(Live.notise.intervalNum);
+        }
+    },
+    init       : function () {
+        Live.notise.count = 0;
+        Live.notise.heartBeat();
+        Live.notise.getList();
+        Live.notise.intervalNum = setInterval(function () {
+            Live.notise.heartBeat();
+            if (Live.notise.hasMore) {
+                Live.notise.page++;
+                Live.notise.getList();
+            }
+        }, 5000);
+    }
+};
+if (getOption("liveNotification") == "on") {
+    Live.notise.init();
+}
