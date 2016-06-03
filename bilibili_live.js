@@ -734,7 +734,7 @@
             minute         : undefined,
             silver         : undefined,
             totalTimes     : 3,
-            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6},
+            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6,'i':1,'I':1},
             init           : function () {
                 chrome.extension.sendMessage({
                     command: "getTreasure"
@@ -944,6 +944,7 @@
                                 e.preventDefault();
                                 Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                                 helper_text_area.val('');
+                                return false;
                             }
                         });
                         helper_emoji_list.on('click', 'a', function () {
