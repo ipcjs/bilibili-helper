@@ -8,7 +8,7 @@ An auxiliary extension for Bilibili (bilibili.com) which allows users to bypass 
 [Chrome Web Store](https://chrome.google.com/webstore/detail/kpbnombpnpcffllnianjibmpadjolanh)
 
 ## License (许可)
-[MIT](http://www.opensource.org/licenses/mit-license.php).
+[MIT](LICENSE)
 
 ## Terms of Service & Privacy Policy (隐私协议)
 http://addons-privacy.com/
