@@ -1,17 +1,14 @@
 # bilibili-helper
 
+An auxiliary extension for Bilibili (bilibili.com) which allows users to bypass playback restrictions, replace video players and use shortcuts.
 哔哩哔哩 (bilibili.com) 辅助工具，可以替换播放器、去广告、推送通知并进行一些快捷操作。
 
-## 发行
+## Release (发行)
 
 [Chrome Web Store](https://chrome.google.com/webstore/detail/kpbnombpnpcffllnianjibmpadjolanh)
 
-## 声明
+## License (许可)
+[MIT](LICENSE)
 
-本项目中使用的 HTML5 播放器修改自 jabbany 以 [MIT许可协议](http://www.opensource.org/licenses/mit-license.php) 发布的开源项目 [ABPlayerHTML5](https://github.com/jabbany/ABPlayerHTML5)。
-
-## 许可
-[MIT许可协议](http://www.opensource.org/licenses/mit-license.php).
-
-## 隐私协议
-本扩展使用 SimilarWeb 提供的追踪代码提供用户使用情况分析，详情参见 [隐私协议](http://addons-privacy.com/).
+## Terms of Service & Privacy Policy (隐私协议)
+http://addons-privacy.com/

@@ -931,19 +931,14 @@
                                 Live.chat.do();
                             } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
-                        helper_text_area.on('keyup', function (e) {
-                            var text = helper_text_area.val().trim();
-                            if (e.keyCode === 13 && text != '') {
-                                e.preventDefault();
-                                helper_text_area.val(text.substr(0,text.length));
-                                helper_send_btn.click();
-                            }
-                        }).on('keydown', function (e) {
+                        helper_text_area.on('keydown', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
-                                e.preventDefault();
                                 Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                                 helper_text_area.val('');
+                            }else if (e.keyCode === 13 && text != '') {
+                                helper_text_area.val(text.substr(0,text.length));
+                                helper_send_btn.click();
                                 return false;
                             }
                         });
