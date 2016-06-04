@@ -734,7 +734,7 @@
             minute         : undefined,
             silver         : undefined,
             totalTimes     : 3,
-            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6},
+            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6, 'i': 1, 'I': 1},
             init           : function () {
                 chrome.extension.sendMessage({
                     command: "getTreasure"
@@ -927,23 +927,19 @@
                             e.preventDefault();
                             if (helper_text_area.val() != '') {
                                 Live.chat.text = helper_text_area.val();
-                                helper_text_area.val('');
                                 Live.chat.do();
                             } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                            helper_text_area.val('');
                         });
-                        helper_text_area.on('keyup', function (e) {
-                            var text = helper_text_area.val().trim();
-                            if (e.keyCode === 13 && text != '') {
-                                e.preventDefault();
-                                helper_text_area.val(text.substr(0,text.length));
-                                helper_send_btn.click();
-                            }
-                        }).on('keydown', function (e) {
+                        helper_text_area.on('keydown', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
-                                e.preventDefault();
                                 Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
-                                helper_text_area.val('');
+                                return false;
+                            } else if (e.keyCode === 13 && text != '') {
+                                helper_text_area.val(text.substr(0, text.length));
+                                helper_send_btn.click();
+                                return false;
                             }
                         });
                         helper_emoji_list.on('click', 'a', function () {
