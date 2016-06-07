@@ -931,19 +931,18 @@
                                 Live.chat.do();
                             } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
-                        helper_text_area.on('keyup', function (e) {
-                            var text = helper_text_area.val().trim();
-                            if (e.keyCode === 13 && text != '') {
-                                e.preventDefault();
-                                helper_text_area.val(text.substr(0,text.length));
-                                helper_send_btn.click();
-                            }
-                        }).on('keydown', function (e) {
+                        helper_text_area.on('keydown', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
                                 e.preventDefault();
                                 Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                                 helper_text_area.val('');
+                                return false;
+                            }else if (e.keyCode === 13 && text != '') {
+                                e.preventDefault();
+                                helper_text_area.val(text.substr(0,text.length));
+                                helper_send_btn.click();
+                                return false;
                             }
                         });
                         helper_emoji_list.on('click', 'a', function () {
@@ -1068,3 +1067,10 @@
     }
     Live.init();
 })();
+//$('#chat-msg-list').on('DOMSubtreeModified',function(e){
+//    var dom = $(this);
+//    console.log(dom)
+//    //var name = dom.find('.user-name').text();
+//    //var msg = dom.find('.msg-content').text();
+//    //console.log(name,msg);
+//})
