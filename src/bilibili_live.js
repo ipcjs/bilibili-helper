@@ -734,7 +734,7 @@
             minute         : undefined,
             silver         : undefined,
             totalTimes     : 3,
-            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6},
+            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6, 'i':1, 'I':1},
             init           : function () {
                 chrome.extension.sendMessage({
                     command: "getTreasure"
@@ -1064,8 +1064,8 @@
             });
 
         };
+        Live.init();
     }
-    Live.init();
 })();
 //$('#chat-msg-list').on('DOMSubtreeModified',function(e){
 //    var dom = $(this);
