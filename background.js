@@ -247,6 +247,15 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
         if (typeof callback == "function") callback(avPlaybackLink);
         return false;
     }
+    if (typeof avPlaybackLink.durl[0].backup_url == 'object' &&
+      avPlaybackLink.durl[0].backup_url.length) {
+      avPlaybackLink.durl[0].backup_url.forEach(function(url) {
+        if (url.indexOf('hd.mp4') > -1) {
+          avPlaybackLink.durl[0].url = url;
+          console.log('replace', url);
+        }
+      })
+    }
     var xmlhttp   = new XMLHttpRequest(),
         xmlChange = function () {
             if (xmlhttp.readyState == 2) {
@@ -467,8 +476,8 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             return true;
         case "getDownloadLink":
             var url = {
-                download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=4&type=" + getOption("dlquality"),
-                playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=4&type=mp4"
+                download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=3&type=" + getOption("dlquality"),
+                playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=3&type=mp4"
             };
             if (request.cidHack && request.cidHack != locale) {
                 cidHackType[request.cid] = request.cidHack;
