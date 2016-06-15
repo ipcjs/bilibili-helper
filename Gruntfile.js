@@ -47,4 +47,5 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-contrib-compress');
 
     grunt.registerTask('default', ['uglify:release','copy:main','compress:main']);
+    grunt.registerTask('debug', ['uglify:release','copy:main']);
 }

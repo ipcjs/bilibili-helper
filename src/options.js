@@ -17,6 +17,7 @@ $(document).ready(function () {
     $("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
     $("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
     $("div[option=\"" + bkg_page.getOption("liveNotification") + "\"].liveNotification").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("giftDisplay") + "\"].giftDisplay").addClass("on");
     var adOption = bkg_page.getOption("ad");
     $("div[option=\"" + adOption + "\"].ad").addClass("on");
     if (adOption == "fade") $("#ad_opacity_opt").show();
@@ -130,49 +131,62 @@ $(document).ready(function () {
         $('.dlquality').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("dlquality", $(this).attr("option"));
-        updatepreview();
+        // updatepreview();
     });
     $('.indexversion').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.indexversion').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("indexversion", $(this).attr("option"));
-        updatepreview();
+        // updatepreview();
     });
     $('.rel_search').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.rel_search').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("rel_search", $(this).attr("option"));
-        updatepreview();
+        // updatepreview();
     });
     $('.doSign').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.doSign').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("doSign", $(this).attr("option"));
-        //updatepreview();
+        // updatepreview();
     });
     $('.autoTreasure').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.autoTreasure').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("autoTreasure", $(this).attr("option"));
-        //updatepreview();
+        // updatepreview();
     });
     $('.danmu').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.danmu').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("danmu", $(this).attr("option"));
-        //updatepreview();
+        // updatepreview();
     });
     $('.liveNotification').click(function () {
         if ($(this).hasClass('on')) return false;
         $('.liveNotification').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("liveNotification", $(this).attr("option"));
-        //updatepreview();
+        
+        if (bkg_page.getOption("liveNotification") != 'on') {
+            clearInterval(bkg_page.Live.notise.intervalNum);
+        }else if (bkg_page.getOption("liveNotification") == 'on') {
+            bkg_page.Live.notise.init();
+        }
+        // updatepreview();
+    });
+    $('.giftDisplay').click(function () {
+        if ($(this).hasClass('on')) return false;
+        $('.giftDisplay').removeClass('on');
+        $(this).addClass('on');
+        bkg_page.setOption("giftDisplay", $(this).attr("option"));
+        // updatepreview();
     });
     function initUpList() {
         var list    = Live.get('favouritesList');
