@@ -888,8 +888,8 @@
                         clearInterval(init_interval);
 
                         var chat_ctrl_panel = $('#chat-ctrl-panel');
+                        Live.chat.counter = chat_ctrl_panel.find('.danmu-length-count');
                         //init & hide original ui
-                        chat_ctrl_panel.find('.danmu-length-count').hide();
                         var original_emoji_btn = chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
                         var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper_emoji');
                         original_emoji_btn.before(helper_emoji_btn).remove();
@@ -906,6 +906,10 @@
                         var original_send_btn = chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
                         var helper_send_btn   = original_send_btn.clone().addClass('helper_send_btn');
                         original_send_btn.before(helper_send_btn).hide();
+
+                        Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
+
+                        Live.chat.counter.text('0 / 1 + 0');
 
                         //init event
                         helper_emoji_btn.on('click', function () {
@@ -944,11 +948,18 @@
                                 helper_send_btn.click();
                                 return false;
                             }
+                            Live.chat.updateTextInfo(text);
+                        });
+                        helper_text_area.on('keyup',function(){
+                            var text = helper_text_area.val().trim();
+                            var part = parseInt(text.length / Live.chat.maxLength);
+                            Live.chat.updateTextInfo(text);
                         });
                         helper_emoji_list.on('click', 'a', function () {
-                            var text = helper_text_area.val();
+                            var text = helper_text_area.val().trim();
                             helper_text_area.val(text + $(this).text());
                             helper_text_area.focus();
+                            Live.chat.updateTextInfo(helper_text_area.val().trim());
                         });
 
                         //init has finished
@@ -984,6 +995,12 @@
                     var l = $('document').find('#giftDisplay');
                     if(l.length)l.remove();
                 }
+            },
+            updateTextInfo:function(text){
+                var part = parseInt(text.length / Live.chat.maxLength);
+                var rest = part>0?text.length%Live.chat.maxLength:0;
+                // part_t = part>0?(rest == 0?part:part+1):1;
+                Live.chat.counter.text(text.length + ' / ' + (part==0?1:part)+' + '+rest);
             }
         };
 
