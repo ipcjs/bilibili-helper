@@ -113,7 +113,7 @@
             return "[object Object]" === e && t.jquery ? "jQuery Object" : "[object Object]" === e ? "Object" : "[object Number]" === e ? "Number" : "[object String]" === e ? "String" : "[object Array]" === e ? "Array" : "[object Boolean]" === e ? "Boolean" : "[object Function]" === e ? "Function" : "[object Null]" === e ? "null" : "[object Undefined]" === e ? "undefined" : e.match(n) ? "HTML Element" : "[object HTMLCollection]" === e ? "HTML Elements Collection" : null
         };
 
-        Live.random_emoji = {
+        Live.randomEmoji = {
             list       : {
                 happy   : ["(｀･ω･´)", "=‿=✧", "●ω●", "(/ ▽ \\)", "(=・ω・=)", "(●'◡'●)ﾉ♥", "<(▰˘◡˘▰)>", "(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "(ง,,• ᴗ •,,)ง ✧"],
                 shock   : [",,Ծ‸Ծ,,", "(｀･д･´)", "Σ( ° △ °|||)︴", "┌( ಠ_ಠ)┘", "(ﾟДﾟ≡ﾟдﾟ)!?"],
@@ -121,21 +121,21 @@
                 helpless: ["◐▽◑", "ʅ（´◔౪◔）ʃ", "_(:3 」∠)_", "_(┐「ε:)_", "(/・ω・＼)", "(°▽°)ﾉ"]
             },
             happy      : function () {
-                return Live.random_emoji.list.happy[Math.floor(Math.random() * Live.random_emoji.list.happy.length)]
+                return Live.randomEmoji.list.happy[Math.floor(Math.random() * Live.randomEmoji.list.happy.length)]
             }, sad     : function () {
-                return Live.random_emoji.list.sad[Math.floor(Math.random() * Live.random_emoji.list.sad.length)]
+                return Live.randomEmoji.list.sad[Math.floor(Math.random() * Live.randomEmoji.list.sad.length)]
             }, shock   : function () {
-                return Live.random_emoji.list.shock[Math.floor(Math.random() * Live.random_emoji.list.shock.length)]
+                return Live.randomEmoji.list.shock[Math.floor(Math.random() * Live.randomEmoji.list.shock.length)]
             }, helpless: function () {
-                return Live.random_emoji.list.helpless[Math.floor(Math.random() * Live.random_emoji.list.helpless.length)]
+                return Live.randomEmoji.list.helpless[Math.floor(Math.random() * Live.randomEmoji.list.helpless.length)]
             }
         };
 
-        Live.send_msg = function (dom, type, msg) {
+        Live.sendMsg = function (dom, type, msg) {
             if (n = type || "info", "success" !== n && "caution" !== n && "error" !== n && "info" !== n) return;
             var c = document.createDocumentFragment();
             var u = document.createElement("div");
-            u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>" + msg + Live.random_emoji.helpless() + "</span>", u.className = "live-toast " + n;
+            u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>" + msg + Live.randomEmoji.helpless() + "</span>", u.className = "live-toast " + n;
             var d = null;
             switch (Live.getDomType(dom)) {
                 case"HTML Element":
@@ -881,22 +881,22 @@
             maxLength : 20,
             text      : '',
             colorValue: {'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800'},
+            giftHideStyle:'#chat-msg-list .gift-msg{display:none;}',
             init      : function () {
                 var init_interval = setInterval(function () {
                     if ($('#danmu-textbox').attr('maxlength')) {
                         clearInterval(init_interval);
 
-
                         var chat_ctrl_panel = $('#chat-ctrl-panel');
+                        Live.chat.counter = chat_ctrl_panel.find('.danmu-length-count');
                         //init & hide original ui
-                        chat_ctrl_panel.find('.danmu-length-count').hide();
                         var original_emoji_btn = chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
                         var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper_emoji');
                         original_emoji_btn.before(helper_emoji_btn).remove();
 
                         var original_emoji_list = chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
                         var helper_emoji_list   = original_emoji_list.clone().addClass('helper_emoji_list');
-                        original_emoji_list.before(helper_emoji_list).remove();
+                        original_emoji_list.before(helper_emoji_list);
 
                         var original_text_area = chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
                         Live.chat.maxLength    = original_text_area.attr('maxlength');
@@ -906,6 +906,10 @@
                         var original_send_btn = chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
                         var helper_send_btn   = original_send_btn.clone().addClass('helper_send_btn');
                         original_send_btn.before(helper_send_btn).hide();
+
+                        Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
+
+                        Live.chat.counter.text('0 / 1 + 0');
 
                         //init event
                         helper_emoji_btn.on('click', function () {
@@ -929,13 +933,13 @@
                                 Live.chat.text = helper_text_area.val();
                                 helper_text_area.val('');
                                 Live.chat.do();
-                            } else Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                            } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
                         helper_text_area.on('keydown', function (e) {
                             var text = helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
                                 e.preventDefault();
-                                Live.send_msg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                                Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                                 helper_text_area.val('');
                                 return false;
                             }else if (e.keyCode === 13 && text != '') {
@@ -944,11 +948,18 @@
                                 helper_send_btn.click();
                                 return false;
                             }
+                            Live.chat.updateTextInfo(text);
+                        });
+                        helper_text_area.on('keyup',function(){
+                            var text = helper_text_area.val().trim();
+                            var part = parseInt(text.length / Live.chat.maxLength);
+                            Live.chat.updateTextInfo(text);
                         });
                         helper_emoji_list.on('click', 'a', function () {
-                            var text = helper_text_area.val();
+                            var text = helper_text_area.val().trim();
                             helper_text_area.val(text + $(this).text());
                             helper_text_area.focus();
+                            Live.chat.updateTextInfo(helper_text_area.val().trim());
                         });
 
                         //init has finished
@@ -966,6 +977,30 @@
                         Live.chat.do();
                     }, 4000);
                 }
+            },
+            initGiftDisplay:function(state){
+                if(state=="on"){
+                    var l = $('document').find('#giftDisplay');
+                    if(l.length)l.remove();
+                    var styleElement = document.createElement("style");
+                    styleElement.setAttribute("id", 'giftDisplay');
+                    styleElement.setAttribute("type", "text/css");
+                    styleElement.appendChild(document.createTextNode(Live.chat.giftHideStyle));
+                    if (document.head) {
+                        document.head.appendChild(styleElement);
+                    } else {
+                        document.documentElement.appendChild(styleElement);
+                    }
+                }else{
+                    var l = $('document').find('#giftDisplay');
+                    if(l.length)l.remove();
+                }
+            },
+            updateTextInfo:function(text){
+                var part = parseInt(text.length / Live.chat.maxLength);
+                var rest = part>0?text.length%Live.chat.maxLength:0;
+                // part_t = part>0?(rest == 0?part:part+1):1;
+                Live.chat.counter.text(text.length + ' / ' + (part==0?1:part)+' + '+rest);
             }
         };
 
@@ -1019,7 +1054,7 @@
                 key    : 'version',
             }, function (response) {
                 Live.version = response.value;
-                $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩直播助手 v" + Live.version + " by <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
+                $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
             });
 
             Live.set('helper_userInfo', 'login', false);
@@ -1055,6 +1090,14 @@
                             if (response['value'] == 'on') {
                                 $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help_chat_shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
                                 setTimeout(Live.chat.init, 2000);
+                            }
+                        });
+                        chrome.extension.sendMessage({
+                            command: "getOption",
+                            key    : 'giftDisplay',
+                        }, function (response) {
+                            if (response['value'] == 'on') {
+                                Live.chat.initGiftDisplay(response['value']);
                             }
                         });
                         Live.notise.init();

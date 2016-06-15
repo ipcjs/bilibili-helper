@@ -969,6 +969,13 @@ Live.notise = {
     },
     init       : function () {
         Live.notise.count = 0;
+        Live.notise.hasMore    = !1;
+        Live.notise.list       = [];
+        Live.notise.count      = 0;
+        Live.notise.intervalNum= undefined;
+        Live.notise.heart      = {};
+        Live.notise.roomIdList = {};
+        Live.notise.cacheList  = {};
         Live.notise.heartBeat();
         Live.notise.getList();
         Live.notise.intervalNum = setInterval(function () {
