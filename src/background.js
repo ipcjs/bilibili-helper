@@ -30,11 +30,11 @@ Live.get = function (n, k, v) {
 
     if (!window.localStorage[n]) {
         window.localStorage[n] = JSON.stringify(v || {});
-        return eval(v);
+        return JSON.parse(v);
     }
     var l = JSON.parse(window.localStorage[n]);
     if (!k) return l;
-    if (l[k] == 'true' || l[k] == 'false')l[k] = eval(l[k]);
+    if (l[k] == 'true' || l[k] == 'false')l[k] = JSON.parse(l[k]);
     return l[k];
 };
 Live.del = function (n, k) {
@@ -411,6 +411,12 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             sendResponse();
             return true;
         case "getOption":
+            sendResponse({
+                value: getOption(request.key)
+            });
+            return true;
+        case "setOption":
+            setOption(request.key,request.value);
             sendResponse({
                 value: getOption(request.key)
             });

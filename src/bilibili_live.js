@@ -27,11 +27,11 @@
 
             if (!window.localStorage[n]) {
                 window.localStorage[n] = JSON.stringify(v || {});
-                return eval(v);
+                return JSON.parse(v);
             }
             var l = JSON.parse(window.localStorage[n]);
             if (!k) return l;
-            if (l[k] == 'true' || l[k] == 'false')l[k] = eval(l[k]);
+            if (l[k] == 'true' || l[k] == 'false')l[k] = JSON.parse(l[k]);
             return l[k];
         };
 
@@ -897,39 +897,72 @@
             text      : '',
             colorValue: {'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800'},
             hideStyle:{
-                gift:'#chat-msg-list .gift-msg{display:none;}',
-                vipEnterMsg:'#chat-msg-list .system-msg{padding:0;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,#chat-msg-list .system-msg .v-middle{display: none;}',
-                liveTitleIcon:'#chat-msg-list .chat-msg .live-title-icon{display:none;}',
-                mediaIcon:'#chat-msg-list .chat-msg .medal-icon{display:none;}',
-                userLevel:'#chat-msg-list .chat-msg .user-level-icon{display:none;}',
-                chatBg:'#chat-list-ctnr{background:#f8f8f8;}',
-                superGift:'.super-gift-ctnr{display:none;}',
-                announcement:'#chat-msg-list .announcement-container{display:none;}'
+                gift:{
+                    title:'礼物信息',
+                    css:'#chat-msg-list .gift-msg{display:none;}',
+                    value:'off'
+                },
+                vipEnterMsg:{
+                    title:'礼物信息',
+                    css:'#chat-msg-list .system-msg{padding:0 10px;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,#chat-msg-list .system-msg .v-middle{display: none;}',
+                    value:'off'
+                },
+                liveTitleIcon:{
+                    title:'成就头衔',
+                    css:'#chat-msg-list .chat-msg .live-title-icon{display:none;}',
+                    value:'off'
+                },
+                mediaIcon:{
+                    title:'粉丝勋章',
+                    css:'#chat-msg-list .chat-msg .medal-icon{display:none;}',
+                    value:'off'
+                },
+                userLevel:{
+                    title:'用户等级',
+                    css:'#chat-msg-list .chat-msg .user-level-icon{display:none;}',
+                    value:'off'
+                },
+                chatBg:{
+                    title:'聊天背景',
+                    css:'#chat-list-ctnr{background:#f8f8f8;}',
+                    value:'off'
+                },
+                superGift:{
+                    title:'礼物连击',
+                    css:'.super-gift-ctnr{display:none;}',
+                    value:'off'
+                },
+                announcement:{
+                    title:'获奖通告',
+                    css:'#chat-msg-list .announcement-container{display:none;}',
+                    value:'off'
+                }
             },
+            displayStatus:[],
             init      : function () {
                 var init_interval = setInterval(function () {
                     if ($('#danmu-textbox').attr('maxlength')) {
                         clearInterval(init_interval);
 
-                        var chat_ctrl_panel = $('#chat-ctrl-panel');
-                        Live.chat.counter = chat_ctrl_panel.find('.danmu-length-count');
+                        Live.chat.chat_ctrl_panel = $('#chat-ctrl-panel');
+                        Live.chat.counter = Live.chat.chat_ctrl_panel.find('.danmu-length-count');
                         //init & hide original ui
-                        var original_emoji_btn = chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
+                        var original_emoji_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
                         var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper_emoji');
                         original_emoji_btn.before(helper_emoji_btn).remove();
 
-                        var original_emoji_list = chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
+                        var original_emoji_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
                         var helper_emoji_list   = original_emoji_list.clone().addClass('helper_emoji_list');
-                        original_emoji_list.before(helper_emoji_list);
+                        original_emoji_list.before(helper_emoji_list).remove();
 
-                        var original_text_area = chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
+                        var original_text_area = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
                         Live.chat.maxLength    = original_text_area.attr('maxlength');
-                        var helper_text_area   = original_text_area.clone().addClass('helper_text_area').removeAttr('maxlength');
-                        original_text_area.before(helper_text_area).hide();
+                        Live.chat.helper_text_area   = original_text_area.clone().addClass('helper_text_area').removeAttr('maxlength');
+                        original_text_area.before(Live.chat.helper_text_area).remove();
 
-                        var original_send_btn = chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
+                        var original_send_btn = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
                         var helper_send_btn   = original_send_btn.clone().addClass('helper_send_btn');
-                        original_send_btn.before(helper_send_btn).hide();
+                        original_send_btn.before(helper_send_btn).remove();
 
                         Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
 
@@ -953,41 +986,50 @@
                         });
                         helper_send_btn.on('click', function (e) {
                             e.preventDefault();
-                            if (helper_text_area.val() != '') {
-                                Live.chat.text = helper_text_area.val();
-                                helper_text_area.val('');
+                            if (Live.chat.helper_text_area.val() != '') {
+                                Live.chat.text = Live.chat.helper_text_area.val();
+                                Live.chat.helper_text_area.val('');
                                 Live.chat.do();
+                                Live.chat.helper_text_area.attr('disabled','disabled');
                             } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
-                        helper_text_area.on('keydown', function (e) {
-                            var text = helper_text_area.val().trim();
+                        Live.chat.helper_text_area.on('keydown', function (e) {
+                            var text = Live.chat.helper_text_area.val().trim();
                             if (e.keyCode === 13 && text == '') {
                                 e.preventDefault();
                                 Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
-                                helper_text_area.val('');
+                                Live.chat.helper_text_area.val('');
                                 return false;
                             }else if (e.keyCode === 13 && text != '') {
                                 e.preventDefault();
-                                helper_text_area.val(text.substr(0,text.length));
+                                Live.chat.helper_text_area.val(text.substr(0,text.length));
                                 helper_send_btn.click();
+                                Live.chat.helper_text_area.attr('disabled','disabled');
                                 return false;
                             }
                             Live.chat.updateTextInfo(text);
                         });
-                        helper_text_area.on('keyup',function(){
-                            var text = helper_text_area.val().trim();
+                        Live.chat.helper_text_area.on('keyup',function(){
+                            var text = Live.chat.helper_text_area.val().trim();
                             var part = parseInt(text.length / Live.chat.maxLength);
                             Live.chat.updateTextInfo(text);
                         });
                         helper_emoji_list.on('click', 'a', function () {
-                            var text = helper_text_area.val().trim();
-                            helper_text_area.val(text + $(this).text());
-                            helper_text_area.focus();
-                            Live.chat.updateTextInfo(helper_text_area.val().trim());
+                            var text = Live.chat.helper_text_area.val().trim();
+                            Live.chat.helper_text_area.val(text + $(this).text());
+                            Live.chat.helper_text_area.focus();
+                            Live.chat.updateTextInfo(Live.chat.helper_text_area.val().trim());
                         });
-
+                        chrome.extension.sendMessage({
+                            command: "getOption",
+                            key    : 'chatDisplay',
+                        }, function (response) {
+                            if (response['value'] == 'on') {
+                                Live.chat.initChatDisplay(true);
+                            }
+                        });
                         //init has finished
-                        chat_ctrl_panel.find('.help_chat_shade').hide('middle');
+                        Live.chat.chat_ctrl_panel.find('.help_chat_shade').hide('middle');
                     }
                 }, 350);
 
@@ -1000,24 +1042,83 @@
                     if (Live.chat.text.length > 0)setTimeout(function () {
                         Live.chat.do();
                     }, 4000);
-                }
+                }else Live.chat.helper_text_area.attr('disabled','');
             },
-            initChatDisplay:function(){
-                var l = $('document').find('#chatDisplay');
+            initChatHelper:function(dsiplayList){
+                Live.chat.chat_ctrl_panel.find('#chatHelper').remove();
+                Live.chat.chatHelper = $('<div id="chatHelper"></div>');
+                Live.chat.chatDisplayBlock = $('<div class="chat-display"><h2 class="panel-title">屏蔽选项</h2></div>');
+                Live.chat.chatHelperWindow = $('<div id="chatHelperWindow" class="chat-helper-panel ctrl-panel"></div>').hide();
+                Live.each(Live.chat.hideStyle,function(i){
+                    var displayOption = $(
+                        '<div class="display-option">'+
+                            '<span class="title">'+ Live.chat.hideStyle[i].title + '</span>'+
+                            '<div class="option">'+
+                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='on'?' on':'') +'" option="on">开启</div>'+
+                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='off'?' on':'') +'" option="off">关闭</div>'+
+                            '</div>'+
+                        '</div>');
+                    Live.chat.chatDisplayBlock.append(displayOption);
+                });
+                Live.chat.chatHelperWindow.append(Live.chat.chatDisplayBlock);
+                Live.chat.chat_ctrl_panel.append(Live.chat.chatHelper,Live.chat.chatHelperWindow);
+                Live.chat.chatHelper.on('click', function () {
+                    if (Live.chat.chatHelperWindow.css('display') == 'none') {
+                        Live.chat.chatHelperWindow.show();
+                        function n(t) {
+                            var e = t && (t.target || t.srcElement);
+                            !$(e).hasClass('chat-helper-panel') && !$(e).parents('#chatHelperWindow').length &&
+                            $(".chat-helper-panel").fadeOut(200, function () {
+                                $(window).off("click", n);
+                            });
+                        }
+                        setTimeout(function () {
+                            $(window).on("click", n)
+                        }, 1);
+                    }
+                });
+                Live.chat.chatDisplayBlock.find('.display-option .option .button').click(function(){
+                    var displayOption = dsiplayList;
+                    var classes = $(this).attr('class').split(' ')[1];
+                    if ($(this).hasClass('on')) return false;
+                    $('.'+classes).removeClass('on');
+                    $(this).addClass('on');
+                    var type = $(this).attr('option');
+                    if(type == "on"){
+                        var index = displayOption.indexOf(classes);
+                        if(index == -1) displayOption.push(classes);
+                    }else{
+                        var index = displayOption.indexOf(classes);
+                        if(index != -1) displayOption.splice(index,1);
+                    }
+                    chrome.extension.sendMessage({
+                        command: "setOption",
+                        key    : 'displayOption',
+                        value  : JSON.stringify(displayOption)
+                    });
+                    Live.chat.initChatDisplay(true);
+                });
+            },
+            initChatDisplay:function(isInit){
+                var l = $('.chatDisplayStyle');
                 if(l.length)l.remove();
                 var style = "";
                 var styleElement = document.createElement("style");
-                styleElement.setAttribute("id", 'chatDisplay');
+                styleElement.setAttribute("class", 'chatDisplayStyle');
                 styleElement.setAttribute("type", "text/css");
                 chrome.extension.sendMessage({
                     command: "getOption",
                     key    : 'displayOption',
                 }, function (response) {
-                    var dsiplayList = response['value'] ? eval(response['value']):[];
-                    Live.each(dsiplayList,function(i){style+=Live.chat.hideStyle[dsiplayList[i]]});
+                    var dsiplayList = response['value'] ? JSON.parse(response['value']):[];
+                    Live.each(dsiplayList,function(i){
+                        style+=Live.chat.hideStyle[dsiplayList[i]].css;
+                        Live.chat.hideStyle[dsiplayList[i]].value='on';
+                    });
                     styleElement.appendChild(document.createTextNode(style));
                     if (document.head) document.head.appendChild(styleElement);
                     else document.documentElement.appendChild(styleElement);
+                    if(isInit)Live.chat.initChatHelper(dsiplayList);
                 });
             },
             updateTextInfo:function(text){
@@ -1114,14 +1215,6 @@
                                     setTimeout(Live.chat.init, 2000);
                                 }
                             });
-                            chrome.extension.sendMessage({
-                                command: "getOption",
-                                key    : 'chatDisplay',
-                            }, function (response) {
-                                if (response['value'] == 'on') {
-                                    Live.chat.initChatDisplay();
-                                }
-                            });
                             Live.notise.init();
                             Notification.requestPermission();
                         }
@@ -1130,7 +1223,7 @@
             },
             initStyle:function(){
                 //.live-room-body.player-full-win #room-left-sidebar{display:block;transform: translate(-60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar{transform: translate(160px,0);}.live-room-body.player-full-win #room-left-sidebar .toggle-btn{transform:translate(60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar .toggle-btn{transform:rotate(90deg) translate(80px,-60px);}
-                var style = "#quiz_helper{position:relative;overflow:hidden}#quiz_helper.hide{height:0}#quiz-control-panel .quiz_helper{position:relative;margin-bottom:29px}#quiz-control-panel .quiz_helper span{position:absolute;top:6px;left:0;color:#222}#quiz-control-panel input.error{border-color:#ff6767}#quiz-control-panel input{width:80%;display:block;border:1px solid #aaa;border-radius:7px;margin:0 0 0 40px;padding:5px;box-sizing:border-box}#quiz-control-panel .quiz_helper .rate{width:130px;display:inline;text-align:center;height:29px;line-height:29px}#quiz-control-panel .quiz_helper .rate:after{content:'\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';font-size:10px;position:absolute;left:0;top:22px}#quiz-control-panel .quiz_helper .msg{font-size:10px;position:absolute;left:40px;top:32px;color:#6f6d6d}#quiz_helper>*.hide{position:absolute;top:0;display:none}#quiz-control-panel .bet_toggle{position:absolute;top:1px;right:-10px;padding:0 5px;color:#fff;background-color:#aaa;border-radius:4px;cursor:pointer}#quiz-control-panel .bet_toggle.on{background-color:#4fc1e9}.bet-buy-btns{overflow:hidden;height:27px;transition:all cubic-bezier(.22,.58,.12,.98) .4s}.bet-buy-btns.hide{height:0}#gift-panel .version{color:#444;font-size:12px}#gift-panel .version a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;margin-right:5px}#gift-panel .version a:hover{color:#f25d8e}.quiz-panel{overflow:hidden;margin:10px 0 0}.quiz-panel h4{font-size:17px;margin:0;float:left}.quiz-panel .blue-box h4{float:left}.quiz-panel .red-box h4{float:right}.quiz-panel .blue-box .rate{float:right;border:1px solid #4fc1e9}.quiz-panel .red-box .rate{float:left}.quiz-panel .rate{background-color:rgba(255,255,255,0.25);display:block;width:14px;text-align:center;height:21px;line-height:23px;border:1px solid rgba(255,255,255,0.5);padding:0 5px 0 3px;border-radius:8px;cursor:pointer;font-family:-webkit-pictograph}.quiz-panel .red-box .rate{border:1px solid #fd9ccc}.quiz-panel .count{overflow:hidden;padding:5px;border-bottom:1px solid #e2e2e2;position:relative}.quiz-panel .count:last-child{border-bottom:0}.quiz-panel .blue-box{overflow:hidden;border-radius:8px;width:90px;float:left;border:1px solid #4fc1e9;border-left:5px solid #4fc1e9;color:#4c4c4c}.quiz-panel .red-box{overflow:hidden;border-radius:8px;width:90px;float:right;border:1px solid #fd9ccc;border-right:5px solid #fd9ccc;color:#4c4c4c}#quiz-control-panel .quiz_helper .rate_n{right:0;top:0;left:auto;position:absolute;width:20px;line-height:33px;text-align:center;margin-bottom:7px}.blue-box .wait{color:#4fc1e9;background-color:rgba(79,193,233,0.15)}.red-box .wait{background-color:rgba(253,156,204,0.15);color:#fd9ccc}.quiz-panel .success{color:#fff;background-color:#64d07d}.quiz-panel .success .rate{border-color:#fff}.quiz-panel .error{color:#fff;background-color:#e74e8f}.quiz-panel .count.run{background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(.25,#b6e2c1),color-stop(.25,transparent),color-stop(.5,transparent),color-stop(.5,#b6e2c1),color-stop(.75,#b6e2c1),color-stop(.75,transparent),to(transparent));-webkit-animation:move 3s linear infinite;background-size:50px 50px}.quiz-panel .error .rate{border-color:#fff}.quiz-panel .hide{height:0;padding:0;border:0}@-webkit-keyframes move{0%{background-position:0 0}100%{background-position:50px 50px}}#quiz_helper .count .menu{width:90px;height:33px;position:absolute;margin:-5px;background-color:rgba(255,254,254,0.5);border-radius:4px;overflow:hidden;transition:all ease-in-out .6s}#quiz_helper .count .menu span{cursor:pointer;float:left;width:23px;height:23px;padding:0;background-color:#ff4b4b;border-radius:25%;transition:all .3s;margin:5px 5px 5px 0}#quiz_helper .blue-box .count .menu span{float:right;margin:5px 0 5px 5px}#quiz_helper .count .menu span:hover{background-color:#f00}#quiz_helper .count .menu span:first-child{margin:5px}#quiz_helper .blue-box .count .menu{right:-85px}#quiz_helper .red-box .count .menu{left:-85px}#quiz_helper .blue-box .count:hover .menu{right:5px}#quiz_helper .red-box .count:hover .menu{left:5px}#quiz_helper .count .menu .cancel{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#quiz_helper .count .menu .run{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-55px 5px;background-size:127px}#quiz_helper .count .menu .reset{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-36px 5px;background-size:127px}#quiz_helper .count .menu .delete{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#head-info-panel .treasure-info{padding:10px;background-color:#fff;position:absolute;right:calc(100%+5px);width:38px;border-radius:5px;border:1px solid #ddd;box-sizing:border-box;top:-1px}#head-info-panel .treasure-info a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;display:inline-block}#head-info-panel .treasure-info a:hover{color:#f25d8e}.head-info-panel .attention-btn-ctrl{width:auto!important}.attention-btn-ctrl .mid-part{background-color:#4fc1e9;color:#fff;float:left;cursor:pointer;-webkit-user-select:none;width:90px;height:26px;padding:0 5px;line-height:26px;font-size:12px;text-align:center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;box-sizing:border-box;box-shadow:0 0 .1em .1em #ddd}.attention-btn-ctrl .mid-part:hover{background-color:#61c7eb}.room-ctrl{position:absolute;right:10px}.chat-ctrl-panel .emoji-panel.helper_emoji_list,#chat-msg-list .chat-msg .msg-content{line-height:17px}.helper_text_area{line-height:12px}";
+                var style = "@-webkit-keyframes jinkela-push{from{background-position-y:0px}to{background-position-y:-220px}}@-webkit-keyframes jinkela-regain{from{background-position-y:-220px}to{background-position-x:0px}}#chatHelper{position:absolute;width:76px;height:44px;top:-25px;right:0px;background-image:url(" + chrome.extension.getURL("imgs/jinkela.png") + ");background-repeat:no-repeat;background-position:0px 0px;cursor:pointer;animation:jinkela-regain 0.5s steps(5, end) forwards;}#chatHelper:hover{animation:jinkela-push 0.5s steps(5, end) forwards;}#quiz_helper{position:relative;overflow:hidden}#quiz_helper.hide{height:0}#quiz-control-panel .quiz_helper{position:relative;margin-bottom:29px}#quiz-control-panel .quiz_helper span{position:absolute;top:6px;left:0;color:#222}#quiz-control-panel input.error{border-color:#ff6767}#quiz-control-panel input{width:80%;display:block;border:1px solid #aaa;border-radius:7px;margin:0 0 0 40px;padding:5px;box-sizing:border-box}#quiz-control-panel .quiz_helper .rate{width:130px;display:inline;text-align:center;height:29px;line-height:29px}#quiz-control-panel .quiz_helper .rate:after{content:'\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';font-size:10px;position:absolute;left:0;top:22px}#quiz-control-panel .quiz_helper .msg{font-size:10px;position:absolute;left:40px;top:32px;color:#6f6d6d}#quiz_helper>*.hide{position:absolute;top:0;display:none}#quiz-control-panel .bet_toggle{position:absolute;top:1px;right:-10px;padding:0 5px;color:#fff;background-color:#aaa;border-radius:4px;cursor:pointer}#quiz-control-panel .bet_toggle.on{background-color:#4fc1e9}.bet-buy-btns{overflow:hidden;height:27px;transition:all cubic-bezier(.22,.58,.12,.98) .4s}.bet-buy-btns.hide{height:0}#gift-panel .version{color:#444;font-size:12px}#gift-panel .version a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;margin-right:5px}#gift-panel .version a:hover{color:#f25d8e}.quiz-panel{overflow:hidden;margin:10px 0 0}.quiz-panel h4{font-size:17px;margin:0;float:left}.quiz-panel .blue-box h4{float:left}.quiz-panel .red-box h4{float:right}.quiz-panel .blue-box .rate{float:right;border:1px solid #4fc1e9}.quiz-panel .red-box .rate{float:left}.quiz-panel .rate{background-color:rgba(255,255,255,0.25);display:block;width:14px;text-align:center;height:21px;line-height:23px;border:1px solid rgba(255,255,255,0.5);padding:0 5px 0 3px;border-radius:8px;cursor:pointer;font-family:-webkit-pictograph}.quiz-panel .red-box .rate{border:1px solid #fd9ccc}.quiz-panel .count{overflow:hidden;padding:5px;border-bottom:1px solid #e2e2e2;position:relative}.quiz-panel .count:last-child{border-bottom:0}.quiz-panel .blue-box{overflow:hidden;border-radius:8px;width:90px;float:left;border:1px solid #4fc1e9;border-left:5px solid #4fc1e9;color:#4c4c4c}.quiz-panel .red-box{overflow:hidden;border-radius:8px;width:90px;float:right;border:1px solid #fd9ccc;border-right:5px solid #fd9ccc;color:#4c4c4c}#quiz-control-panel .quiz_helper .rate_n{right:0;top:0;left:auto;position:absolute;width:20px;line-height:33px;text-align:center;margin-bottom:7px}.blue-box .wait{color:#4fc1e9;background-color:rgba(79,193,233,0.15)}.red-box .wait{background-color:rgba(253,156,204,0.15);color:#fd9ccc}.quiz-panel .success{color:#fff;background-color:#64d07d}.quiz-panel .success .rate{border-color:#fff}.quiz-panel .error{color:#fff;background-color:#e74e8f}.quiz-panel .count.run{background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(.25,#b6e2c1),color-stop(.25,transparent),color-stop(.5,transparent),color-stop(.5,#b6e2c1),color-stop(.75,#b6e2c1),color-stop(.75,transparent),to(transparent));-webkit-animation:move 3s linear infinite;background-size:50px 50px}.quiz-panel .error .rate{border-color:#fff}.quiz-panel .hide{height:0;padding:0;border:0}@-webkit-keyframes move{0%{background-position:0 0}100%{background-position:50px 50px}}#quiz_helper .count .menu{width:90px;height:33px;position:absolute;margin:-5px;background-color:rgba(255,254,254,0.5);border-radius:4px;overflow:hidden;transition:all ease-in-out .6s}#quiz_helper .count .menu span{cursor:pointer;float:left;width:23px;height:23px;padding:0;background-color:#ff4b4b;border-radius:25%;transition:all .3s;margin:5px 5px 5px 0}#quiz_helper .blue-box .count .menu span{float:right;margin:5px 0 5px 5px}#quiz_helper .count .menu span:hover{background-color:#f00}#quiz_helper .count .menu span:first-child{margin:5px}#quiz_helper .blue-box .count .menu{right:-85px}#quiz_helper .red-box .count .menu{left:-85px}#quiz_helper .blue-box .count:hover .menu{right:5px}#quiz_helper .red-box .count:hover .menu{left:5px}#quiz_helper .count .menu .cancel{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#quiz_helper .count .menu .run{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-55px 5px;background-size:127px}#quiz_helper .count .menu .reset{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-36px 5px;background-size:127px}#quiz_helper .count .menu .delete{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#head-info-panel .treasure-info{padding:10px;background-color:#fff;position:absolute;right:calc(100%+5px);width:38px;border-radius:5px;border:1px solid #ddd;box-sizing:border-box;top:-1px}#head-info-panel .treasure-info a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;display:inline-block}#head-info-panel .treasure-info a:hover{color:#f25d8e}.head-info-panel .attention-btn-ctrl{width:auto!important}.attention-btn-ctrl .mid-part{background-color:#4fc1e9;color:#fff;float:left;cursor:pointer;-webkit-user-select:none;width:90px;height:26px;padding:0 5px;line-height:26px;font-size:12px;text-align:center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;box-sizing:border-box;box-shadow:0 0 .1em .1em #ddd}.attention-btn-ctrl .mid-part:hover{background-color:#61c7eb}.room-ctrl{position:absolute;right:10px}.chat-ctrl-panel .emoji-panel.helper_emoji_list,#chat-msg-list .chat-msg .msg-content{line-height:17px}.helper_text_area{line-height:12px}#chatHelperWindow{position:absolute;top:-335px;right:0;padding:10px}.display-option .title{padding:3px 15px 3px 5px;font-size:14px}.display-option .option{display:inline-block;padding:3px 5px}.display-option .option .button{cursor:pointer;display:inline-block;font-size:12px;padding:3px 10px;margin:2px;background-color:#c7c7c7;border-radius:3px;color:#fff}.display-option .option .button.on{background-color:#4fc1e9}.chat-display .panel-title{margin:0}.danmu-sender .helper_text_area[disabled=\"disabled\"]{background-color:#e5e5e5;border-radius:5px 0 0 5px}";
                 var l = $('document').find('#bilibiliHelperLive');
                 if(l.length)l.remove();
                 var styleElement = document.createElement("style");
