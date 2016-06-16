@@ -1,5 +1,6 @@
 (function() {
 	if ($("html").hasClass("bilibili-helper")) return false;
+	else if(location.hostname != 'www.bilibili.com') return false;
 
 	var adModeOn = false;
 	var biliHelper = new Object();

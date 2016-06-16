@@ -49,7 +49,22 @@
         Live.getUser = function () {
             return $.getJSON("/user/getuserinfo").promise();
         };
-
+        Live.each = function (obj, fn) {
+            if (!fn) return;
+            if (obj instanceof Array) {
+                var i = 0, len = obj.length;
+                for (; i < len; i++) {
+                    if (fn.call(obj[i], i) == false)
+                        break;
+                }
+            } else if (typeof obj === 'object') {
+                var j = null;
+                for (j in obj) {
+                    if (fn.call(obj[j], j) == false)
+                        break;
+                }
+            }
+        };
         Live.initUserInfo = function (callback) {
             return Live.getUser().done(function (user) {
                 if (user.code == 'REPONSE_OK') {
@@ -881,7 +896,16 @@
             maxLength : 20,
             text      : '',
             colorValue: {'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800'},
-            giftHideStyle:'#chat-msg-list .gift-msg{display:none;}',
+            hideStyle:{
+                gift:'#chat-msg-list .gift-msg{display:none;}',
+                vipEnterMsg:'#chat-msg-list .system-msg{padding:0;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,#chat-msg-list .system-msg .v-middle{display: none;}',
+                liveTitleIcon:'#chat-msg-list .chat-msg .live-title-icon{display:none;}',
+                mediaIcon:'#chat-msg-list .chat-msg .medal-icon{display:none;}',
+                userLevel:'#chat-msg-list .chat-msg .user-level-icon{display:none;}',
+                chatBg:'#chat-list-ctnr{background:#f8f8f8;}',
+                superGift:'.super-gift-ctnr{display:none;}',
+                announcement:'#chat-msg-list .announcement-container{display:none;}'
+            },
             init      : function () {
                 var init_interval = setInterval(function () {
                     if ($('#danmu-textbox').attr('maxlength')) {
@@ -978,23 +1002,23 @@
                     }, 4000);
                 }
             },
-            initGiftDisplay:function(state){
-                if(state=="on"){
-                    var l = $('document').find('#giftDisplay');
-                    if(l.length)l.remove();
-                    var styleElement = document.createElement("style");
-                    styleElement.setAttribute("id", 'giftDisplay');
-                    styleElement.setAttribute("type", "text/css");
-                    styleElement.appendChild(document.createTextNode(Live.chat.giftHideStyle));
-                    if (document.head) {
-                        document.head.appendChild(styleElement);
-                    } else {
-                        document.documentElement.appendChild(styleElement);
-                    }
-                }else{
-                    var l = $('document').find('#giftDisplay');
-                    if(l.length)l.remove();
-                }
+            initChatDisplay:function(){
+                var l = $('document').find('#chatDisplay');
+                if(l.length)l.remove();
+                var style = "";
+                var styleElement = document.createElement("style");
+                styleElement.setAttribute("id", 'chatDisplay');
+                styleElement.setAttribute("type", "text/css");
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'displayOption',
+                }, function (response) {
+                    var dsiplayList = response['value'] ? eval(response['value']):[];
+                    Live.each(dsiplayList,function(i){style+=Live.chat.hideStyle[dsiplayList[i]]});
+                    styleElement.appendChild(document.createTextNode(style));
+                    if (document.head) document.head.appendChild(styleElement);
+                    else document.documentElement.appendChild(styleElement);
+                });
             },
             updateTextInfo:function(text){
                 var part = parseInt(text.length / Live.chat.maxLength);
@@ -1047,67 +1071,77 @@
                 });
             }
         };
-
-        Live.init = function () {
-            chrome.extension.sendMessage({
-                command: "getOption",
-                key    : 'version',
-            }, function (response) {
-                Live.version = response.value;
-                $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒事卖萌肉</a></div>");
-            });
-
-            Live.set('helper_userInfo', 'login', false);
-            Live.clearLocalStorage();
-            Live.initUserInfo(function () {
-                if (Live.get('helper_userInfo', 'login')) {
-                    Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
-                    $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
-                    Live.bet.quiz_toggle_btn.click(function () {
-                        if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
-                        else Live.bet.able();
-                    });
-                    if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
-
-                    chrome.extension.sendMessage({
-                        command: "getOption",
-                        key    : 'doSign',
-                    }, function (response) {
-                        if (response['value'] == 'on') Live.doSign.init();
-                    });
-
-                    if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {
+        Live.init = {
+            do:function(){
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'version',
+                }, function (response) {
+                    Live.version = response.value;
+                    $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒睡醒的肉啊</a></div>");
+                    Live.init.initStyle();
+                });
+                Live.set('helper_userInfo', 'login', false);
+                Live.clearLocalStorage();
+                Live.initUserInfo(function () {
+                    if (Live.get('helper_userInfo', 'login')) {
                         chrome.extension.sendMessage({
                             command: "getOption",
-                            key    : 'autoTreasure',
+                            key    : 'doSign',
                         }, function (response) {
-                            if (response['value'] == 'on') setTimeout(Live.treasure.init, 2000);
+                            if (response['value'] == 'on') Live.doSign.init();
                         });
-                        chrome.extension.sendMessage({
-                            command: "getOption",
-                            key    : 'danmu',
-                        }, function (response) {
-                            if (response['value'] == 'on') {
-                                $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help_chat_shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
-                                setTimeout(Live.chat.init, 2000);
-                            }
-                        });
-                        chrome.extension.sendMessage({
-                            command: "getOption",
-                            key    : 'giftDisplay',
-                        }, function (response) {
-                            if (response['value'] == 'on') {
-                                Live.chat.initGiftDisplay(response['value']);
-                            }
-                        });
-                        Live.notise.init();
+                        if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {
+                            Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
+                            $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
+                            Live.bet.quiz_toggle_btn.click(function () {
+                                if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
+                                else Live.bet.able();
+                            });
+                            if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
+                            chrome.extension.sendMessage({
+                                command: "getOption",
+                                key    : 'autoTreasure',
+                            }, function (response) {
+                                if (response['value'] == 'on') setTimeout(Live.treasure.init, 2000);
+                            });
+                            chrome.extension.sendMessage({
+                                command: "getOption",
+                                key    : 'danmu',
+                            }, function (response) {
+                                if (response['value'] == 'on') {
+                                    $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help_chat_shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
+                                    setTimeout(Live.chat.init, 2000);
+                                }
+                            });
+                            chrome.extension.sendMessage({
+                                command: "getOption",
+                                key    : 'chatDisplay',
+                            }, function (response) {
+                                if (response['value'] == 'on') {
+                                    Live.chat.initChatDisplay();
+                                }
+                            });
+                            Live.notise.init();
+                            Notification.requestPermission();
+                        }
                     }
-                    Notification.requestPermission();
-                }
-            });
-
+                });
+            },
+            initStyle:function(){
+                //.live-room-body.player-full-win #room-left-sidebar{display:block;transform: translate(-60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar{transform: translate(160px,0);}.live-room-body.player-full-win #room-left-sidebar .toggle-btn{transform:translate(60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar .toggle-btn{transform:rotate(90deg) translate(80px,-60px);}
+                var style = "#quiz_helper{position:relative;overflow:hidden}#quiz_helper.hide{height:0}#quiz-control-panel .quiz_helper{position:relative;margin-bottom:29px}#quiz-control-panel .quiz_helper span{position:absolute;top:6px;left:0;color:#222}#quiz-control-panel input.error{border-color:#ff6767}#quiz-control-panel input{width:80%;display:block;border:1px solid #aaa;border-radius:7px;margin:0 0 0 40px;padding:5px;box-sizing:border-box}#quiz-control-panel .quiz_helper .rate{width:130px;display:inline;text-align:center;height:29px;line-height:29px}#quiz-control-panel .quiz_helper .rate:after{content:'\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';font-size:10px;position:absolute;left:0;top:22px}#quiz-control-panel .quiz_helper .msg{font-size:10px;position:absolute;left:40px;top:32px;color:#6f6d6d}#quiz_helper>*.hide{position:absolute;top:0;display:none}#quiz-control-panel .bet_toggle{position:absolute;top:1px;right:-10px;padding:0 5px;color:#fff;background-color:#aaa;border-radius:4px;cursor:pointer}#quiz-control-panel .bet_toggle.on{background-color:#4fc1e9}.bet-buy-btns{overflow:hidden;height:27px;transition:all cubic-bezier(.22,.58,.12,.98) .4s}.bet-buy-btns.hide{height:0}#gift-panel .version{color:#444;font-size:12px}#gift-panel .version a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;margin-right:5px}#gift-panel .version a:hover{color:#f25d8e}.quiz-panel{overflow:hidden;margin:10px 0 0}.quiz-panel h4{font-size:17px;margin:0;float:left}.quiz-panel .blue-box h4{float:left}.quiz-panel .red-box h4{float:right}.quiz-panel .blue-box .rate{float:right;border:1px solid #4fc1e9}.quiz-panel .red-box .rate{float:left}.quiz-panel .rate{background-color:rgba(255,255,255,0.25);display:block;width:14px;text-align:center;height:21px;line-height:23px;border:1px solid rgba(255,255,255,0.5);padding:0 5px 0 3px;border-radius:8px;cursor:pointer;font-family:-webkit-pictograph}.quiz-panel .red-box .rate{border:1px solid #fd9ccc}.quiz-panel .count{overflow:hidden;padding:5px;border-bottom:1px solid #e2e2e2;position:relative}.quiz-panel .count:last-child{border-bottom:0}.quiz-panel .blue-box{overflow:hidden;border-radius:8px;width:90px;float:left;border:1px solid #4fc1e9;border-left:5px solid #4fc1e9;color:#4c4c4c}.quiz-panel .red-box{overflow:hidden;border-radius:8px;width:90px;float:right;border:1px solid #fd9ccc;border-right:5px solid #fd9ccc;color:#4c4c4c}#quiz-control-panel .quiz_helper .rate_n{right:0;top:0;left:auto;position:absolute;width:20px;line-height:33px;text-align:center;margin-bottom:7px}.blue-box .wait{color:#4fc1e9;background-color:rgba(79,193,233,0.15)}.red-box .wait{background-color:rgba(253,156,204,0.15);color:#fd9ccc}.quiz-panel .success{color:#fff;background-color:#64d07d}.quiz-panel .success .rate{border-color:#fff}.quiz-panel .error{color:#fff;background-color:#e74e8f}.quiz-panel .count.run{background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(.25,#b6e2c1),color-stop(.25,transparent),color-stop(.5,transparent),color-stop(.5,#b6e2c1),color-stop(.75,#b6e2c1),color-stop(.75,transparent),to(transparent));-webkit-animation:move 3s linear infinite;background-size:50px 50px}.quiz-panel .error .rate{border-color:#fff}.quiz-panel .hide{height:0;padding:0;border:0}@-webkit-keyframes move{0%{background-position:0 0}100%{background-position:50px 50px}}#quiz_helper .count .menu{width:90px;height:33px;position:absolute;margin:-5px;background-color:rgba(255,254,254,0.5);border-radius:4px;overflow:hidden;transition:all ease-in-out .6s}#quiz_helper .count .menu span{cursor:pointer;float:left;width:23px;height:23px;padding:0;background-color:#ff4b4b;border-radius:25%;transition:all .3s;margin:5px 5px 5px 0}#quiz_helper .blue-box .count .menu span{float:right;margin:5px 0 5px 5px}#quiz_helper .count .menu span:hover{background-color:#f00}#quiz_helper .count .menu span:first-child{margin:5px}#quiz_helper .blue-box .count .menu{right:-85px}#quiz_helper .red-box .count .menu{left:-85px}#quiz_helper .blue-box .count:hover .menu{right:5px}#quiz_helper .red-box .count:hover .menu{left:5px}#quiz_helper .count .menu .cancel{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#quiz_helper .count .menu .run{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-55px 5px;background-size:127px}#quiz_helper .count .menu .reset{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-36px 5px;background-size:127px}#quiz_helper .count .menu .delete{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#head-info-panel .treasure-info{padding:10px;background-color:#fff;position:absolute;right:calc(100%+5px);width:38px;border-radius:5px;border:1px solid #ddd;box-sizing:border-box;top:-1px}#head-info-panel .treasure-info a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;display:inline-block}#head-info-panel .treasure-info a:hover{color:#f25d8e}.head-info-panel .attention-btn-ctrl{width:auto!important}.attention-btn-ctrl .mid-part{background-color:#4fc1e9;color:#fff;float:left;cursor:pointer;-webkit-user-select:none;width:90px;height:26px;padding:0 5px;line-height:26px;font-size:12px;text-align:center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;box-sizing:border-box;box-shadow:0 0 .1em .1em #ddd}.attention-btn-ctrl .mid-part:hover{background-color:#61c7eb}.room-ctrl{position:absolute;right:10px}.chat-ctrl-panel .emoji-panel.helper_emoji_list,#chat-msg-list .chat-msg .msg-content{line-height:17px}.helper_text_area{line-height:12px}";
+                var l = $('document').find('#bilibiliHelperLive');
+                if(l.length)l.remove();
+                var styleElement = document.createElement("style");
+                styleElement.setAttribute("id", 'bilibiliHelperLive');
+                styleElement.setAttribute("type", "text/css");
+                styleElement.appendChild(document.createTextNode(style));
+                if (document.head) document.head.appendChild(styleElement);
+                else document.documentElement.appendChild(styleElement);
+            }
         };
-        Live.init();
+        Live.init.do();
     }
 })();
 //$('#chat-msg-list').on('DOMSubtreeModified',function(e){
