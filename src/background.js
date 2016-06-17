@@ -30,7 +30,7 @@ Live.get = function (n, k, v) {
 
     if (!window.localStorage[n]) {
         window.localStorage[n] = JSON.stringify(v || {});
-        return JSON.parse(v);
+        return eval(v);
     }
     var l = JSON.parse(window.localStorage[n]);
     if (!k) return l;
@@ -920,7 +920,7 @@ Live.notise = {
 
                 if (newList.length) {
                     each(newList, function (i) {
-                        if (Live.favouritesIdList.indexOf(parseInt(newList[i].roomid)) != -1 || Live.favouritesIdList.length == 0) {
+                        if (Live.favouritesIdList.indexOf(parseInt(newList[i].roomid)) != -1) {
                             var data = newList[i], myNotificationID = null;
                             chrome.notifications.create(data.roomid, {
                                 type       : "basic",

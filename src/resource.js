@@ -27,7 +27,7 @@ var defaultOptions = {
 	"liveNotification":"off",
 	"favouritesIdList":"[]",
 	"favouritesList":"{}",
-	"chatDisplay":"off",
+	"chatDisplay":"on",
 	"displayOption":"[]"
 };
 var cidCache = {};
