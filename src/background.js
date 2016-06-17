@@ -10,6 +10,7 @@ var notification       = false,
     updateNotified     = false,
     videoPlaybackHosts = ["http://*.hdslb.com/*", "http://*.acgvideo.com/*"],
     Live               = {};
+    bangumi          = false;
 var bkg_page           = chrome.extension.getBackgroundPage();
 
 Live.set = function (n, k, v) {
@@ -284,7 +285,7 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
     xmlhttp.send();
 }
 
-function getVideoInfo(avid, page, callback) {
+function getVideoInfo(avid, page,isbangumi, callback) {
 
     page         = parseInt(page);
     var currTime = parseInt(new Date().getTime() / 1000);
@@ -293,11 +294,69 @@ function getVideoInfo(avid, page, callback) {
         callback(viCache[avid + '-' + page]);
         return true;
     }
+    bangumi = isbangumi;
+    if(isbangumi){
+        getFileData("http://bangumi.bilibili.com/web_api/episode/get_source?episode_id=" + avid,function(result){
+            result = JSON.parse(result)['result'];
+            avid =result.aid;
+            getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function (avInfo) {
+                avInfo = JSON.parse(avInfo);
+                if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
+                    setTimeout(function () {
+                        getVideoInfo(avid, page, isbangumi, callback);
+                    }, 1000);
+                } else {
+                    if (typeof avInfo.list == "object") {
+                        avInfo.pages = avInfo.list.length;
+                        for (var i = 0; i < avInfo.pages; i++) {
+                            if (avInfo.list[i].page == page) {
+                                avInfo.cid = avInfo.list[i].cid;
+                                break;
+                            }
+                        }
+                    }
+                    if (typeof avInfo.cid == "number") {
+                        viCache[avid + '-' + page] = {
+                            mid        : avInfo.mid,
+                            tid        : avInfo.tid,
+                            cid        : avInfo.cid,
+                            pic        : avInfo.pic,
+                            pages      : avInfo.pages,
+                            title      : avInfo.title,
+                            list       : avInfo.list,
+                            sp_title   : avInfo.sp_title,
+                            spid       : avInfo.spid,
+                            season_id  : avInfo.season_id,
+                            created_at : avInfo.created_at,
+                            description: avInfo.description,
+                            tag        : avInfo.tag,
+                            ts         : currTime,
+                            bangumi    : false
+                        };
+                        if (typeof avInfo.bangumi == "object") {
+                            getFileData("http://api.bilibili.cn/sp?spid=" + avInfo.spid, function (spInfo) {
+                                spInfo = JSON.parse(spInfo);
+                                if (spInfo.isbangumi == 1) {
+                                    viCache[avid + '-' + page].bangumi = {
+                                        cover: spInfo.cover,
+                                        desc : spInfo.description
+                                    }
+                                }
+                                callback(viCache[avid + '-' + page]);
+                            });
+                        } else callback(viCache[avid + '-' + page]);
+                    } else {
+                        callback(avInfo);
+                    }
+                }
+            });
+        });
+    }else 
     getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function (avInfo) {
         avInfo = JSON.parse(avInfo);
         if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
             setTimeout(function () {
-                getVideoInfo(avid, page, callback);
+                getVideoInfo(avid, page, isbangumi, callback);
             }, 1000);
         } else {
             if (typeof avInfo.list == "object") {
@@ -474,7 +533,7 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             });
             return true;
         case "getVideoInfo":
-            getVideoInfo(request.avid, request.pg, function (avInfo) {
+            getVideoInfo(request.avid, request.pg, request.isBangumi, function (avInfo) {
                 sendResponse({
                     videoInfo: avInfo
                 });
@@ -801,7 +860,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function (details) {
         requestHeaders: details.requestHeaders
     };
 }, {
-    urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*", "http://www.bilibili.com/api_proxy*"]
+    urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*", "http://www.bilibili.com/api_proxy*","http://bangumi.bilibili.com/*"]
 }, ['requestHeaders', 'blocking']);
 
 function receivedHeaderModifier(details) {
@@ -811,10 +870,15 @@ function receivedHeaderModifier(details) {
             hasCORS = true;
         }
     });
-    if (!hasCORS) {
+    if (!hasCORS && !bangumi) {
         details.responseHeaders.push({
             name : "Access-Control-Allow-Origin",
             value: "http://www.bilibili.com"
+        });
+    }else{
+        details.responseHeaders.push({
+            name : "Access-Control-Allow-Origin",
+            value: "http://bangumi.bilibili.com"
         });
     }
     return {
@@ -859,7 +923,7 @@ chrome.webRequest.onHeadersReceived.addListener(function (details) {
         responseHeaders: headers
     };
 }, {
-    urls: ["http://www.bilibili.com/video/av*"]
+    urls: ["http://www.bilibili.com/video/av*","http://bangumi.bilibili.com/anime/v/*"]
 }, ["responseHeaders", "blocking"]);
 
 function getCookie(name) {
