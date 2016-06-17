@@ -2,39 +2,7 @@ $(document).ready(function () {
     var bkg_page   = chrome.extension.getBackgroundPage();
     var Live       = {}
     document.title = chrome.i18n.getMessage('extShortName') + " - " + chrome.i18n.getMessage('optionPage');
-    $("#menu_title").text(chrome.i18n.getMessage('extShortName'));
-    $("#version").html(bkg_page.version);
-    $("#ad_opacity_opt").hide();
-    $("div[option=\"" + bkg_page.getOption("replace") + "\"].replace").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("html5") + "\"].html5").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("contextmenu") + "\"].contextmenu").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("dynamic") + "\"].dynamic").addClass("on");
-    // $("div[option=\"" + bkg_page.getOption("support") + "\"].support").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("dlquality") + "\"].dlquality").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("rel_search") + "\"].rel_search").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("doSign") + "\"].doSign").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("liveNotification") + "\"].liveNotification").addClass("on");
-    $("div[option=\"" + bkg_page.getOption("giftDisplay") + "\"].giftDisplay").addClass("on");
-    var adOption = bkg_page.getOption("ad");
-    $("div[option=\"" + adOption + "\"].ad").addClass("on");
-    if (adOption == "fade") $("#ad_opacity_opt").show();
-    $("#ad_opacity").val(bkg_page.getOption("ad_opacity"));
-    $('.ad').click(function () {
-        if ($(this).hasClass('on')) return false;
-        $('.ad').removeClass('on');
-        $(this).addClass('on');
-        if ($(this).attr("option") == "fade") $("#ad_opacity_opt").slideDown(300);
-        else $("#ad_opacity_opt").slideUp(300);
-        bkg_page.setOption("ad", $(this).attr("option"), true);
-        updatepreview();
-    });
-    $('#ad_opacity').change(function () {
-        bkg_page.setOption("ad_opacity", $(this).val(), true);
-        updatepreview();
-    });
+
     Live.set = function (n, k, v) {
         if (!window.localStorage || !n) return;
         var storage = window.localStorage;
@@ -53,11 +21,11 @@ $(document).ready(function () {
 
         if (!window.localStorage[n]) {
             window.localStorage[n] = JSON.stringify(v || {});
-            return eval(v);
+            return JSON.parse(v);
         }
         var l = JSON.parse(window.localStorage[n]);
         if (!k) return l;
-        if(l[k]== 'true' || l[k]== 'false')l[k] = eval(l[k]);
+        if(l[k]== 'true' || l[k]== 'false')l[k] = JSON.parse(l[k]);
         return l[k];
     };
     Live.del = function (n, k) {
@@ -86,6 +54,48 @@ $(document).ready(function () {
             }
         }
     }
+
+    $("#menu_title").text(chrome.i18n.getMessage('extShortName'));
+    $("#version").html(bkg_page.version);
+    $("#ad_opacity_opt").hide();
+    $("div[option=\"" + bkg_page.getOption("replace") + "\"].replace").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("html5") + "\"].html5").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("contextmenu") + "\"].contextmenu").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("dynamic") + "\"].dynamic").addClass("on");
+    // $("div[option=\"" + bkg_page.getOption("support") + "\"].support").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("dlquality") + "\"].dlquality").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("rel_search") + "\"].rel_search").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("doSign") + "\"].doSign").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("liveNotification") + "\"].liveNotification").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("chatDisplay") + "\"].chatDisplay").addClass("on");
+    var options = JSON.parse(bkg_page.getOption("displayOption"));
+    $(".display-option .option .button[option=off]").addClass("on");
+    each(options,function(i){
+        $(".display-option .option ."+options[i]+"[option=\"off\"]").removeClass("on");
+        $(".display-option .option ."+options[i]+"[option=\"on\"]").addClass("on");
+    });
+
+    var adOption = bkg_page.getOption("ad");
+    $("div[option=\"" + adOption + "\"].ad").addClass("on");
+    if (adOption == "fade") $("#ad_opacity_opt").show();
+    $("#ad_opacity").val(bkg_page.getOption("ad_opacity"));
+    $('.ad').click(function () {
+        if ($(this).hasClass('on')) return false;
+        $('.ad').removeClass('on');
+        $(this).addClass('on');
+        if ($(this).attr("option") == "fade") $("#ad_opacity_opt").slideDown(300);
+        else $("#ad_opacity_opt").slideUp(300);
+        bkg_page.setOption("ad", $(this).attr("option"), true);
+        updatepreview();
+    });
+    $('#ad_opacity').change(function () {
+        bkg_page.setOption("ad_opacity", $(this).val(), true);
+        updatepreview();
+    });
+    
 
     /*$('.support').click(function() {
      if ($(this).hasClass('on')) return false;
@@ -181,12 +191,28 @@ $(document).ready(function () {
         }
         // updatepreview();
     });
-    $('.giftDisplay').click(function () {
+    $('.chatDisplay').click(function () {
         if ($(this).hasClass('on')) return false;
-        $('.giftDisplay').removeClass('on');
+        $('.chatDisplay').removeClass('on');
         $(this).addClass('on');
-        bkg_page.setOption("giftDisplay", $(this).attr("option"));
+        bkg_page.setOption("chatDisplay", $(this).attr("option"));
         // updatepreview();
+    });
+    $('.chat-display .display-option .option .button').click(function(){
+        var classes = $(this).attr('class').split(' ')[1];
+        if ($(this).hasClass('on')) return false;
+        $('.'+classes).removeClass('on');
+        $(this).addClass('on');
+        var displayOption = JSON.parse(bkg_page.getOption("displayOption"));
+        var type = $(this).attr('option');
+        if(type == "on"){
+            var index = displayOption.indexOf(classes);
+            if(index == -1) displayOption.push(classes);
+        }else{
+            var index = displayOption.indexOf(classes);
+            if(index != -1) displayOption.splice(index,1);
+        }
+        bkg_page.setOption("displayOption", JSON.stringify(displayOption));
     });
     function initUpList() {
         var list    = Live.get('favouritesList');
