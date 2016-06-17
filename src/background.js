@@ -295,6 +295,7 @@ function getVideoInfo(avid, page,isbangumi, callback) {
         return true;
     }
     bangumi = isbangumi;
+    resetVideoHostList();
     if(isbangumi){
         getFileData("http://bangumi.bilibili.com/web_api/episode/get_source?episode_id=" + avid,function(result){
             result = JSON.parse(result)['result'];
