@@ -482,8 +482,8 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             return true;
         case "getDownloadLink":
             var url = {
-                download: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=3&type=" + getOption("dlquality"),
-                playback: "http://interface.bilibili.com/playurl?platform=bilihelper&otype=json&appkey=8e9fc618fbd41e28&cid=" + request.cid + "&quality=3&type=mp4"
+                download: "http://interface.bilibili.com/playurl?platform=android&otype=json&appkey=86385cdc024c0f6c&cid=" + request.cid + "&quality=3&type=" + getOption("dlquality"),
+                playback: "http://interface.bilibili.com/playurl?platform=android&otype=json&appkey=86385cdc024c0f6c&cid=" + request.cid + "&quality=3&type=mp4"
             };
             if (request.cidHack && request.cidHack != locale) {
                 cidHackType[request.cid] = request.cidHack;

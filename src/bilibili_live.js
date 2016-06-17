@@ -1082,8 +1082,8 @@
                         '<div class="display-option">'+
                             '<span class="title">'+ Live.chat.hideStyle[i].title + '</span>'+
                             '<div class="option">'+
-                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='on'?' on':'') +'" option="on">开启</div>'+
-                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='off'?' on':'') +'" option="off">关闭</div>'+
+                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='on'?' on':'') +'" option="on">屏蔽</div>'+
+                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='off'?' on':'') +'" option="off">显示</div>'+
                             '</div>'+
                         '</div>');
                     Live.chat.chatDisplayBlock.append(displayOption);

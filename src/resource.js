@@ -24,7 +24,7 @@ var defaultOptions = {
 	"doSign":"on",
 	"autoTreasure":"on",
 	"danmu":"on",
-	"liveNotification":"off",
+	"liveNotification":"on",
 	"favouritesIdList":"[]",
 	"favouritesList":"{}",
 	"chatDisplay":"on",
