@@ -1014,6 +1014,7 @@
                                     Live.chat.do();
                                 }else{
                                     Live.chat.text +=Live.chat.helper_text_area.val();
+                                    Live.chat.helper_text_area.val('');
                                 }
                             } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
@@ -1031,6 +1032,7 @@
                                     helper_send_btn.click();
                                 }else{
                                     Live.chat.text +=text;
+                                    Live.chat.helper_text_area.val('');
                                 }
                                 return false;
                             }
