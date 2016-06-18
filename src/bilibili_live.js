@@ -1008,10 +1008,13 @@
                         helper_send_btn.on('click', function (e) {
                             e.preventDefault();
                             if (Live.chat.helper_text_area.val() != '') {
-                                Live.chat.text = Live.chat.helper_text_area.val();
-                                Live.chat.helper_text_area.val('');
-                                Live.chat.do();
-                                Live.chat.helper_text_area.attr('disabled','disabled');
+                                if(Live.chat.text.length ==0){
+                                    Live.chat.text = Live.chat.helper_text_area.val().trim();
+                                    Live.chat.helper_text_area.val('');
+                                    Live.chat.do();
+                                }else{
+                                    Live.chat.text +=Live.chat.helper_text_area.val();
+                                }
                             } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         });
                         Live.chat.helper_text_area.on('keydown', function (e) {
@@ -1023,9 +1026,12 @@
                                 return false;
                             }else if (e.keyCode === 13 && text != '') {
                                 e.preventDefault();
-                                Live.chat.helper_text_area.val(text.substr(0,text.length));
-                                helper_send_btn.click();
-                                Live.chat.helper_text_area.attr('disabled','disabled');
+                                if(Live.chat.text.length ==0){
+                                    Live.chat.helper_text_area.val(text.substr(0,text.length));
+                                    helper_send_btn.click();
+                                }else{
+                                    Live.chat.text +=text;
+                                }
                                 return false;
                             }
                             Live.chat.updateTextInfo(text);
@@ -1069,7 +1075,6 @@
                     if (Live.chat.text.length > 0)setTimeout(function () {
                         Live.chat.do();
                     }, 4000);
-                    else Live.chat.helper_text_area.removeAttr('disabled');
                 }
             },
             initChatHelper:function(dsiplayList){
