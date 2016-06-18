@@ -933,7 +933,7 @@
                     value:'off'
                 },
                 announcement:{
-                    title:'获奖通告',
+                    title:'系统通告',
                     css:'#chat-msg-list .announcement-container{display:none;}',
                     value:'off'
                 }
