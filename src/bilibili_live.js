@@ -940,134 +940,25 @@
             },
             displayStatus:[],
             init      : function () {
-                setTimeout(function () {
-                    if ($('#danmu-textbox').attr('maxlength')) {
-                        Live.chat.chat_ctrl_panel = $('#chat-ctrl-panel');
-                        Live.chat.counter = Live.chat.chat_ctrl_panel.find('.danmu-length-count');
-                        //init & hide original ui
-                        var original_emoji_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
-                        var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper-emoji');
-                        original_emoji_btn.before(helper_emoji_btn).remove();
-
-                        var original_emoji_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
-                        var helper_emoji_list   = original_emoji_list.clone().addClass('helper-emoji-list');
-                        original_emoji_list.before(helper_emoji_list).remove();
-
-                        var original_hot_words_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .hot-words');
-                        var helper_hot_words_btn   = original_hot_words_btn.clone().addClass('helper-hot-words');
-                        original_hot_words_btn.before(helper_hot_words_btn).remove();
-
-                        var original_hot_words_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .hot-words-panel');
-                        var helper_hot_words_list   = original_hot_words_list.clone().addClass('helper-hot-words-list');
-                        original_hot_words_list.before(helper_hot_words_list).remove();
-
-                        var original_text_area = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
-                        Live.chat.maxLength    = original_text_area.attr('maxlength');
-                        Live.chat.helper_text_area   = original_text_area.clone().addClass('helper-text-area').removeAttr('maxlength');
-                        original_text_area.before(Live.chat.helper_text_area).remove();
-
-                        var original_send_btn = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
-                        var helper_send_btn   = original_send_btn.clone().addClass('helper-send-btn');
-                        original_send_btn.before(helper_send_btn).remove();
-
-                        Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
-
-                        Live.chat.counter.text('0 / 1 + 0');
-
-                        //init event
-                        helper_emoji_btn.on('click', function () {
-                            if (helper_emoji_list.css('display') == 'none') {
-                                helper_emoji_list.show();
-                                function n(t) {
-                                    var e = t && (t.target || t.srcElement);
-                                    e && e.className.indexOf("emoji-panel") > -1 || $(".emoji-panel").fadeOut(200, function () {
-                                        $(window).off("click", n);
-                                    })
-                                }
-
-                                setTimeout(function () {
-                                    $(window).on("click", n)
-                                }, 1);
-                            }
-                        });
-                        helper_hot_words_btn.on('click', function () {
-                            if (helper_hot_words_list.css('display') == 'none') {
-                                helper_hot_words_list.show();
-                                function n(t) {
-                                    var e = t && (t.target || t.srcElement);
-                                    e && e.className.indexOf("hot-words-panel") > -1 || $(".hot-words-panel").fadeOut(200, function () {
-                                        $(window).off("click", n);
-                                    })
-                                }
-
-                                setTimeout(function () {
-                                    $(window).on("click", n)
-                                }, 1);
-                            }
-                        });
-                        helper_send_btn.on('click', function (e) {
-                            e.preventDefault();
-                            if (Live.chat.helper_text_area.val() != '') {
-                                if(Live.chat.text.length ==0){
-                                    Live.chat.text = Live.chat.helper_text_area.val().trim();
-                                    Live.chat.helper_text_area.val('');
-                                    Live.chat.do();
-                                }else{
-                                    Live.chat.text +=Live.chat.helper_text_area.val();
-                                    Live.chat.helper_text_area.val('');
-                                }
-                            } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
-                        });
-                        Live.chat.helper_text_area.on('keydown', function (e) {
-                            var text = Live.chat.helper_text_area.val().trim();
-                            if (e.keyCode === 13 && text == '') {
-                                e.preventDefault();
-                                Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
-                                Live.chat.helper_text_area.val('');
-                                return false;
-                            }else if (e.keyCode === 13 && text != '') {
-                                e.preventDefault();
-                                if(Live.chat.text.length ==0){
-                                    Live.chat.helper_text_area.val(text.substr(0,text.length));
-                                    helper_send_btn.click();
-                                }else{
-                                    Live.chat.text +=text;
-                                    Live.chat.helper_text_area.val('');
-                                }
-                                return false;
-                            }
-                            Live.chat.updateTextInfo(text);
-                        });
-                        Live.chat.helper_text_area.on('keyup',function(){
-                            var text = Live.chat.helper_text_area.val().trim();
-                            var part = parseInt(text.length / Live.chat.maxLength);
-                            Live.chat.updateTextInfo(text);
-                        });
-                        helper_emoji_list.on('click', 'a', function () {
-                            var text = Live.chat.helper_text_area.val().trim();
-                            Live.chat.helper_text_area.val(text + $(this).text());
-                            Live.chat.helper_text_area.focus();
-                            Live.chat.updateTextInfo(Live.chat.helper_text_area.val().trim());
-                        });
-                        helper_hot_words_list.on('click', 'a', function () {
-                            var text = Live.chat.helper_text_area.val().trim();
-                            Live.chat.helper_text_area.val(text + $(this).text());
-                            Live.chat.helper_text_area.focus();
-                            Live.chat.updateTextInfo(Live.chat.helper_text_area.val().trim());
-                        });
-                        chrome.extension.sendMessage({
-                            command: "getOption",
-                            key    : 'chatDisplay',
-                        }, function (response) {
-                            if (response['value'] == 'on') {
-                                Live.chat.initChatDisplay(true);
-                            }
-                        });
-                        //init has finished
-                        Live.chat.chat_ctrl_panel.find('.help-chat-shade').hide('middle');
+                Live.chat.chat_ctrl_panel = $('#chat-ctrl-panel');
+                Live.chat.counter = Live.chat.chat_ctrl_panel.find('.danmu-length-count');
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'danmu',
+                }, function (response) {
+                    if (response['value'] == 'on') {
+                        $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help-chat-shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
+                        setTimeout(Live.chat.initDanmu, 2000);
                     }
-                }, 350);
-
+                });
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key    : 'chatDisplay',
+                }, function (response) {
+                    if (response['value'] == 'on') {
+                        Live.chat.initChatDisplay(true);
+                    }
+                });
             },
             do        : function () {
                 if (Live.chat.text.length > 0) {
@@ -1078,6 +969,121 @@
                         Live.chat.do();
                     }, 4000);
                 }
+            },
+            initDanmu:function(){
+                //init & hide original ui
+                var original_emoji_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
+                var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper-emoji');
+                original_emoji_btn.before(helper_emoji_btn).remove();
+
+                var original_emoji_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
+                var helper_emoji_list   = original_emoji_list.clone().addClass('helper-emoji-list');
+                original_emoji_list.before(helper_emoji_list).remove();
+
+                var original_hot_words_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .hot-words');
+                var helper_hot_words_btn   = original_hot_words_btn.clone().addClass('helper-hot-words');
+                original_hot_words_btn.before(helper_hot_words_btn).remove();
+
+                var original_hot_words_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .hot-words-panel');
+                var helper_hot_words_list   = original_hot_words_list.clone().addClass('helper-hot-words-list');
+                original_hot_words_list.before(helper_hot_words_list).remove();
+
+                var original_text_area = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
+                Live.chat.maxLength    = original_text_area.attr('maxlength');
+                Live.chat.helper_text_area   = original_text_area.clone().addClass('helper-text-area').removeAttr('maxlength');
+                original_text_area.before(Live.chat.helper_text_area).remove();
+
+                var original_send_btn = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
+                var helper_send_btn   = original_send_btn.clone().addClass('helper-send-btn');
+                original_send_btn.before(helper_send_btn).remove();
+
+                Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
+
+                Live.chat.counter.text('0 / 1 + 0');
+
+                //init event
+                helper_emoji_btn.on('click', function () {
+                    if (helper_emoji_list.css('display') == 'none') {
+                        helper_emoji_list.show();
+                        function n(t) {
+                            var e = t && (t.target || t.srcElement);
+                            e && e.className.indexOf("emoji-panel") > -1 || $(".emoji-panel").fadeOut(200, function () {
+                                $(window).off("click", n);
+                            })
+                        }
+                        setTimeout(function () {
+                            $(window).on("click", n)
+                        }, 1);
+                    }
+                });
+                helper_hot_words_btn.on('click', function () {
+                    if (helper_hot_words_list.css('display') == 'none') {
+                        helper_hot_words_list.show();
+                        function n(t) {
+                            var e = t && (t.target || t.srcElement);
+                            e && e.className.indexOf("hot-words-panel") > -1 || $(".hot-words-panel").fadeOut(200, function () {
+                                $(window).off("click", n);
+                            })
+                        }
+
+                        setTimeout(function () {
+                            $(window).on("click", n)
+                        }, 1);
+                    }
+                });
+                helper_send_btn.on('click', function (e) {
+                    e.preventDefault();
+                    if (Live.chat.helper_text_area.val() != '') {
+                        if(Live.chat.text.length ==0){
+                            Live.chat.text = Live.chat.helper_text_area.val().trim();
+                            Live.chat.helper_text_area.val('');
+                            Live.chat.do();
+                        }else{
+                            Live.chat.text +=Live.chat.helper_text_area.val();
+                            Live.chat.helper_text_area.val('');
+                        }
+                    } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                });
+                Live.chat.helper_text_area.on('keydown', function (e) {
+                    var text = Live.chat.helper_text_area.val().trim();
+                    if (e.keyCode === 13 && text == '') {
+                        e.preventDefault();
+                        Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
+                        Live.chat.helper_text_area.val('');
+                        return false;
+                    }else if (e.keyCode === 13 && text != '') {
+                        e.preventDefault();
+                        if(Live.chat.text.length ==0){
+                            Live.chat.helper_text_area.val(text.substr(0,text.length));
+                            helper_send_btn.click();
+                        }else{
+                            Live.chat.text +=text;
+                            Live.chat.helper_text_area.val('');
+                        }
+                        return false;
+                    }
+                    Live.chat.updateCounter(text);
+                });
+                Live.chat.helper_text_area.on('keyup',function(){
+                    var text = Live.chat.helper_text_area.val().trim();
+                    var part = parseInt(text.length / Live.chat.maxLength);
+                    Live.chat.updateCounter(text);
+                });
+                helper_emoji_list.on('click', 'a', function () {
+                    var text = Live.chat.helper_text_area.val().trim();
+                    Live.chat.helper_text_area.val(text + $(this).text());
+                    Live.chat.helper_text_area.focus();
+                    Live.chat.updateCounter(Live.chat.helper_text_area.val().trim());
+                });
+                helper_hot_words_list.on('click', 'a', function () {
+                    var text = Live.chat.helper_text_area.val().trim();
+                    Live.chat.helper_text_area.val(text + $(this).text());
+                    Live.chat.helper_text_area.focus();
+                    Live.chat.updateCounter(Live.chat.helper_text_area.val().trim());
+                });
+                
+                //init has finished
+                Live.chat.chat_ctrl_panel.find('.help-chat-shade').hide('middle');
             },
             initChatHelper:function(dsiplayList){
                 Live.chat.chat_ctrl_panel.find('#chatHelper').remove();
@@ -1156,10 +1162,9 @@
                     if(isInit)Live.chat.initChatHelper(dsiplayList);
                 });
             },
-            updateTextInfo:function(text){
+            updateCounter:function(text){
                 var part = parseInt(text.length / Live.chat.maxLength);
                 var rest = part>0?text.length%Live.chat.maxLength:0;
-                // part_t = part>0?(rest == 0?part:part+1):1;
                 Live.chat.counter.text(text.length + ' / ' + (part==0?1:part)+' + '+rest);
             }
         };
@@ -1241,15 +1246,8 @@
                             }, function (response) {
                                 if (response['value'] == 'on') setTimeout(Live.treasure.init, 2000);
                             });
-                            chrome.extension.sendMessage({
-                                command: "getOption",
-                                key    : 'danmu',
-                            }, function (response) {
-                                if (response['value'] == 'on') {
-                                    $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help-chat-shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
-                                    setTimeout(Live.chat.init, 2000);
-                                }
-                            });
+                            
+                            Live.chat.init();
                             Live.notise.init();
                             Notification.requestPermission();
                         }
@@ -1258,7 +1256,7 @@
             },
             initStyle:function(){
                 //.live-room-body.player-full-win #room-left-sidebar{display:block;transform: translate(-60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar{transform: translate(160px,0);}.live-room-body.player-full-win #room-left-sidebar .toggle-btn{transform:translate(60px,0);}.live-room-body.player-full-win .sidebar-left-open #room-left-sidebar .toggle-btn{transform:rotate(90deg) translate(80px,-60px);}
-                var style = "@-webkit-keyframes jinkela-push{from{background-position-y:0px}to{background-position-y:-220px}}@-webkit-keyframes jinkela-regain{from{background-position-y:-220px}to{background-position-x:0px}}#chatHelper{position:absolute;width:76px;height:44px;top:-25px;right:0px;background-image:url(" + chrome.extension.getURL("imgs/jinkela.png") + ");background-repeat:no-repeat;background-position:0px 0px;cursor:pointer;animation:jinkela-regain 0.5s steps(5, end) forwards;}#chatHelper:hover{animation:jinkela-push 0.5s steps(5, end) forwards;}#quiz_helper{position:relative;overflow:hidden}#quiz_helper.hide{height:0}#quiz-control-panel .quiz_helper{position:relative;margin-bottom:29px}#quiz-control-panel .quiz_helper span{position:absolute;top:6px;left:0;color:#222}#quiz-control-panel input.error{border-color:#ff6767}#quiz-control-panel input{width:80%;display:block;border:1px solid #aaa;border-radius:7px;margin:0 0 0 40px;padding:5px;box-sizing:border-box}#quiz-control-panel .quiz_helper .rate{width:130px;display:inline;text-align:center;height:29px;line-height:29px}#quiz-control-panel .quiz_helper .rate:after{content:'\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';font-size:10px;position:absolute;left:0;top:22px}#quiz-control-panel .quiz_helper .msg{font-size:10px;position:absolute;left:40px;top:32px;color:#6f6d6d}#quiz_helper>*.hide{position:absolute;top:0;display:none}#quiz-control-panel .bet_toggle{position:absolute;top:1px;right:-10px;padding:0 5px;color:#fff;background-color:#aaa;border-radius:4px;cursor:pointer}#quiz-control-panel .bet_toggle.on{background-color:#4fc1e9}.bet-buy-btns{overflow:hidden;height:27px;transition:all cubic-bezier(.22,.58,.12,.98) .4s}.bet-buy-btns.hide{height:0}#gift-panel .version{color:#444;font-size:12px}#gift-panel .version a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;margin-right:5px}#gift-panel .version a:hover{color:#f25d8e}.quiz-panel{overflow:hidden;margin:10px 0 0}.quiz-panel h4{font-size:17px;margin:0;float:left}.quiz-panel .blue-box h4{float:left}.quiz-panel .red-box h4{float:right}.quiz-panel .blue-box .rate{float:right;border:1px solid #4fc1e9}.quiz-panel .red-box .rate{float:left}.quiz-panel .rate{background-color:rgba(255,255,255,0.25);display:block;width:14px;text-align:center;height:21px;line-height:23px;border:1px solid rgba(255,255,255,0.5);padding:0 5px 0 3px;border-radius:8px;cursor:pointer;font-family:-webkit-pictograph}.quiz-panel .red-box .rate{border:1px solid #fd9ccc}.quiz-panel .count{overflow:hidden;padding:5px;border-bottom:1px solid #e2e2e2;position:relative}.quiz-panel .count:last-child{border-bottom:0}.quiz-panel .blue-box{overflow:hidden;border-radius:8px;width:90px;float:left;border:1px solid #4fc1e9;border-left:5px solid #4fc1e9;color:#4c4c4c}.quiz-panel .red-box{overflow:hidden;border-radius:8px;width:90px;float:right;border:1px solid #fd9ccc;border-right:5px solid #fd9ccc;color:#4c4c4c}#quiz-control-panel .quiz_helper .rate_n{right:0;top:0;left:auto;position:absolute;width:20px;line-height:33px;text-align:center;margin-bottom:7px}.blue-box .wait{color:#4fc1e9;background-color:rgba(79,193,233,0.15)}.red-box .wait{background-color:rgba(253,156,204,0.15);color:#fd9ccc}.quiz-panel .success{color:#fff;background-color:#64d07d}.quiz-panel .success .rate{border-color:#fff}.quiz-panel .error{color:#fff;background-color:#e74e8f}.quiz-panel .count.run{background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(.25,#b6e2c1),color-stop(.25,transparent),color-stop(.5,transparent),color-stop(.5,#b6e2c1),color-stop(.75,#b6e2c1),color-stop(.75,transparent),to(transparent));-webkit-animation:move 3s linear infinite;background-size:50px 50px}.quiz-panel .error .rate{border-color:#fff}.quiz-panel .hide{height:0;padding:0;border:0}@-webkit-keyframes move{0%{background-position:0 0}100%{background-position:50px 50px}}#quiz_helper .count .menu{width:90px;height:33px;position:absolute;margin:-5px;background-color:rgba(255,254,254,0.5);border-radius:4px;overflow:hidden;transition:all ease-in-out .6s}#quiz_helper .count .menu span{cursor:pointer;float:left;width:23px;height:23px;padding:0;background-color:#ff4b4b;border-radius:25%;transition:all .3s;margin:5px 5px 5px 0}#quiz_helper .blue-box .count .menu span{float:right;margin:5px 0 5px 5px}#quiz_helper .count .menu span:hover{background-color:#f00}#quiz_helper .count .menu span:first-child{margin:5px}#quiz_helper .blue-box .count .menu{right:-85px}#quiz_helper .red-box .count .menu{left:-85px}#quiz_helper .blue-box .count:hover .menu{right:5px}#quiz_helper .red-box .count:hover .menu{left:5px}#quiz_helper .count .menu .cancel{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#quiz_helper .count .menu .run{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-55px 5px;background-size:127px}#quiz_helper .count .menu .reset{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-36px 5px;background-size:127px}#quiz_helper .count .menu .delete{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#head-info-panel .treasure-info{padding:10px;background-color:#fff;position:absolute;right:calc(100% + 5px);width:38px;border-radius:5px;border:1px solid #ddd;box-sizing:border-box;top:-1px}#head-info-panel .treasure-info a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;display:inline-block}#head-info-panel .treasure-info a:hover{color:#f25d8e}.head-info-panel .attention-btn-ctrl{width:auto!important}.attention-btn-ctrl .mid-part{background-color:#4fc1e9;color:#fff;float:left;cursor:pointer;-webkit-user-select:none;width:90px;height:26px;padding:0 5px;line-height:26px;font-size:12px;text-align:center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;box-sizing:border-box;box-shadow:0 0 .1em .1em #ddd}.attention-btn-ctrl .mid-part:hover{background-color:#61c7eb}.room-ctrl{position:absolute;right:10px}.chat-ctrl-panel .emoji-panel.helper-emoji-list,#chat-msg-list .chat-msg .msg-content{line-height:17px}.helper-text-area{line-height:12px}#chatHelperWindow{position:absolute;top:-335px;right:0;padding:10px}.display-option .title{padding:3px 15px 3px 5px;font-size:14px}.display-option .option{display:inline-block;padding:3px 5px}.display-option .option .button{cursor:pointer;display:inline-block;font-size:12px;padding:3px 10px;margin:2px;background-color:#c7c7c7;border-radius:3px;color:#fff}.display-option .option .button.on{background-color:#4fc1e9}.chat-display .panel-title{margin:0}.danmu-sender .helper_text_area[disabled=\"disabled\"]{background-color:#e5e5e5;border-radius:5px 0 0 5px}";
+                var style = "@-webkit-keyframes jinkela-push{from{background-position-y:0px}to{background-position-y:-220px}}@-webkit-keyframes jinkela-regain{from{background-position-y:-220px}to{background-position-x:0px}}#chatHelper{z-index:1001;position:absolute;width:76px;height:44px;top:-25px;right:0px;background-image:url(" + chrome.extension.getURL("imgs/jinkela.png") + ");background-repeat:no-repeat;background-position:0px 0px;cursor:pointer;animation:jinkela-regain 0.5s steps(5, end) forwards;}#chatHelper:hover{animation:jinkela-push 0.5s steps(5, end) forwards;}#quiz_helper{position:relative;overflow:hidden}#quiz_helper.hide{height:0}#quiz-control-panel .quiz_helper{position:relative;margin-bottom:29px}#quiz-control-panel .quiz_helper span{position:absolute;top:6px;left:0;color:#222}#quiz-control-panel input.error{border-color:#ff6767}#quiz-control-panel input{width:80%;display:block;border:1px solid #aaa;border-radius:7px;margin:0 0 0 40px;padding:5px;box-sizing:border-box}#quiz-control-panel .quiz_helper .rate{width:130px;display:inline;text-align:center;height:29px;line-height:29px}#quiz-control-panel .quiz_helper .rate:after{content:'\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';font-size:10px;position:absolute;left:0;top:22px}#quiz-control-panel .quiz_helper .msg{font-size:10px;position:absolute;left:40px;top:32px;color:#6f6d6d}#quiz_helper>*.hide{position:absolute;top:0;display:none}#quiz-control-panel .bet_toggle{position:absolute;top:1px;right:-10px;padding:0 5px;color:#fff;background-color:#aaa;border-radius:4px;cursor:pointer}#quiz-control-panel .bet_toggle.on{background-color:#4fc1e9}.bet-buy-btns{overflow:hidden;height:27px;transition:all cubic-bezier(.22,.58,.12,.98) .4s}.bet-buy-btns.hide{height:0}#gift-panel .version{color:#444;font-size:12px}#gift-panel .version a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;margin-right:5px}#gift-panel .version a:hover{color:#f25d8e}.quiz-panel{overflow:hidden;margin:10px 0 0}.quiz-panel h4{font-size:17px;margin:0;float:left}.quiz-panel .blue-box h4{float:left}.quiz-panel .red-box h4{float:right}.quiz-panel .blue-box .rate{float:right;border:1px solid #4fc1e9}.quiz-panel .red-box .rate{float:left}.quiz-panel .rate{background-color:rgba(255,255,255,0.25);display:block;width:14px;text-align:center;height:21px;line-height:23px;border:1px solid rgba(255,255,255,0.5);padding:0 5px 0 3px;border-radius:8px;cursor:pointer;font-family:-webkit-pictograph}.quiz-panel .red-box .rate{border:1px solid #fd9ccc}.quiz-panel .count{overflow:hidden;padding:5px;border-bottom:1px solid #e2e2e2;position:relative}.quiz-panel .count:last-child{border-bottom:0}.quiz-panel .blue-box{overflow:hidden;border-radius:8px;width:90px;float:left;border:1px solid #4fc1e9;border-left:5px solid #4fc1e9;color:#4c4c4c}.quiz-panel .red-box{overflow:hidden;border-radius:8px;width:90px;float:right;border:1px solid #fd9ccc;border-right:5px solid #fd9ccc;color:#4c4c4c}#quiz-control-panel .quiz_helper .rate_n{right:0;top:0;left:auto;position:absolute;width:20px;line-height:33px;text-align:center;margin-bottom:7px}.blue-box .wait{color:#4fc1e9;background-color:rgba(79,193,233,0.15)}.red-box .wait{background-color:rgba(253,156,204,0.15);color:#fd9ccc}.quiz-panel .success{color:#fff;background-color:#64d07d}.quiz-panel .success .rate{border-color:#fff}.quiz-panel .error{color:#fff;background-color:#e74e8f}.quiz-panel .count.run{background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(.25,#b6e2c1),color-stop(.25,transparent),color-stop(.5,transparent),color-stop(.5,#b6e2c1),color-stop(.75,#b6e2c1),color-stop(.75,transparent),to(transparent));-webkit-animation:move 3s linear infinite;background-size:50px 50px}.quiz-panel .error .rate{border-color:#fff}.quiz-panel .hide{height:0;padding:0;border:0}@-webkit-keyframes move{0%{background-position:0 0}100%{background-position:50px 50px}}#quiz_helper .count .menu{width:90px;height:33px;position:absolute;margin:-5px;background-color:rgba(255,254,254,0.5);border-radius:4px;overflow:hidden;transition:all ease-in-out .6s}#quiz_helper .count .menu span{cursor:pointer;float:left;width:23px;height:23px;padding:0;background-color:#ff4b4b;border-radius:25%;transition:all .3s;margin:5px 5px 5px 0}#quiz_helper .blue-box .count .menu span{float:right;margin:5px 0 5px 5px}#quiz_helper .count .menu span:hover{background-color:#f00}#quiz_helper .count .menu span:first-child{margin:5px}#quiz_helper .blue-box .count .menu{right:-85px}#quiz_helper .red-box .count .menu{left:-85px}#quiz_helper .blue-box .count:hover .menu{right:5px}#quiz_helper .red-box .count:hover .menu{left:5px}#quiz_helper .count .menu .cancel{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#quiz_helper .count .menu .run{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-55px 5px;background-size:127px}#quiz_helper .count .menu .reset{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-36px 5px;background-size:127px}#quiz_helper .count .menu .delete{background-image:url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/menu-icon.png);background-repeat:no-repeat;background-position:-16px 5px;background-size:127px}#head-info-panel .treasure-info{padding:10px;background-color:#fff;position:absolute;right:calc(100% + 5px);width:38px;border-radius:5px;border:1px solid #ddd;box-sizing:border-box;top:-1px}#head-info-panel .treasure-info a{outline:0;color:#4fc1e9;text-decoration:none;cursor:pointer;display:inline-block}#head-info-panel .treasure-info a:hover{color:#f25d8e}.head-info-panel .attention-btn-ctrl{width:auto!important}.attention-btn-ctrl .mid-part{background-color:#4fc1e9;color:#fff;float:left;cursor:pointer;-webkit-user-select:none;width:90px;height:26px;padding:0 5px;line-height:26px;font-size:12px;text-align:center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;box-sizing:border-box;box-shadow:0 0 .1em .1em #ddd}.attention-btn-ctrl .mid-part:hover{background-color:#61c7eb}.room-ctrl{position:absolute;right:10px}.chat-ctrl-panel .emoji-panel.helper-emoji-list,#chat-msg-list .chat-msg .msg-content{line-height:17px}.helper-text-area{line-height:12px}#chatHelperWindow{position:absolute;top:-335px;right:0;padding:10px}.display-option .title{padding:3px 15px 3px 5px;font-size:14px}.display-option .option{display:inline-block;padding:3px 5px}.display-option .option .button{cursor:pointer;display:inline-block;font-size:12px;padding:3px 10px;margin:2px;background-color:#c7c7c7;border-radius:3px;color:#fff}.display-option .option .button.on{background-color:#4fc1e9}.chat-display .panel-title{margin:0}.danmu-sender .helper_text_area[disabled=\"disabled\"]{background-color:#e5e5e5;border-radius:5px 0 0 5px}";
                 var l = $('document').find('#bilibiliHelperLive');
                 if(l.length)l.remove();
                 var styleElement = document.createElement("style");
