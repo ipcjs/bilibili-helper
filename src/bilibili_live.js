@@ -1103,7 +1103,7 @@
                 });
                 Live.chat.chatHelperWindow.append(Live.chat.chatDisplayBlock);
                 Live.chat.chat_ctrl_panel.append(Live.chat.chatHelper,Live.chat.chatHelperWindow);
-                Live.chat.chatHelper.on('click', function () {
+                Live.chat.chatHelper.off('click').on('click', function () {
                     if (Live.chat.chatHelperWindow.css('display') == 'none') {
                         Live.chat.chatHelperWindow.show();
                         function n(t) {
@@ -1118,7 +1118,7 @@
                         }, 1);
                     }
                 });
-                Live.chat.chatDisplayBlock.find('.display-option .option .button').click(function(){
+                Live.chat.chatDisplayBlock.find('.display-option .option .button').off('click').on('click',function(){
                     var displayOption = dsiplayList;
                     var classes = $(this).attr('class').split(' ')[1];
                     if ($(this).hasClass('on')) return false;
@@ -1128,39 +1128,48 @@
                     if(type == "on"){
                         var index = displayOption.indexOf(classes);
                         if(index == -1) displayOption.push(classes);
+                        Live.chat.hideStyle[classes].value = 'on';
                     }else{
                         var index = displayOption.indexOf(classes);
                         if(index != -1) displayOption.splice(index,1);
+                        Live.chat.hideStyle[classes].value = 'off';
                     }
                     chrome.extension.sendMessage({
                         command: "setOption",
                         key    : 'displayOption',
                         value  : JSON.stringify(displayOption)
                     });
-                    Live.chat.initChatDisplay(true);
+                    Live.chat.initChatDisplay();
                 });
             },
             initChatDisplay:function(isInit){
-                var l = $('.chatDisplayStyle');
-                if(l.length)l.remove();
-                var style = "";
-                var styleElement = document.createElement("style");
-                styleElement.setAttribute("class", 'chatDisplayStyle');
-                styleElement.setAttribute("type", "text/css");
                 chrome.extension.sendMessage({
                     command: "getOption",
                     key    : 'displayOption',
                 }, function (response) {
-                    var dsiplayList = response['value'] ? JSON.parse(response['value']):[];
+                    var dsiplayList = response['value'] && isInit ? JSON.parse(response['value']):Live.chat.hideStyle;
                     Live.each(dsiplayList,function(i){
-                        style+=Live.chat.hideStyle[dsiplayList[i]].css;
-                        Live.chat.hideStyle[dsiplayList[i]].value='on';
+                        if(!isInit){
+                            if(Live.chat.hideStyle[i].value =='off'){
+                                $('.chatDisplayStyle_'+i).remove();
+                            }else if($('.chatDisplayStyle_'+i).length == 0){
+                                Live.chat.addStylesheet(i);
+                            }
+                        }else{
+                            Live.chat.hideStyle[dsiplayList[i]].value = "on";
+                            Live.chat.addStylesheet(dsiplayList[i]);
+                        }
                     });
-                    styleElement.appendChild(document.createTextNode(style));
-                    if (document.head) document.head.appendChild(styleElement);
-                    else document.documentElement.appendChild(styleElement);
-                    if(isInit)Live.chat.initChatHelper(dsiplayList);
+                    if(isInit) Live.chat.initChatHelper(dsiplayList);
                 });
+            },
+            addStylesheet:function(displayType){
+                var styleElement = document.createElement("style");
+                styleElement.setAttribute("class", 'chatDisplayStyle_'+displayType);
+                styleElement.setAttribute("type", "text/css");
+                styleElement.appendChild(document.createTextNode(Live.chat.hideStyle[displayType].css));
+                if (document.head) document.head.appendChild(styleElement);
+                else document.documentElement.appendChild(styleElement);
             },
             updateCounter:function(text){
                 var part = parseInt(text.length / Live.chat.maxLength);
@@ -1246,7 +1255,6 @@
                             }, function (response) {
                                 if (response['value'] == 'on') setTimeout(Live.treasure.init, 2000);
                             });
-                            
                             Live.chat.init();
                             Live.notise.init();
                             Notification.requestPermission();
