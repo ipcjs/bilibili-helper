@@ -253,7 +253,6 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
       avPlaybackLink.durl[0].backup_url.forEach(function(url) {
         if (url.indexOf('hd.mp4') > -1) {
           avPlaybackLink.durl[0].url = url;
-          console.log('replace', url);
         }
       })
     }
