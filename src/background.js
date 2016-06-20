@@ -248,15 +248,14 @@ function resolvePlaybackLink(avPlaybackLink, callback) {
         if (typeof callback == "function") callback(avPlaybackLink);
         return false;
     }
-    if (typeof avPlaybackLink.durl[0].backup_url == 'object' &&
+    /*if (typeof avPlaybackLink.durl[0].backup_url == 'object' &&
       avPlaybackLink.durl[0].backup_url.length) {
       avPlaybackLink.durl[0].backup_url.forEach(function(url) {
         if (url.indexOf('hd.mp4') > -1) {
           avPlaybackLink.durl[0].url = url;
-          console.log('replace', url);
         }
       })
-    }
+    }*/
     var xmlhttp   = new XMLHttpRequest(),
         xmlChange = function () {
             if (xmlhttp.readyState == 2) {
@@ -352,7 +351,7 @@ function getVideoInfo(avid, page,isbangumi, callback) {
                 }
             });
         });
-    }else 
+    }else
     getFileData("http://api.bilibili.com/view?type=json&appkey=8e9fc618fbd41e28&id=" + avid + "&page=" + page + "&batch=true", function (avInfo) {
         avInfo = JSON.parse(avInfo);
         if (typeof avInfo.code != "undefined" && avInfo.code == -503) {
@@ -861,7 +860,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function (details) {
         requestHeaders: details.requestHeaders
     };
 }, {
-    urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*", "http://www.bilibili.com/api_proxy*","http://bangumi.bilibili.com/*"]
+    urls: ["http://interface.bilibili.com/playurl?cid*", "http://interface.bilibili.com/playurl?accel=1&cid=*", "http://interface.bilibili.com/playurl?platform=bilihelper*", "http://www.bilibili.com/video/av*", "http://www.bilibili.com/bangumi/*", "http://app.bilibili.com/bangumi/*", "http://www.bilibili.com/search*", "http://*.acgvideo.com/*", "http://www.bilibili.com/api_proxy*","http://bangumi.bilibili.com/*","http://interface.bilibili.com/playurl?platform=android*"]
 }, ['requestHeaders', 'blocking']);
 
 function receivedHeaderModifier(details) {
@@ -895,18 +894,6 @@ function resetVideoHostList() {
         urls: videoPlaybackHosts
     }, ["responseHeaders", "blocking"]);
 }
-
-/*function checkVigLink(tab) {
- if (getOption("support") == "on" && tab.url.indexOf('http://') === 0 && !/(secure|password|bank|pay|login|register|local|127\.0\.0\.1)/.test(tab.url)) { // http only && exclude secure keywords
- chrome.tabs.executeScript(tab.id, {
- code: '!function(){if(document.querySelector("script.viglink"))return!1;var e=document.createElement("script");e.className="viglink",e.src="//cdn.viglink.com/api/vglnk.js",document.body.appendChild(e)}();window.vglnk={key:'ddf667f52d88dc2b3878f5f0c146a04d'};'
- })
- }
- }
-
- chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
- if (changeInfo.status == 'complete') checkVigLink(tab);
- });*/
 
 chrome.webRequest.onHeadersReceived.addListener(function (details) {
     var headers = details.responseHeaders;
