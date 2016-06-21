@@ -875,7 +875,7 @@ function receivedHeaderModifier(details) {
             name : "Access-Control-Allow-Origin",
             value: "http://www.bilibili.com"
         });
-    }else{
+    } else if (!hasCORS) {
         details.responseHeaders.push({
             name : "Access-Control-Allow-Origin",
             value: "http://bangumi.bilibili.com"
