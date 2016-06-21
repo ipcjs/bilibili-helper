@@ -1059,6 +1059,7 @@
                         }else{
                             Live.chat.text +=text;
                             Live.chat.helper_text_area.val('');
+                            Live.chat.updateCounter('');
                         }
                         return false;
                     }
