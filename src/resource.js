@@ -28,7 +28,8 @@ var defaultOptions = {
 	"favouritesIdList":"[]",
 	"favouritesList":"{}",
 	"chatDisplay":"on",
-	"displayOption":"[]"
+	"displayOption":"[]",
+	"versionNotify":"on"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {

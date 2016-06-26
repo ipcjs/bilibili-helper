@@ -280,6 +280,7 @@ $(document).ready(function () {
             $('#update .detail').parent().hide();
         }
         $('#update .url').attr('href', 'https://bilihelper.guguke.net/');
+        $('#about #update p').addClass('highlight');
     }
 
     switch (getQueryVariable('mod')) {
@@ -311,13 +312,15 @@ $(document).ready(function () {
                     text             : "发现新版哔哩哔哩助手: v" + updateInfo.version + "<br/>您当前使用的版本是: v" + chrome.app.getDetails().version + "<br/>如果您不能通过 Google 自动更新扩展或者在使用上遇到严重的问题，建议您参阅右侧信息，手动更新。",
                     type             : "warning",
                     confirmButtonText: "好的",
-                    html             : true
-                }, function () {
-                    $('#about #update p').addClass('highlight');
+                    cancelButtonText : "不再提醒",
+                    html             : true,
+                    showCancelButton : true
+                }, function (isConfirm) {
+                    !isConfirm && bkg_page.setOption("versionNotify", 'off', false);
                 });
             }
             break;
     }
 
-    window.history.replaceState({}, document.title, '/options.html');
+    window.history.replaceState({}, document.title, '/options.min.html');
 });

@@ -681,8 +681,7 @@ if (window.navigator.userAgent.indexOf('Windows') < 0) {
 chrome.alarms.create("checkDynamic", {
     periodInMinutes: 1
 });
-
-chrome.alarms.create("checkVersion", {
+getOption("versionNotify") == 'on' && chrome.alarms.create("checkVersion", {
     periodInMinutes: 10
 });
 
@@ -723,6 +722,8 @@ function getLocale() {
 }
 
 function checkVersion() {
+	var versionNotify = getOption("versionNotify");
+	versionNotify == 'on' &&
     getFileData("https://bilihelper.guguke.net/version.json?v=" + encodeURIComponent(chrome.app.getDetails().version), function (result) {
         try {
             result = JSON.parse(result);
