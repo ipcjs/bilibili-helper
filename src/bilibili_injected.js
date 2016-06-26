@@ -401,12 +401,12 @@
 				}
 			};
 			if(biliHelper.site == 0) {
-				biliHelper.helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"t\"><div class=\"icon\"></div><div class=\"t-right\"><span class=\"t-right-top middle\">助手</span><span class=\"t-right-bottom\">扩展菜单</span></div></span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a><a class=\"setting b-btn w\" href=\"" + chrome.extension.getURL("options.html") + "\" target=\"_blank\">设置</a></div></div></div>");
+				biliHelper.helperBlock = $("<div class=\"block helper\" id=\"bilibili_helper\"><span class=\"t\"><div class=\"icon\"></div><div class=\"t-right\"><span class=\"t-right-top middle\">助手</span><span class=\"t-right-bottom\">扩展菜单</span></div></span><div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a><a class=\"setting b-btn w\" href=\"" + chrome.extension.getURL("options.min.html") + "\" target=\"_blank\">设置</a></div></div></div>");
 				biliHelper.helperBlock.find('.t').click(function() {
 					biliHelper.helperBlock.toggleClass('active');
 				});
 			}else if(biliHelper.site == 1){
-			 	biliHelper.helperBlock = $("<div class=\"v1-bangumi-info-btn helper\" id=\"bilibili_helper\">哔哩哔哩助手<div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a><a class=\"setting b-btn w\" href=\"" + chrome.extension.getURL("options.html") + "\" target=\"_blank\">设置</a></div></div></div>");
+			 	biliHelper.helperBlock = $("<div class=\"v1-bangumi-info-btn helper\" id=\"bilibili_helper\">哔哩哔哩助手<div class=\"info\"><div class=\"main\"></div><div class=\"version\">哔哩哔哩助手 " + biliHelper.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a><a class=\"setting b-btn w\" href=\"" + chrome.extension.getURL("options.min.html") + "\" target=\"_blank\">设置</a></div></div></div>");
 				biliHelper.helperBlock.click(function() {
 					biliHelper.helperBlock.toggleClass('active');
 				});

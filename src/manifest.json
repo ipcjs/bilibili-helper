@@ -1,6 +1,6 @@
 {
    "background": {
-      "page": "background.html",
+      "page": "background.min.html",
       "persistent": true
    },
    "browser_action": {
@@ -8,7 +8,7 @@
          "19": "imgs/icon-19.png",
          "38": "imgs/icon-38.png"
       },
-      "default_popup": "popup.html",
+      "default_popup": "popup.min.html",
       "default_title": "__MSG_extShortName__"
    },
    "content_scripts": [ {
@@ -29,7 +29,7 @@
    "manifest_version": 2,
    "name": "__MSG_extName__",
    "short_name": "__MSG_extShortName__",
-   "options_page": "options.html",
+   "options_page": "options.min.html",
    "permissions": [ "downloads", "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
    "version": "0.8.10",
