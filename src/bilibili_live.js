@@ -1273,7 +1273,7 @@
                 styleLink.setAttribute("id", 'bilibiliHelperLive');
                 styleLink.setAttribute("type", "text/css");
                 styleLink.setAttribute("rel", "stylesheet");
-                styleLink.setAttribute('href',chrome.extension.getURL('live.css'));
+                styleLink.setAttribute('href',chrome.extension.getURL('live.min.css'));
                 if (document.head) document.head.appendChild(styleLink);
                 else document.documentElement.appendChild(styleLink);
             }
