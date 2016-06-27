@@ -755,10 +755,6 @@
                     command: "getTreasure"
                 }, function (response) {
                     $('#head-info-panel').append($('<div class="room-info treasure-info">自动领瓜子功能正在初始化</div>'));
-                    if (response['data'].finish != undefined && response['data'].finish == true) {
-                        $('#head-info-panel').find('.treasure-info').append('今天的瓜子已经领完');
-                        return;
-                    }
                     if (response['data'].roomId == undefined) {
                         Live.treasure.canvas        = document.createElement('canvas');
                         Live.treasure.canvas.width  = 120;
@@ -804,10 +800,18 @@
                 }, 'json').promise();
             },
             checkTask      : function () {
+                if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
+                    $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
+                    Live.treasure.completed = true;
+                    return;
+                }
                 Live.treasure.getCurrentTask().done(function (data) {
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
+                    } else if(data.code == -99){//领奖信息不存在
+                        clearInterval(Live.treasure.interval);
+                        $('#head-info-panel').find('.treasure-info').html('领奖信息不存在 或 其他错误');
                     } else if (data.code == -10017) {//领完
                         clearInterval(Live.treasure.interval);
                         if (!Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
