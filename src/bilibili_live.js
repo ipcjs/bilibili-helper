@@ -3,7 +3,7 @@
  */
 (function () {
     if (location.hostname == 'live.bilibili.com') {
-        d           = document.createElement('script');
+        d = document.createElement('script');
         d.innerHTML = 'if (window.localStorage) {if(!window.localStorage.helper_live_roomId){window.localStorage.helper_live_roomId=JSON.stringify({});}var l = JSON.parse(window.localStorage.helper_live_roomId);l[ROOMURL] = ROOMID;window.localStorage.helper_live_roomId=JSON.stringify(l);if(!window.localStorage.helper_live_rnd){window.localStorage.helper_live_rnd=JSON.stringify({});}var r = JSON.parse(window.localStorage.helper_live_rnd);r[ROOMURL] = DANMU_RND;window.localStorage.helper_live_rnd=JSON.stringify(r);}';
         document.body.appendChild(d);
 
@@ -12,12 +12,12 @@
         Live.set = function (n, k, v) {
             if (!window.localStorage || !n) return;
             var storage = window.localStorage;
-            if (!storage[n])storage[n] = JSON.stringify({});
+            if (!storage[n]) storage[n] = JSON.stringify({});
             var l = JSON.parse(storage[n]);
             if (v == undefined) {
                 storage[n] = typeof k == 'string' ? k.trim() : JSON.stringify(k);
             } else {
-                l[k]       = typeof v == 'string' ? v.trim() : JSON.stringify(v);
+                l[k] = typeof v == 'string' ? v.trim() : JSON.stringify(v);
                 storage[n] = JSON.stringify(l);
             }
         };
@@ -26,12 +26,13 @@
             if (!window.localStorage || !n) return;
 
             if (!window.localStorage[n]) {
-                window.localStorage[n] = JSON.stringify(v || {});
-                return JSON.parse(v);
+                var temp = {};
+                if (k != undefined && v != undefined) temp[k] = v;
+                window.localStorage[n] = JSON.stringify(temp);
             }
             var l = JSON.parse(window.localStorage[n]);
-            if (!k) return l;
-            if (l[k] == 'true' || l[k] == 'false')l[k] = JSON.parse(l[k]);
+            if (k == undefined) return l;
+            if (l[k] == 'true' || l[k] == 'false') l[k] = JSON.parse(l[k]);
             return l[k];
         };
 
@@ -52,7 +53,8 @@
         Live.each = function (obj, fn) {
             if (!fn) return;
             if (obj instanceof Array) {
-                var i = 0, len = obj.length;
+                var i = 0,
+                    len = obj.length;
                 for (; i < len; i++) {
                     if (fn.call(obj[i], i) == false)
                         break;
@@ -76,9 +78,9 @@
                     Live.set('helper_userInfo', 'face', user.face);
                     Live.set('helper_userInfo', 'vip', user.vip);
                     Live.set('helper_userInfo', 'login', true);
-                    if (callback && typeof callback == 'function')callback(user);
+                    if (callback && typeof callback == 'function') callback(user);
                     return true;
-                } else if (user.code == -101)Live.del('helper_userInfo');
+                } else if (user.code == -101) Live.del('helper_userInfo');
             });
 
         };
@@ -92,6 +94,7 @@
             Live.del('helper_doSign_today', Live.getRoomId());
             Live.del('helper_doSign_date', Live.getRoomId());
             Live.del('helper_userInfo', Live.getRoomId());
+            Live.del('noTreasure', Live.get('helper_userInfo', 'username'));
         };
 
         Live.getRoomId = function () {
@@ -118,30 +121,34 @@
 
             if (rgb.charAt(0) == '#') return rgb;
 
-            var ds      = rgb.split(/\D+/);
+            var ds = rgb.split(/\D+/);
             var decimal = Number(ds[1]) * 65536 + Number(ds[2]) * 256 + Number(ds[3]);
             return "#" + zero_fill_hex(decimal, 6);
         };
 
         Live.getDomType = function (t) {
-            var e = Object.prototype.toString.call(t), n = /HTML.*.Element/;
+            var e = Object.prototype.toString.call(t),
+                n = /HTML.*.Element/;
             return "[object Object]" === e && t.jquery ? "jQuery Object" : "[object Object]" === e ? "Object" : "[object Number]" === e ? "Number" : "[object String]" === e ? "String" : "[object Array]" === e ? "Array" : "[object Boolean]" === e ? "Boolean" : "[object Function]" === e ? "Function" : "[object Null]" === e ? "null" : "[object Undefined]" === e ? "undefined" : e.match(n) ? "HTML Element" : "[object HTMLCollection]" === e ? "HTML Elements Collection" : null
         };
 
         Live.randomEmoji = {
-            list       : {
-                happy   : ["(｀･ω･´)", "=‿=✧", "●ω●", "(/ ▽ \\)", "(=・ω・=)", "(●'◡'●)ﾉ♥", "<(▰˘◡˘▰)>", "(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "(ง,,• ᴗ •,,)ง ✧"],
-                shock   : [",,Ծ‸Ծ,,", "(｀･д･´)", "Σ( ° △ °|||)︴", "┌( ಠ_ಠ)┘", "(ﾟДﾟ≡ﾟдﾟ)!?"],
-                sad     : ["∑(っ °Д °;)っ", "＞︿＜", "＞△＜", "●︿●", "(´；ω；`)"],
+            list: {
+                happy: ["(｀･ω･´)", "=‿=✧", "●ω●", "(/ ▽ \\)", "(=・ω・=)", "(●'◡'●)ﾉ♥", "<(▰˘◡˘▰)>", "(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "(ง,,• ᴗ •,,)ง ✧"],
+                shock: [",,Ծ‸Ծ,,", "(｀･д･´)", "Σ( ° △ °|||)︴", "┌( ಠ_ಠ)┘", "(ﾟДﾟ≡ﾟдﾟ)!?"],
+                sad: ["∑(っ °Д °;)っ", "＞︿＜", "＞△＜", "●︿●", "(´；ω；`)"],
                 helpless: ["◐▽◑", "ʅ（´◔౪◔）ʃ", "_(:3 」∠)_", "_(┐「ε:)_", "(/・ω・＼)", "(°▽°)ﾉ"]
             },
-            happy      : function () {
+            happy: function () {
                 return Live.randomEmoji.list.happy[Math.floor(Math.random() * Live.randomEmoji.list.happy.length)]
-            }, sad     : function () {
+            },
+            sad: function () {
                 return Live.randomEmoji.list.sad[Math.floor(Math.random() * Live.randomEmoji.list.sad.length)]
-            }, shock   : function () {
+            },
+            shock: function () {
                 return Live.randomEmoji.list.shock[Math.floor(Math.random() * Live.randomEmoji.list.shock.length)]
-            }, helpless: function () {
+            },
+            helpless: function () {
                 return Live.randomEmoji.list.helpless[Math.floor(Math.random() * Live.randomEmoji.list.helpless.length)]
             }
         };
@@ -153,15 +160,16 @@
             u.innerHTML = "<i class='toast-icon info'></i><span class='toast-text'>" + msg + Live.randomEmoji.helpless() + "</span>", u.className = "live-toast " + n;
             var d = null;
             switch (Live.getDomType(dom)) {
-                case"HTML Element":
+                case "HTML Element":
                     d = dom;
                     break;
-                case"jQuery Object":
+                case "jQuery Object":
                     d = dom[0];
                     break;
                 default:
                     throw new Error(a.consoleText.error + "在使用 Live Toast 时请传入正确的原生 Dom 对象或节点的 jQuery 对象.")
             }
+
             function o(t) {
                 var e = t.offsetLeft;
                 return null !== t.offsetParent ? e += o(t.offsetParent) : void 0, e
@@ -172,27 +180,31 @@
                 return null !== t.offsetParent ? e += i(t.offsetParent) : void 0, e
             }
 
-            var f = {width: $(d).width(), height: $(d).height()}, p = o(d), m = i(d);
-            $(u).css({left: p + f.width});
+            var f = { width: $(d).width(), height: $(d).height() },
+                p = o(d),
+                m = i(d);
+            $(u).css({ left: p + f.width });
             var v = 0;
-            v = document.body.scrollTop, $(u).css({top: m + f.height}), setTimeout(function () {
+            v = document.body.scrollTop, $(u).css({ top: m + f.height }), setTimeout(function () {
                 $(u).addClass("out"), setTimeout(function () {
                     $(u).remove(), c = u = d = f = p = m = v = null
                 }, 400)
             }, 2e3), c.appendChild(u), document.body.appendChild(c);
-            var h = $(window).width(), g = u.offsetWidth, y = u.offsetLeft;
-            0 > h - g - y && $(u).css({left: h - g - 10}), h = g = y = null
+            var h = $(window).width(),
+                g = u.offsetWidth,
+                y = u.offsetLeft;
+            0 > h - g - y && $(u).css({ left: h - g - 10 }), h = g = y = null
         };
 
         Live.doSign = {
             getSignInfo: function () {
                 return $.getJSON("/sign/GetSignInfo").promise();
             },
-            init       : function () {
+            init: function () {
                 Live.doSign.getSignInfo().done(function (data) {
                     if (data.code == 0 && data.data.status == 0) {
                         Live.doSign.sign();
-                        setInterval(Live.doSign.sign, 60000);//doSign per 1 min
+                        setInterval(Live.doSign.sign, 60000); //doSign per 1 min
                     } else if (data.code == 0 && data.data.status == 1) {
                         var username = Live.get('helper_userInfo', 'username');
                         Live.set('helper_doSign_today', username, true);
@@ -200,13 +212,14 @@
                     }
                 });
             },
-            sign       : function () {
+            sign: function () {
                 /*check login*/
-                var date     = new Date().getDate();
+                var date = new Date().getDate();
                 var username = Live.get('helper_userInfo', 'username');
                 if (!Live.get('helper_doSign_today', username) || Live.get('helper_doSign_date', username) != date) {
                     $.get("/sign/doSign", function (data) {
-                        var e = JSON.parse(data), msg = undefined;
+                        var e = JSON.parse(data),
+                            msg = undefined;
                         //    {
                         //    "code": 0,
                         //    "msg": "ok",
@@ -228,7 +241,7 @@
                             Live.set('helper_doSign_date', username, date);
                             setTimeout(function () {
                                 msg.close();
-                            }, 1000);
+                            }, 10000);
                             var spans = $('.body-container').find('.room-left-sidebar .sign-and-mission .sign-up-btn .dp-inline-block span');
                             $(spans[0]).hide(), $(spans[1]).show();
                         } else if (e.code == -500) {
@@ -240,7 +253,7 @@
                             Live.set('helper_doSign_date', username, date);
                             setTimeout(function () {
                                 msg.close();
-                            }, 5000);
+                            }, 10000);
                         } else {
                             msg = new Notification(eval("'" + e.msg + "'"), {
                                 body: "",
@@ -248,7 +261,7 @@
                             });
                             setTimeout(function () {
                                 msg.close();
-                            }, 5000);
+                            }, 10000);
                         }
                     });
                 }
@@ -256,35 +269,35 @@
         };
 
         Live.Queue = function (which) {
-            var o         = {};
-            o.id          = new Date().getTime();
-            o.which       = which;
-            o.total       = 0;
-            o.run         = [];
-            o.wait        = [];
-            o.error       = [];
-            o.success     = [];
-            o.cancel      = [];
-            o.add         = function (appoint, state) {
+            var o = {};
+            o.id = new Date().getTime();
+            o.which = which;
+            o.total = 0;
+            o.run = [];
+            o.wait = [];
+            o.error = [];
+            o.success = [];
+            o.cancel = [];
+            o.add = function (appoint, state) {
                 state = state == undefined ? 'wait' : state;
                 o[state].push(appoint);
             };
-            o.empty       = function () {
+            o.empty = function () {
                 $('#quiz_helper').find(o.which + '-box *').addClass('hide');
-                o.run     = [];
-                o.wait    = [];
-                o.error   = [];
-                o.cancel  = [];
+                o.run = [];
+                o.wait = [];
+                o.error = [];
+                o.cancel = [];
                 o.success = [];
             };
-            o.remove      = function (appoint) {
+            o.remove = function (appoint) {
                 var index = o[appoint.state].indexOf(appoint);
                 if (index != -1) {
                     o[appoint.state].splice(index, 1);
                     appoint.destory();
                 }
             };
-            o.pushQueue   = function (appoint, state) {
+            o.pushQueue = function (appoint, state) {
                 if (appoint.state != state) {
                     state = state == undefined ? 'wait' : state;
                     o.remove(appoint);
@@ -316,14 +329,14 @@
 
         Live.Appoint = function (which, rate, number, state) {
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
-            var o    = {};
-            o.id     = new Date().getTime();
-            o.which  = which;
-            o.rate   = rate;
+            var o = {};
+            o.id = new Date().getTime();
+            o.which = which;
+            o.rate = rate;
             o.number = number;
             /*0:cancel,1:success,2:error,3:wait,4:run*/
-            o.state      = state == undefined ? 'wait' : state;
-            o.emit       = function (which, state) {
+            o.state = state == undefined ? 'wait' : state;
+            o.emit = function (which, state) {
                 /*set state*/
                 o.state = state == undefined ? o.state : state;
                 o.create_dom();
@@ -336,12 +349,12 @@
             };
             o.create_dom = function (top) {
                 if (o.dom == undefined) {
-                    var rate_dom   = $('<span>').addClass('rate').text(rate);
+                    var rate_dom = $('<span>').addClass('rate').text(rate);
                     var number_dom = $('<h4>').addClass('number').text(Live.numFormat(o.number));
-                    o.menu         = $('<div>').addClass('menu');
-                    o.dom          = $('<div>').addClass('count').addClass(o.state).attr({
-                        id    : o.id,
-                        rate  : rate,
+                    o.menu = $('<div>').addClass('menu');
+                    o.dom = $('<div>').addClass('count').addClass(o.state).attr({
+                        id: o.id,
+                        rate: rate,
                         number: o.number
                     }).append(number_dom, rate_dom, $('<a>').addClass('close'), o.menu);
                     o.updateMenu();
@@ -359,10 +372,10 @@
                 o.menu_delete = $('<span class="delete"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].remove(o);
                 });
-                o.menu_reset  = $('<span class="reset"></span>').off('click').click(function () {
+                o.menu_reset = $('<span class="reset"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].pushQueue(o, 'wait');
                 });
-                o.menu_run    = $('<span class="run"></span>').off('click').click(function () {
+                o.menu_run = $('<span class="run"></span>').off('click').click(function () {
                     Live.bet[o.which + '_queue'].pushQueue(o, 'run');
                 });
                 if (o.state == 'run' || o.state == 'success' || o.state == 'error' || o.state == 'cancel') {
@@ -372,7 +385,7 @@
                 }
                 return o;
             };
-            o.run        = function (bet) {
+            o.run = function (bet) {
                 if (!bet) return false;
                 o.state = 'run';
                 /*deal style class*/
@@ -380,29 +393,27 @@
                 if (!o.dom.hasClass('run')) o.dom.addClass('run');
 
                 /*get data*/
-                var w        = (o.which == 'blue') ? 'a' : 'b';
+                var w = (o.which == 'blue') ? 'a' : 'b';
                 var bankerId = bet.silver[w].id;
-                var rate     = bet.silver[w].times;
+                var rate = bet.silver[w].times;
                 //var amount = bet.silver[w].amount;
                 /*be canceled*/
                 if (Live.bet.stop) clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 if (rate >= o.rate) {
                     $.ajax({
-                        url     : 'http://live.bilibili.com/bet/addBettor',
-                        type    : 'POST',
+                        url: 'http://live.bilibili.com/bet/addBettor',
+                        type: 'POST',
                         dataType: 'json',
-                        data    : {
+                        data: {
                             bankerId: bankerId,
-                            amount  : o.number,
-                            token   : __GetCookie('LIVE_LOGIN_DATA')
+                            amount: o.number,
+                            token: __GetCookie('LIVE_LOGIN_DATA')
                         },
                         complete: function (data) {
                             var b = JSON.parse(data.responseText);
-                            if (b.code == -400) {//error
-                                if (b.msg == '手慢了,剩余可购数量不足！') {
-                                }
-                                else o.error(b);
-                            } else if (b.msg == 'ok') {//success
+                            if (b.code == -400) { //error
+                                if (b.msg == '手慢了,剩余可购数量不足！') {} else o.error(b);
+                            } else if (b.msg == 'ok') { //success
                                 o.success();
 
                             }
@@ -411,7 +422,7 @@
                 }
                 return o;
             };
-            o.error      = function (data) {
+            o.error = function (data) {
                 if (!data) return false;
                 o.state = 'error';
                 console.log(o.id + ':' + data.msg);
@@ -421,7 +432,7 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'error');
                 return o;
             };
-            o.success    = function () {
+            o.success = function () {
                 o.updateMenu();
                 /*deal style class*/
                 o.dom.removeClass('cancel wait error run');
@@ -429,14 +440,14 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'success');
                 return o;
             };
-            o.wait       = function () {
+            o.wait = function () {
                 o.state = 'wait';
                 /*deal style class*/
                 o.dom.removeClass('cancel success error run');
                 if (!o.dom.hasClass('wait')) o.dom.addClass('wait');
                 return o;
             };
-            o.cancel     = function () {
+            o.cancel = function () {
                 o.state = 'cancel';
                 /*deal style class*/
                 o.dom.removeClass('wait success error run');
@@ -444,11 +455,11 @@
                 Live.bet[o.which + '_queue'].pushQueue(Live.bet[o.which + '_queue'].run.shift(), 'cancel');
                 return o;
             };
-            o.destory    = function () {
+            o.destory = function () {
                 o.dom.remove();
                 o.dom = undefined;
             };
-            o.dealWith   = function (data) {
+            o.dealWith = function (data) {
                 switch (o.state) {
                     case 'cancel':
                         o.cancel();
@@ -471,13 +482,13 @@
         };
 
         Live.bet = {
-            times           : 0,
-            stop            : false,
-            hasInit         : false,
-            hasShow         : false,
-            blue_queue      : new Live.Queue('blue'),
-            red_queue       : new Live.Queue('red'),
-            checkBetStatus  : function (callback) {
+            times: 0,
+            stop: false,
+            hasInit: false,
+            hasShow: false,
+            blue_queue: new Live.Queue('blue'),
+            red_queue: new Live.Queue('red'),
+            checkBetStatus: function (callback) {
                 /*check bet*/
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
@@ -497,7 +508,7 @@
                     if (typeof callback == 'function') callback();
                 });
             },
-            canBet          : function (bet) {
+            canBet: function (bet) {
                 if (bet.isBet == false) {
                     if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.disable();
@@ -506,7 +517,7 @@
                     return false;
                 } else return true;
             },
-            betOn           : function (bet) {
+            betOn: function (bet) {
                 if (bet.betStatus == false) {
                     if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) {
                         Live.bet.hide();
@@ -516,7 +527,7 @@
                     return false;
                 } else return true;
             },
-            checkQueue      : function () {
+            checkQueue: function () {
                 Live.bet.cancelCheck();
                 if (Live.bet.stop) Live.bet.stopBet();
                 /*check wait queue*/
@@ -541,18 +552,18 @@
                 }
             },
             hide_quiz_helper: function () {
-                Live.bet.hasShow            = false;
+                Live.bet.hasShow = false;
                 Live.bet.quiz_helper_height = Live.bet.quiz_helper.height();
-                Live.bet.quiz_helper.animate({"height": "0px"});
+                Live.bet.quiz_helper.animate({ "height": "0px" });
             },
             show_quiz_helper: function () {
                 Live.bet.hasShow = true;
-                if (Live.bet.quiz_helper_height == undefined)Live.bet.quiz_helper_height = 'auto';
-                Live.bet.quiz_helper.animate({height: Live.bet.quiz_helper_height}, function () {
+                if (Live.bet.quiz_helper_height == undefined) Live.bet.quiz_helper_height = 'auto';
+                Live.bet.quiz_helper.animate({ height: Live.bet.quiz_helper_height }, function () {
                     Live.bet.quiz_helper.css('height', 'auto');
                 });
             },
-            init            : function () {
+            init: function () {
                 /*check login*/
                 if (!Live.get('helper_userInfo', 'login')) return;
 
@@ -561,42 +572,35 @@
 
                 /*create quiz helper DOM*/
                 if (!Live.bet.hasInit) {
-                    Live.bet.quiz_panel    = $('#quiz-control-panel');
-                    Live.bet.quiz_helper   = $('<div id="quiz_helper"></div>');
-                    Live.bet.quiz_rate     = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
-                    Live.bet.quiz_rate_n   = $('<span class="rate_n">1</span>');
-                    Live.bet.quiz_number   = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
-                    Live.bet.quiz_msg      = $('<span class="msg"></span>');
-                    Live.bet.quiz_btns     = $('<div class="bet-buy-btns p-relative clear-float"></div>');
+                    Live.bet.quiz_panel = $('#quiz-control-panel');
+                    Live.bet.quiz_helper = $('<div id="quiz_helper"></div>');
+                    Live.bet.quiz_rate = $('<input type="range" class="rate" min="0" max="9.9" step="0.1" />').val(1);
+                    Live.bet.quiz_rate_n = $('<span class="rate_n">1</span>');
+                    Live.bet.quiz_number = $('<input class="number" type="text" placeholder="数额" min="1" maxlength="8" required="required" />');
+                    Live.bet.quiz_msg = $('<span class="msg"></span>');
+                    Live.bet.quiz_btns = $('<div class="bet-buy-btns p-relative clear-float"></div>');
                     Live.bet.quiz_blue_btn = $('<button class="bet-buy-btn blue float-left" data-target="a" data-type="silver">填坑</button>');
-                    Live.bet.quiz_red_btn  = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
-                    Live.bet.description   = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
+                    Live.bet.quiz_red_btn = $('<button class="bet-buy-btn pink float-right" data-target="b" data-type="silver">填坑</button>');
+                    Live.bet.description = $('<a class="description" title="自动下注功能会根据您填写的赔率及下注数额和实时的赔率及可购买量进行不停的比对，一旦满足条件则自动买入\n当实时赔率大于等于目标赔率且有购买量时自动买入"><i class="help-icon"></i></a>');
                     Live.bet.quiz_btns.append(Live.bet.quiz_blue_btn, Live.bet.quiz_red_btn);
 
                     /*count panel*/
                     Live.bet.count_panel = $('<div>').addClass('quiz-panel');
-                    Live.bet.blue_box    = $('<div>').addClass('blue-box');
-                    Live.bet.red_box     = $('<div>').addClass('red-box');
+                    Live.bet.blue_box = $('<div>').addClass('blue-box');
+                    Live.bet.red_box = $('<div>').addClass('red-box');
 
-                    Live.bet.sum_box         = $('<div>').addClass('sum-sbox');
+                    Live.bet.sum_box = $('<div>').addClass('sum-sbox');
                     Live.bet.blue_sum_number = $('<div>').addClass('blue-sum-number');
                     Live.bet.blue_sum_income = $('<div>').addClass('blue-sum-income');
-                    Live.bet.red_sum_number  = $('<div>').addClass('red-sum-number');
-                    Live.bet.red_sum_income  = $('<div>').addClass('red-sum-income');
-                    Live.bet.blue_sum_box    = $('<div>').addClass('blue-sum-sbox');
-                    Live.bet.red_sum_box     = $('<div>').addClass('red-sum-box');
+                    Live.bet.red_sum_number = $('<div>').addClass('red-sum-number');
+                    Live.bet.red_sum_income = $('<div>').addClass('red-sum-income');
+                    Live.bet.blue_sum_box = $('<div>').addClass('blue-sum-sbox');
+                    Live.bet.red_sum_box = $('<div>').addClass('red-sum-box');
 
                     Live.bet.blue_sum_box.append(Live.bet.blue_sum_number, Live.bet.blue_sum_income);
                     Live.bet.red_sum_box.append(Live.bet.red_sum_number, Live.bet.red_sum_income);
-                    Live.bet.sum_box.append(
-                        Live.bet.blue_sum_box,
-                        Live.bet.red_sum_box
-                    );
-
-                    Live.bet.count_panel.append(
-                        Live.bet.blue_box,
-                        Live.bet.red_box
-                    );
+                    Live.bet.sum_box.append(Live.bet.blue_sum_box, Live.bet.red_sum_box);
+                    Live.bet.count_panel.append(Live.bet.blue_box, Live.bet.red_box);
 
                     Live.bet.quiz_helper.append(
                         Live.bet.count_panel,
@@ -645,7 +649,7 @@
                         Live.initUserInfo();
                     });
                     Live.bet.quiz_number.keyup(function () {
-                        var v      = $(this).val();
+                        var v = $(this).val();
                         var silver = parseInt(Live.get('helper_userInfo', 'silver'));
                         while (v != '' && isNaN(v)) {
                             $(this).val(v.substr(0, v.length - 1));
@@ -662,11 +666,10 @@
                 Live.bet.hasInit = true;
                 Live.bet.show();
             },
-            getBet          : function () {
-                return $.post('http://live.bilibili.com/bet/getRoomBet', {roomid: Live.getRoomId()}, function () {
-                }, 'json').promise();
+            getBet: function () {
+                return $.post('http://live.bilibili.com/bet/getRoomBet', { roomid: Live.getRoomId() }, function () {}, 'json').promise();
             },
-            do              : function () {
+            do: function () {
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
                     /*no bet permission or bet is not on*/
@@ -677,20 +680,20 @@
                     }
                     /*deal with run queue*/
                     var blue = Live.bet.blue_queue.run[0];
-                    var red  = Live.bet.red_queue.run[0];
-                    if (blue)blue.dealWith(bet);
+                    var red = Live.bet.red_queue.run[0];
+                    if (blue) blue.dealWith(bet);
                     if (red) red.dealWith(bet);
                     Live.bet.checkQueue();
                 });
             },
-            cancel          : function (check) {
+            cancel: function (check) {
                 if (Live.bet.hasInit) {
                     Live.bet.quiz_helper.children('input,div').removeClass('hide');
                     Live.clearLocalStorage();
                 }
-                if (check)Live.bet.check();
+                if (check) Live.bet.check();
             },
-            hide            : function (all) {
+            hide: function (all) {
                 if (Live.bet.hasInit) {
                     if (all) {
                         Live.bet.quiz_toggle_btn.removeClass('on');
@@ -700,7 +703,7 @@
                     Live.bet.hide_quiz_helper();
                 }
             },
-            show            : function () {
+            show: function () {
                 if (Live.bet.hasInit) {
                     $('.bet-buy-ctnr.dp-none').find('.bet-buy-btns').addClass('hide');
                     $('#quiz-control-panel').find('.section-title').append(Live.bet.description);
@@ -708,17 +711,17 @@
                     Live.bet.show_quiz_helper();
                 }
             },
-            stopBet         : function () {
+            stopBet: function () {
                 clearInterval(Live.get('helper_live_bet', Live.getRoomId()));
                 Live.del('helper_live_bet', Live.getRoomId());
             },
-            able            : function () {
+            able: function () {
                 Live.bet.stop = false;
                 Live.set('helper_live_autoMode', Live.getRoomId(), 1);
                 if (Live.bet.hasInit) Live.bet.show();
                 Live.bet.check();
             },
-            disable         : function () {
+            disable: function () {
                 if (Live.bet.hasInit) {
                     Live.bet.stopBet();
                     Live.bet.cancelCheck();
@@ -730,13 +733,13 @@
                     Live.bet.red_queue.empty();
                 }
             },
-            check           : function () {
+            check: function () {
                 if (!Live.get('helper_live_check', Live.getRoomId())) {
                     Live.bet.checkBetStatus();
                     Live.set('helper_live_check', Live.getRoomId(), setInterval(Live.bet.checkBetStatus, 3000));
                 }
             },
-            cancelCheck     : function () {
+            cancelCheck: function () {
                 clearInterval(Live.get('helper_live_check', Live.getRoomId()));
                 Live.del('helper_live_check', Live.getRoomId());
             }
@@ -745,23 +748,23 @@
         Live.currentRoom = [];
 
         Live.treasure = {
-            vote           : undefined,
-            minute         : undefined,
-            silver         : undefined,
-            totalTimes     : 3,
-            correctStr     : {'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6, 'i':1, 'I':1},
-            init           : function () {
+            vote: undefined,
+            minute: undefined,
+            silver: undefined,
+            totalTimes: 3,
+            correctStr: { 'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6, 'i': 1, 'I': 1 },
+            init: function () {
                 chrome.extension.sendMessage({
                     command: "getTreasure"
                 }, function (response) {
                     $('#head-info-panel').append($('<div class="room-info treasure-info">自动领瓜子功能正在初始化</div>'));
                     if (response['data'].roomId == undefined) {
-                        Live.treasure.canvas        = document.createElement('canvas');
-                        Live.treasure.canvas.width  = 120;
+                        Live.treasure.canvas = document.createElement('canvas');
+                        Live.treasure.canvas.width = 120;
                         Live.treasure.canvas.height = 40;
                         document.body.appendChild(Live.treasure.canvas);
-                        Live.treasure.context              = Live.treasure.canvas.getContext('2d');
-                        Live.treasure.context.font         = '40px agencyfbbold';
+                        Live.treasure.context = Live.treasure.canvas.getContext('2d');
+                        Live.treasure.context.font = '40px agencyfbbold';
                         Live.treasure.context.textBaseline = 'top';
                         if (!window.OCRAD) {
                             var d = document.createElement('script');
@@ -776,6 +779,7 @@
                             });
                             console.log(0);
                         });
+                        Live.get('silverSum', Live.get('helper_userInfo', 'username'), 0);
                     } else if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     } else if (response['data'].roomId != Live.getRoomId()) {
@@ -788,18 +792,18 @@
                 });
             },
             correctQuestion: function (question) {
-                var q = '', question = question.trim();
+                var q = '',
+                    question = question.trim();
                 for (var i in question) {
                     var a = Live.treasure.correctStr[question[i]];
                     q += (a != undefined ? a : question[i]);
                 }
                 return q;
             },
-            getCurrentTask : function () {
-                return $.post('http://live.bilibili.com/FreeSilver/getCurrentTask', {r: Math.random}, function () {
-                }, 'json').promise();
+            getCurrentTask: function () {
+                return $.post('http://live.bilibili.com/FreeSilver/getCurrentTask', { r: Math.random }, function () {}, 'json').promise();
             },
-            checkTask      : function () {
+            checkTask: function () {
                 if (Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                     $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
                     Live.treasure.completed = true;
@@ -809,10 +813,10 @@
                     if (data.code == -101) {
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('没有登录');
-                    } else if(data.code == -99){//领奖信息不存在
+                    } else if (data.code == -99) { //领奖信息不存在
                         clearInterval(Live.treasure.interval);
                         $('#head-info-panel').find('.treasure-info').html('领奖信息不存在 或 其他错误');
-                    } else if (data.code == -10017) {//领完
+                    } else if (data.code == -10017) { //领完
                         clearInterval(Live.treasure.interval);
                         if (!Live.get('noTreasure', Live.get('helper_userInfo', 'username'))) {
                             var msg = new Notification("今天所有的宝箱已经领完!", {
@@ -821,7 +825,7 @@
                             });
                             setTimeout(function () {
                                 msg.close();
-                            }, 5000);
+                            }, 10000);
                         }
                         Live.set('noTreasure', Live.get('helper_userInfo', 'username'), true);
                         $('#head-info-panel').find('.treasure-info').html('今天的瓜子已经领完');
@@ -833,13 +837,13 @@
                                 Live.getRoomInfo().done(function (data) {
                                     chrome.extension.sendMessage({
                                         command: "setTreasure",
-                                        data   : {
-                                            uid        : data.data.UID,
-                                            roomId     : data.data.ROOMID,
+                                        data: {
+                                            uid: data.data.UID,
+                                            roomId: data.data.ROOMID,
                                             roomShortId: location.pathname.substr(1),
-                                            roomTitle  : data.data.ROOMTITLE,
-                                            upName     : data.data.ANCHOR_NICK_NAME,
-                                            url        : location.href
+                                            roomTitle: data.data.ROOMTITLE,
+                                            upName: data.data.ANCHOR_NICK_NAME,
+                                            url: location.href
                                         }
                                     });
                                     $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
@@ -850,7 +854,7 @@
                                     Live.set('noTreasure', Live.get('helper_userInfo', 'username'), false);
                                     setTimeout(function () {
                                         msg.close();
-                                    }, 5000);
+                                    }, 10000);
                                 });
                             if (Live.treasure.vote != data.data.vote && Live.treasure.vote != undefined) {
                                 var msg = new Notification("自动领取成功", {
@@ -859,23 +863,24 @@
                                 });
                                 setTimeout(function () {
                                     msg.close();
-                                }, 5000);
+                                }, 10000);
                                 if (Live.get('silverSum', Live.get('helper_userInfo', 'username'))) {
-                                    Live.set('silverSum', Live.get('silverSum', Live.get('helper_userInfo', 'username')) + Live.treasure.silver);
-                                }
+                                    console.log(Live.get('silverSum', Live.get('helper_userInfo', 'username')));
+                                    Live.set('silverSum', Live.get('helper_userInfo', 'username'), parseInt(Live.get('silverSum', Live.get('helper_userInfo', 'username'))) + Live.treasure.silver);
+                                } else Live.set('silverSum', Live.get('helper_userInfo', 'username'), '0');
                             }
-                            Live.treasure.vote     = data.data.vote;
-                            Live.treasure.times    = data.data.times;
-                            Live.treasure.minute   = data.data.minute;
-                            Live.treasure.silver   = data.data.silver;
+                            Live.treasure.vote = data.data.vote;
+                            Live.treasure.times = data.data.times;
+                            Live.treasure.minute = data.data.minute;
+                            Live.treasure.silver = data.data.silver;
                             Live.treasure.interval = setInterval(Live.treasure.do, 3000);
                         }
                     }
                 });
             },
-            do             : function () {
+            do: function () {
                 if ($('.treasure-count-down').text() == '00:00') {
-                    if($('.treasure-box.animate1').css('display') == 'none') $('.treasure-count-down').click();
+                    if ($('.treasure-box.animate1').css('display') == 'none') $('.treasure-count-down').click();
                     $(".treasure-box").off('click').on('click', function () {
                         var img = document.getElementById('captchaImg');
                         if (img && img.onload == undefined)
@@ -885,7 +890,7 @@
                                 Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
                                 Live.treasure.context.drawImage(img, 0, 0);
                                 Live.treasure.question = Live.treasure.correctQuestion(OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40)));
-                                Live.treasure.answer   = eval(Live.treasure.question);
+                                Live.treasure.answer = eval(Live.treasure.question);
                                 $('#freeSilverCaptchaInput').val(Live.treasure.answer);
                                 $("#getFreeSilverAward").click();
                                 Live.treasure.checkTask();
@@ -893,65 +898,65 @@
                     }).click();
                 } else if ($('.treasure-box-panel').css('display') != 'none') {
                     $(".acknowledge-btn").click();
-                }else if ($('.treasure-box.animate1').css('display') != 'none') {
+                } else if ($('.treasure-box.animate1').css('display') != 'none') {
                     $(".close-treasure-box").click();
                 }
             }
         };
 
         Live.chat = {
-            maxLength : 20,
-            text      : '',
-            colorValue: {'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800'},
-            hideStyle:{
-                gift:{
-                    title:'礼物信息',
-                    css:'#chat-msg-list .gift-msg{display:none;}',
-                    value:'off'
+            maxLength: 20,
+            text: '',
+            colorValue: { 'white': '0xffffff', 'red': '0xff6868', 'blue': '0x66ccff', 'blue-2': '0x006098', 'cyan': '0x00fffc', 'green': '0x7eff00', 'yellow': '0xffed4f', 'orange': '0xff9800' },
+            hideStyle: {
+                gift: {
+                    title: '礼物信息',
+                    css: '#chat-msg-list .gift-msg{display:none;}',
+                    value: 'off'
                 },
-                vipEnterMsg:{
-                    title:'老爷进场',
-                    css:'#chat-msg-list .system-msg{padding:0 10px;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,.system-msg .admin.square-icon,#chat-msg-list .system-msg .v-middle{display: none;}',
-                    value:'off'
+                vipEnterMsg: {
+                    title: '老爷进场',
+                    css: '#chat-msg-list .system-msg{padding:0 10px;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,.system-msg .admin.square-icon,#chat-msg-list .system-msg .v-middle{display: none;}',
+                    value: 'off'
                 },
-                liveTitleIcon:{
-                    title:'成就头衔',
-                    css:'#chat-msg-list .chat-msg .live-title-icon{display:none;}',
-                    value:'off'
+                liveTitleIcon: {
+                    title: '成就头衔',
+                    css: '#chat-msg-list .chat-msg .live-title-icon{display:none;}',
+                    value: 'off'
                 },
-                mediaIcon:{
-                    title:'粉丝勋章',
-                    css:'#chat-msg-list .chat-msg .medal-icon{display:none;}',
-                    value:'off'
+                mediaIcon: {
+                    title: '粉丝勋章',
+                    css: '#chat-msg-list .chat-msg .medal-icon{display:none;}',
+                    value: 'off'
                 },
-                userLevel:{
-                    title:'用户等级',
-                    css:'#chat-msg-list .chat-msg .user-level-icon{display:none;}',
-                    value:'off'
+                userLevel: {
+                    title: '用户等级',
+                    css: '#chat-msg-list .chat-msg .user-level-icon{display:none;}',
+                    value: 'off'
                 },
-                chatBg:{
-                    title:'聊天背景',
-                    css:'#chat-list-ctnr{background:#f8f8f8;}',
-                    value:'off'
+                chatBg: {
+                    title: '聊天背景',
+                    css: '#chat-list-ctnr{background:#f8f8f8;}',
+                    value: 'off'
                 },
-                superGift:{
-                    title:'礼物连击',
-                    css:'.super-gift-ctnr{display:none;}',
-                    value:'off'
+                superGift: {
+                    title: '礼物连击',
+                    css: '.super-gift-ctnr{display:none;}',
+                    value: 'off'
                 },
-                announcement:{
-                    title:'系统通告',
-                    css:'#chat-msg-list .announcement-container{display:none;}',
-                    value:'off'
+                announcement: {
+                    title: '系统通告',
+                    css: '#chat-msg-list .announcement-container{display:none;}',
+                    value: 'off'
                 }
             },
-            displayStatus:[],
-            init      : function () {
+            displayStatus: [],
+            init: function () {
                 Live.chat.chat_ctrl_panel = $('#chat-ctrl-panel');
                 Live.chat.counter = Live.chat.chat_ctrl_panel.find('.danmu-length-count');
                 chrome.extension.sendMessage({
                     command: "getOption",
-                    key    : 'danmu',
+                    key: 'danmu',
                 }, function (response) {
                     if (response['value'] == 'on') {
                         $('#chat-ctrl-panel').append($('<div class="room-silent-merge dp-none p-absolute p-zero help-chat-shade" style="display:block;"><p><span class="hint-text"></span>弹幕增强功能正在初始化</p></div>'));
@@ -960,51 +965,51 @@
                 });
                 chrome.extension.sendMessage({
                     command: "getOption",
-                    key    : 'chatDisplay',
+                    key: 'chatDisplay',
                 }, function (response) {
                     if (response['value'] == 'on') {
                         Live.chat.initChatDisplay(true);
                     }
                 });
             },
-            do        : function () {
+            do: function () {
                 if (Live.chat.text.length > 0) {
                     var colorStr = $('.color-select-panel').find('a.active').attr('class').split(' ')[1];
                     $("#player_object")[0].sendMsg(Live.chat.text.substr(0, Live.chat.maxLength), Live.chat.colorValue[colorStr]);
                     Live.chat.text = Live.chat.text.substr(Live.chat.maxLength);
-                    if (Live.chat.text.length > 0)setTimeout(function () {
+                    if (Live.chat.text.length > 0) setTimeout(function () {
                         Live.chat.do();
                     }, 4000);
                 }
             },
-            initDanmu:function(){
+            initDanmu: function () {
                 //init & hide original ui
                 var original_emoji_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .emoji');
-                var helper_emoji_btn   = original_emoji_btn.clone().addClass('helper-emoji');
+                var helper_emoji_btn = original_emoji_btn.clone().addClass('helper-emoji');
                 original_emoji_btn.before(helper_emoji_btn).remove();
 
                 var original_emoji_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .emoji-panel');
-                var helper_emoji_list   = original_emoji_list.clone().addClass('helper-emoji-list');
+                var helper_emoji_list = original_emoji_list.clone().addClass('helper-emoji-list');
                 original_emoji_list.before(helper_emoji_list).remove();
 
                 var original_hot_words_btn = Live.chat.chat_ctrl_panel.find('.chat-ctrl-btns .btns .hot-words');
-                var helper_hot_words_btn   = original_hot_words_btn.clone().addClass('helper-hot-words');
+                var helper_hot_words_btn = original_hot_words_btn.clone().addClass('helper-hot-words');
                 original_hot_words_btn.before(helper_hot_words_btn).remove();
 
                 var original_hot_words_list = Live.chat.chat_ctrl_panel.find('.ctrl-panels .hot-words-panel');
-                var helper_hot_words_list   = original_hot_words_list.clone().addClass('helper-hot-words-list');
+                var helper_hot_words_list = original_hot_words_list.clone().addClass('helper-hot-words-list');
                 original_hot_words_list.before(helper_hot_words_list).remove();
 
                 var original_text_area = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-textbox');
-                Live.chat.maxLength    = original_text_area.attr('maxlength');
-                Live.chat.helper_text_area   = original_text_area.clone().addClass('helper-text-area').removeAttr('maxlength');
+                Live.chat.maxLength = original_text_area.attr('maxlength');
+                Live.chat.helper_text_area = original_text_area.clone().addClass('helper-text-area').removeAttr('maxlength');
                 original_text_area.before(Live.chat.helper_text_area).remove();
 
                 var original_send_btn = Live.chat.chat_ctrl_panel.find('.danmu-sender #danmu-send-btn');
-                var helper_send_btn   = original_send_btn.clone().addClass('helper-send-btn');
+                var helper_send_btn = original_send_btn.clone().addClass('helper-send-btn');
                 original_send_btn.before(helper_send_btn).remove();
 
-                Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel'))>=20?30:20;
+                Live.chat.maxLength = parseInt(Live.get('helper_userInfo', 'userLevel')) >= 20 ? 30 : 20;
 
                 Live.chat.counter.text('0 / 1 + 0');
 
@@ -1012,6 +1017,7 @@
                 helper_emoji_btn.on('click', function () {
                     if (helper_emoji_list.css('display') == 'none') {
                         helper_emoji_list.show();
+
                         function n(t) {
                             var e = t && (t.target || t.srcElement);
                             e && e.className.indexOf("emoji-panel") > -1 || $(".emoji-panel").fadeOut(200, function () {
@@ -1026,6 +1032,7 @@
                 helper_hot_words_btn.on('click', function () {
                     if (helper_hot_words_list.css('display') == 'none') {
                         helper_hot_words_list.show();
+
                         function n(t) {
                             var e = t && (t.target || t.srcElement);
                             e && e.className.indexOf("hot-words-panel") > -1 || $(".hot-words-panel").fadeOut(200, function () {
@@ -1041,12 +1048,12 @@
                 helper_send_btn.on('click', function (e) {
                     e.preventDefault();
                     if (Live.chat.helper_text_area.val() != '') {
-                        if(Live.chat.text.length ==0){
+                        if (Live.chat.text.length == 0) {
                             Live.chat.text = Live.chat.helper_text_area.val().trim();
                             Live.chat.helper_text_area.val('');
                             Live.chat.do();
-                        }else{
-                            Live.chat.text +=Live.chat.helper_text_area.val();
+                        } else {
+                            Live.chat.text += Live.chat.helper_text_area.val();
                             Live.chat.helper_text_area.val('');
                         }
                     } else Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
@@ -1058,13 +1065,13 @@
                         Live.sendMsg(helper_send_btn, 'info', '请输入弹幕后再发送~');
                         Live.chat.helper_text_area.val('');
                         return false;
-                    }else if (e.keyCode === 13 && text != '') {
+                    } else if (e.keyCode === 13 && text != '') {
                         e.preventDefault();
-                        if(Live.chat.text.length ==0){
-                            Live.chat.helper_text_area.val(text.substr(0,text.length));
+                        if (Live.chat.text.length == 0) {
+                            Live.chat.helper_text_area.val(text.substr(0, text.length));
                             helper_send_btn.click();
-                        }else{
-                            Live.chat.text +=text;
+                        } else {
+                            Live.chat.text += text;
                             Live.chat.helper_text_area.val('');
                             Live.chat.updateCounter('');
                         }
@@ -1072,7 +1079,7 @@
                     }
                     Live.chat.updateCounter(text);
                 });
-                Live.chat.helper_text_area.on('keyup',function(){
+                Live.chat.helper_text_area.on('keyup', function () {
                     var text = Live.chat.helper_text_area.val().trim();
                     var part = parseInt(text.length / Live.chat.maxLength);
                     Live.chat.updateCounter(text);
@@ -1089,118 +1096,127 @@
                     Live.chat.helper_text_area.focus();
                     Live.chat.updateCounter(Live.chat.helper_text_area.val().trim());
                 });
-                
+
                 //init has finished
                 Live.chat.chat_ctrl_panel.find('.help-chat-shade').hide('middle');
             },
-            initChatHelper:function(dsiplayList){
+            initChatHelper: function (dsiplayList) {
                 Live.chat.chat_ctrl_panel.find('#chatHelper').remove();
                 Live.chat.chatHelper = $('<div id="chatHelper"></div>');
                 Live.chat.chatDisplayBlock = $('<div class="chat-display"><h2 class="panel-title">屏蔽选项</h2></div>');
                 Live.chat.chatHelperWindow = $('<div id="chatHelperWindow" class="chat-helper-panel ctrl-panel"></div>').hide();
-                Live.each(Live.chat.hideStyle,function(i){
+                Live.each(Live.chat.hideStyle, function (i) {
                     var displayOption = $(
-                        '<div class="display-option">'+
-                            '<span class="title">'+ Live.chat.hideStyle[i].title + '</span>'+
-                            '<div class="option">'+
-                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='on'?' on':'') +'" option="on">屏蔽</div>'+
-                                '<div class="button ' + i + (Live.chat.hideStyle[i].value=='off'?' on':'') +'" option="off">显示</div>'+
-                            '</div>'+
+                        '<div class="display-option">' +
+                        '<span class="title">' + Live.chat.hideStyle[i].title + '</span>' +
+                        '<div class="option">' +
+                        '<div class="button ' + i + (Live.chat.hideStyle[i].value == 'on' ? ' on' : '') + '" option="on">屏蔽</div>' +
+                        '<div class="button ' + i + (Live.chat.hideStyle[i].value == 'off' ? ' on' : '') + '" option="off">显示</div>' +
+                        '</div>' +
                         '</div>');
                     Live.chat.chatDisplayBlock.append(displayOption);
                 });
                 Live.chat.chatHelperWindow.append(Live.chat.chatDisplayBlock);
-                Live.chat.chat_ctrl_panel.append(Live.chat.chatHelper,Live.chat.chatHelperWindow);
+                Live.chat.chat_ctrl_panel.append(Live.chat.chatHelper, Live.chat.chatHelperWindow);
                 Live.chat.chatHelper.off('click').on('click', function () {
                     if (Live.chat.chatHelperWindow.css('display') == 'none') {
                         Live.chat.chatHelperWindow.show();
+
                         function n(t) {
                             var e = t && (t.target || t.srcElement);
                             !$(e).hasClass('chat-helper-panel') && !$(e).parents('#chatHelperWindow').length &&
-                            $(".chat-helper-panel").fadeOut(200, function () {
-                                $(window).off("click", n);
-                            });
+                                $(".chat-helper-panel").fadeOut(200, function () {
+                                    $(window).off("click", n);
+                                });
                         }
                         setTimeout(function () {
                             $(window).on("click", n)
                         }, 1);
                     }
                 });
-                Live.chat.chatDisplayBlock.find('.display-option .option .button').off('click').on('click',function(){
+                Live.chat.chatDisplayBlock.find('.display-option .option .button').off('click').on('click', function () {
                     var displayOption = dsiplayList;
                     var classes = $(this).attr('class').split(' ')[1];
                     if ($(this).hasClass('on')) return false;
-                    $('.'+classes).removeClass('on');
+                    $('.' + classes).removeClass('on');
                     $(this).addClass('on');
                     var type = $(this).attr('option');
-                    if(type == "on"){
+                    if (type == "on") {
                         var index = displayOption.indexOf(classes);
-                        if(index == -1) displayOption.push(classes);
+                        if (index == -1) displayOption.push(classes);
                         Live.chat.hideStyle[classes].value = 'on';
-                    }else{
+                    } else {
                         var index = displayOption.indexOf(classes);
-                        if(index != -1) displayOption.splice(index,1);
+                        if (index != -1) displayOption.splice(index, 1);
                         Live.chat.hideStyle[classes].value = 'off';
                     }
                     chrome.extension.sendMessage({
                         command: "setOption",
-                        key    : 'displayOption',
-                        value  : JSON.stringify(displayOption)
+                        key: 'displayOption',
+                        value: JSON.stringify(displayOption)
                     });
                     Live.chat.initChatDisplay();
                 });
             },
-            initChatDisplay:function(isInit){
+            initChatDisplay: function (isInit) {
                 chrome.extension.sendMessage({
                     command: "getOption",
-                    key    : 'displayOption',
+                    key: 'displayOption',
                 }, function (response) {
-                    var dsiplayList = response['value'] && isInit ? JSON.parse(response['value']):Live.chat.hideStyle;
-                    Live.each(dsiplayList,function(i){
-                        if(!isInit){
-                            if(Live.chat.hideStyle[i].value =='off'){
-                                $('.chatDisplayStyle_'+i).remove();
-                            }else if($('.chatDisplayStyle_'+i).length == 0){
+                    var dsiplayList = response['value'] && isInit ? JSON.parse(response['value']) : Live.chat.hideStyle;
+                    Live.each(dsiplayList, function (i) {
+                        if (!isInit) {
+                            if (Live.chat.hideStyle[i].value == 'off') {
+                                $('.chatDisplayStyle_' + i).remove();
+                            } else if ($('.chatDisplayStyle_' + i).length == 0) {
                                 Live.chat.addStylesheet(i);
                             }
-                        }else{
+                        } else {
                             Live.chat.hideStyle[dsiplayList[i]].value = "on";
                             Live.chat.addStylesheet(dsiplayList[i]);
                         }
                     });
-                    if(isInit) Live.chat.initChatHelper(dsiplayList);
+                    if (isInit) Live.chat.initChatHelper(dsiplayList);
                 });
             },
-            addStylesheet:function(displayType){
+            addStylesheet: function (displayType) {
                 var styleElement = document.createElement("style");
-                styleElement.setAttribute("class", 'chatDisplayStyle_'+displayType);
+                styleElement.setAttribute("class", 'chatDisplayStyle_' + displayType);
                 styleElement.setAttribute("type", "text/css");
                 styleElement.appendChild(document.createTextNode(Live.chat.hideStyle[displayType].css));
                 if (document.head) document.head.appendChild(styleElement);
                 else document.documentElement.appendChild(styleElement);
             },
-            updateCounter:function(text){
+            updateCounter: function (text) {
                 var part = parseInt(text.length / Live.chat.maxLength);
-                var rest = part>0?text.length%Live.chat.maxLength:0;
-                Live.chat.counter.text(text.length + ' / ' + (part==0?1:part)+' + '+rest);
+                var rest = part > 0 ? text.length % Live.chat.maxLength : 0;
+                Live.chat.counter.text(text.length + ' / ' + (part == 0 ? 1 : part) + ' + ' + rest);
+            },
+            watchChatList: function () {
+                $('#chat-msg-list').on('DOMSubtreeModified', function (e) {
+                    var dom = $(this).find('.msg-item-ctnr:last-child');
+                    console.log(dom)
+                        //var name = dom.find('.user-name').text();
+                        //var msg = dom.find('.msg-content').text();
+                        //console.log(name,msg);
+                })
             }
         };
-
         Live.notise = {
             init: function () {
                 var upInfo = {};
                 Live.getRoomInfo().done(function (data) {
-                    upInfo.uid        = data.data.UID;
-                    upInfo.roomId     = data.data.ROOMID;
+                    upInfo.uid = data.data.UID;
+                    upInfo.roomId = data.data.ROOMID;
                     upInfo.roomShortI = location.pathname.substr(1);
-                    upInfo.roomTitle  = data.data.ROOMTITLE;
-                    upInfo.upName     = data.data.ANCHOR_NICK_NAME;
-                    upInfo.url        = location.href;
-                    var notiseBtn     = $('<div>').addClass('mid-part').append('<i class="live-icon-small favourite p-relative" style="top: 1px"></i><span>特别关注</span>').click(function () {
+                    upInfo.roomTitle = data.data.ROOMTITLE;
+                    upInfo.upName = data.data.ANCHOR_NICK_NAME;
+                    upInfo.url = location.href;
+                    var notiseBtn = $('<div>').addClass('mid-part').append('<i class="live-icon-small favourite p-relative" style="top: 1px"></i><span>特别关注</span>').click(function () {
                         if ($(this).find('i').hasClass('favourited')) {
                             chrome.extension.sendMessage({
                                 command: "setNotFavourite",
-                                id     : upInfo.roomId
+                                id: upInfo.roomId
                             }, function (response) {
                                 if (response.data) {
                                     notiseBtn.find('span').html('特别关注');
@@ -1210,9 +1226,9 @@
                         } else {
                             chrome.extension.sendMessage({
                                 command: "setFavourite",
-                                upInfo : upInfo
+                                upInfo: upInfo
                             }, function (response) {
-                                if (response.data)notiseBtn.find('span').html('已特别关注')
+                                if (response.data) notiseBtn.find('span').html('已特别关注')
                                 notiseBtn.find('i').addClass('favourited');
                             });
                         }
@@ -1230,10 +1246,10 @@
             }
         };
         Live.init = {
-            do:function(){
+            do: function () {
                 chrome.extension.sendMessage({
                     command: "getOption",
-                    key    : 'version',
+                    key: 'version',
                 }, function (response) {
                     Live.version = response.value;
                     $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒睡醒的肉啊</a></div>");
@@ -1245,7 +1261,7 @@
                     if (Live.get('helper_userInfo', 'login')) {
                         chrome.extension.sendMessage({
                             command: "getOption",
-                            key    : 'doSign',
+                            key: 'doSign',
                         }, function (response) {
                             if (response['value'] == 'on') Live.doSign.init();
                         });
@@ -1253,13 +1269,13 @@
                             Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
                             $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
                             Live.bet.quiz_toggle_btn.click(function () {
-                                if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1)Live.bet.disable();
+                                if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.disable();
                                 else Live.bet.able();
                             });
                             if (Live.get('helper_live_autoMode', Live.getRoomId()) == 1) Live.bet.check();
                             chrome.extension.sendMessage({
                                 command: "getOption",
-                                key    : 'autoTreasure',
+                                key: 'autoTreasure',
                             }, function (response) {
                                 if (response['value'] == 'on') setTimeout(Live.treasure.init, 2000);
                             });
@@ -1270,14 +1286,14 @@
                     }
                 });
             },
-            initStyle:function(){
+            initStyle: function () {
                 var l = $('document').find('#bilibiliHelperLive');
-                if(l.length)l.remove();
+                if (l.length) l.remove();
                 var styleLink = document.createElement("link");
                 styleLink.setAttribute("id", 'bilibiliHelperLive');
                 styleLink.setAttribute("type", "text/css");
                 styleLink.setAttribute("rel", "stylesheet");
-                styleLink.setAttribute('href',chrome.extension.getURL('live.min.css'));
+                styleLink.setAttribute('href', chrome.extension.getURL('live.min.css'));
                 if (document.head) document.head.appendChild(styleLink);
                 else document.documentElement.appendChild(styleLink);
             }
@@ -1285,10 +1301,3 @@
         Live.init.do();
     }
 })();
-//$('#chat-msg-list').on('DOMSubtreeModified',function(e){
-//    var dom = $(this);
-//    console.log(dom)
-//    //var name = dom.find('.user-name').text();
-//    //var msg = dom.find('.msg-content').text();
-//    //console.log(name,msg);
-//})

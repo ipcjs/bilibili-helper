@@ -24,7 +24,7 @@ module.exports = function(grunt) {
                     collapseWhitespace: true,
                     minifyCSS: true,
                     minifyJS: true,
-                    removeComments: true,
+                    removeComments: true
                 },
                 files: [{
                     expand: true,

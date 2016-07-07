@@ -16,18 +16,20 @@ $(document).ready(function () {
         }
     };
 
-    Live.get = function (n, k, v) {
+    Live.get = function(n, k, v) {
         if (!window.localStorage || !n) return;
 
         if (!window.localStorage[n]) {
-            window.localStorage[n] = JSON.stringify(v || {});
-            return JSON.parse(v);
+            var temp = {};
+            if (k != undefined && v != undefined) temp[k] = v;
+            window.localStorage[n] = JSON.stringify(temp);
         }
         var l = JSON.parse(window.localStorage[n]);
-        if (!k) return l;
-        if(l[k]== 'true' || l[k]== 'false')l[k] = JSON.parse(l[k]);
+        if (k == undefined) return l;
+        if (l[k] == 'true' || l[k] == 'false') l[k] = JSON.parse(l[k]);
         return l[k];
     };
+    
     Live.del = function (n, k) {
         if (!window.localStorage || n==undefined || window.localStorage[n]==undefined) return;
         if(k == undefined) {

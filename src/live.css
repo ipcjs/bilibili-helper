@@ -104,7 +104,7 @@
 #quiz-control-panel .bet_toggle {
     position: absolute;
     top: 1px;
-    right: -10px;
+    right: 20px;
     padding: 0 5px;
     color: #fff;
     background-color: #aaa;
