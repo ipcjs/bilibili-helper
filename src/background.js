@@ -435,7 +435,6 @@ function setTreasure(data) {
     }
 }
 function setWatcherRoom(data) {
-    console.log(data);
     if (Object.prototype.toString.call(data) === '[object Object]') {
         for (var index in data) {
             Live.watcherRoom[index] = data[index];
@@ -514,7 +513,6 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             });
             return true;
         case "setWatcherRoom":
-        console.log(request,request.data);
             setWatcherRoom(request.data);
             sendResponse({
                 data: Live.watcherRoom
