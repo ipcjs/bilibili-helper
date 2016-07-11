@@ -29,7 +29,8 @@ var defaultOptions = {
 	"favouritesList":"{}",
 	"chatDisplay":"on",
 	"displayOption":"[]",
-	"versionNotify":"on"
+	"versionNotify":"on",
+	"watcher":"off"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {

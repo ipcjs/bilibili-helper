@@ -86,5 +86,9 @@
   "notificationLiveOn": {
     "message": "开播啦",
     "description": "Noticefication: Live On"
+  },
+  "notificationGetTv": {
+    "message": "前往填写收货地址",
+    "description": "Noticefication: Live On"
   }
 }

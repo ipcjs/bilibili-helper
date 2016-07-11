@@ -23,7 +23,7 @@
     position: absolute;
     width: 76px;
     height: 44px;
-    top: -25px;
+    top: -45px;
     right: 0px;
     background-image: url(chrome-extension://kpbnombpnpcffllnianjibmpadjolanh/imgs/jinkela.png);
     background-repeat: no-repeat;
@@ -80,7 +80,7 @@
 }
 
 #quiz-control-panel .quiz_helper .rate:after {
-    content: '\u4f7f\u7528\u65b9\u5411\u952e\u201c\u2190\u201d\u548c\u201c\u2192\u201d\u8fdb\u884c\u5fae\u8c03';
+    content: "使用方向键“←”和“→”进行微调";
     font-size: 10px;
     position: absolute;
     left: 0;
@@ -360,11 +360,11 @@
     background-size: 127px
 }
 
-#head-info-panel .treasure-info {
+#head-info-panel .treasure-info,
+#head-info-panel .watcher-info {
     padding: 10px;
     background-color: #fff;
     position: absolute;
-    right: calc(100% + 5px);
     width: 38px;
     border-radius: 5px;
     border: 1px solid #ddd;
@@ -372,7 +372,16 @@
     top: -1px
 }
 
-#head-info-panel .treasure-info a {
+#head-info-panel .treasure-info {
+    right: calc(100% + 45px);
+}
+
+#head-info-panel .watcher-info {
+    right: calc(100% + 5px);
+}
+
+#head-info-panel .treasure-info a,
+#head-info-panel .watcher-info a {
     outline: 0;
     color: #4fc1e9;
     text-decoration: none;
@@ -380,7 +389,8 @@
     display: inline-block
 }
 
-#head-info-panel .treasure-info a:hover {
+#head-info-panel .treasure-info a:hover,
+#head-info-panel .watcher-info a:hover {
     color: #f25d8e
 }
 

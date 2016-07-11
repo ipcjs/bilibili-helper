@@ -79,6 +79,7 @@ $(document).ready(function () {
         $(".display-option .option ."+options[i]+"[option=\"off\"]").removeClass("on");
         $(".display-option .option ."+options[i]+"[option=\"on\"]").addClass("on");
     });
+    $("div[option=\"" + bkg_page.getOption("watcher") + "\"].watcher").addClass("on");
 
     var adOption = bkg_page.getOption("ad");
     $("div[option=\"" + adOption + "\"].ad").addClass("on");
@@ -215,6 +216,13 @@ $(document).ready(function () {
             if(index != -1) displayOption.splice(index,1);
         }
         bkg_page.setOption("displayOption", JSON.stringify(displayOption));
+    });
+    $('.watcher').click(function () {
+        if ($(this).hasClass('on')) return false;
+        $('.watcher').removeClass('on');
+        $(this).addClass('on');
+        bkg_page.setOption("watcher", $(this).attr("option"));
+        // updatepreview();
     });
     function initUpList() {
         var list    = Live.get('favouritesList');
