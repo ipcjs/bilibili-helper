@@ -42,6 +42,7 @@ Live.setInterval(window.protocol, function () {
         });
         setTimeout(function () {
             msg.close();
+        }, 5000);
     }, 500);
     Live.setInterval(window.protocol.TV_END, function () {
         var b = window.protocol.TV_END;
