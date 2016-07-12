@@ -5,12 +5,17 @@
     if (location.hostname == 'live.bilibili.com') {
 
         var Live = {};
-        Live.addScriptByfile = function (fileName) {
+        Live.addScriptByFile = function (fileName) {
             var a = document.createElement('script');
             a.src = chrome.extension.getURL(fileName);
             document.body.appendChild(a);
         }
-
+        Live.addScriptByText = function (text) {
+            var a = document.createElement('script');
+            a.innerHTML = text;
+            document.body.appendChild(a);
+        }
+        Live.addScriptByText('(function(){var a=function(f,d,c){if(!window.localStorage||!f){return}var e=window.localStorage;if(!e[f]){e[f]=JSON.stringify({})}var b=JSON.parse(e[f]);if(c==undefined){e[f]=typeof d=="string"?d.trim():JSON.stringify(d)}else{b[d]=typeof c=="string"?c.trim():JSON.stringify(c);e[f]=JSON.stringify(b)}};a("helper_live_roomId",ROOMURL,ROOMID);a("helper_live_rnd",ROOMURL,DANMU_RND)})();');
         Live.set = function (n, k, v) {
             if (!window.localStorage || !n) return;
             var storage = window.localStorage;
@@ -49,12 +54,12 @@
             window.localStorage[n] = JSON.stringify(l);
         };
         Live.getRoomHTML = function (url) {
-            return $.get('live.bilibili.com/' + url).promise();
+            return $.get('http://live.bilibili.com/' + url).promise();
         };
         Live.getRoomIdByUrl = function (url, callback) {
-            Live.getRoomHTML().done(function (roomHtml) {
-                var regStr = /var ROOMID = (\d+)/;
-                var roomID = regStr.exec(roomHtml)[1];
+            Live.getRoomHTML(url).done(function (roomHtml) {
+                var reg = new RegExp("var ROOMID = ([\\d]+)");
+                var roomID = reg.exec(roomHtml)[1];
                 if (typeof callback == 'function') callback(roomID);
             });
         };
@@ -161,6 +166,71 @@
             },
             helpless: function () {
                 return Live.randomEmoji.list.helpless[Math.floor(Math.random() * Live.randomEmoji.list.helpless.length)]
+            }
+        };
+
+        Live.console = {
+            info: function (type, json) {
+                if (type == 'danmu') {
+                    var danmu = json.info[1];
+                    var userId = json.info[2][0];
+                    var username = json.info[2][1];
+                    var userUL = json.info[4][0];
+                    var userULRank = json.info[4][1];
+                    console.log("%c弹幕:" + danmu + ' ID:' + userId + ' 用户名:' + username + ' 等级:' + userUL + ' 排名:' + userULRank, "color:#FFFFFF;background-color:#646c7a;padding:5px;border-radius:7px;line-height:30px;");
+                } else if (type == 'system') {
+                    // var a = {
+                    //     cmd: "SYS_MSG",
+                    //     msg: "【磨茶先生】在直播间【44515】赠送 小电视一个，请前往抽奖",
+                    //     rep: 1,
+                    //     styleType: 2,
+                    //     url: "http://live.bilibili.com/44515"
+                    // };
+                    var msg = json.msg;
+                    var url = json.url;
+                    Live.watcher.dealWithSysMsg(json);
+                    console.log("%c系统通告:" + msg + ' 地址:' + url, "color:#FFFFFF;background-color:#e74e8f;padding:5px;border-radius:7px;line-height:30px;");
+                } else if (type == 'tv_end') {
+                    // var a = {
+                    //     "cmd": "TV_END",
+                    //     "data": {
+                    //         "id": 5467,
+                    //         "sname": "机智的聪明蛋",
+                    //         "uname": "私生恋人Li"
+                    //     },
+                    //     "roomid": "20105"
+                    // };
+                    console.log(json);
+                } else if (type == 'tv') {
+                    console.log("%c小电视监控:"+json.msg,"color:#FFFFFF;background-color:#4fc1e9;padding:5px;border-radius:7px;line-height:30px;");
+                } else if (type == 'gift') {
+                    // var a = {
+                    //     "cmd": "SEND_GIFT",
+                    //     "data": {
+                    //         "giftName": "辣条",
+                    //         "num": 11,
+                    //         "uname": "墨颜曦",
+                    //         "rcost": 26870158,
+                    //         "uid": 7915142,
+                    //         "top_list": [],
+                    //         "timestamp": 1468160121,
+                    //         "giftId": 1,
+                    //         "giftType": 0,
+                    //         "action": "喂食",
+                    //         "super": 0,
+                    //         "price": 100,
+                    //         "rnd": "1468156041",
+                    //         "newMedal": 0,
+                    //         "medal": 1,
+                    //         "capsule": []
+                    //     },
+                    //     "roomid": 1029
+                    // };
+                    var gift = json.data['giftName'];
+                    var count = json.data['num'];
+                    var uname = json.data['uname'];
+                    console.log("%c喂食:" + gift + ' x' + count + ' 用户名:' + uname, "color:#FFFFFF;background-color:#ff8e29;padding:5px;border-radius:7px;line-height:30px;");
+                }
             }
         };
 
@@ -926,7 +996,7 @@
                 },
                 vipEnterMsg: {
                     title: '老爷进场',
-                    css: '#chat-msg-list .system-msg{padding:0 10px;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,.system-msg .admin.square-icon,#chat-msg-list .system-msg .v-middle{display: none;}',
+                    css: '#chat-msg-list .system-msg{padding:0 10px;height:auto;}#chat-msg-list .system-msg .live-icon,#chat-msg-list .system-msg .welcome,#chat-msg-list .system-msg .admin.square-icon,#chat-msg-list .system-msg .v-middle{display: none;}',
                     value: 'off'
                 },
                 liveTitleIcon: {
@@ -1256,17 +1326,17 @@
                             // sTvVM.isShowPanel = true;
                         }
                         // sTv.events.updatePanelsArr();
-                        console.log(result, '正在抽奖中');
+                        Live.console.info('tv',{msg:'正在抽奖中'});
                     }
                     if (result.code == 0 && result.data.lastid) { // 抽奖结束
                         // sTv.events.showSmallTvTips(result.data.lastid);
-                        console.log(result, '抽奖结束');
+                        Live.console.info('tv',{msg:'抽奖已经结束'});
                     } else {
+                        Live.console.info('tv',{msg:'正在获取抽奖信息'});
                         var unjoin = result.data.unjoin;
                         Live.each(unjoin, function (index) {
                             Live.smallTV.joinSmallTV(roomId, unjoin[index].id);
                         });
-                        console.log(result, '获取抽奖信息');
                     }
                 });
             },
@@ -1284,17 +1354,17 @@
                         setTimeout(function () {
                             msg.close();
                         }, 10000);
-                        console.log(result, '参加成功');
+                        Live.console.info('tv',{msg:'参加成功'});
                     } else if (result.code == 0 && result.data.status == 2) { // 参加的时候已经过了三百秒，但是还未计算出结果
                         // sTv.panels.drawingPanel.open();
-                        console.log(result, '参加的时候已经过了三百秒，但是还未计算出结果');
+                        Live.console.info('tv',{msg:'参加的时候已经过了三百秒，但是还未计算出结果'});
                     } else {
                         // sTv.panels.commonPanel("提示", result.msg);
-                        console.log(result, result.msg);
+                        Live.console.info('tv',{msg:result.msg});
                     }
                 });
             },
-            GetReward: function (tvId, roomId) {
+            getReward: function (tvId, roomId) {
                 $.getJSON('/SmallTV/getReward', { _: (new Date()).getTime(), id: tvId }).promise().then(function (result) {
                     if (result.code == 0 && result.data.status == 0) {
                         Live.smallTV.winResultPanel.open(result.data.reward, result.data.win);
@@ -1306,16 +1376,18 @@
                                 isWin: result.data.win
                             },
                         });
-                        console.log(result, '你居然中了小电视！');
+                        Live.console.info('tv',{msg:'你居然中了小电视'});
                     } else if (result.code == 0 && result.data.status == 1) {
                         // sTv.panels.commonPanel("抽奖过期", "非常抱歉，您错过了此次抽奖，下次记得早点来哦 (▔□▔)/");
-                        console.log(result, '非常抱歉，您错过了此次抽奖，下次记得早点来哦 (▔□▔)/');
+                        Live.console.info('tv',{msg:'非常抱歉，您错过了此次抽奖，下次记得早点来哦'});
                     } else if (result.code == 0 && result.data.status == 2) {
                         // sTv.panels.drawingPanel.open();
-                        console.log(result, result.msg);
+                        setTimeout(Live.smallTV.getReward(result.data.id, roomId), 2000);
+                        Live.console.info('tv',{msg:result.msg});
                     } else {
                         // sTv.panels.commonPanel("提示", result.msg);
                         console.log(result, result.msg);
+                        Live.console.info('tv',{msg:result.msg});
                     }
                 });
             },
@@ -1421,16 +1493,15 @@
                             });
                             console.log(0);
                         });
-                        Live.addScriptByfile('live-content-script.min.js');
+                        Live.addScriptByFile('live-content-script.min.js');
                         document.addEventListener("sendMessage", function (event) {
-                            var sendMessage = $('#bilibiliHelperMessage');
-                            try {
-                                var message = JSON.parse(sendMessage.text());
-                                if (!message.cmd) return false;
-                                Live.watcher.classify(message);
-                            } catch (e) {
-                                console.log(e);
-                            }
+                            // try {
+                            var message = Live.get('bilibili_helper_message');
+                            if (!message.cmd) return false;
+                            Live.watcher.classify(message);
+                            // } catch (e) {
+                            // console.log(e);
+                            // }
                         });
                         $('#head-info-panel').find('.watcher-info').html('该房间已开启监控功能');
                     } else {
@@ -1441,69 +1512,30 @@
             classify: function (json) {
                 switch (json.cmd) {
                     case 'DANMU_MSG':
-                        var danmu = json.info[1];
-                        var userId = json.info[2][0];
-                        var username = json.info[2][1];
-                        var userUL = json.info[4][0];
-                        var userULRank = json.info[4][1];
-                        console.log("%c弹幕:" + danmu + ' ID:' + userId + ' 用户名:' + username + ' 等级:' + userUL + ' 排名:' + userULRank, "color:#FFFFFF;background-color:#646c7a;padding:5px;border-radius:7px;line-height:30px;");
+                        Live.console.info('danmu',json);
                         break;
                     case 'SYS_MSG':
-                        dealWithSysMsg(json);
-                        console.log(json);
+                        Live.console.info('system',json);
                         break;
                     case 'TV_END':
-                        // var a = {
-                        //     "cmd": "TV_END",
-                        //     "data": {
-                        //         "id": 5467,
-                        //         "sname": "机智的聪明蛋",
-                        //         "uname": "私生恋人Li"
-                        //     },
-                        //     "roomid": "20105"
-                        // };
-                        console.log(json);
+                        Live.console.info('tv_end',json);
                         break;
                     case 'SEND_GIFT':
-                        // var a = {
-                        //     "cmd": "SEND_GIFT",
-                        //     "data": {
-                        //         "giftName": "辣条",
-                        //         "num": 11,
-                        //         "uname": "墨颜曦",
-                        //         "rcost": 26870158,
-                        //         "uid": 7915142,
-                        //         "top_list": [],
-                        //         "timestamp": 1468160121,
-                        //         "giftId": 1,
-                        //         "giftType": 0,
-                        //         "action": "喂食",
-                        //         "super": 0,
-                        //         "price": 100,
-                        //         "rnd": "1468156041",
-                        //         "newMedal": 0,
-                        //         "medal": 1,
-                        //         "capsule": []
-                        //     },
-                        //     "roomid": 1029
-                        // };
-                        var gift = json.data['giftName'];
-                        var count = json.data['num'];
-                        var uname = json.data['uname'];
-                        console.log("%c喂食:" + gift + ' x' + count + ' 用户名:' + uname, "color:#FFFFFF;background-color:#ff8e29;padding:5px;border-radius:7px;line-height:30px;");
+                        Live.console.info('gift',json);
                         break;
                 }
             },
             dealWithSysMsg: function (json) {
-                if (json.msg.chatAt(0) == "【" && json.url != "" && json.rep == 1 && json.styleType == 2) { //smallTV
-                    var reg = new RegExp('/【([\u4E00-\u9FA5|\w]+)】在直播间【([\d]+)】赠送 小电视一个，请前往抽奖/');
-                    var res = reg.test(msg);
+                var msg = json.msg;
+                if (msg[0] == "【" && json.url != "" && json.rep == 1 && json.styleType == 2) { //smallTV
+                    var reg = new RegExp("【([\\S]+)】在直播间【([\\d]+)】");
+                    var res = reg.exec(msg);
                     var user = res[1];
                     var roomUrl = res[2];
                     Live.getRoomIdByUrl(roomUrl, function (roomId) {
                         Live.smallTV.getSmallTV(roomId);
                     });
-                } else if (json.msg.chatAt(0) == "恭" && json.url == "" && json.rep == 1 && json.styleType == 2) { //get smallTV
+                } else if (msg[0] == "恭" && json.url == "" && json.rep == 1 && json.styleType == 2) { //get smallTV
 
                 }
             }

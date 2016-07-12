@@ -1,13 +1,4 @@
-if (window.localStorage) {
-    if (!window.localStorage.helper_live_roomId) { window.localStorage.helper_live_roomId = JSON.stringify({}); }
-    var l = JSON.parse(window.localStorage.helper_live_roomId);
-    l[ROOMURL] = ROOMID;
-    window.localStorage.helper_live_roomId = JSON.stringify(l);
-    if (!window.localStorage.helper_live_rnd) { window.localStorage.helper_live_rnd = JSON.stringify({}); }
-    var r = JSON.parse(window.localStorage.helper_live_rnd);
-    r[ROOMURL] = DANMU_RND;
-    window.localStorage.helper_live_rnd = JSON.stringify(r);
-}
+
 var Live = {
     setInterval: function (object, func, timeout) {
         var a = setInterval(function () {
@@ -17,17 +8,25 @@ var Live = {
             }
         }, timeout);
     },
-    extensionId: 'kpbnombpnpcffllnianjibmpadjolanh'
+    set : function (n, k, v) {
+        if (!window.localStorage || !n) return;
+        var storage = window.localStorage;
+        if (!storage[n]) storage[n] = JSON.stringify({});
+        var l = JSON.parse(storage[n]);
+        if (v == undefined) {
+            storage[n] = typeof k == 'string' ? k.trim() : JSON.stringify(k);
+        } else {
+            l[k] = typeof v == 'string' ? v.trim() : JSON.stringify(v);
+            storage[n] = JSON.stringify(l);
+        }
+    }
 };
-var port = chrome.runtime.connect(Live.extensionId);
+
 var event = document.createEvent('Event');
 event.initEvent('sendMessage', true, true);
-var json = document.createElement('div');
-json.id = 'bilibiliHelperMessage';
-document.body.appendChild(json);
 var sendMessage = function (json) {
     var message = JSON.stringify(json);
-    $('#bilibiliHelperMessage').text(message);
+    Live.set('bilibili_helper_message',message);
     document.dispatchEvent(event);
 };
 
@@ -43,7 +42,6 @@ Live.setInterval(window.protocol, function () {
         });
         setTimeout(function () {
             msg.close();
-        }, 10000);
     }, 500);
     Live.setInterval(window.protocol.TV_END, function () {
         var b = window.protocol.TV_END;
