@@ -426,6 +426,7 @@ if (typeof (chrome.runtime.setUninstallURL) == "function") {
 }
 Live.treasure = {};
 Live.watcherRoom = {};
+Live.tvs = {};
 
 function setTreasure(data) {
     if (Object.prototype.toString.call(data) === '[object Object]') {
@@ -671,43 +672,47 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                 });
             return true;
         case "getTVReward":
-            var rewardStr = '',lost = '<p>很遗憾，此次您没有中奖。</p>';
-            if (!request.reward) return lost;
-            if (request.reward.id == 1) {
-                rewardStr+="大号小电视"+request.reward.num+"个";
-            } else if (request.reward.id == 2) {
-                rewardStr+="蓝白胖次道具"+request.reward.num+"个";
-            } else if (request.reward.id == 3) {
-                rewardStr+="B坷垃"+request.reward.num+"个";
-            } else if (request.reward.id == 4) {
-                rewardStr+="喵娘"+request.reward.num+"个";
-            } else if (request.reward.id == 5) {
-                rewardStr+="便当"+request.reward.num+"个";
-            } else if (request.reward.id == 6) {
-                rewardStr+="银瓜子"+request.reward.num+"个";
-            } else if (request.reward.id == 7) {
-                rewardStr+="辣条"+request.reward.num+"个";
+            var rewardStr = '',lost = "很遗憾，此次您没有中奖";
+            var data = request.data;
+            if (data.rewardId == 1) {
+                rewardStr+="大号小电视"+data.rewardNum+"个";
+            } else if (data.rewardId == 2) {
+                rewardStr+="蓝白胖次道具"+data.rewardNum+"个";
+            } else if (data.rewardId == 3) {
+                rewardStr+="B坷垃"+data.rewardNum+"个";
+            } else if (data.rewardId == 4) {
+                rewardStr+="喵娘"+data.rewardNum+"个";
+            } else if (data.rewardId == 5) {
+                rewardStr+="便当"+data.rewardNum+"个";
+            } else if (data.rewardId == 6) {
+                rewardStr+="银瓜子"+data.rewardNum+"个";
+            } else if (data.rewardId == 7) {
+                rewardStr+="辣条"+data.rewardNum+"个";
             } else {
                 rewardStr+= lost;
             }
-            if(request.reward.num>0){
-                if(request.reward.id == 1)
+            if(data.rewardNum>0){
+                if(data.rewardId == 1 || data.isWin)
                     chrome.notifications.create('getTV', {
                         type: 'basic',
-                        iconUrl: '//static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                        title: '在直播间【' + request.roomId + '】抽到'+rewardStr,
+                        iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
+                        title: '在直播间【' + data.roomId + '】抽到'+rewardStr,
                         message: '请尽快前往填写收货地址，不填视为放弃',
                         isClickable: false,
                         buttons: [{
                             title: chrome.i18n.getMessage('notificationGetTv')
-                        }],
-                        requireInteraction: true
-                    });
+                        }]
+                    }, function (id) {
+                    setTimeout(function () {
+                        chrome.notifications.clear(id);
+                    }, 10000);
+                });
                 else chrome.notifications.create('getTV', {
                         type: 'basic',
-                        iconUrl: '//static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                        title: '在直播间【' + request.roomId + '】抽到'+rewardStr,
-                        isClickable: false
+                        iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
+                        title: '直播间:' + data.roomId ,
+                        isClickable: false,
+                        message:'抽到'+rewardStr
                     }, function (id) {
                         setTimeout(function () {
                             chrome.notifications.clear(id);
@@ -715,8 +720,9 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                     });
             } else chrome.notifications.create('getTV', {
                     type: 'basic',
-                    iconUrl: '//static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                    title: rewardStr,
+                    iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
+                    title: '直播间:' + data.roomId,
+                    message:rewardStr,
                     isClickable: false
                 }, function (id) {
                     setTimeout(function () {

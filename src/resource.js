@@ -30,7 +30,8 @@ var defaultOptions = {
 	"chatDisplay":"on",
 	"displayOption":"[]",
 	"versionNotify":"on",
-	"watcher":"off"
+	"watcher":"off",
+	"watchList":"[]"
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {

@@ -72,14 +72,24 @@ $(document).ready(function () {
     $("div[option=\"" + bkg_page.getOption("autoTreasure") + "\"].autoTreasure").addClass("on");
     $("div[option=\"" + bkg_page.getOption("danmu") + "\"].danmu").addClass("on");
     $("div[option=\"" + bkg_page.getOption("liveNotification") + "\"].liveNotification").addClass("on");
+
+    //chat-display
     $("div[option=\"" + bkg_page.getOption("chatDisplay") + "\"].chatDisplay").addClass("on");
-    var options = JSON.parse(bkg_page.getOption("displayOption"));
+    var c_options = JSON.parse(bkg_page.getOption("displayOption"));
     $(".display-option .option .button[option=off]").addClass("on");
-    each(options,function(i){
-        $(".display-option .option ."+options[i]+"[option=\"off\"]").removeClass("on");
-        $(".display-option .option ."+options[i]+"[option=\"on\"]").addClass("on");
+    each(c_options,function(i){
+        $(".display-option .option ."+c_options[i]+"[option=\"off\"]").removeClass("on");
+        $(".display-option .option ."+c_options[i]+"[option=\"on\"]").addClass("on");
     });
+
+    //watcher-options
     $("div[option=\"" + bkg_page.getOption("watcher") + "\"].watcher").addClass("on");
+    var w_options = JSON.parse(bkg_page.getOption("watchList"));
+    $(".watcher-option .option .button[option=off]").addClass("on");
+    each(w_options,function(i){
+        $(".watcher-option .option ."+w_options[i]+"[option=\"off\"]").removeClass("on");
+        $(".watcher-option .option ."+w_options[i]+"[option=\"on\"]").addClass("on");
+    });
 
     var adOption = bkg_page.getOption("ad");
     $("div[option=\"" + adOption + "\"].ad").addClass("on");
@@ -223,6 +233,22 @@ $(document).ready(function () {
         $(this).addClass('on');
         bkg_page.setOption("watcher", $(this).attr("option"));
         // updatepreview();
+    });
+    $('.watcher-options .watcher-option .option .button').click(function(){
+        var classes = $(this).attr('class').split(' ')[1];
+        if ($(this).hasClass('on')) return false;
+        $('.'+classes).removeClass('on');
+        $(this).addClass('on');
+        var watchList = JSON.parse(bkg_page.getOption("watchList"));
+        var type = $(this).attr('option');
+        if(type == "on"){
+            var index = watchList.indexOf(classes);
+            if(index == -1) watchList.push(classes);
+        }else{
+            var index = watchList.indexOf(classes);
+            if(index != -1) watchList.splice(index,1);
+        }
+        bkg_page.setOption("watchList", JSON.stringify(watchList));
     });
     function initUpList() {
         var list    = Live.get('favouritesList');

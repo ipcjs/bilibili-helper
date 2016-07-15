@@ -37,20 +37,21 @@ Live.setInterval(window.protocol, function () {
             b(json);
             sendMessage(json);
         };
-        var msg = new Notification("自动抽小电视功能已启动", {
-            icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png"
-        });
-        setTimeout(function () {
-            msg.close();
-        }, 5000);
     }, 500);
-    Live.setInterval(window.protocol.TV_END, function () {
-        var b = window.protocol.TV_END;
-        window.protocol.TV_END = function (json) {
+    Live.setInterval(window.protocol.SYS_GIFT, function () {
+        var b = window.protocol.SYS_GIFT;
+        window.protocol.SYS_GIFT = function (json) {
             b(json);
             sendMessage(json);
         };
     }, 500);
+    // Live.setInterval(window.protocol.TV_END, function () {
+    //     var b = window.protocol.TV_END;
+    //     window.protocol.TV_END = function (json) {
+    //         b(json);
+    //         sendMessage(json);
+    //     };
+    // }, 500);
 }, 1000);
 Live.setInterval(window.liveRoomFuncs, function () {
     Live.setInterval(window.liveRoomFuncs.addDanmu, function () {
