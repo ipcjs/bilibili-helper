@@ -176,8 +176,8 @@
                     "danmu": false,
                     "tv_end": false,
                     "gift": false,
-                    "system": true,
-                    "tv": true
+                    "system": false,
+                    "tv": false
                 }
             },
             watcher: function (msg) {
@@ -1558,7 +1558,7 @@
                 // };
                 $.getJSON('/summer/join', { roomid: roomId, raffleId: raffleId }).promise().then(function (result) {
                     Live.summer.lotteries[roomId][0].join = true;
-                    Live.console.watcher("刨冰活动:参加成功,直播间:" + roomId + " 编号:" + raffleId);
+                    Live.console.watcher("刨冰活动 参加成功,直播间:" + roomId + " 编号:" + raffleId);
                     var msg = new Notification("已参与刨冰抽奖", {
                         body: "直播间:" + roomId + " 编号:" + raffleId,
                         icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-36.png"
@@ -1569,7 +1569,7 @@
                     // console.log(Live.summer.lotteries[roomId],Live.summer.timer[roomId]);
                     Live.summer.timer[roomId][raffleId]['setTimeoutNum'] = setTimeout(function () {
                         Live.summer.getReward(roomId, raffleId, function (roomid, result) {
-                            Live.console.watcher("刨冰活动:结果查询,直播间:" + roomId + " 编号:" + raffleId + " " + result.msg);
+                            Live.console.watcher("刨冰抽奖结果 直播间:" + roomId + " 编号:" + raffleId + " " + result.msg);
                             var msg = new Notification("直播间【" + roomId + "】刨冰抽奖结果", {
                                 body: result.msg,
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-36.png"

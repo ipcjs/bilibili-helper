@@ -696,8 +696,8 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                     chrome.notifications.create('getTV', {
                         type: 'basic',
                         iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                        title: '在直播间【' + data.roomId + '】抽到'+rewardStr,
-                        message: '请尽快前往填写收货地址，不填视为放弃',
+                        title: '小电视抽奖结果',
+                        message: '恭喜你抽到了小电视，请尽快前往填写收货地址，不填视为放弃',
                         isClickable: false,
                         buttons: [{
                             title: chrome.i18n.getMessage('notificationGetTv')
@@ -710,9 +710,9 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                 else chrome.notifications.create('getTV', {
                         type: 'basic',
                         iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                        title: '直播间:' + data.roomId ,
+                        title: '小电视抽奖结果' ,
                         isClickable: false,
-                        message:'抽到'+rewardStr
+                        message:'在直播间:' + data.roomId+' 抽到'+rewardStr
                     }, function (id) {
                         setTimeout(function () {
                             chrome.notifications.clear(id);
