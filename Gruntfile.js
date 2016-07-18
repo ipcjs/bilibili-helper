@@ -31,7 +31,7 @@ module.exports = function(grunt) {
                     cwd: 'src',
                     src: ['**/*.html'],
                     dest: 'dest/',
-                    ext: '.min.html'
+                    ext: '.html'
                 }]
             },
         },

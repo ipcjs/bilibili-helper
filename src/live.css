@@ -360,28 +360,35 @@
     background-size: 127px
 }
 
-#head-info-panel .treasure-info,
-#head-info-panel .watcher-info {
+#head-info-panel .bilibili-helper-info {
+    position: absolute;
+    width: 200px;
+    right: 100%;
+}
+
+.bilibili-helper-info .treasure-info,
+.bilibili-helper-info .watcher-info {
     padding: 10px;
     background-color: #fff;
-    position: absolute;
     width: 38px;
     border-radius: 5px;
     border: 1px solid #ddd;
     box-sizing: border-box;
-    top: -1px
+    top: -1px;
+    float: right;
+    margin-right: 5px;
 }
 
-#head-info-panel .treasure-info {
-    right: calc(100% + 45px);
+.bilibili-helper-info .treasure-info {
+    /*right: calc(100% + 45px);*/
 }
 
-#head-info-panel .watcher-info {
-    right: calc(100% + 5px);
+.bilibili-helper-info .watcher-info {
+    /*right: calc(100% + 5px);*/
 }
 
-#head-info-panel .treasure-info a,
-#head-info-panel .watcher-info a {
+.bilibili-helper-info .treasure-info a,
+.bilibili-helper-info .watcher-info a {
     outline: 0;
     color: #4fc1e9;
     text-decoration: none;
@@ -389,8 +396,8 @@
     display: inline-block
 }
 
-#head-info-panel .treasure-info a:hover,
-#head-info-panel .watcher-info a:hover {
+.bilibili-helper-info .treasure-info a:hover,
+.bilibili-helper-info .watcher-info a:hover {
     color: #f25d8e
 }
 

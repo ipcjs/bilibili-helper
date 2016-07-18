@@ -30,7 +30,7 @@ Live.get = function (n, k, v) {
     if (!window.localStorage || !n) return;
 
     if (!window.localStorage[n]) {
-        var temp = v || {};
+        var temp = (v==undefined?{}:v);
         if (k != undefined && v != undefined) temp[k] = v;
         window.localStorage[n] = JSON.stringify(temp);
     }
@@ -820,7 +820,7 @@ function checkVersion() {
                         updateNotified = true;
 
                         chrome.tabs.create({
-                            url: chrome.extension.getURL("options.min.html?mod=new")
+                            url: chrome.extension.getURL("options.html?mod=new")
                         });
                     }
                 }
@@ -837,7 +837,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
     setOption("version", chrome.app.getDetails().version);
     if (details.reason == "install") {
         chrome.tabs.create({
-            url: chrome.extension.getURL("options.min.html?mod=install")
+            url: chrome.extension.getURL("options.html?mod=install")
         });
     } else if (details.reason == "update") {
         if (compareVersion(getOption("version"), chrome.app.getDetails().version) < 0) {
@@ -889,7 +889,7 @@ chrome.notifications.onButtonClicked.addListener(function (notificationId, index
         }
     } else if (notificationId == 'bh-update') {
         chrome.tabs.create({
-            url: chrome.extension.getURL("options.min.html?mod=update")
+            url: chrome.extension.getURL("options.html?mod=update")
         });
     } else if (notificationId == 'getTV') {
         chrome.tabs.create({
@@ -1044,6 +1044,7 @@ Live.notise = {
     getList: function (d) {
         var url = "http://live.bilibili.com/feed/getList/" + Live.notise.page;
         var callback = function (t) {
+            t = t.substr(1,t.length-3);
             t = JSON.parse(t);
             var roomIdList = {},
                 newList = [];
@@ -1096,8 +1097,6 @@ Live.notise = {
         var type = Live.notise.userMode ? "POST" : "GET";
 
         getFileData(url, callback, type);
-
-
     },
     heartBeat: function () {
         getFileData("http://live.bilibili.com/feed/heartBeat/heartBeat", function (data) {

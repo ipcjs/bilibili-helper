@@ -70,7 +70,7 @@ $(document).ready(function() {
 	});
 	$('#go_option').click(function() {
 		chrome.tabs.create({
-			url: chrome.extension.getURL('options.min.html')
+			url: chrome.extension.getURL('options.html')
 		});
 		return false;
 	});

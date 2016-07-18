@@ -358,5 +358,5 @@ $(document).ready(function () {
             break;
     }
 
-    window.history.replaceState({}, document.title, '/options.min.html');
+    window.history.replaceState({}, document.title, '/options.html');
 });

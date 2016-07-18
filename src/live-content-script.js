@@ -1,4 +1,3 @@
-
 var Live = {
     setInterval: function (object, func, timeout) {
         var a = setInterval(function () {
@@ -8,7 +7,7 @@ var Live = {
             }
         }, timeout);
     },
-    set : function (n, k, v) {
+    set: function (n, k, v) {
         if (!window.localStorage || !n) return;
         var storage = window.localStorage;
         if (!storage[n]) storage[n] = JSON.stringify({});
@@ -26,10 +25,14 @@ var event = document.createEvent('Event');
 event.initEvent('sendMessage', true, true);
 var sendMessage = function (json) {
     var message = JSON.stringify(json);
-    Live.set('bilibili_helper_message',message);
+    Live.set('bilibili_helper_message', message);
     document.dispatchEvent(event);
 };
-
+Live.setInterval(window.refreshCaptcha, function () {
+    window.refreshCaptcha = function () {
+        $("#captchaImg").attr("src", "http://live.bilibili.com/freeSilver/getCaptcha?t=" + Math.random());
+    };
+},1000);
 Live.setInterval(window.protocol, function () {
     Live.setInterval(window.protocol.SYS_MSG, function () {
         var b = window.protocol.SYS_MSG;
