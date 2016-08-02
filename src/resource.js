@@ -31,7 +31,9 @@ var defaultOptions = {
 	"displayOption":"[]",
 	"versionNotify":"on",
 	"watcher":"off",
-	"watchList":"[]"
+	"watchList":"[]",
+	"watchNotify":"on",
+	"watchNotifyList":"[]",
 };
 var cidCache = {};
 if(localStorage.getItem('cidCache') != null) {

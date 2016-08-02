@@ -1105,17 +1105,19 @@ Live.notise = {
         }, 'POST');
     },
     do: function (data) {
-        Live.notise.feedMode = data.data.open;
-        if (0 == data.code) {
-            Live.notise.count = data.data.count;
-            if (data.data.open && data.data.has_new) {
-                Live.notise.count = 0;
-                Live.notise.page = 1;
-                Live.notise.open = !0;
-                Live.notise.getList(data.data);
+        if(data.data){
+            Live.notise.feedMode = data.data.open;
+            if (0 == data.code) {
+                Live.notise.count = data.data.count;
+                if (data.data.open && data.data.has_new) {
+                    Live.notise.count = 0;
+                    Live.notise.page = 1;
+                    Live.notise.open = !0;
+                    Live.notise.getList(data.data);
+                }
+            } else {
+                clearInterval(Live.notise.intervalNum);
             }
-        } else {
-            clearInterval(Live.notise.intervalNum);
         }
     },
     init: function () {

@@ -28,47 +28,55 @@ var sendMessage = function (json) {
     Live.set('bilibili_helper_message', message);
     document.dispatchEvent(event);
 };
-Live.setInterval(window.refreshCaptcha, function () {
-    window.refreshCaptcha = function () {
-        $("#captchaImg").attr("src", "http://live.bilibili.com/freeSilver/getCaptcha?t=" + Math.random());
-    };
-},1000);
-Live.setInterval(window.protocol, function () {
-    Live.setInterval(window.protocol.SYS_MSG, function () {
-        var b = window.protocol.SYS_MSG;
-        window.protocol.SYS_MSG = function (json) {
-            b(json);
-            sendMessage(json);
-        };
-    }, 500);
-    Live.setInterval(window.protocol.SYS_GIFT, function () {
-        var b = window.protocol.SYS_GIFT;
-        window.protocol.SYS_GIFT = function (json) {
-            b(json);
-            sendMessage(json);
-        };
-    }, 500);
-    // Live.setInterval(window.protocol.TV_END, function () {
-    //     var b = window.protocol.TV_END;
-    //     window.protocol.TV_END = function (json) {
-    //         b(json);
-    //         sendMessage(json);
+var options = document.getElementById('bilibiliHelperScript').getAttribute('options');
+if (options != '{}') options = JSON.parse(options);
+//treause
+// if (options['treasure']){
+    // Live.setInterval(window.refreshCaptcha, function () {
+    //     window.refreshCaptcha = function () {
+    //         $("#captchaImg").attr("src", "http://live.bilibili.com/freeSilver/getCaptcha?ts=" + Date.now());
     //     };
-    // }, 500);
-}, 1000);
-Live.setInterval(window.liveRoomFuncs, function () {
-    Live.setInterval(window.liveRoomFuncs.addDanmu, function () {
-        var b = window.liveRoomFuncs.addDanmu;
-        window.liveRoomFuncs.addDanmu = function (json) {
-            b(json);
-            sendMessage(json);
-        };
-    }, 500);
-    Live.setInterval(window.liveRoomFuncs.addGift, function () {
-        var b = window.liveRoomFuncs.addGift;
-        window.liveRoomFuncs.addGift = function (json) {
-            b(json);
-            sendMessage(json);
-        };
-    }, 500);
-}, 1000);
+    // }, 1000);
+// }
+//watcher
+if (options['watcher']) {
+    Live.setInterval(window.protocol, function () {
+        Live.setInterval(window.protocol.SYS_MSG, function () {
+            var b = window.protocol.SYS_MSG;
+            window.protocol.SYS_MSG = function (json) {
+                b(json);
+                sendMessage(json);
+            };
+        }, 500);
+        Live.setInterval(window.protocol.SYS_GIFT, function () {
+            var b = window.protocol.SYS_GIFT;
+            window.protocol.SYS_GIFT = function (json) {
+                b(json);
+                sendMessage(json);
+            };
+        }, 500);
+        // Live.setInterval(window.protocol.TV_END, function () {
+        //     var b = window.protocol.TV_END;
+        //     window.protocol.TV_END = function (json) {
+        //         b(json);
+        //         sendMessage(json);
+        //     };
+        // }, 500);
+    }, 1000);
+    Live.setInterval(window.liveRoomFuncs, function () {
+        Live.setInterval(window.liveRoomFuncs.addDanmu, function () {
+            var b = window.liveRoomFuncs.addDanmu;
+            window.liveRoomFuncs.addDanmu = function (json) {
+                b(json);
+                sendMessage(json);
+            };
+        }, 500);
+        Live.setInterval(window.liveRoomFuncs.addGift, function () {
+            var b = window.liveRoomFuncs.addGift;
+            window.liveRoomFuncs.addGift = function (json) {
+                b(json);
+                sendMessage(json);
+            };
+        }, 500);
+    }, 1000);
+}

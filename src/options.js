@@ -91,6 +91,15 @@ $(document).ready(function () {
         $(".watcher-option .option ."+w_options[i]+"[option=\"on\"]").addClass("on");
     });
 
+    //watcher-notify
+    $("div[option=\"" + bkg_page.getOption("watchNotify") + "\"].watchNotify").addClass("on");
+    var wn_options = JSON.parse(bkg_page.getOption("watchNotifyList"));
+    $(".watcher-notify-option .option .button[option=off]").addClass("on");
+    each(wn_options,function(i){
+        $(".watcher-notify-option .option ."+wn_options[i]+"[option=\"off\"]").removeClass("on");
+        $(".watcher-notify-option .option ."+wn_options[i]+"[option=\"on\"]").addClass("on");
+    });
+
     var adOption = bkg_page.getOption("ad");
     $("div[option=\"" + adOption + "\"].ad").addClass("on");
     if (adOption == "fade") $("#ad_opacity_opt").show();
@@ -237,7 +246,7 @@ $(document).ready(function () {
     $('.watcher-options .watcher-option .option .button').click(function(){
         var classes = $(this).attr('class').split(' ')[1];
         if ($(this).hasClass('on')) return false;
-        $('.'+classes).removeClass('on');
+        $('.watcher-options .'+classes).removeClass('on');
         $(this).addClass('on');
         var watchList = JSON.parse(bkg_page.getOption("watchList"));
         var type = $(this).attr('option');
@@ -249,6 +258,29 @@ $(document).ready(function () {
             if(index != -1) watchList.splice(index,1);
         }
         bkg_page.setOption("watchList", JSON.stringify(watchList));
+    });
+    $('.watchNotify').click(function () {
+        if ($(this).hasClass('on')) return false;
+        $('.watchNotify').removeClass('on');
+        $(this).addClass('on');
+        bkg_page.setOption("watchNotify", $(this).attr("option"));
+        // updatepreview();
+    });
+    $('.watcher-notify-options .watcher-notify-option .option .button').click(function(){
+        var classes = $(this).attr('class').split(' ')[1];
+        if ($(this).hasClass('on')) return false;
+        $('.watcher-notify-options .'+classes).removeClass('on');
+        $(this).addClass('on');
+        var watchNotifyList = JSON.parse(bkg_page.getOption("watchNotifyList"));
+        var type = $(this).attr('option');
+        if(type == "on"){
+            var index = watchNotifyList.indexOf(classes);
+            if(index == -1) watchNotifyList.push(classes);
+        }else{
+            var index = watchNotifyList.indexOf(classes);
+            if(index != -1) watchNotifyList.splice(index,1);
+        }
+        bkg_page.setOption("watchNotifyList", JSON.stringify(watchNotifyList));
     });
     function initUpList() {
         var list    = Live.get('favouritesList');
