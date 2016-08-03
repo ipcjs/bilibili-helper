@@ -1784,7 +1784,7 @@
                         Live.set('bilibili_helper_tvs_reward', Live.smallTV.reward);
                         if (result.data.reward.num) {
                             Live.console.watcher('小电视活动 直播间【' + roomId + '】 编号:' + tvId + ' 获得' + Live.smallTV.rewardList[result.data.reward.id] + "x" + result.data.reward.num);
-                            if (Live.watcher.notifyOptions && Live.watcher.notifyOptionsList.tv) {
+                            if (Live.watcher.notifyOptions && Live.watcher.notifyOptions.tv) {
                                 chrome.extension.sendMessage({
                                     command: "getTVReward",
                                     data: {
