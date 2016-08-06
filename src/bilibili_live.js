@@ -67,7 +67,7 @@
                 console.log(url, roomID);
                 Live.set('helper_live_roomId', url, roomID);
                 if (typeof callback == 'function') callback(roomID);
-            }, function () {
+            }).fail(function () {
                 Live.getRoomIdByUrl(url, callback);
             });
         };
@@ -1088,7 +1088,7 @@
                                     });
                                     console.log(0);
                                 });
-                                var port = chrome.runtime.connect({ name: "kpbnombpnpcffllnianjibmpadjolanh" });
+                                var port = chrome.runtime.connect({ name: chrome.i18n.getMessage("@@extension_id") });
                                 port.onMessage.addListener(function (request) {
                                     switch (request.command) {
                                         case 'updateCurrentTreasure':
@@ -1293,18 +1293,16 @@
                                 Live.treasure.allowCtrl = true;
                                 Live.treasure.captcha.refresh();
                                 Live.treasure.awardBtn.restore();
-                                setTimeout(function () {
-                                    chrome.extension.sendMessage({
-                                        command: "getCurrentTreasure"
-                                    }, function (response) {
-                                        console.log(request.data);
-                                        var startTime = request.data.time_start;
-                                        var endTime = response.data.time_end;
-                                        var minute = response.data.minute;
-                                        var award = response.data.silver;
-                                        Live.treasure.setNewTask(startTime, endTime, minute, award);
-                                    });
-                                }, 2000);
+                                chrome.extension.sendMessage({
+                                    command: "getCurrentTreasure"
+                                }, function (response) {
+                                    console.log(request.data);
+                                    var startTime = request.data.time_start;
+                                    var endTime = response.data.time_end;
+                                    var minute = response.data.minute;
+                                    var award = response.data.silver;
+                                    Live.treasure.setNewTask(startTime, endTime, minute, award);
+                                });
                                 return;
                             } else if (result.code != 0) {
                                 Live.liveToast(Live.treasure.captchaInput[0], result.msg + Live.randomEmoji.helpless(), "info");
@@ -1342,6 +1340,7 @@
                             Live.treasure.captcha.refresh();
                             Live.treasure.awardBtn.restore();
                             Live.treasure.allowCtrl = true;
+                            Live.treasure.getAward(time_start, time_end, captcha);
                             // MOCKING.
                             // treasureCtrl.setNewTask(111, 222, 5, 10);
                         })
@@ -1349,9 +1348,6 @@
                             Live.treasure.captcha.userInput = "";
                         });
                 }
-
-            },
-            getTreasureFromBG: function () {
 
             },
             updateCurrency: function () {
@@ -1602,7 +1598,7 @@
             },
             initChatHelper: function () {
                 Live.chat.chat_ctrl_panel.find('#chatHelper').remove();
-                Live.chat.chatHelper = $('<div id="chatHelper"></div>');
+                Live.chat.chatHelper = $('<div id="chatHelper"></div>').css('background-image', 'url(' + chrome.extension.getURL("imgs/jinkela.png") + ')');
                 Live.chat.chatDisplayBlock = $('<div class="chat-display"><h2 class="panel-title">屏蔽选项</h2></div>');
                 Live.chat.chatHelperWindow = $('<div id="chatHelperWindow" class="chat-helper-panel ctrl-panel"></div>').hide();
                 Live.each(Live.chat.hideStyle, function (i) {
