@@ -487,3 +487,6 @@
     overflow-y: auto!important;
     overflow-x: hidden;
 }
+#chat-msg-list .chat-list-ctnr .chat-msg-list{
+    padding: 5px 15px 5px 5px;
+}
