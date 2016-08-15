@@ -5,7 +5,6 @@
     if (location.hostname == 'live.bilibili.com') {
         if (!store.enabled) return;
         store.delete = function (key, value) {
-
             if (key === undefined) return;
             var o = store.get(key);
             if (o == undefined) return;
@@ -16,11 +15,11 @@
                 }
             } else store.remove(key);
         };
-        var Live = { scriptOptions: {}, hasInit: false };
-        if (store.has('bilibilihelper_init')) Live.hasInit = true;
-        else {
-            store.set('bilibilihelper_init', true);
-        }
+        var Live = { scriptOptions: {}, hasInit: false, giftList: {} };
+
+        if (store.has('bilibili_helper_init')) Live.hasInit = true;
+        else store.set('bilibili_helper_init', true);
+
         Live.addScriptByFile = function (fileName, options) {
             var a = document.createElement('script');
             a.id = 'bilibiliHelperScript'
@@ -33,19 +32,20 @@
             a.innerHTML = text;
             document.body.appendChild(a);
         }
-        Live.addScriptByText('(function(){if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {var a=function(f,d,c){if(!window.localStorage||!f){return}var e=window.localStorage;if(!e[f]){e[f]=JSON.stringify({})}var b=JSON.parse(e[f]);if(c==undefined){e[f]=typeof d=="string"?d.trim():JSON.stringify(d)}else{b[d]=typeof c=="string"?c.trim():JSON.stringify(c);e[f]=JSON.stringify(b)}};a("helper_live_roomId",ROOMURL,ROOMID);a("helper_live_rnd",ROOMURL,DANMU_RND)}})();');
+        Live.addScriptByText('(function(){if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {var a=function(f,d,c){if(!window.localStorage||!f){return}var e=window.localStorage;if(!e[f]){e[f]=JSON.stringify({})}var b=JSON.parse(e[f]);if(c==undefined){e[f]=typeof d=="string"?d.trim():JSON.stringify(d)}else{b[d]=typeof c=="string"?c.trim():JSON.stringify(c);e[f]=JSON.stringify(b)}};a("bilibili_helper_live_roomId",ROOMURL,ROOMID);a("bilibili_helper_live_danmu_rnd",ROOMURL,DANMU_RND);}})();');
 
         Live.getRoomHTML = function (url) {
             return $.get('http://live.bilibili.com/' + url).promise();
         };
         Live.getRoomIdByUrl = function (url, callback) {
-            var id = store.get('helper_live_roomId')[url];
+            var id = store.get('bilibili_helper_live_roomId')[url];
             if (id != undefined) callback(id);
             else Live.getRoomHTML(url).done(function (roomHtml) {
                 var reg = new RegExp("var ROOMID = ([\\d]+)");
                 var roomID = reg.exec(roomHtml)[1];
-                var o;(o=store.get('helper_live_roomId'))[url] = roomID;
-                store.set('helper_live_roomId', o);
+                var o;
+                (o = store.get('bilibili_helper_live_roomId'))[url] = roomID;
+                store.set('bilibili_helper_live_roomId', o);
                 if (typeof callback == 'function') callback(roomID);
             }).fail(function () {
                 Live.getRoomIdByUrl(url, callback);
@@ -120,7 +120,7 @@
             return Live.getUser().done(function (user) {
                 if (user.code == 'REPONSE_OK') {
                     user = user.data;
-                    store.set('helper_userInfo', {
+                    store.set('bilibili_helper_userInfo', {
                         username: user.uname,
                         userLevel: user.user_level,
                         silver: user.silver,
@@ -131,23 +131,22 @@
                     });
                     if (callback && typeof callback == 'function') callback(user);
                     return true;
-                } else if (user.code == -101) store.remove('helper_userInfo');
+                } else if (user.code == -101) store.remove('bilibili_helper_userInfo');
             });
         };
 
         Live.clearLocalStorage = function () {
-            store.delete('helper_live_bet', Live.roomId);
-            store.delete('helper_live_check', Live.roomId);
-            store.delete('helper_live_number', Live.roomId);
-            store.delete('helper_live_rate', Live.roomId);
-            store.delete('helper_live_which', Live.roomId);
-            store.delete('helper_doSign');
-            store.delete('helper_userInfo');
-            store.delete('noTreasure');
+            store.delete('bilibili_helper_quiz_bet', Live.roomId);
+            store.delete('bilibili_helper_quiz_check', Live.roomId);
+            store.delete('bilibili_helper_quiz_number', Live.roomId);
+            store.delete('bilibili_helper_quiz_rate', Live.roomId);
+            store.delete('bilibili_helper_quiz_which', Live.roomId);
+            store.delete('bilibili_helper_doSign');
+            store.delete('bilibili_helper_userInfo');
         };
 
         Live.getRoomId = function () {
-            return store.get('helper_live_roomId')[location.pathname.substr(1)];
+            return store.get('bilibili_helper_live_roomId')[location.pathname.substr(1)];
         };
 
         Live.getRoomInfo = function () {
@@ -246,7 +245,6 @@
         Live.countdown.prototype.clearCountdown = function () {
             clearInterval(this.countDown);
         };
-
         Live.console = {
             option: {
                 display: {
@@ -333,7 +331,50 @@
                 }
             }
         };
+        Live.createPanel = function (toggleDom, eventName, className, id, callback) {
+            var openEvent, closeEvent, d;
+            switch (eventName) {
+                case 'click':
+                    openEvent = eventName;
+                    closeEvent = eventName;
+                    break;
+                case 'mouseenter':
+                case 'hover':
+                case 'mouseover':
+                    openEvent = 'mouseenter';
+                    closeEvent = 'mouseleave';
+                    break;
+            }
+            var panel = $('<div />').addClass('live-hover-panel arrow-top ' + className).attr('id', id);
 
+            toggleDom.off(openEvent).on(openEvent, function (e) {
+                if (panel.hasClass('show')) {
+                    typeof $(window)[closeEvent] == 'function' && $(window)[closeEvent]();
+                    return;
+                }
+                panel.addClass('show');
+                if (typeof callback == 'function') callback();
+
+                function n(t) {
+                    var e = t && (t.target || t.srcElement),
+                        ec;
+                    if (eventName == 'click') ec = !$(e).hasClass(className) && !$(e).parents('.' + className).length;
+                    else ec = $(e).hasClass(className);
+                    if (ec) {
+                        $(window).off(openEvent, n);
+                        panel.addClass('out');
+                        setTimeout(function () {
+                            panel.removeClass('out').removeClass('show').css('display', '');
+                        }, 300);
+                    }
+                }
+                setTimeout(function () {
+                    if (eventName == 'click') $(window).on(closeEvent, n);
+                    else panel.on(closeEvent, n), toggleDom.on(closeEvent, n);
+                }, 1);
+            });
+            return panel;
+        };
         Live.liveToast = function (dom, type, msg) {
             if (n = type || "info", "success" !== n && "caution" !== n && "error" !== n && "info" !== n) return;
             var c = document.createDocumentFragment();
@@ -376,34 +417,36 @@
                 y = u.offsetLeft;
             0 > h - g - y && $(u).css({ left: h - g - 10 }), h = g = y = null
         };
-
         Live.doSign = {
             getSignInfo: function () {
                 return $.getJSON("/sign/GetSignInfo").promise();
             },
             init: function () {
-                var username = store.get('helper_userInfo')['username'];
-                var o;(o={})[username]={today: false, date: undefined};
-                !store.has('helper_doSign') && store.set('helper_doSign',o);
+                var username = store.get('bilibili_helper_userInfo')['username'];
+                var o;
+                (o = {})[username] = { today: false, date: undefined };
+                !store.has('bilibili_helper_doSign') && store.set('bilibili_helper_doSign', o);
                 Live.doSign.getSignInfo().done(function (data) {
                     if (data.code == 0 && data.data.status == 0) {
                         Live.doSign.sign();
                         setInterval(Live.doSign.sign, 60000); //doSign per 1 min
                     } else if (data.code == 0 && data.data.status == 1) {
-                        var username = store.get('helper_userInfo')['username'];
-                        var o;(o=store.get('helper_doSign'))[username]={today:true,date:new Date().getDate()}
-                        store.set('helper_doSign',o);
+                        var username = store.get('bilibili_helper_userInfo')['username'];
+                        var o;
+                        (o = store.get('bilibili_helper_doSign'))[username] = { today: true, date: new Date().getDate() }
+                        store.set('bilibili_helper_doSign', o);
                     }
                 });
             },
             sign: function () {
                 /*check login*/
-                
+
                 var date = new Date().getDate();
-                var username = store.get('helper_userInfo')['username'];
-                if (!store.get('helper_doSign')[username].today || store.get('helper_doSign')[username].date != date) {
+                var username = store.get('bilibili_helper_userInfo')['username'];
+                if (!store.get('bilibili_helper_doSign')[username].today || store.get('bilibili_helper_doSign')[username].date != date) {
                     $.get("/sign/doSign", function (data) {
-                        var e = JSON.parse(data), msg;
+                        var e = JSON.parse(data),
+                            msg;
                         //    {
                         //    "code": 0,
                         //    "msg": "ok",
@@ -422,8 +465,8 @@
                                 icon: "//static.hdslb.com/live-static/images/7.png"
                             });
                             var o;
-                            (o = store.get('helper_doSign'))[username] = { today: true, date: date };
-                            store.set('helper_doSign', o);
+                            (o = store.get('bilibili_helper_doSign'))[username] = { today: true, date: date };
+                            store.set('bilibili_helper_doSign', o);
                             setTimeout(function () {
                                 msg.close();
                             }, 10000);
@@ -435,8 +478,8 @@
                                 icon: "//static.hdslb.com/live-static/live-room/images/gift-section/gift-1.gif"
                             });
                             var o;
-                            (o = store.get('helper_doSign'))[username] = { today: true, date: date };
-                            store.set('helper_doSign', o);
+                            (o = store.get('bilibili_helper_doSign'))[username] = { today: true, date: date };
+                            store.set('bilibili_helper_doSign', o);
                             setTimeout(function () {
                                 msg.close();
                             }, 10000);
@@ -453,7 +496,6 @@
                 }
             }
         };
-
         Live.Queue = function (which) {
             var o = {};
             o.id = new Date().getTime();
@@ -512,7 +554,6 @@
             };
             return o;
         };
-
         Live.Appoint = function (which, rate, number, state) {
             //var queueStr = {'0': 'cancel', '1': 'success', '2': 'error', '3': 'wait', '4': 'run'};
             var o = {};
@@ -584,7 +625,7 @@
                 var rate = bet.silver[w].times;
                 //var amount = bet.silver[w].amount;
                 /*be canceled*/
-                if (Live.bet.stop) clearInterval(store.get('helper_live_bet')[Live.roomId]);
+                if (Live.bet.stop) clearInterval(store.get('bilibili_helper_quiz_bet')[Live.roomId]);
                 if (rate >= o.rate) {
                     $.ajax({
                         url: 'http://live.bilibili.com/bet/addBettor',
@@ -593,7 +634,7 @@
                         data: {
                             bankerId: bankerId,
                             amount: o.number,
-                            token: __GetCookie('LIVE_LOGIN_DATA')
+                            token: Live.getCookie('LIVE_LOGIN_DATA')
                         },
                         complete: function (data) {
                             var b = JSON.parse(data.responseText);
@@ -666,7 +707,6 @@
             };
             return o;
         };
-
         Live.bet = {
             times: 0,
             stop: false,
@@ -678,7 +718,7 @@
                 /*check bet*/
                 Live.bet.getBet().done(function (bet) {
                     bet = bet.data;
-                    if (!store.get('helper_userInfo')['login'] && bet.betStatus == false) {
+                    if (!store.get('bilibili_helper_userInfo')['login'] && bet.betStatus == false) {
                         Live.bet.cancelCheck();
                         return;
                     }
@@ -687,7 +727,7 @@
                         Live.bet.stopBet();
                         return;
                     }
-                    if (store.get('helper_live_autoMode')[Live.roomId] == 1) {
+                    if (store.get('bilibili_helper_quiz_autoMode')[Live.roomId] == 1) {
                         if (Live.bet.hasInit && !Live.bet.hasShow) Live.bet.show();
                         else if (!Live.bet.hasInit) Live.bet.init();
                     }
@@ -696,18 +736,18 @@
             },
             canBet: function (bet) {
                 if (bet.isBet == false) {
-                    if (store.get('helper_live_autoMode')[Live.roomId] == 1) {
+                    if (store.get('bilibili_helper_quiz_autoMode')[Live.roomId] == 1) {
                         Live.bet.disable();
                         var o;
-                        (o = store.get('helper_live_autoMode'))[Live.roomId] = 0;
-                        store.set('helper_live_autoMode', o);
+                        (o = store.get('bilibili_helper_quiz_autoMode'))[Live.roomId] = 0;
+                        store.set('bilibili_helper_quiz_autoMode', o);
                     }
                     return false;
                 } else return true;
             },
             betOn: function (bet) {
                 if (bet.betStatus == false) {
-                    if (store.get('helper_live_autoMode')[Live.roomId] == 1) {
+                    if (store.get('bilibili_helper_quiz_autoMode')[Live.roomId] == 1) {
                         Live.bet.hide();
                         Live.bet.blue_queue.empty();
                         Live.bet.red_queue.empty();
@@ -734,11 +774,11 @@
                     Live.bet.check();
                 }
                 /*if run queue is not empty*/
-                else if (!store.get('helper_live_bet')[Live.roomId]) {
+                else if (!store.get('bilibili_helper_quiz_bet')[Live.roomId]) {
                     Live.bet.do();
                     var o = new Object();
                     o[Live.roomId] = setInterval(Live.bet.do, 2000);
-                    store.set('helper_live_bet', o)
+                    store.set('bilibili_helper_quiz_bet', o)
                 }
             },
             hide_quiz_helper: function () {
@@ -754,11 +794,24 @@
                 });
             },
             init: function () {
+                /*init localstorage*/
+                !store.has('bilibili_helper_quiz_autoMode') && store.set('bilibili_helper_quiz_autoMode', {});
+                !store.has('bilibili_helper_quiz_check') && store.set('bilibili_helper_quiz_check', {});
+                !store.has('bilibili_helper_quiz_bet') && store.set('bilibili_helper_quiz_bet', {});
+
+                var o, p, q;
+                (o = store.get('bilibili_helper_quiz_autoMode'))[Live.roomId] = false;
+                (p = store.get('bilibili_helper_quiz_check'))[Live.roomId] = false;
+                (q = store.get('bilibili_helper_quiz_bet'))[Live.roomId] = undefined;
+                store.set('bilibili_helper_quiz_autoMode', o);
+                store.set('bilibili_helper_quiz_check', p);
+                store.set('bilibili_helper_quiz_bet', q);
+
                 /*check login*/
-                if (!store.get('helper_userInfo')['login']) return;
+                if (!store.get('bilibili_helper_userInfo')['login']) return;
 
                 /*auto mode*/
-                if (!parseInt(store.get('helper_live_autoMode')[Live.roomId])) return;
+                if (!parseInt(store.get('bilibili_helper_quiz_autoMode')[Live.roomId])) return;
 
                 /*create quiz helper DOM*/
                 if (!Live.bet.hasInit) {
@@ -809,8 +862,8 @@
                         var rate = parseFloat(Live.bet.quiz_rate.val());
                         if (rate.length > 3) rate = rate.toFixed(1);
                         var o;
-                        (o = store.get('helper_live_rate'))[Live.roomId] = rate;
-                        store.set('helper_live_rate', o);
+                        (o = store.get('bilibili_helper_quiz_rate'))[Live.roomId] = rate;
+                        store.set('bilibili_helper_quiz_rate', o);
 
                         /*number*/
                         var number = parseInt(Live.bet.quiz_number.val());
@@ -833,8 +886,8 @@
                         var o, p;
                         (o = {})[Live.roomId] = number;
                         (p = {})[Live.roomId] = which;
-                        store.set('helper_live_number', o);
-                        store.set('helper_live_which', p);
+                        store.set('bilibili_helper_quiz_number', o);
+                        store.set('bilibili_helper_quiz_which', p);
 
                         which = which == 'a' ? 'blue' : 'red';
                         new Live.Appoint(which, rate, number).emit(which);
@@ -844,7 +897,7 @@
                     });
                     Live.bet.quiz_number.keyup(function () {
                         var v = $(this).val();
-                        var silver = parseInt(store.get('helper_userInfo')['silver']);
+                        var silver = parseInt(store.get('bilibili_helper_userInfo')['silver']);
                         while (v != '' && isNaN(v)) {
                             $(this).val(v.substr(0, v.length - 1));
                             v = $(this).val();
@@ -906,14 +959,14 @@
                 }
             },
             stopBet: function () {
-                clearInterval(store.get('helper_live_bet')[Live.roomId]);
-                store.delete('helper_live_bet', Live.roomId);
+                clearInterval(store.get('bilibili_helper_quiz_bet')[Live.roomId]);
+                store.delete('bilibili_helper_quiz_bet', Live.roomId);
             },
             able: function () {
                 Live.bet.stop = false;
                 var o;
-                (o = store.get('helper_live_autoMode'))[Live.roomId] = 1;
-                store.set('helper_live_autoMode', o);
+                (o = store.get('bilibili_helper_quiz_autoMode'))[Live.roomId] = true;
+                store.set('bilibili_helper_quiz_autoMode', o);
                 if (Live.bet.hasInit) Live.bet.show();
                 Live.bet.check();
             },
@@ -924,29 +977,27 @@
                     Live.bet.cancel(false);
                     Live.bet.hide(true);
                     var o;
-                    (o = store.get('helper_live_autoMode'))[Live.roomId] = 0;
-                    store.set('helper_live_autoMode', o);
+                    (o = store.get('bilibili_helper_quiz_autoMode'))[Live.roomId] = false;
+                    store.set('bilibili_helper_quiz_autoMode', o);
                     Live.clearLocalStorage();
                     Live.bet.blue_queue.empty();
                     Live.bet.red_queue.empty();
                 }
             },
             check: function () {
-                if (!store.get('helper_live_check')[Live.roomId]) {
+                if (!store.get('bilibili_helper_quiz_check')[Live.roomId]) {
                     Live.bet.checkBetStatus();
                     var o;
-                    (o = store.get('helper_live_check'))[Live.roomId] = setInterval(Live.bet.checkBetStatus, 3000);
-                    store.set('helper_live_check', o);
+                    (o = store.get('bilibili_helper_quiz_check'))[Live.roomId] = setInterval(Live.bet.checkBetStatus, 3000);
+                    store.set('bilibili_helper_quiz_check', o);
                 }
             },
             cancelCheck: function () {
-                clearInterval(store.get('helper_live_check')[Live.roomId]);
-                store.delete('helper_live_check', Live.roomId);
+                clearInterval(store.get('bilibili_helper_quiz_check')[Live.roomId]);
+                store.delete('bilibili_helper_quiz_check', Live.roomId);
             }
         };
-
         Live.currentRoom = [];
-
         Live.treasure = {
             silverSum: 0,
             correctStr: { 'g': 9, 'z': 2, '_': 4, 'Z': 2, 'o': 0, 'l': 1, 'B': 8, 'O': 0, 'S': 6, 's': 6, 'i': 1, 'I': 1 },
@@ -973,6 +1024,7 @@
                 refresh: function () {
                     Live.treasure.captcha.img = Live.treasure.getCaptcha();
                     Live.treasure.treasureTipAcquire.find('img').attr('src', Live.treasure.captcha.img);
+                    Live.treasure.treasureTipAcquire.find('input').val("");
                 }
             },
             awardBtn: {
@@ -1002,42 +1054,43 @@
             waitingEmoji: Live.randomEmoji.happy(),
             panelEmoji: Live.randomEmoji.helpless(),
             init: function () {
-                !store.has('noTreasure') && store.set("noTreasure", {});
                 chrome.extension.sendMessage({
                     command: "getOption",
                     key: 'autoTreasure',
                 }, function (res) {
+
                     if (res['value'] == 'on') setTimeout(function () {
                         // Live.scriptOptions['treasure'] = true;
                         chrome.extension.sendMessage({
                             command: "getTreasure"
                         }, function (response) {
-                            Live.treasureInfoDOM = $('<div class="room-info treasure-info">自动领瓜子功能正在初始化</div>');
-                            Live.bilibiliHelperInfoDOM.append(Live.treasureInfoDOM);
+                            Live.treasureBtn.find('span').attr('title', '正在初始化');
+                            // Live.treasureInfoDOM = $('<div class="room-info treasure-info">自动领瓜子功能正在初始化</div>');
+                            // Live.bilibiliHelperInfoDOM.append(Live.treasureInfoDOM);
                             if (response['data'].roomId == undefined) {
                                 //init background data
-                                Live.getRoomInfo().done(function (data) {
-                                    chrome.extension.sendMessage({
-                                        command: "setTreasure",
-                                        data: {
-                                            uid: data.data.UID,
-                                            roomId: data.data.ROOMID,
-                                            roomShortId: location.pathname.substr(1),
-                                            roomTitle: data.data.ROOMTITLE,
-                                            upName: data.data.ANCHOR_NICK_NAME,
-                                            url: location.href,
-                                        }
-                                    });
-
-                                    var msg = new Notification("自动领瓜子功能已经启动", {
-                                        body: data.data.ANCHOR_NICK_NAME + '：' + data.data.ROOMTITLE,
-                                        icon: "//static.hdslb.com/live-static/images/7.png"
-                                    });
-
-                                    setTimeout(function () {
-                                        msg.close();
-                                    }, 10000);
+                                chrome.extension.sendMessage({
+                                    command: "setTreasure",
+                                    data: {
+                                        uid: Live.roomInfo.UID,
+                                        roomId: Live.roomInfo.ROOMID,
+                                        roomShortId: Live.roomInfo.roomShortId,
+                                        roomTitle: Live.roomInfo.ROOMTITLE,
+                                        upName: Live.roomInfo.ANCHOR_NICK_NAME,
+                                        url: location.href,
+                                    }
                                 });
+
+                                var msg = new Notification("自动领瓜子功能已经启动", {
+                                    body: Live.roomInfo.ANCHOR_NICK_NAME + '：' + Live.roomInfo.ROOMTITLE,
+                                    icon: "//static.hdslb.com/live-static/images/7.png"
+                                });
+
+                                setTimeout(function () {
+                                    msg.close();
+                                }, 10000);
+                                !store.has('bilibili_helper_treasure_silver_count') && store.set('bilibili_helper_treasure_silver_count', 0);
+                                Live.treasure.silverSum = store.get('bilibili_helper_treasure_silver_count');
 
                                 //init dom
                                 Live.treasure.treasureCtrl = $('.treasure-box-ctnr').clone();
@@ -1080,7 +1133,7 @@
                                     Live.treasure.getAward();
                                 });
 
-                                Live.treasure.totalTime = (store.get('helper_userInfo')['vip'] == 1) ? 3 : 5;
+                                Live.treasure.totalTime = (store.get('bilibili_helper_userInfo')['vip'] == 1) ? 3 : 5;
                                 Live.treasure.checkNewTask();
                                 Live.treasure.treasureTip.find('.close-btn').click();
                                 $(window).on('beforeunload', function () {
@@ -1101,14 +1154,15 @@
                                             break;
                                     }
                                 });
-                            } else if (store.get('noTreasure')[store.get('helper_userInfo')['username']]) {
-                                Live.bilibiliHelperInfoDOM.find('.treasure-info').html('今天的瓜子已经领完');
+                                Live.helperInfo.setTreasureStatus('success', '功能已经启动');
                             } else if (response['data'].roomId != Live.roomId) {
-                                Live.treasureInfoDOM.html('已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子');
+                                Live.helperInfo.setTreasureStatus('wait', '已在' + response['data'].upName + '的直播间自动领瓜子');
+                                // Live.treasureInfoDOM.html('已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间自动领瓜子');
                                 $('#player-container').find('.treasure-box-ctnr').hide('middle');
                                 Live.treasure.checkNewTask(true);
                             } else if (response['data'].roomId == Live.roomId) {
-                                Live.treasureInfoDOM.html('本直播间页面已经被打开过');
+                                Live.helperInfo.setTreasureStatus('wait', '本直播间页面已经被打开过');
+                                // Live.treasureInfoDOM.html('本直播间页面已经被打开过');
                                 $('#player-container').find('.treasure-box-ctnr').hide('middle');
                                 Live.treasure.checkNewTask(true);
                             } else {
@@ -1176,7 +1230,6 @@
                 Live.treasure.treasureTipAcquire.show();
                 Live.treasure.treasureTipWait.hide();
                 Live.treasure.treasureTipAcquire.find('.dp-i-block div').html('请输入计算结果领取 <span class="cyan-text">' + Live.treasure.taskInfo.award + '</span> 银瓜子 ' + Live.treasure.panelEmoji);
-                Live.treasure.captcha.refresh();
                 Live.treasure.showBox();
                 Live.treasure.treasureTip.addClass('acquire');
                 Live.treasure.playBoxAnimation();
@@ -1193,8 +1246,10 @@
             makeFinished: function () {
                 Live.treasure.finished = true;
                 Live.setCookie("F_S_T_" + window.UID, 1);
-                Live.treasure.treasureCtrl.hide('middle');
-                Live.bilibiliHelperInfoDOM.find('.treasure-info').html('今天的瓜子已经领完');
+                Live.treasure.treasureCtrl && Live.treasure.treasureCtrl.hide('middle');
+                // Live.bilibiliHelperInfoDOM.find('.treasure-info').html('今天的瓜子已经领完');
+
+                Live.helperInfo.setTreasureStatus('finished', '今天的瓜子已经领完');
             },
             restoreBox: function () {
                 setTimeout(function () {
@@ -1231,26 +1286,24 @@
                     }
                     if (result.code === -10017) {
                         // Live.treasure.makeFinished();
-                        Live.bilibiliHelperInfoDOM.find('.treasure-info').html('今天的瓜子已经领完');
-                        var o;
-                        (o = store.get('noTreasure'))[store.get('helper_userInfo')['username']] = true;
-                        store.set('noTreasure', o);
+                        // Live.bilibiliHelperInfoDOM.find('.treasure-info').html('今天的瓜子已经领完');
+                        Live.helperInfo.setTreasureStatus('finished', '今天的瓜子已经领完');
                         Live.treasure.makeFinished();
                         return;
                     }
                     if (result.code !== 0) {
                         console.log("宝箱任务设置失败：" + result.msg);
                         if (result.code == -101) {
-                            $('#head-info-panel').find('.treasure-info').html('没有登录');
+                            // $('#head-info-panel').find('.treasure-info').html('没有登录');
                         } else if (data.code == -99) { //领奖信息不存在
-                            $('#head-info-panel').find('.treasure-info').html('领奖信息不存在');
+                            // $('#head-info-panel').find('.treasure-info').html('领奖信息不存在');
+                        } else {
+                            // $('#head-info-panel').find('.treasure-info').html('自动领瓜子出现未知错误');
                         }
                         Live.treasure.makeFinished();
+                        Live.helperInfo.setTreasureStatus('error', result.msg);
                         return;
                     }
-                    var o;
-                    (o = store.get('noTreasure'))[store.get('helper_userInfo')['username']] = false;
-                    store.set('noTreasure', o);
                     chrome.extension.sendMessage({
                         command: "setCurrentTreasure",
                         data: {
@@ -1261,9 +1314,11 @@
                         }
                     });
                     if (!opened) {
-                        $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
+                        // $('#head-info-panel').find('.treasure-info').html('已开始在本直播间自动领瓜子');
                         Live.treasure.setNewTask(result.data.time_start, result.data.time_end, parseInt(result.data.minute, 10), parseInt(result.data.silver, 10));
                     }
+                }).fail(function () {
+                    Live.treasure.checkNewTask();
                 });
             },
             setNewTask: function (startTime, endTime, minute, award) {
@@ -1285,39 +1340,26 @@
                 Live.treasure.awardBtn.awarding();
 
                 var img = Live.treasure.treasureTipAcquire.find('.captcha-img');
-                Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
-                Live.treasure.context.drawImage(img[0], 0, 0);
-                Live.treasure.captcha.question = Live.treasure.correctQuestion(OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40)));
-                Live.treasure.captcha.answer = eval(Live.treasure.captcha.question);
-                Live.treasure.treasureTipAcquire.find('input').val(Live.treasure.captcha.answer);
+                img.load(function () {
+                    Live.treasure.context.clearRect(0, 0, Live.treasure.canvas.width, Live.treasure.canvas.height);
+                    Live.treasure.context.drawImage(img[0], 0, 0);
+                    Live.treasure.captcha.question = Live.treasure.correctQuestion(OCRAD(Live.treasure.context.getImageData(0, 0, 120, 40)));
+                    Live.treasure.captcha.answer = eval(Live.treasure.captcha.question);
+                    Live.treasure.treasureTipAcquire.find('input').val(Live.treasure.captcha.answer);
 
-                var data = Live.treasure.taskInfo;
-                Live.treasure.captcha.userInput = Live.treasure.captcha.answer;
-                var captcha = Live.treasure.captcha.answer;
-                getAward(data.startTime, data.endTime, captcha);
+                    var data = Live.treasure.taskInfo;
+                    Live.treasure.captcha.userInput = Live.treasure.captcha.answer;
+                    var captcha = Live.treasure.captcha.answer;
+                    getAward(data.startTime, data.endTime, captcha);
+                });
+                Live.treasure.captcha.refresh();
 
                 function getAward(time_start, time_end, captcha) {
                     $.get('http://live.bilibili.com/FreeSilver/getAward', { time_start: time_start, time_end: time_end, captcha: captcha }, function () {}, 'json').promise()
                         .done(function (result) {
-                            if (result.code == -99) {
-                                Live.treasure.allowCtrl = true;
-                                Live.treasure.captcha.refresh();
-                                Live.treasure.awardBtn.restore();
-                                chrome.extension.sendMessage({
-                                    command: "getCurrentTreasure"
-                                }, function (response) {
-                                    console.log(request.data);
-                                    var startTime = request.data.time_start;
-                                    var endTime = response.data.time_end;
-                                    var minute = response.data.minute;
-                                    var award = response.data.silver;
-                                    Live.treasure.setNewTask(startTime, endTime, minute, award);
-                                });
-                                return;
-                            } else if (result.code != 0) {
+                            if (result.code != 0) {
                                 Live.liveToast(Live.treasure.captchaInput[0], result.msg + Live.randomEmoji.helpless(), "info");
                                 Live.treasure.allowCtrl = true;
-                                Live.treasure.captcha.refresh();
                                 Live.treasure.awardBtn.restore();
                                 Live.treasure.checkNewTask();
                                 return;
@@ -1331,7 +1373,10 @@
 
                             Live.liveToast(Live.treasure.captchaInput[0], "已成功领取 " + Live.treasure.taskInfo.award + " 银瓜子！" + Live.randomEmoji.happy(), "success");
                             Live.treasure.updateCurrency(); // 更新银瓜子.
-                            Live.console.watcher('自动领瓜子 成功领取瓜子 ' + Live.treasure.taskInfo.award + ' 个')
+                            Live.console.watcher('自动领瓜子 成功领取瓜子 ' + Live.treasure.taskInfo.award + ' 个');
+                            Live.treasure.silverSum += Live.treasure.taskInfo.award;
+                            store.set('bilibili_helper_treasure_silver_count', Live.treasure.silverSum);
+
                             var msg = new Notification("自动领取成功", {
                                 body: "领取了" + Live.treasure.taskInfo.award + "个瓜子",
                                 icon: "//static.hdslb.com/live-static/images/7.png"
@@ -1345,17 +1390,14 @@
                             Live.treasure.awardBtn.restore();
                             Live.treasure.allowCtrl = true;
 
-                        })
-                        .fail(function (xhrObject) {
+                        }).fail(function (xhrObject) {
                             Live.liveToast($captchaInput[0], "系统错误，请稍后再试 " + Live.randomEmoji.sad(), "error");
-                            Live.treasure.captcha.refresh();
                             Live.treasure.awardBtn.restore();
                             Live.treasure.allowCtrl = true;
                             Live.treasure.getAward(time_start, time_end, captcha);
                             // MOCKING.
                             // treasureCtrl.setNewTask(111, 222, 5, 10);
-                        })
-                        .always(function () {
+                        }).always(function () {
                             Live.treasure.captcha.userInput = "";
                         });
                 }
@@ -1366,7 +1408,7 @@
                     return
                 }
                 var newSeed = Live.treasure.silverSeed + Live.treasure.taskInfo.award;
-                // Live.treasure.$fire("all!updateCurrency", { silver: newSeed });
+                Live.control.$fire("all!updateCurrency", { silver: newSeed });
                 Live.treasure.silverSeed = newSeed;
             },
             setCountdown: function (countMinutes) {
@@ -1380,9 +1422,7 @@
                     callback: function () {
                         Live.treasure.makeAcquirable();
                         Live.treasure.treasureBox.find('.treasure-box').click();
-                        setTimeout(function () {
-                            Live.treasure.treasureTip.find('.acquiring-panel .get-award-btn').click();
-                        }, 2000);
+                        Live.treasure.treasureTip.find('.acquiring-panel .get-award-btn').click();
                     }
                 });
                 Live.treasure.allowCtrl = true;
@@ -1519,7 +1559,7 @@
                 var helper_send_btn = original_send_btn.clone().addClass('helper-send-btn');
                 original_send_btn.before(helper_send_btn).remove();
 
-                Live.chat.maxLength = parseInt(store.get('helper_userInfo')['userLevel']) >= 20 ? 30 : 20;
+                Live.chat.maxLength = parseInt(store.get('bilibili_helper_userInfo')['userLevel']) >= 20 ? 30 : 20;
 
                 Live.chat.counter.text('0 / 1 + 0');
 
@@ -1640,7 +1680,7 @@
                                 });
                         }
                         setTimeout(function () {
-                            $(window).on("click", n)
+                            $(window).on("click", n);
                         }, 1);
                     }
                 });
@@ -1746,8 +1786,8 @@
                                 notiseBtn.find('i').addClass('favourited');
                             });
                         }
-                    }).hover(function(){
-                        $(this).attr('title','关注之后再特别关注会在主播开播时进行推送哦'+Live.randomEmoji.happy());
+                    }).hover(function () {
+                        $(this).attr('title', '关注之后再特别关注会在主播开播时进行推送哦' + Live.randomEmoji.happy());
                     });
                     chrome.extension.sendMessage({
                         command: "getFavourite"
@@ -1766,13 +1806,13 @@
             count: 0,
             reward: {},
             rewardList: {
-                "1": "大号小电视",
-                "2": "蓝白胖次道具",
-                "3": "B坷垃",
-                "4": "喵娘",
-                "5": "便当",
-                "6": "银瓜子",
-                "7": "辣条"
+                "1": { title: "大号小电视" },
+                "2": { title: "蓝白胖次道具" },
+                "3": { title: "B坷垃" },
+                "4": { title: "喵娘" },
+                "5": { title: "便当" },
+                "6": { title: "银瓜子" },
+                "7": { title: "辣条" }
             },
             init: function () {
                 !store.has('bilibili_helper_tvs_count') && store.set('bilibili_helper_tvs_count', 0);
@@ -1781,7 +1821,7 @@
                 Live.smallTV.count = store.get('bilibili_helper_tvs_count');
             },
             getTVByUrl: function (url) {
-                var roomId = store.get('helper_live_roomId')[url];
+                var roomId = store.get('bilibili_helper_live_roomId')[url];
                 return Live.smallTV.tvs[roomId];
             },
             get: function (roomId) {
@@ -1858,6 +1898,7 @@
                                     }
                                 });
                             }
+                            Live.watcher.updateReward('tv');
                         } else Live.console.watcher('小电视活动 直播间【' + roomId + '】 编号:' + tvId + ' 您未赢得任何奖品');
 
                         // Live.console.info('tv', { msg: '你居然中了小电视' });
@@ -1880,12 +1921,15 @@
             lotteries: {},
             iteratorMap: {},
             reward: {},
+            rewardList: {},
             count: 0,
             init: function () {
                 !store.has('bilibili_helper_summer_count') && store.set('bilibili_helper_summer_count', 0);
                 !store.has('bilibili_helper_summer_reward') && store.set('bilibili_helper_summer_reward', {});
+                !store.has('bilibili_helper_summer_reward_list') && store.set('bilibili_helper_summer_reward_list', {});
                 Live.summer.count = store.get('bilibili_helper_summer_count');
                 Live.summer.reward = store.get('bilibili_helper_summer_reward');
+                Live.summer.rewardList = store.get('bilibili_helper_summer_reward_list');
             },
             get: function (roomId) {
                 // var result = {
@@ -1953,11 +1997,19 @@
                             if (result.data.giftName != "") {
                                 var rewardCount = Live.summer.reward[result.data.giftId];
                                 if (rewardCount == undefined) Live.summer.reward[result.data.giftId] = 0;
+
+                                //update gift id list
+                                Live.summer.rewardList[result.data.giftId] = { title: result.data.giftName };
+                                store.set('bilibili_helper_summer_reward_list', Live.summer.rewardList);
+
                                 Live.console.watcher("刨冰活动 直播间【" + roomId + "】 编号:" + raffleId + " 抽中" + result.data.giftName + "x" + result.data.giftNum);
                                 Live.watcher.pushNotification('lottery', "直播间【" + roomId + "】刨冰抽奖结果", "编号:" + raffleId + " 抽中" + result.data.giftName + "x" + result.data.giftNum, "//static.hdslb.com/live-static/live-room/images/gift-section/gift-36.png");
+
+                                //update reward list
                                 Live.summer.reward[result.data.giftId] += result.data.giftNum;
                                 store.set('bilibili_helper_summer_reward', Live.summer.reward);
                                 Live.summer.lotteries[raffleId].reward = result.data;
+                                Live.watcher.updateReward('lottery');
                             } else {
                                 Live.console.watcher("刨冰活动 直播间【" + roomId + "】 编号:" + raffleId + " " + result.msg);
                                 Live.watcher.pushNotification('lottery', "直播间【" + roomId + "】刨冰抽奖结果", "编号:" + raffleId + " " + result.msg, "//static.hdslb.com/live-static/live-room/images/gift-section/gift-36.png");
@@ -2003,15 +2055,19 @@
         };
         Live.watcher = {
             options: {
-                'tv': false,
-                'lottery': false
+                tv: false,
+                lottery: false
             },
             notifyStatus: false,
             notifyOptions: {
-                'tv': false,
-                'lottery': false
+                tv: false,
+                lottery: false
             },
-            init: function () {
+            panelDOM: {
+                ty: undefined,
+                lottery: undefined
+            },
+            init: function (callback) {
                 chrome.extension.sendMessage({
                     command: "getOption",
                     key: 'watcher'
@@ -2020,8 +2076,10 @@
                         chrome.extension.sendMessage({
                             command: "getWatcherRoom"
                         }, function (response) {
-                            Live.watcherInfoDOM = $('<div class="room-info watcher-info">直播信息监控功能正在初始化</div>');
-                            Live.bilibiliHelperInfoDOM.append(Live.watcherInfoDOM);
+                            // Live.watcherInfoDOM = $('<div class="room-info watcher-info">直播信息监控功能正在初始化</div>');
+                            Live.watcherBtn.find('span').attr('title', '正在初始化');
+
+                            // Live.bilibiliHelperInfoDOM.append(Live.watcherInfoDOM);
                             if (response['data'].roomId == undefined) {
                                 //setWatcherRoom
                                 var roomId = Live.roomId;
@@ -2052,6 +2110,7 @@
                                             Live.console.watcher('启动:' + watchList[i]);
                                         }
                                     });
+                                    Live.watcher.initRewardPanel();
                                     $(window).on('beforeunload', function () {
                                         chrome.extension.sendMessage({
                                             command: "delWatcherRoom"
@@ -2059,8 +2118,16 @@
                                         console.log(0);
                                     });
 
-                                    Live.watcher.options['tv'] && Live.smallTV.init();
-                                    Live.watcher.options['lottery'] && Live.summer.init();
+                                    if (Live.watcher.options['tv']) {
+                                        Live.smallTV.init();
+                                        Live.watcher.updateReward('tv');
+                                    }
+                                    if (Live.watcher.options['lottery']) {
+                                        Live.summer.init();
+                                        Live.watcher.updateReward('lottery');
+                                    }
+
+                                    if (typeof callback == 'function') callback();
                                     document.addEventListener("sendMessage", function (event) {
                                         var message = store.get('bilibili_helper_message');
                                         if (!message.cmd) return false;
@@ -2080,14 +2147,26 @@
                                     var notifyOptionsList = response['value'] ? JSON.parse(response['value']) : [];
                                     Live.each(notifyOptionsList, function (i) {
                                         var option = Live.watcher.notifyOptions[notifyOptionsList[i]];
-                                        if (!option) {
-                                            Live.watcher.notifyOptions[notifyOptionsList[i]] = true;
-                                        }
+                                        if (!option) Live.watcher.notifyOptions[notifyOptionsList[i]] = true;
                                     });
                                 });
-                                Live.watcherInfoDOM.html('该房间已开启监控功能');
+                                // Live.watcherInfoDOM.html('该房间已开启监控功能');
+
+                                Live.helperInfo.setWatcherStatus('success', '功能已经启动');
                             } else {
-                                Live.watcherInfoDOM.html('监控功能已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间启动');
+                                chrome.extension.sendMessage({
+                                    command: "getOption",
+                                    key: 'watchList',
+                                }, function (response) {
+                                    var watchList = response['value'] ? JSON.parse(response['value']) : [];
+                                    Live.each(watchList, function (i) {
+                                        Live.watcher.options[watchList[i]] = true;
+                                    });
+                                    Live.watcher.initRewardPanel();
+                                });
+                                Live.helperInfo.setWatcherStatus('wait', '监控功能已在【' + response['data'].upName + '】的直播间启动');
+
+                                // Live.watcherInfoDOM.html('监控功能已在<a target="_blank" href="' + response['data'].url + '">' + response['data'].upName + '</a>的直播间启动');
                             }
                         });
                     }, 2000);
@@ -2130,7 +2209,7 @@
                     var user = res[1];
                     var url = res[2];
                     var tv = Live.smallTV.getTVByUrl(url);
-                    var roomId = store.get('helper_live_roomId')[url];
+                    var roomId = store.get('bilibili_helper_live_roomId')[url];
                     tv && Live.smallTV.getReward(tv.id, roomId);
                 }
             },
@@ -2166,306 +2245,593 @@
                         msg.close();
                     }, 5000);
                 }
+            },
+            initRewardPanel: function () {
+                if (Live.watcher.options['tv']) {
+                    Live.watcher.panelDOM.tv = $('<div />').addClass('tv reward-panel');
+                    var tvCounter = $('<span />').addClass('reward-counter');
+                    var title = $('<div />').addClass('reward-title').text('小电视抽奖').append(tvCounter);
+                    var container = $('<div />').addClass('reward-container');
+                    Live.watcher.panelDOM.tv.append(title, container);
+                    Live.watcherPanel.append(Live.watcher.panelDOM.tv);
+                }
+                if (Live.watcher.options['lottery']) {
+                    Live.watcher.panelDOM.lottery = $('<div />').addClass('lottery reward-panel');
+                    var lotteryCounter = $('<span />').addClass('reward-counter');
+                    var title = $('<div />').addClass('reward-title').text('刨冰抽奖').append(lotteryCounter);
+                    var container = $('<div />').addClass('reward-container');
+                    Live.watcher.panelDOM.lottery.append(title, container);
+                    Live.watcherPanel.append(Live.watcher.panelDOM.lottery);
+                }
+            },
+            updateReward: function (type) {
+                var gifts = {},
+                    counter = 0,
+                    giftsList = undefined;
+                switch (type) {
+                    case 'tv':
+                        gifts = store.get('bilibili_helper_tvs_reward');
+                        counter = store.get('bilibili_helper_tvs_count');
+                        giftsList = Live.smallTV.rewardList;
+                        break;
+                    case 'lottery':
+                        gifts = store.get('bilibili_helper_summer_reward');
+                        counter = store.get('bilibili_helper_summer_count');
+                        giftsList = store.get('bilibili_helper_summer_reward_list');
+                        break;
+                }
+                if (giftsList && Live.watcher.panelDOM[type]) {
+                    Live.watcher.panelDOM[type].find('.reward-container').empty();
+                    for (var id in gifts) {
+                        var giftName = giftsList[id] ? giftsList[id].title : Live.giftList[id].title,
+                            number = gifts[id];
+                        var giftDOM = $('<span />').addClass('gift').text(giftName + 'x' + Live.numFormat(number));
+                        Live.watcher.panelDOM[type].find('.reward-counter').text(counter + ' 次');
+                        Live.watcher.panelDOM[type].find('.reward-container').append(giftDOM);
+                    }
+                }
             }
         };
-        // Live.giftpackage = {
-        //     giftPackageStatus: 0, // 0: 没有道具 1: 包裹中有赠送的新道具 2:包裹里非新增道具
-        //     panelStatus: false,
-        //     giftPackageData: [],
-        //     giftPackageMap: {},
+        Live.giftpackage = {
+            giftPackageStatus: 0, // 0: 没有道具 1: 包裹中有赠送的新道具 2:包裹里非新增道具
+            panelStatus: false,
+            giftPackageData: {},
+            giftPackageMap: {},
+            giftSendLinePanel: {
+                line_id: null,
+                giftsData: {},
+                outTimeout: null,
+                open: function (giftId) {
+                    $(document).click();
+                    Live.giftpackage.giftSendLinePanel.line_id = giftId;
+                    Live.giftpackage.giftSendLinePanel.giftsData = Live.giftpackage.giftPackageMap[giftId];
+                    var gifts = Live.giftpackage.giftSendLinePanel.giftsData;
+                    var sendPanel = Live.giftpackage.giftSendPanel;
+                    Live.giftpackage.sendLinePanel.show();
+                    Live.giftpackage.sendLineSection.empty();
+                    Live.each(Live.giftpackage.giftSendLinePanel.giftsData, function (index) {
+                        var gift = gifts[index];
+                        var giftDOM = $('<span />').addClass('package-item').attr({
+                                'title': gift.gift_name,
+                                'gift_id': giftId,
+                                'bag_id': gift.id
+                            }),
+                            giftItemDOM = $('<div />').addClass('gift-item gift-item-package gift-' + giftId).html('<span class="expires">' + gift.expireat + '天</span>'),
+                            giftConterDOM = $('<div />').addClass('gift-count').text('x' + gift.gift_num);
+                        giftDOM.append(giftItemDOM, giftConterDOM);
+                        Live.giftpackage.sendLineSection.append(giftDOM);
+                    });
+                },
+                close: function () {
+                    var sendLinePanel = Live.giftpackage.giftSendLinePanel;
+                    Live.giftpackage.sendLinePanel.addClass('hide out');
+                    sendLinePanel.outTimeout = setTimeout(function () {
+                        Live.giftpackage.sendLinePanel.removeClass('hide out').css('display', '');
+                    }, 380);
+                },
+                sendLine: function (event) {
+                    if (event.type === "keyup" && event.keyCode !== 13) {
+                        return;
+                    }
+                    var element = event.target || event.srcElement;
+                    var gifts = Live.giftpackage.giftSendLinePanel.giftsData;
+                    var complete = 0;
+                    Live.each(gifts, function (index) {
+                        var gift = gifts[index];
+                        Live.giftpackage.giftSendLinePanel.send(gift, function () {
+                            ++complete;
+                            if (complete == gifts.length) {
+                                Live.giftpackage.giftSendLinePanel.close();
+                                console.log('礼物全部送完');
+                            }
+                        });
+                    });
+                },
+                send: function (gift, callback) {
+                    $.ajax({
+                        url: "/giftBag/send",
+                        type: "POST",
+                        data: {
+                            giftId: gift.gift_id,
+                            roomid: Live.roomId,
+                            ruid: Live.roomInfo.MASTERID,
+                            num: gift.gift_num,
+                            coinType: "silver",
+                            Bag_id: gift.id,
+                            timestamp: Date.now(),
+                            rnd: store.get('bilibili_helper_live_danmu_rnd', Live.roomId),
+                            token: Live.getCookie("LIVE_LOGIN_DATA") || ""
+                        },
+                        dataType: "JSON",
+                        success: function (result) {
+                            if (result.code == 0) {
+                                console.log('礼物送出成功' + ' id:' + gift.gift_id + ' num:' + gift.gift_num);
+                                if (typeof callback == 'function') callback();
+                            } else if (result.code == 1) {
+                                console.log('系统繁忙，正在重试');
+                                setTimeout(function () {
+                                    Live.giftpackage.giftSendLinePanel.send(gift);
+                                }, 500);
 
-        //     toggleGiftPackage: function (event) {
-        //         event.stopPropagation();
-        //         Live.liveQuickLogin();
-        //         if (!giftPackagelVM.panelStatus) {
-        //             if (giftPackagelVM.giftPackageStatus == 1) { // 有新道具，先打开新送道具面板
-        //                 Live.giftpackage.openGiftPackageNewPanel();
-        //             } else {
-        //                 Live.giftpackage.openGiftPackagePanel(); // 否则直接打开包裹
-        //             }
-        //         } else {
-        //             Live.giftpackage.closeGiftPackagePanel();
-        //         }
-        //     },
-        //     giftSendPanel: {
-        //         giftData: {
-        //             giftId: "",
-        //             giftName: "",
-        //             giftNum: 0,
-        //             type: "silver",
-        //             count: 1,
-        //             bagId: 0
-        //         },
-        //         show: false,
-        //         out: false,
-        //         outTimeout: null,
-        //         open: function (giftId, giftName, giftNum, bigId) {
-        //             var sendPanel = Live.giftpackage.giftSendPanel;
+                            }else{
+                                console.log(result);
+                            }
 
-        //             sendPanel.giftData.giftId = giftId;
-        //             sendPanel.giftData.giftName = giftName;
-        //             sendPanel.giftData.giftNum = giftNum;
-        //             sendPanel.giftData.count = 1;
-        //             sendPanel.giftData.bagId = bigId;
+                        }
+                    });
+                }
+            },
+            giftSendPanel: {
+                giftData: {
+                    giftId: "",
+                    giftName: "",
+                    giftNum: 0,
+                    type: "silver",
+                    count: 1,
+                    bagId: 0
+                },
+                show: false,
+                out: false,
+                outTimeout: null,
+                toggleGiftPackage: function (event) {
+                    event.stopPropagation();
+                    Live.liveQuickLogin();
+                    if (!Live.giftpackage.panelStatus) {
+                        if (Live.giftpackage.giftPackageStatus == 1) { // 有新道具，先打开新送道具面板
+                            Live.giftpackage.giftPackageNewPanel.open();
+                        } else {
+                            Live.giftpackage.openGiftPackagePanel(); // 否则直接打开包裹
+                        }
+                    } else {
+                        Live.giftpackage.closeGiftPackagePanel();
+                    }
+                },
+                open: function (giftId, giftName, giftNum, bigId) {
+                    var sendPanel = Live.giftpackage.giftSendPanel;
 
-        //             Live.giftpackage.panelStatus = false;
-        //             sendPanel.show = true;
-        //         },
-        //         close: function () {
-        //             var sendPanel = Live.giftpackage.giftSendPanel;
-        //             sendPanel.out = true;
-        //             sendPanel.outTimeout = setTimeout(function () {
-        //                 sendPanel.out = false;
-        //                 sendPanel.show = false;
-        //                 sendPanel = null;
-        //             }, 380);
-        //         },
-        //         sendGift: function (event) {
-        //             if (event.type === "keyup" && event.keyCode !== 13) {
-        //                 return;
-        //             }
+                    sendPanel.giftData.giftId = giftId;
+                    sendPanel.giftData.giftName = giftName;
+                    sendPanel.giftData.giftNum = giftNum;
+                    sendPanel.giftData.count = giftNum;
+                    sendPanel.giftData.bagId = bigId;
 
-        //             var element = event.target || event.srcElement;
-        //             var giftData = Live.giftpackage.giftSendPanel.giftData;
-        //             var num = parseInt(giftData.count, 10);
+                    $(document).click();
 
-        //             // 检测礼物数量是否为合法数字.
-        //             if (isNaN(num)) {
-        //                 giftData.count = "";
-        //                 liveToast(element, "请填写正确的送礼数量 " + Live.randomEmoji.helpless(), true);
-        //                 return;
-        //             }
+                    Live.giftpackage.sendGiftImg.attr('class', 'gift-img float-left gift-' + giftId);
+                    Live.giftpackage.sendGiftInfo.text('您的包裹中还剩 ' + giftNum + ' 个可用');
+                    Live.giftpackage.sendGiftInput.val(giftNum).focus();
+                    Live.giftpackage.sendPanel.show();
 
-        //             var timestamp = timestampShorter(Date.now());
+                    setTimeout(function () {
+                        $(document).on("click", n);
+                        var n = function (t) {
+                            var e = t && (t.target || t.srcElement)
+                            if (!$(e).hasClass('panel-content') && !$(e).parents('.panel-content').length) {
+                                $(document).off("click", n);
+                                Live.giftpackage.giftSendPanel.close();
+                            }
+                        }
+                    }, 1);
+                },
+                close: function () {
+                    var sendPanel = Live.giftpackage.giftSendPanel;
+                    Live.giftpackage.sendPanel.addClass('hide out');
+                    sendPanel.outTimeout = setTimeout(function () {
+                        Live.giftpackage.sendPanel.removeClass('hide out').css('display', '');
+                    }, 380);
+                },
+                sendGift: function (event) {
+                    if (event.type === "keyup" && event.keyCode !== 13) {
+                        return;
+                    }
 
-        //             var sendGiftUrl = "";
-        //             if (param.type == "normal") {
-        //                 sendGiftUrl = "/gift/send";
-        //             } else if (param.type == "package") {
-        //                 sendGiftUrl = "/giftBag/send";
-        //             }
+                    var element = event.target || event.srcElement;
+                    var giftData = Live.giftpackage.giftSendPanel.giftData;
+                    giftData.count = Live.giftpackage.sendGiftInput.val();
+                    var num = parseInt(giftData.count, 10),
+                        rnd = store.get('bilibili_helper_live_danmu_rnd', Live.roomId);
 
-        //             $.ajax({
-        //                 url: sendGiftUrl,
-        //                 type: "POST",
-        //                 data: {
-        //                     giftId: giftData.data.giftId,
-        //                     roomid: ROOMID,
-        //                     ruid: MASTERID,
-        //                     num: giftData.data.num,
-        //                     coinType: giftData.data.coinType,
-        //                     Bag_id: giftData.data.bagId || 0,
-        //                     timestamp: timestamp,
-        //                     rnd: DANMU_RND,
-        //                     token: Live.getCookie("LIVE_LOGIN_DATA") || ""
-        //                 },
-        //                 dataType: "JSON",
-        //                 success: function (result) {
-        //                     if (result.code == 0) {
-        //                         console.log("Gift-sending is successful.");
-        //                         // 更新瓜子数.
-        //                         // giftCtrl.$fire("all!updateCurrency", {
-        //                         //     gold: result.data.gold,
-        //                         //     silver: result.data.silver
-        //                         // });
 
-        //                         // 如果是弹幕道具通知 Flash.
-        //                         result.data.data.giftType == 1 && $("#player_object")[0].sendGift(result.data.data.giftId, result.data.data.num);
+                    // 检测礼物数量是否为合法数字.
+                    if (isNaN(num)) {
+                        giftData.count = "";
+                        Live.liveToast(element, "请填写正确的送礼数量 " + Live.randomEmoji.helpless(), true);
+                        return;
+                    }
+                    $.ajax({
+                        url: "/giftBag/send",
+                        type: "POST",
+                        data: {
+                            giftId: giftData.giftId,
+                            roomid: Live.roomId,
+                            ruid: Live.roomInfo.MASTERID,
+                            num: giftData.count,
+                            coinType: giftData.type,
+                            Bag_id: giftData.bagId,
+                            timestamp: Date.now(),
+                            rnd: rnd,
+                            token: Live.getCookie("LIVE_LOGIN_DATA") || ""
+                        },
+                        dataType: "JSON",
+                        success: function (result) {
+                            if (result.code == 0) {
+                                console.log("Gift-sending is successful.");
+                                Live.liveToast(element, "Gift-sending is successful. " + Live.randomEmoji.helpless(), "info");
+                                // 更新瓜子数.
+                                // Live.control.$fire("all!updateCurrency", {
+                                //     gold: result.data.gold,
+                                //     silver: result.data.silver
+                                // });
 
-        //                         // 如果获得勋章.
-        //                         result.data.data.newMedal == 1 && giftCtrl.$fire("all!newFansMedalNotice", {
-        //                             medalId: result.data.data.medal.medalId,
-        //                             medalName: result.data.data.medal.medalName,
-        //                             medalLevel: result.data.data.medal.level
-        //                         });
+                                // 如果是弹幕道具通知 Flash.
+                                result.data.data.giftType == 1 && $("#player_object")[0].sendGift(result.data.data.giftId, result.data.data.num);
 
-        //                         // 获得新头衔
-        //                         result.data.data.newTitle == 1 && giftCtrl.$fire("all!newTitleNotice", result.data.data.title);
+                                // 如果获得勋章.
+                                // result.data.data.newMedal == 1 && Live.control.$fire("all!newFansMedalNotice", {
+                                //     medalId: result.data.data.medal.medalId,
+                                //     medalName: result.data.data.medal.medalName,
+                                //     medalLevel: result.data.data.medal.level
+                                // });
 
-        //                         // 判断礼物价值并将其放在对应位置.
-        //                         // Edited By LancerComet at XX:XX (Afternoon), 2016.03.22.
-        //                         if (parseInt(result.data.data.num, 10) < 10 && chatGiftJudgement(result.data.data.giftId)) {
-        //                             chatGiftList(result.data);
-        //                         } else {
-        //                             // 本地添加送礼记录.
-        //                             window.liveRoomFuncs.addGiftHistory(result.data);
-        //                         }
+                                // 获得新头衔
+                                // result.data.data.newTitle == 1 && Live.control.$fire("all!newTitleNotice", result.data.data.title);
 
-        //                         // 连击礼物.
-        //                         giftCtrl.$fire("all!superGift", result.data.data);
+                                // 判断礼物价值并将其放在对应位置.
+                                // Edited By LancerComet at XX:XX (Afternoon), 2016.03.22.
+                                var giftTarget = document.getElementById("gift-msg-1000"); // 低价礼物容器节点.
+                                function chatGiftList(json) {
+                                    // 礼物信息
+                                    var giftLtInfo = {
+                                        uname: json.data.uname,
+                                        num: json.data.num,
+                                        giftName: json.data.giftName,
+                                        giftId: json.data.giftId
+                                    };
 
-        //                         // 更新投喂榜.
-        //                         giftCtrl.$fire("all!updateGiftTop", result.data.data.top_list);
+                                    giftTarget.innerHTML = '<div class="gift-msg-item"><span class="user-name-low">' + giftLtInfo.uname + '</span> ' +
+                                        '<span class="action">赠送' + giftLtInfo.giftName + '</span>' +
+                                        '<div class="gift-img gift-' + giftLtInfo.giftId + '" role="img"></div>' +
+                                        'X <span class="gift-count">' + giftLtInfo.num + '</span></div>';
 
-        //                         // 更新扭蛋机数据
-        //                         giftCtrl.$fire("all!updateCapsuleData", result.data.data.capsule);
+                                }
+                                if (parseInt(result.data.data.num, 10) < 10) {
+                                    chatGiftList(result.data);
+                                } else {
+                                    // 本地添加送礼记录.
+                                    window.liveRoomFuncs.addGiftHistory(result.data);
+                                }
 
-        //                         // 送小电视用户通过接口获得通知，屏蔽广播
-        //                         if (result.data.data.giftId == 25) {
-        //                             (function () {
-        //                                 var msgItem = {};
-        //                                 for (var i = 0; i < result.data.data.smalltv_msg.length; i++) {
-        //                                     msgItem = result.data.data.smalltv_msg[i];
-        //                                     msgItem.msg = msgItem.msg.replace(/\:\?/g, " ");
-        //                                     giftCtrl.$fire("all!addSysMsg", msgItem);
-        //                                 }
-        //                             })();
-        //                         }
+                                // console.log(result);
+                                // 连击礼物.
+                                // Live.control.$fire("all!superGift", result.data.data);
 
-        //                         // 调用 Flash 礼物公共方法
-        //                         if (result.data.data.notice_msg) {
-        //                             $("#player_object")[0].noticeGift(result.data.data.notice_msg);
-        //                         }
+                                // 更新投喂榜.
+                                // Live.control.$fire("all!updateGiftTop", result.data.data.top_list);
 
-        //                     }
+                                // 更新扭蛋机数据
+                                // Live.control.$fire("all!updateCapsuleData", result.data.data.capsule);
 
-        //                     // 道具包裹刷道具锁定状态不提示错误
-        //                     else if (result.code == 1) {
-        //                         console.log("系统繁忙...");
-        //                     }
+                                // 送小电视用户通过接口获得通知，屏蔽广播
+                                // if (result.data.data.giftId == 25) {
+                                //     (function () {
+                                //         var msgItem = {};
+                                //         for (var i = 0; i < result.data.data.smalltv_msg.length; i++) {
+                                //             msgItem = result.data.data.smalltv_msg[i];
+                                //             msgItem.msg = msgItem.msg.replace(/\:\?/g, " ");
+                                //             Live.control.$fire("all!addSysMsg", msgItem);
+                                //         }
+                                //     })();
+                                // }
 
-        //                     // 余额不足自动弹出相应弹窗.
-        //                     else if (result.code == -400 && result.msg == "余额不足") {
-        //                         giftCtrl.$fire("all!noSeed");
-        //                         closeGiftSendPanel();
-        //                     }
+                                // 调用 Flash 礼物公共方法
+                                if (result.data.data.notice_msg) {
+                                    $("#player_object")[0].noticeGift(result.data.data.notice_msg);
+                                }
 
-        //                     // Error Handler.
-        //                     else {
-        //                         element && liveToast(element, result.msg + " " + Live.randomEmoji.sad(), "caution", true);
-        //                     }
+                                // Callback
+                                giftData.giftNum = result.data.remain;
+                                Live.giftpackage.sendGiftInfo.text('您的包裹中还剩 ' + giftData.giftNum + ' 个可用');
+                                // 当 remain 为 0 时检查包裹状态并更新
+                                if (result.data.remain == 0) {
+                                    Live.liveToast(element, "已经没有道具了 " + Live.randomEmoji.sad(), "caution", true);
+                                    // getGiftPackageStatus(function (result) {
+                                    //     Live.giftpackage.giftPackageStatus = result.data.result;
+                                    // });
+                                } else Live.giftpackage.sendGiftInput.val(result.data.remain);
+                            }
 
-        //                     // Callback
-        //                     if (result.code == 0) {
-        //                         giftData.giftNum = result.data.remain;
-        //                         // 当 remain 为 0 时检查包裹状态并更新
-        //                         if (result.data.remain == 0) {
-        //                             getGiftPackageStatus(function (result) {
-        //                                 giftPackagelVM.giftPackageStatus = result.data.result;
-        //                             });
-        //                         }
-        //                     }
-        //                 },
-        //                 error: function (result) {
-        //                     element && liveToast(element, Live.randomEmoji.sad() + " 送礼失败：" + result.statusText + " " + Live.randomEmoji.sad(), "error");
-        //                     param.errorCallback && param.errorCallback();
-        //                 }
-        //             });
+                            // 道具包裹刷道具锁定状态不提示错误
+                            else if (result.code == 1) {
+                                console.log("系统繁忙...");
+                            }
 
-        //             giftPackagelVM.$fire("all!sendGift", {
-        //                 element: element,
-        //                 type: "package",
-        //                 data: {
-        //                     giftId: giftData.giftId,
-        //                     num: num,
-        //                     coinType: giftData.type,
-        //                     bagId: giftData.bagId
-        //                 },
-        //                 callback: function (result) {
-        //                     if (result.code == 0) {
-        //                         giftData.giftNum = result.data.remain;
-        //                         // 当 remain 为 0 时检查包裹状态并更新
-        //                         if (result.data.remain == 0) {
-        //                             getGiftPackageStatus(function (result) {
-        //                                 giftPackagelVM.giftPackageStatus = result.data.result;
-        //                             });
-        //                         }
-        //                     }
-        //                 }
-        //             });
-        //         }
-        //     },
-        //     giftPackageNewPanel: {
-        //         data: [],
-        //         show: false,
-        //         out: false,
-        //         outTimeout: null,
-        //         open: Live.giftpackage.openGiftPackageNewPanel,
-        //         close: Live.giftpackage.closeGiftPackageNewPanel
-        //     },
-        //     init: function () {
-        //         //init dom
-        //         Live.giftpackage.controlPanel = $('#gift-panel').find('.control-panel');
-        //         Live.giftpackage.package = Live.giftpackage.controlPanel.find('.items-package').clone();
-        //         Live.giftpackage.controlPanel.find('.items-package').after(Live.giftpackage.package).hide();
-        //         Live.giftpackage.packageBtn = Live.giftpackage.package.find('.link');
-        //         Live.giftpackage.packagePanel = Live.giftpackage.package.find('.gifts-package-panel');
-        //     },
-        //     initGiftsDOM: function () {
-        //         Live.giftpackage.getGiftPackage().then(function (result) {
-        //             if (result.code == 0) {
+                            // 余额不足自动弹出相应弹窗.
+                            else if (result.code == -400 && result.msg == "余额不足") {
+                                // Live.control.$fire("all!noSeed");
+                                Live.giftpackage.giftSendPanel.close();
+                            }
 
-        //                 Live.giftpackage.giftPackageData = result.data;
-        //                 Live.giftpackage.giftPackageMap = Live.giftpackage.sortGifts(result.data);
-        //             }
-        //         }, function () {
-        //             console.log('获取礼物包裹数据失败，正在重试')
-        //             Live.giftpackage.initGiftsDOM();
-        //         });
-        //     },
-        //     sortGifts: function (giftpackageData) {
-        //         var r = {},
-        //             gs = giftpackageData;
-        //         for (var i in gs) {
-        //             var gift = gs[i];
-        //             // expireat:"31天"
-        //             // gift_id:37
-        //             // gift_name:"团扇"
-        //             // gift_num:39
-        //             // gift_price:"1000金瓜子"
-        //             // gift_type:3
-        //             // id:4473074
-        //             // uid:50623
-        //             if (r[gift.gift_id] == undefined) r[gift.gift_id] = {};
+                            // Error Handler.
+                            else {
+                                element && Live.liveToast(element, result.msg + " " + Live.randomEmoji.sad(), "caution", true);
+                            }
+                        },
+                        error: function (result) {
+                            element && Live.liveToast(element, Live.randomEmoji.sad() + " 送礼失败：" + result.statusText + " " + Live.randomEmoji.sad(), "error");
+                            // param.errorCallback && param.errorCallback();
+                        }
+                    });
+                    // Live.control.$fire("all!sendGift", {
+                    //     element: element,
+                    //     type: "package",
+                    //     data: {
+                    //         giftId: giftData.giftId,
+                    //         num: num,
+                    //         coinType: giftData.type,
+                    //         bagId: giftData.bagId
+                    //     },
+                    //     callback: function (result) {
+                    //         if (result.code == 0) {
+                    // giftData.giftNum = result.data.remain;
+                    // // 当 remain 为 0 时检查包裹状态并更新
+                    // if (result.data.remain == 0) {
+                    //     getGiftPackageStatus(function (result) {
+                    //         Live.giftpackage.giftPackageStatus = result.data.result;
+                    //     });
+                    // }
+                    //         }
+                    //     }
+                    // });
+                }
+            },
+            giftPackageNewPanel: {
+                data: [],
+                show: false,
+                out: false,
+                outTimeout: null,
+                open: function () {
+                    var giftPackageNewPanel = Live.giftpackage.giftPackageNewPanel;
+                    // 获取赠送的新道具数据
+                    Live.giftpackage.getSendGift(function (result) {
+                        if (result.code == 0) {
+                            Live.giftpackage.giftPackageNewPanel.data = result.data;
+                            Live.giftpackage.giftPackageNewPanel.show = true;
 
-        //         }
-        //     },
-        //     getGiftPackage: function () { //get package data
-        //         return $.get('http://live.bilibili.com/gift/playerBag', {}, function () {}, 'json').promise();
-        //     },
-        //     getSendGift: function () { // get new gift
-        //         return $.get('http://live.bilibili.com/giftBag/getSendGift', {}, function () {}, 'json').promise();
-        //     },
-        //     getGiftPackageStatus: function () { //get the info for 'if has new gift'
-        //         return $.get('http://live.bilibili.com/giftBag/sendDaily', {}, function () {}, 'json').promise();
-        //     },
-        //     openGiftPackageNewPanel: function () {
-        //         var giftPackageNewPanel = Live.giftpackage.giftPackageNewPanel;
-        //         // 获取赠送的新道具数据
-        //         getSendGift(function (result) {
-        //             if (result.code == 0) {
-        //                 giftPackageNewPanel.data = result.data;
-        //                 giftPackageNewPanel.show = true;
-        //             }
-        //         });
-        //     },
-        //     closeGiftPackageNewPanel: function () {
-        //         var giftPackageNewPanel = Live.giftpackage.giftPackageNewPanel;
-        //         giftPackageNewPanel.out = true;
-        //         giftPackageNewPanel.outTimeout = setTimeout(function () {
-        //             giftPackageNewPanel.out = false;
-        //             giftPackageNewPanel.show = false;
-        //             giftPackageNewPanel = null;
-        //             giftPackagelVM.giftPackageStatus = 2;
-        //             Live.giftpackage.openGiftPackagePanel(); // 打开包裹
-        //         }, 380);
-        //     },
-        //     openGiftPackagePanel: function () {
-        //         Live.giftpackage.getGiftPackage(function (result) {
-        //             giftPackagelVM.giftPackageData = result.data;
-        //             giftPackagelVM.panelStatus = true;
-        //         });
-        //         setTimeout(function () {
-        //             $(document).on("click", Live.giftpackage.closeGiftPackagePanel);
-        //         }, 1);
-        //     },
-        //     closeGiftPackagePanel: function () {
-        //         $(".gifts-package-panel").fadeOut(200, function () {
-        //             Live.giftpackage.panelStatus = false;
-        //             $(document).off("click", Live.giftpackage.closeGiftPackagePanel);
-        //         });
-        //     }
-        // };
+                        }
+                    });
+                },
+                close: function () {
+                    var giftPackageNewPanel = Live.giftpackage.giftPackageNewPanel;
+                    giftPackageNewPanel.out = true;
+                    giftPackageNewPanel.outTimeout = setTimeout(function () {
+                        giftPackageNewPanel.out = false;
+                        giftPackageNewPanel.show = false;
+                        giftPackageNewPanel = null;
+                        Live.giftpackage.giftPackageStatus = 2;
+                        Live.giftpackage.openGiftPackagePanel(); // 打开包裹
+                    }, 380);
+                }
+            },
+            init: function () {
+                //init dom
+                Live.giftpackage.controlPanel = $('#gift-panel').find('.control-panel');
+                Live.giftpackage.package = Live.giftpackage.controlPanel.find('.items-package').clone();
+                Live.giftpackage.controlPanel.find('.items-package').after(Live.giftpackage.package).remove();
+                Live.giftpackage.packageBtn = Live.giftpackage.package.find('.link');
+                Live.giftpackage.packagePanel = Live.giftpackage.package.find('.gifts-package-panel');
+                Live.giftpackage.packageContent = Live.giftpackage.package.find('.gifts-package-content');
+
+                Live.giftpackage.sendPanel = $('#gift-package-send-panel');
+                Live.giftpackage.sendContent = $('#gift-package-send-panel').find('.panel-content');
+                Live.giftpackage.sendGiftImg = Live.giftpackage.sendPanel.find('.gift-img');
+                Live.giftpackage.sendGiftInfo = Live.giftpackage.sendPanel.find('.gift-info p');
+                Live.giftpackage.sendGiftInput = Live.giftpackage.sendPanel.find('input');
+                Live.giftpackage.sendGiftBtn = Live.giftpackage.sendPanel.find('button').clone();
+                Live.giftpackage.sendPanel.find('button').after(Live.giftpackage.sendGiftBtn).remove();
+
+                //send line dom
+                Live.giftpackage.sendLinePanel = $('#gift-package-send-panel').clone().attr('id', 'gift-package-send-line-panel');
+                Live.giftpackage.sendPanel.after(Live.giftpackage.sendLinePanel);
+                Live.giftpackage.sendLineSection = Live.giftpackage.sendLinePanel.find('.section').empty();
+                Live.giftpackage.sendLinePanel.find('input').remove();
+                Live.giftpackage.sendLineBtn = Live.giftpackage.sendLinePanel.find('button');
+
+                //init event
+                Live.giftpackage.packageBtn.off('click').on('click', function (e) {
+                    Live.giftpackage.openGiftPackagePanel();
+                });
+
+                Live.giftpackage.sendContent.find('.close-btn').off('click').on('click', function (e) {
+                    Live.giftpackage.giftSendPanel.close();
+                });
+                Live.giftpackage.sendLinePanel.find('.close-btn').off('click').on('click', function (e) {
+                    Live.giftpackage.giftSendLinePanel.close();
+                });
+                Live.giftpackage.sendGiftBtn.off('click').on('click', function (e) {
+                    e.stopPropagation();
+                    Live.giftpackage.giftSendPanel.sendGift(e);
+                });
+                Live.giftpackage.sendLineBtn.off('click').on('click', function (e) {
+                    e.stopPropagation();
+                    Live.giftpackage.giftSendLinePanel.sendLine(e);
+                });
+            },
+            initGiftsDOM: function (giftsData) {
+                Live.giftpackage.packageContent.empty();
+                Live.each(giftsData, function (id) {
+                    var gifts = giftsData[id];
+                    var giftsDOM = $('<div />').addClass('gift-item-group').attr('gift_id', id);
+                    Live.each(gifts, function (index) {
+                        var gift = gifts[index];
+                        var giftDOM = $('<span />').addClass('package-item').attr({
+                                'title': gift.gift_name,
+                                'gift_id': id,
+                                'bag_id': gift.id
+                            }),
+                            giftItemDOM = $('<div />').addClass('gift-item gift-item-package gift-' + id).html('<span class="expires">' + gift.expireat + '天</span>'),
+                            giftConterDOM = $('<div />').addClass('gift-count').text('x' + gift.gift_num);
+                        giftDOM.append(giftItemDOM, giftConterDOM);
+                        giftsDOM.append(giftDOM).css('width', (54 * gifts.length) + 'px');
+                    });
+                    var lineSendDOM = $('<div />').addClass('send_line').text('清空本行');
+                    var container = $('<div />').addClass('container').append(lineSendDOM, giftsDOM);
+                    Live.giftpackage.packageContent.append(container);
+                });
+
+                //init event
+                Live.giftpackage.packageContent.find('.package-item').off('click').on('click', function (e) {
+                    var bagId = $(this).attr('bag_id');
+                    var gift = Live.giftpackage.giftPackageData[bagId];
+                    Live.giftpackage.giftSendPanel.open(gift.gift_id, gift.gift_name, gift.gift_num, gift.id);
+                });
+                Live.giftpackage.packageContent.find('.send_line').off('click').on('click', function (e) {
+                    var gift_id = $(this).parent().find('.gift-item-group').attr('gift_id');
+                    Live.giftpackage.giftSendLinePanel.open(gift_id);
+                });
+            },
+            sortGifts: function (giftpackageData) {
+                var r = {},
+                    gs = giftpackageData;
+                Live.giftpackage.giftPackageData = {};
+                Live.each(gs, function (i) {
+                    // expireat:"31天"
+                    // gift_id:37
+                    // gift_name:"团扇"
+                    // gift_num:39
+                    // gift_price:"1000金瓜子"
+                    // gift_type:3
+                    // id:4473074
+                    // uid:50623
+                    var gift = gs[i];
+                    Live.giftpackage.giftPackageData[gift.id] = gift;
+
+                    if (gift.expireat == '今日') gift.expireat = 1;
+                    else gift.expireat = parseInt(gift.expireat);
+                    if (r[gift.gift_id] == undefined) r[gift.gift_id] = [];
+                    var position = 0;
+                    Live.each(r[gift.gift_id], function (index) {
+                        if (gift.expireat < r[gift.gift_id][index].expireat && position >= index) position = index;
+                        else if (position >= index) position = index + 1;
+                    });
+                    r[gift.gift_id].splice(position, 0, gift);
+                });
+                return r;
+            },
+            getGiftPackage: function () { //get package data
+                return $.get('http://live.bilibili.com/gift/playerBag', {}, function () {}, 'json').promise();
+            },
+            getSendGift: function () { // get new gift
+                return $.get('http://live.bilibili.com/giftBag/getSendGift', {}, function () {}, 'json').promise();
+            },
+            getGiftPackageStatus: function () { //get the info for 'if has new gift'
+                return $.get('http://live.bilibili.com/giftBag/sendDaily', {}, function () {}, 'json').promise();
+            },
+            openGiftPackagePanel: function () {
+                if (Live.giftpackage.packagePanel.css('display') != 'none') return;
+                Live.giftpackage.getGiftPackage().then(function (result) {
+                    Live.giftpackage.giftPackageMap = Live.giftpackage.sortGifts(result.data);
+                    Live.giftpackage.initGiftsDOM(Live.giftpackage.giftPackageMap);
+                    Live.giftpackage.packagePanel.show();
+                });
+                setTimeout(function () {
+                    $(document).on("click", Live.giftpackage.closeGiftPackagePanel);
+                }, 1);
+            },
+            closeGiftPackagePanel: function (t) {
+                var e = t && (t.target || t.srcElement)
+                if (!$(e).hasClass('gifts-package-panel') && !$(e).parents('.gifts-package-panel').length)
+                    Live.giftpackage.packagePanel.hide(0, function () {
+                        Live.giftpackage.panelStatus = false;
+                        $(document).off("click", Live.giftpackage.closeGiftPackagePanel);
+                    });
+            }
+        };
+        Live.helperInfo = {
+            setStatus: function (dom, className, statusClass) {
+                if (dom.hasClass(statusClass)) return;
+                else dom.attr('class', className).addClass(statusClass);
+            },
+            setWatcherStatus: function (statusClass, title) {
+                Live.helperInfo.setStatus(Live.watcherBtn, 'watcher-info', statusClass);
+                Live.watcherBtn.find('span').attr('title', title);
+                Live.watcher.updateReward('tv');
+                Live.watcher.updateReward('lottery');
+            },
+            setTreasureStatus: function (statusClass, title) {
+                Live.helperInfo.setStatus(Live.treasureBtn, 'treasure-info', statusClass);
+                Live.treasureBtn.find('span').attr('title', title);
+            },
+            initPanel: function () {
+                var headPanel = $('#head-info-panel');
+                var anchor = headPanel.find('.anchor-avatar');
+                var infoPanel = headPanel.find('.info-ctnr');
+                var roomInfo = infoPanel.find('.room-info');
+                var roomControl = infoPanel.find('room-ctrl');
+                var upLevel = infoPanel.find('.anchor-info-row .master-info');
+                var roomTitleRow = roomInfo.find('.room-title-row');
+
+                /*up more btn & panel*/
+                var helperAnchorInfoBtn = $('<span />').addClass('helper-anchor-info-btn').text('更多');
+                var helperAnchorInfoPanel = Live.createPanel(helperAnchorInfoBtn, 'click', 'helper-anchor-info-panel', 'helperAnchorInfoPanel');
+                var area = roomInfo.find('.room-info.v-top:eq(0)');
+                var tags = roomInfo.find('.room-info.v-top:eq(1)');
+                var report = roomTitleRow.find('.report-link');
+                var share = roomTitleRow.find('.share-link');
+                roomTitleRow.find('span.report-link').hide();
+                helperAnchorInfoPanel.append(area, tags, report, share);
+                roomTitleRow.append(helperAnchorInfoBtn, helperAnchorInfoPanel);
+
+                /*helper info panel*/
+                Live.helperInfoRow = $('<div />').addClass('helper-info-panel').attr('id', 'helperInfoPanel');
+                infoPanel.find('.room-info.float-left').append(Live.helperInfoRow);
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key: 'watcher'
+                }, function (res) {
+                    if (res['value'] == 'on') {
+                        Live.watcherBtn = $('<div />').addClass('watcher-info').html('<i class="watcher-info-icon" style="background-image:url(' + chrome.extension.getURL('imgs/icon.png') + ')"></i><span class="watcher-info-text">抽奖监控</span>');
+                        Live.helperInfoRow.append(Live.watcherBtn);
+                        Live.watcherPanel = Live.createPanel(Live.watcherBtn, 'click', 'watcher-info-panel', 'watcherInfoPanel', function () {
+                            Live.watcher.updateReward('tv');
+                            Live.watcher.updateReward('lottery');
+                        });
+                        Live.watcherBtn.append(Live.watcherPanel);
+                    }
+                });
+                chrome.extension.sendMessage({
+                    command: "getOption",
+                    key: 'autoTreasure'
+                }, function (res) {
+                    if (res['value'] == 'on') {
+                        Live.treasureBtn = $('<div />').addClass('treasure-info').html('<i class="treasure-info-icon" style="background-image:url(' + chrome.extension.getURL('imgs/icon.png') + ')"></i><span class="treasure-info-text">自动领瓜子</span>');
+                        Live.helperInfoRow.append(Live.treasureBtn);
+                        // Live.treasurePanel = Live.createPanel(Live.treasureBtn, 'click', 'treasure-info-panel', 'treasureInfoPanel');
+                        // Live.treasureBtn.append(Live.treasurePanel);
+                    }
+                });
+
+            }
+        };
         Live.init = {
             do: function () {
                 Live.clearLocalStorage();
@@ -2476,43 +2842,60 @@
                     Live.version = response.value;
                     $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒睡醒的肉啊</a></div>");
                     Live.init.initStyle();
+                    Live.init.initGiftList();
                 });
-                store.set('helper_userInfo', { 'login': false });
+                store.set('bilibili_helper_userInfo', { 'login': false });
                 Live.roomId = Live.getRoomId();
-                if (!store.has('helper_live_autoMode')) store.set('helper_live_autoMode', {});
-                if (!store.has('helper_live_roomId')) store.set('helper_live_roomId', {});
+                if (!store.has('bilibili_helper_quiz_autoMode')) store.set('bilibili_helper_quiz_autoMode', {});
+                if (!store.has('bilibili_helper_live_roomId')) store.set('bilibili_helper_live_roomId', {});
+
+                Live.getRoomInfo().done(function (data) {
+                    Live.roomInfo = data.data;
+                    Live.roomInfo.roomShortId = location.pathname.substr(1);
+                });
+
                 Live.initUserInfo(function () {
-                    if (store.get('helper_userInfo', 'login')) {
+
+                    if (store.get('bilibili_helper_userInfo', 'login')) {
                         chrome.extension.sendMessage({
                             command: "getOption",
                             key: 'doSign',
                         }, function (response) {
                             if (response['value'] == 'on') Live.doSign.init();
                         });
-                        Live.bilibiliHelperInfoDOM = $('<div class="room-info bilibili-helper-info"></div>');
-                        $('#head-info-panel').append(Live.bilibiliHelperInfoDOM);
+                        // Live.bilibiliHelperInfoDOM = $('<div class="room-info bilibili-helper-info"></div>');
+                        $('.left-part.player-area').prepend(Live.bilibiliHelperInfoDOM);
                         if (location.pathname.substr(1) && !isNaN(location.pathname.substr(1))) {
-                            Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
-                            $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
-                            Live.bet.quiz_toggle_btn.click(function () {
-                                if (store.get('helper_live_autoMode')[Live.roomId] == 1) Live.bet.disable();
-                                else Live.bet.able();
-                            });
-                            if (store.get('helper_live_autoMode')[Live.roomId] == 1) Live.bet.check();
+                            // Live.bet.quiz_toggle_btn = $('<a class="bet_toggle">自动下注</a>');
+                            // $('#quiz-control-panel').find('.section-title').append(Live.bet.quiz_toggle_btn);
+                            // Live.bet.quiz_toggle_btn.click(function () {
+                            //     if (store.get('bilibili_helper_quiz_autoMode')[Live.roomId] == 1) Live.bet.disable();
+                            //     else Live.bet.able();
+                            // });
+                            // if (store.get('bilibili_helper_quiz_autoMode')[Live.roomId] == true) Live.bet.init();
 
+                            //                             Live.control = avalon.define({
+                            //                                 $id: "bilibiliHelperControl"
+                            //                             });
+                            //                             var a = {"normal":{"coin":5,"status":true,"change":0,"progress":{"now":9600,"max":10000}},"colorful":{"coin":0,"status":false,"change":0,"progress":{"now":0,"max":0}}};
+                            // Live.control.$fire("all!updateCapsuleData", a);
+
+                            Live.helperInfo.initPanel();
                             Live.treasure.init();
-                            Live.watcher.init();
+                            Live.watcher.init(function () {
+                                Live.addScriptByFile('live-content-script.min.js', Live.scriptOptions);
+                            });
                             Live.chat.init();
                             Live.notise.init();
-                            setTimeout(function () {
-                                Live.addScriptByFile('live-content-script.min.js', Live.scriptOptions);
-                            }, 3500);
+                            Live.giftpackage.init();
+
                             Notification.requestPermission();
                         }
                     }
                 });
             },
             initStyle: function () {
+                //init stylesheet
                 var l = $('document').find('#bilibiliHelperLive');
                 if (l.length) l.remove();
                 var styleLink = document.createElement("link");
@@ -2522,6 +2905,18 @@
                 styleLink.setAttribute('href', chrome.extension.getURL('live.min.css'));
                 if (document.head) document.head.appendChild(styleLink);
                 else document.documentElement.appendChild(styleLink);
+            },
+            initGiftList: function () {
+                var giftsDom = $('div.gift-item[role=listitem]');
+                Live.each(giftsDom, function (i) {
+                    var gift = $(giftsDom[i]);
+                    var giftId = gift.attr('data-gift-id');
+                    if (!isNaN(parseInt(giftId))) Live.giftList[giftId] = {
+                        title: gift.attr('data-title'),
+                        type: gift.attr('data-type'),
+                        description: gift.attr('data-desc')
+                    };
+                })
             }
         };
         Live.init.do();

@@ -20,7 +20,7 @@ var Live = {
         }
     }
 };
-console.log('弹幕监控脚本 插入成功㇏(°ω° )ノ♪~')
+console.log("%c弹幕监控脚本 插入成功㇏(°ω° )ノ♪~", "color:#FFFFFF;background-color:#4fc1e9;padding:5px;border-radius:7px;line-height:30px;");
 var event = document.createEvent('Event');
 event.initEvent('sendMessage', true, true);
 var sendMessage = function (json) {
