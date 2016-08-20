@@ -38,6 +38,14 @@ if (options != '{}') options = JSON.parse(options);
     //     };
     // }, 1000);
 // }
+//giftpackage
+// if (options['giftpackage']){
+//     Live.setInterval(window.flash_giftPackageOpen, function () {
+//         window.flash_giftPackageOpen = function () {
+//             $(".items-package").click();
+//         };
+//     }, 1000);
+// }
 //watcher
 if (options['watcher']) {
     Live.setInterval(window.protocol, function () {

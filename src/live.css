@@ -519,6 +519,7 @@
     top: 35px;
     width: 220px;
     left: calc(100% - 142px);
+    z-index: 999;
 }
 
 .helper-anchor-info-panel > div {
@@ -576,20 +577,25 @@
 .helper-info-panel {
     font-size: 13px;
     padding: 5px;
+    position: relative;
+    opacity: 0;
 }
 
-.helper-info-panel > div {
+.helper-info-panel .watcher-info,
+.helper-info-panel .treasure-info {
     display: inline-block;
     position: relative;
     width: 132px;
 }
 
-.helper-info-panel > div span {
+.helper-info-panel .watcher-info span,
+.helper-info-panel .treasure-info span {
     cursor: pointer;
     transition: color cubic-bezier(.22, .58, .12, .98) .4s;
 }
 
-.helper-info-panel > div span:hover {
+.helper-info-panel .watcher-info span:hover,
+.helper-info-panel .treasure-info span:hover {
     color: #4fc1e9;
 }
 
@@ -652,12 +658,12 @@
 
 .watcher-info-panel {
     left: -60px;
-    top: 30px;
+    top: 35px;
 }
 
 .treasure-info-panel {
     left: -72px;
-    top: 30px;
+    top: 35px;
 }
 
 .watcher-info-panel .reward-panel {
@@ -693,7 +699,6 @@
 .watcher-info-panel .gift {
     display: inline-block;
     margin: 5px 5px 5px 10px;
-    width: 80px;
 }
 
 .gifts-package-panel .gift-count {
@@ -724,7 +729,9 @@
     color: #FFC760;
     cursor: pointer;
     opacity: 0;
-    transition: all cubic-bezier(.22, .58, .12, .98) .4s
+    transition: all cubic-bezier(.22, .58, .12, .98) .4s;
+    position: absolute;
+    left: 0;
 }
 
 .gifts-package-panel .gifts-package-content .container .send_line:hover {
@@ -738,12 +745,12 @@
 
 .gifts-package-panel .gifts-package-content .container .gift-item-group {
     display: inline-block;
-    margin-left: -24px;
+    margin-left: 0;
     transition: all cubic-bezier(.22, .58, .12, .98) .4s
 }
 
 .gifts-package-panel .gifts-package-content .container:hover .gift-item-group {
-    margin-left: 0;
+    margin-left: 20px;
 }
 
 .gifts-package-panel .package-item {
@@ -751,7 +758,7 @@
     line-height: 16px;
 }
 
-.gifts-package-panel {
+.gifts-package-panel.big {
     width: 490px;
     left: -210px;
 }
@@ -853,6 +860,10 @@
     background: #fd9ccc;
 }
 
+#gift-package-send-line-panel .panel-content .section {
+    text-align: center;
+}
+
 #gift-package-send-line-panel .gift-count {
     text-align: center;
     color: #fd9ccc;
@@ -865,3 +876,31 @@
     text-align: center;
     margin-top: 10px;
 }
+
+#gift-package-send-panel .send-ctrl {}
+
+#gift-package-send-panel .number-group {
+    margin-top: 10px;
+}
+
+#gift-package-send-panel .number-btn {
+    width: 37.5px;
+    display: inline-block;
+    text-align: center;
+    border: 1px solid #4fc1e9;
+    margin: 3px;
+    border-radius: 4px;
+    color: #4fc1e9;
+    cursor: pointer;
+    background-color: #fff;
+    transition: all cubic-bezier(.22, .58, .12, .98) .4s;
+    font-size: 12px;
+}
+
+#gift-package-send-panel .number-btn:hover {
+    color: #ffffff;
+    background-color: #4fc1e9;
+}
+/*.gift-panel.main-section .control-panel .items-package{
+    display:none;
+}*/

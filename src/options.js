@@ -64,6 +64,7 @@ $(document).ready(function () {
     $("div[option=\"" + bkg_page.getOption("html5") + "\"].html5").addClass("on");
     $("div[option=\"" + bkg_page.getOption("contextmenu") + "\"].contextmenu").addClass("on");
     $("div[option=\"" + bkg_page.getOption("dynamic") + "\"].dynamic").addClass("on");
+    $("div[option=\"" + bkg_page.getOption("giftpackage") + "\"].giftpackage").addClass("on");
     // $("div[option=\"" + bkg_page.getOption("support") + "\"].support").addClass("on");
     $("div[option=\"" + bkg_page.getOption("dlquality") + "\"].dlquality").addClass("on");
     $("div[option=\"" + bkg_page.getOption("indexversion") + "\"].indexversion").addClass("on");
@@ -198,6 +199,13 @@ $(document).ready(function () {
         $('.danmu').removeClass('on');
         $(this).addClass('on');
         bkg_page.setOption("danmu", $(this).attr("option"));
+        // updatepreview();
+    });
+    $('.giftpackage').click(function () {
+        if ($(this).hasClass('on')) return false;
+        $('.giftpackage').removeClass('on');
+        $(this).addClass('on');
+        bkg_page.setOption("giftpackage", $(this).attr("option"));
         // updatepreview();
     });
     $('.liveNotification').click(function () {
