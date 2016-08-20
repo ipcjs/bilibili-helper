@@ -2693,6 +2693,8 @@
                 }, function (res) {
                     if (res['value'] == 'on') {
                         //init dom
+                        $('#gift-panel').find('.control-panel .items-package').hide();
+
                         Live.giftpackage.controlPanel = $('#gift-panel').find('.control-panel');
                         Live.giftpackage.package = Live.giftpackage.controlPanel.find('.items-package').clone().css('display', 'inline-block');
                         Live.giftpackage.controlPanel.find('.items-package').after(Live.giftpackage.package);
@@ -2942,7 +2944,7 @@
                             Live.roomId = Live.getRoomId();
                             if (!store.has('bilibili_helper_quiz_autoMode')) store.set('bilibili_helper_quiz_autoMode', {});
                             if (!store.has('bilibili_helper_live_roomId')) store.set('bilibili_helper_live_roomId', {});
-                            $('#gift-panel').find('.control-panel .items-package').hide();
+                            
                             Live.getRoomInfo().done(function (data) {
                                 Live.roomInfo = data.data;
                                 Live.roomInfo.roomShortId = location.pathname.substr(1);
