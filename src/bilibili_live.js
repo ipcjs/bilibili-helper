@@ -15,7 +15,7 @@
                 }
             } else store.remove(key);
         };
-        var Live = { scriptOptions: {}, hasInit: false, giftList: {}};
+        var Live = { scriptOptions: {}, hasInit: false, giftList: {} };
 
         if (store.has('bilibili_helper_init')) Live.hasInit = true;
         else store.set('bilibili_helper_init', true);
@@ -1937,6 +1937,10 @@
                 }
                 Live.summer.reward = store.get('bilibili_helper_summer_reward');
                 Live.summer.rewardList = store.get('bilibili_helper_summer_reward_list');
+                if (typeof Live.summer.reward != 'object') {
+                    Live.summer.reward = {};
+                    store.set('bilibili_helper_summer_reward', Live.summer.reward);
+                }
             },
             get: function (roomId) {
                 // var result = {
@@ -2003,8 +2007,7 @@
                         Live.summer.getReward(roomId, raffleId, function (result, roomId, raffleId) {
                             var msg;
                             if (result.data.giftName != "") {
-                                var rewardCount = Live.summer.reward[result.data.giftId];
-                                if (rewardCount == undefined) Live.summer.reward[result.data.giftId] = 0;
+                                console.log(result.data);
 
                                 //update gift id list
                                 Live.summer.rewardList[result.data.giftId] = { title: result.data.giftName };
@@ -2014,10 +2017,11 @@
                                 Live.watcher.pushNotification('lottery', "直播间【" + roomId + "】刨冰抽奖结果", "编号:" + raffleId + " 抽中" + result.data.giftName + "x" + result.data.giftNum, "//static.hdslb.com/live-static/live-room/images/gift-section/gift-36.png");
 
                                 //update reward list
-                                console.log(result.data);
-                                Live.summer.reward[result.data.giftId] += result.data.giftNum;
+                                var rewardCount = Live.summer.reward[result.data.giftId];
+                                if (rewardCount == undefined) rewardCount = 0;
+                                Live.summer.reward[result.data.giftId] = rewardCount + result.data.giftNum;
                                 store.set('bilibili_helper_summer_reward', Live.summer.reward);
-                                Live.summer.lotteries[raffleId].reward = result.data;
+                                // Live.summer.lotteries[raffleId].reward = result.data;
                                 Live.watcher.updateReward('lottery');
                             } else {
                                 Live.console.watcher("刨冰活动 直播间【" + roomId + "】 编号:" + raffleId + " " + result.msg);
@@ -2938,14 +2942,14 @@
                                 }
                                 $('#gift-panel').find('.control-panel').prepend("<div class=\"ctrl-item version\">哔哩哔哩助手 v" + Live.version + " by <a href=\"http://weibo.com/guguke\" target=\"_blank\">@啾咕咕www</a> <a href=\"http://weibo.com/ruo0037\" target=\"_blank\">@沒睡醒的肉啊</a></div>");
                                 Live.init.initStyle();
-                                Live.init.initGiftList();
                             });
 
                             Live.roomId = Live.getRoomId();
                             if (!store.has('bilibili_helper_quiz_autoMode')) store.set('bilibili_helper_quiz_autoMode', {});
                             if (!store.has('bilibili_helper_live_roomId')) store.set('bilibili_helper_live_roomId', {});
-                            
+
                             Live.getRoomInfo().done(function (data) {
+                                Live.init.initGiftList();
                                 Live.roomInfo = data.data;
                                 Live.roomInfo.roomShortId = location.pathname.substr(1);
 
@@ -2957,6 +2961,7 @@
                                     Live.addScriptByFile('live-content-script.min.js', Live.scriptOptions);
                                 });
                                 setTimeout(function () {
+                                    
                                     Live.giftpackage.init();
                                     Live.helperInfoRow.css('opacity', 1);
                                 }, 2500);
@@ -2991,8 +2996,8 @@
             },
             initGiftList: function () {
                 var giftsDom = $('.gifts-ctnr .gift-item[role=listitem]');
-                if (giftsDom.length == 1)
-                    Live.each(giftsDom, function (i) {
+                if (giftsDom.length > 0)
+                    for (var i = 0; i < giftsDom.length; ++i) {
                         var gift = $(giftsDom[i]);
                         var giftId = gift.attr('data-gift-id');
                         if (!isNaN(parseInt(giftId))) Live.giftList[giftId] = {
@@ -3000,7 +3005,7 @@
                             type: gift.attr('data-type'),
                             description: gift.attr('data-desc')
                         };
-                    })
+                    }
             }
         };
         Live.init.do();
