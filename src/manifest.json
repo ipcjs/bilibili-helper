@@ -13,7 +13,7 @@
    },
    "content_scripts": [ {
       "all_frames": true,
-      "js": [ "bilibili_ASS_Danmaku_Downloader.min.js", "filename-sanitize.min.js", "jq.bilibili.min.js", "bilibili_injected.min.js","ocrad.min.js","bilibili_live.min.js", "ColPick.min.js", "CommentCoreLibrary.min.js", "ABPlayer.min.js", "hls.min.js" ],
+      "js": [ "bilibili_ASS_Danmaku_Downloader.min.js", "store.min.js", "filename-sanitize.min.js", "jq.bilibili.min.js", "bilibili_injected.min.js","ocrad.min.js","bilibili_live.min.js", "ColPick.min.js", "CommentCoreLibrary.min.js", "ABPlayer.min.js", "hls.min.js" ],
       "matches": [ "*://*.bilibili.com/*" ],
       "run_at": "document_end"
    } ],
@@ -32,6 +32,6 @@
    "options_page": "options.html",
    "permissions": [ "downloads", "alarms", "contextMenus", "cookies", "notifications", "storage", "tabs", "webRequest", "webRequestBlocking", "http://*/", "https://*/" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "0.8.13",
-   "web_accessible_resources": [ "bilibili-helper.woff", "template.html", "imgs/icon-32.png", "imgs/loading.gif", "imgs/jinkela.png", "imgs/loading.gif", "imgs/helper-neko.png", "options.html", "imgs/menu-icon.png", "live.min.css", "live-content-script.min.js" ]
+   "version": "0.8.16.4",
+   "web_accessible_resources": [ "bilibili-helper.woff", "template.html", "imgs/icon-32.png", "imgs/loading.gif", "imgs/jinkela.png", "imgs/loading.gif", "imgs/helper-neko.png","imgs/icon.png", "options.html", "imgs/menu-icon.png", "live.min.css", "live-content-script.min.js" ]
 }

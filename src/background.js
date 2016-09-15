@@ -30,7 +30,7 @@ Live.get = function (n, k, v) {
     if (!window.localStorage || !n) return;
 
     if (!window.localStorage[n]) {
-        var temp = (v==undefined?{}:v);
+        var temp = (v == undefined ? {} : v);
         if (k != undefined && v != undefined) temp[k] = v;
         window.localStorage[n] = JSON.stringify(temp);
     }
@@ -435,6 +435,7 @@ function setTreasure(data) {
         }
     }
 }
+
 function setWatcherRoom(data) {
     if (Object.prototype.toString.call(data) === '[object Object]') {
         for (var index in data) {
@@ -465,6 +466,7 @@ function setNotFavourite(id) {
     }
     return false;
 }
+chrome.runtime.onConnect.addListener(function (port) {Live.treasure.port=port});
 chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.command) {
         case "init":
@@ -501,6 +503,30 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
             setTreasure(request.data);
             sendResponse({
                 data: Live.treasure
+            });
+            return true;
+        case "setCurrentTreasure":
+            if (request.data.time_end != undefined && request.data.time_end != Live.treasure.time_end && Live.treasure.port) {
+                setTreasure(request.data);
+                Live.treasure.port.postMessage({
+                    command: "updateCurrentTreasure",
+                    data: {
+                        minute: request.data.minute,
+                        silver: request.data.silver,
+                        time_end: request.data.time_end,
+                        time_start: request.data.time_start
+                    }
+                });
+            }
+            return true;
+        case "getCurrentTreasure":
+            sendResponse({
+                data: {
+                    minute: Live.treasure.minute,
+                    silver: Live.treasure.silver,
+                    time_end: Live.treasure.time_end,
+                    time_start: Live.treasure.time_start
+                }
             });
             return true;
         case "delTreasure":
@@ -672,27 +698,28 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                 });
             return true;
         case "getTVReward":
-            var rewardStr = '',lost = "很遗憾，此次您没有中奖";
+            var rewardStr = '',
+                lost = "很遗憾，此次您没有中奖";
             var data = request.data;
             if (data.rewardId == 1) {
-                rewardStr+="大号小电视"+data.rewardNum+"个";
+                rewardStr += "大号小电视" + data.rewardNum + "个";
             } else if (data.rewardId == 2) {
-                rewardStr+="蓝白胖次道具"+data.rewardNum+"个";
+                rewardStr += "蓝白胖次道具" + data.rewardNum + "个";
             } else if (data.rewardId == 3) {
-                rewardStr+="B坷垃"+data.rewardNum+"个";
+                rewardStr += "B坷垃" + data.rewardNum + "个";
             } else if (data.rewardId == 4) {
-                rewardStr+="喵娘"+data.rewardNum+"个";
+                rewardStr += "喵娘" + data.rewardNum + "个";
             } else if (data.rewardId == 5) {
-                rewardStr+="便当"+data.rewardNum+"个";
+                rewardStr += "便当" + data.rewardNum + "个";
             } else if (data.rewardId == 6) {
-                rewardStr+="银瓜子"+data.rewardNum+"个";
+                rewardStr += "银瓜子" + data.rewardNum + "个";
             } else if (data.rewardId == 7) {
-                rewardStr+="辣条"+data.rewardNum+"个";
+                rewardStr += "辣条" + data.rewardNum + "个";
             } else {
-                rewardStr+= lost;
+                rewardStr += lost;
             }
-            if(data.rewardNum>0){
-                if(data.rewardId == 1 || data.isWin)
+            if (data.rewardNum > 0) {
+                if (data.rewardId == 1 || data.isWin)
                     chrome.notifications.create('getTV', {
                         type: 'basic',
                         iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
@@ -703,32 +730,32 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
                             title: chrome.i18n.getMessage('notificationGetTv')
                         }]
                     }, function (id) {
-                    setTimeout(function () {
-                        chrome.notifications.clear(id);
-                    }, 10000);
-                });
-                else chrome.notifications.create('getTV', {
-                        type: 'basic',
-                        iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                        title: '小电视抽奖结果' ,
-                        isClickable: false,
-                        message:'在直播间:' + data.roomId+' 抽到'+rewardStr
-                    }, function (id) {
                         setTimeout(function () {
                             chrome.notifications.clear(id);
                         }, 10000);
                     });
-            } else chrome.notifications.create('getTV', {
+                else chrome.notifications.create('getTV', {
                     type: 'basic',
                     iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
-                    title: '直播间:' + data.roomId,
-                    message:rewardStr,
-                    isClickable: false
+                    title: '小电视抽奖结果',
+                    isClickable: false,
+                    message: '在直播间:' + data.roomId + ' 抽到' + rewardStr
                 }, function (id) {
                     setTimeout(function () {
                         chrome.notifications.clear(id);
                     }, 10000);
                 });
+            } else chrome.notifications.create('getTV', {
+                type: 'basic',
+                iconUrl: 'http://static.hdslb.com/live-static/live-room/images/gift-section/gift-25.png',
+                title: '直播间:' + data.roomId,
+                message: rewardStr,
+                isClickable: false
+            }, function (id) {
+                setTimeout(function () {
+                    chrome.notifications.clear(id);
+                }, 10000);
+            });
             return true;
         case "requestForDownload":
             chrome.downloads.download({
@@ -1044,7 +1071,7 @@ Live.notise = {
     getList: function (d) {
         var url = "http://live.bilibili.com/feed/getList/" + Live.notise.page;
         var callback = function (t) {
-            t = t.substr(1,t.length-3);
+            t = t.substr(1, t.length - 3);
             t = JSON.parse(t);
             var roomIdList = {},
                 newList = [];
@@ -1105,17 +1132,19 @@ Live.notise = {
         }, 'POST');
     },
     do: function (data) {
-        Live.notise.feedMode = data.data.open;
-        if (0 == data.code) {
-            Live.notise.count = data.data.count;
-            if (data.data.open && data.data.has_new) {
-                Live.notise.count = 0;
-                Live.notise.page = 1;
-                Live.notise.open = !0;
-                Live.notise.getList(data.data);
+        if (data.data) {
+            Live.notise.feedMode = data.data.open;
+            if (0 == data.code) {
+                Live.notise.count = data.data.count;
+                if (data.data.open && data.data.has_new) {
+                    Live.notise.count = 0;
+                    Live.notise.page = 1;
+                    Live.notise.open = !0;
+                    Live.notise.getList(data.data);
+                }
+            } else {
+                clearInterval(Live.notise.intervalNum);
             }
-        } else {
-            clearInterval(Live.notise.intervalNum);
         }
     },
     init: function () {
