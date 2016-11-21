@@ -20,7 +20,7 @@ var Live = {
         }
     }
 };
-console.log("%c弹幕监控脚本 插入成功㇏(°ω° )ノ♪~", "color:#FFFFFF;background-color:#4fc1e9;padding:5px;border-radius:7px;line-height:30px;");
+// console.log("%c弹幕监控脚本 插入成功㇏(°ω° )ノ♪~", "color:#FFFFFF;background-color:#4fc1e9;padding:5px;border-radius:7px;line-height:30px;");
 var event = document.createEvent('Event');
 event.initEvent('sendMessage', true, true);
 var sendMessage = function (json) {
@@ -31,13 +31,13 @@ var sendMessage = function (json) {
 var options = document.getElementById('bilibiliHelperScript').getAttribute('options');
 if (options != '{}') options = JSON.parse(options);
 //treause
-// if (options['treasure']){
-    // Live.setInterval(window.refreshCaptcha, function () {
-    //     window.refreshCaptcha = function () {
-    //         $("#captchaImg").attr("src", "http://live.bilibili.com/freeSilver/getCaptcha?ts=" + Date.now());
-    //     };
-    // }, 1000);
-// }
+if (options['treasure']) {
+    Live.setInterval(window.refreshCaptcha, function () {
+        window.refreshCaptcha = function () {
+            $("#captchaImg").attr("src", "http://live.bilibili.com/freeSilver/getCaptcha?ts=" + Date.now());
+        };
+    }, 1000);
+}
 //giftpackage
 // if (options['giftpackage']){
 //     Live.setInterval(window.flash_giftPackageOpen, function () {
@@ -46,6 +46,17 @@ if (options != '{}') options = JSON.parse(options);
 //         };
 //     }, 1000);
 // }
+//beat
+if (options['beat']) {
+    Live.setInterval(window.sendBeatStorm, function () {
+        var b = window.sendBeatStorm;
+        window.sendBeatStorm = function (json) {
+            b(json);
+            var beat = json.content;
+            $.ajax({ url: "http://live.bilibili.com/msg/send", type: "post", data: { color: 16777215, fontsize: 25, mode: 1, msg: beat, rnd: new Date().getTime(), roomid: window.ROOMID } })
+        };
+    }, 1000);
+}
 //watcher
 if (options['watcher']) {
     Live.setInterval(window.protocol, function () {
@@ -88,3 +99,16 @@ if (options['watcher']) {
         }, 500);
     }, 1000);
 }
+    // var html = $(e.target).html();
+    // var reg = new RegExp('([\\d]+)s');
+    // var timer = reg.exec(html);
+var getBeat = function (roomId) {return $.get('http://live.bilibili.com/SpecialGift/room/' + window.ROOMID, {}, function () {}, 'json').promise();};
+$('#player-container').on('DOMNodeInserted', function (e) {
+    getBeat().done(function (data) {
+        if (data.code == 0 && data.data['39'].hadJoin == 0) {
+            console.log(data.data['39'].hadJoin);
+            $.ajax({ url: "http://live.bilibili.com/msg/send", type: "post", data: { color: 16777215, fontsize: 25, mode: 1, msg: data.data['39'].content, rnd: new Date().getTime(), roomid: window.ROOMID } })
+        }
+    });
+});
+$('.activity-lottery').on('DOMNodeInserted',function(e){$('.lottery-box').click();});

@@ -535,6 +535,7 @@
 						$('#loading-notice').fadeOut(300);
 					}
 				} else {
+					console.log(biliHelper)
 					if (!isNaN(biliHelper.cid) && biliHelper.originalPlayer) biliHelper.originalPlayer.replace('cid=' + biliHelper.cid, 'cid=' + videoInfo.cid);
 					biliHelper.cid = videoInfo.cid;
 					if (!biliHelper.genPage) {
@@ -553,7 +554,9 @@
 						});
 						biliHelper.mainBlock.commentSection = commentDiv;
 						biliHelper.mainBlock.append(biliHelper.mainBlock.commentSection);
-						$.get('http://comment.bilibili.com/' + biliHelper.cid + '.xml', function(response) {
+						var id = biliHelper.site ==1?biliHelper.avid:biliHelper.cid;
+						$.get('http://comment.bilibili.com/' + id + '.xml', function(response) {
+							console.log(response)
 							var assData = '\ufeff' + generateASS(setPosition(parseXML('', response)), {
 									'title': getNiceSectionFilename(biliHelper.avid, biliHelper.page, biliHelper.totalPage, 1, 1),
 									'ori': location.href
