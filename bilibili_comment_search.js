@@ -1,8 +1,7 @@
 // 在匿名函数中执行代码, 防止污染全局变量
 (function () {
     'use strict';
-    console.log('hello world');
-    var id, type, feedback, group;
+    var id, type, feedback, group, title = 'bilibili_comment_search';
     if (window.aid) {
         id = window.aid;
         type = "arc";
@@ -15,6 +14,7 @@
         type = 'arc';
     }
     if (id) {
+        console.log(`${title}...`);
         $('#comment .comm').children().remove(); // 移除评论区域..., 让bbFeedback重新生成
         feedback = new bbFeedback(".comm", type, {autoLoad: true});
         $("#load_comment").off("click").removeAttr("onclick").on("click", function () {
@@ -43,5 +43,7 @@
         } else {
             feedback.show(id, 1);
         }
+    } else {
+        alert(`${title}在当前页面不可用`);
     }
 })();
