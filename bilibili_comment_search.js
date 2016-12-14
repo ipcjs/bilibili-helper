@@ -24,7 +24,7 @@
             type = 'arc';
         }
         if (id) {
-            console.log(`${title}...`);
+            console.log(title + '...');
             $('#comment .comm').children().remove(); // 移除评论区域..., 让bbFeedback重新生成
             feedback = new bbFeedback(".comm", type, {autoLoad: true});
             $("#load_comment").off("click").removeAttr("onclick").on("click", function () {
@@ -54,8 +54,13 @@
                 feedback.show(id, 1);
             }
         } else {
-            console.log(`${title}在当前页面不可用`);
+            console.log(title + '在当前页面不可用');
         }
     }
-    $(window).load(jumpToComment); // 页面完全加载完成后在再触发
+
+    if (document.readyState === 'complete') {
+        jumpToComment();
+    } else {
+        $(window).load(jumpToComment); // 页面完全加载完成后在再触发
+    }
 })();
