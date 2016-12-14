@@ -23,4 +23,5 @@ javascript:(function(){ let s = document.createElement('script'); s.src = 'https
 
 ## B萌无需投票查看数据
 
-1. [点击安装脚本](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_meo_vote_data_hack.user.js)
+1. 安装扩展：[Tampermonkey](http://tampermonkey.net/)
+2. [点击安装脚本](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_meo_vote_data_hack.user.js)
