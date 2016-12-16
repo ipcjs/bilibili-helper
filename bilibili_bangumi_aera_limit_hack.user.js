@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      1.0
 // @description  把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#);
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
@@ -98,7 +98,7 @@
                                     if (confirm('试图解除区域限制失败, 请登录biliplus' +
                                             '\n注意: 因为反向代理服务器没有证书, 只能在http下用密码方式登录, 有泄漏密码的风险, 需要自行承担...'
                                         )) {
-                                        unsafeWindow.location = biliplusHost + '/login';
+                                        unsafeWindow.top.location = biliplusHost + '/login';
                                     }
                                 } else {
                                     data = JSON.stringify(obj);
