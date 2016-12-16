@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#);
+// @version      1.2
+// @description  把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#); 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
 // @include      http://bangumi.bilibili.com/anime/v/*
