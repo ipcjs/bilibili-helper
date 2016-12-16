@@ -25,3 +25,13 @@ javascript:(function(){ let s = document.createElement('script'); s.src = 'https
 
 1. 安装扩展：[Tampermonkey](http://tampermonkey.net/)
 2. [点击安装脚本](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_meo_vote_data_hack.user.js)
+
+## 解除番剧区域限制
+
+把获取视频地址相关接口的返回值替换成[biliplus](https://www.biliplus.com)的接口的返回值
+
+1. 因为替换值的操作是同步的，所有会卡几下...
+2. 因为biliplus的接口不支持跨域请求，所以使用了我自己的服务器做反向代理(-_-#)
+3. 因为反向代理服务器在太渣，经常会加载不出来_(:3」∠)_，多刷新几次就好了
+
+[点击安装脚本](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_bangumi_aera_limit_hack.user.js)
