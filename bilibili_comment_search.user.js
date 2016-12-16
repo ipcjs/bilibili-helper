@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  点击消息中心的评论后, 自动定位评论
 // @author       ipcjs
 // @match        http://*.bilibili.com/*?*aid=*
@@ -11,7 +11,7 @@
 (function () {
     'use strict';
     function jumpToComment() {
-        var id, type, feedback, group, title = 'bilibili_comment_search';
+        var id, type, feedback, group, title = '[' + GM_info.script.name + ']';
         if (window.aid) {
             id = window.aid;
             type = "arc";
@@ -23,10 +23,10 @@
             id = group[1];
             type = 'arc';
         }
-        if (id) {
-            console.log(title + '...');
+        if (id && window.bbFeedback) {
+            console.log(title, 'search...');
             $('#comment .comm').children().remove(); // 移除评论区域..., 让bbFeedback重新生成
-            feedback = new bbFeedback(".comm", type, {autoLoad: true});
+            feedback = new window.bbFeedback(".comm", type, {autoLoad: true});
             $("#load_comment").off("click").removeAttr("onclick").on("click", function () {
                 feedback.show(id, 1)
             });
@@ -54,7 +54,7 @@
                 feedback.show(id, 1);
             }
         } else {
-            console.log(title + '在当前页面不可用');
+            console.log(title, '当前页不可用:', window.location.href);
         }
     }
 
