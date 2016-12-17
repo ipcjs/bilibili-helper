@@ -1,13 +1,17 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  点击消息中心的评论后, 自动定位评论
 // @author       ipcjs
 // @match        http://*.bilibili.com/*?*aid=*
 // @exclude      http://www.bilibili.com/html/html5player.html*
 // @grant        none
 // ==/UserScript==
+
+/**
+* 文档注释会被自动读取？
+*/
 
 (function () {
     'use strict';
