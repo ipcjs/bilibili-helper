@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      1.3
-// @description  把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#); 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
+// @version      1.4
+// @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
 // @include      http://bangumi.bilibili.com/anime/v/*
@@ -13,6 +13,12 @@
 // @connect      biliplus.com
 // @connect      biliplus.ipcjsdev.tk
 // ==/UserScript==
+
+/**
+* 把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 
+* 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#); 
+* 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
+*/
 
 (function () {
     'use strict';
@@ -96,7 +102,7 @@
                                     }
                                 });
                                 if (obj.durl.length === 1 && obj.durl[0].length == 15126 && obj.durl[0].size === 124627) {
-                                    if (confirm('试图解除区域限制失败, 请登录biliplus' +
+                                    if (confirm('试图获取视频地址失败, 请登录biliplus' +
                                             '\n注意: 只支持"使用bilibili账户密码进行登录"'
                                         )) {
                                         unsafeWindow.top.location = biliplusHost + '/login';
