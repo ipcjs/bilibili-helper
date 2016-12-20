@@ -62,11 +62,14 @@
 		// console.log('exit');
 	});
 	$(window).load(function(){
-		 var b = window.defaultDynObj;
-         b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
-
 		 let li = dynamic.find('.dyn_menu > .menu > ul > li').mouseenter(function(){
-			enterFromI || $(this).click();
+		 	if(!enterFromI) {
+		 		$(this).click();
+		 		if ($(this).attr('type') === window.defaultDynObj.type){
+					var b = window.defaultDynObj;
+    			    b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
+		 		}
+		 	}
 			// console.log('click');
 		});
 	});
