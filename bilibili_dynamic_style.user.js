@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         B站主页动态提醒直接显示在顶栏
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  可以直接看到当前的提醒的类型, 省去鼠标移过去的麻烦...
 // @author       ipcjs
 // @match        http://www.bilibili.com/
@@ -65,7 +65,7 @@
 		 let li = dynamic.find('.dyn_menu > .menu > ul > li').mouseenter(function(){
 		 	if(!enterFromI) {
 		 		$(this).click();
-		 		if ($(this).attr('type') === window.defaultDynObj.type){
+		 		if ($(this).attr('mode') === window.defaultDynObj.params.type){
 					var b = window.defaultDynObj;
     			    b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
 		 		}
