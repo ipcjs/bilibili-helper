@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         B站主页动态提醒直接显示在顶栏
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  可以直接看到当前的提醒的类型, 省去鼠标移过去的麻烦...
 // @author       ipcjs
 // @match        http://www.bilibili.com/
@@ -10,7 +10,8 @@
 
 (function() {
 	'use strict';
-	let msgStyleHtml = `#dyn_wnd {
+	let msgStyleHtml = `
+#dyn_wnd {
     display: block!important;
     opacity: 1!important;
     background-color: transparent;
@@ -21,6 +22,9 @@
     
     box-shadow: none;
     border: none;
+}
+#dyn_wnd > .dyn_menu > .menu > .line {
+    left: 5px;
 }
 `;
 	let msgHideListStyleHtml = `
