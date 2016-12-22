@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  点击消息中心的评论后, 自动定位评论; (Update: 修复番剧页面跳转问题: 通过监听消息页面的点击事件获取真实原来的url, 需要等到消息页面载入完成后才有效;)
 // @author       ipcjs
 // @include      http://*.bilibili.com/*?*aid=*
@@ -17,47 +17,21 @@
 
 (function () {
     'use strict';
-    function msgClickListener() {
-        var group;
-        if (group = this.href.match(/^http:\/\/bangumi\.bilibili\.com\/anime\/v\/(\d+)\?aid=(\d+)#reply(\d+)$/)) {
-            GM_setValue('bangumi_id=' + group[1], this.href); // 点击番剧页面的链接时存储真实的url
-            console.log('click', this.href);
-        }
-    }
-
-    function listenMsgClick() {
-        var a = $('#message_right ul > li > .message-main-right')
-            .find('> .message-content-title > a , > div > span.message-context > a')
-            .off('click', msgClickListener) // 先移除, 在监听
-            .click(msgClickListener);
-        console.log('listen click:', a.length, a);
-    }
-
-    function listenDomChange() {
-        console.log('listen DOM change.', 'readyState:', unsafeWindow.document.readyState);
-        new unsafeWindow.MutationObserver(function (mutations, observer) {
-            // console.log(...mutations);
-            mutations.forEach(function (item, index) {
-                if (item.type === 'childList'
-                    && item.target.nodeName === 'UL' && item.target.className === 'message-main-lists' // target为ul.message-main-lists
-                    && item.addedNodes.length > 10 // 添加消息列表的事件中, 添加的node数量一般为41
-                ) {
-                    // console.log(item, index);
-                    listenMsgClick();
-                }
-            });
-        }).observe(unsafeWindow.document.querySelector('#message_center_box'), {
-            childList: true,
-            subtree: true,
-            // attributes: true
-        });
-    }
-
-
     function jumpToComment() {
         if (unsafeWindow.location.host === 'message.bilibili.com' && unsafeWindow.location.pathname === '/') {
-            listenMsgClick();
-            listenDomChange();
+            // 使用委托事件的方式监听点击
+            $('#message_center_box').on(
+                'click.user',
+                '#message_right ul > li > .message-main-right > .message-content-title > a' +
+                ' , ' +
+                '#message_right ul > li > .message-main-right > div > span.message-context > a',
+                function () {
+                    var group;
+                    if (group = this.href.match(/^http:\/\/bangumi\.bilibili\.com\/anime\/v\/(\d+)\?aid=(\d+)#reply(\d+)$/)) {
+                        GM_setValue('bangumi_id=' + group[1], this.href); // 点击番剧页面的链接时存储真实的url
+                        console.log('click', this.href);
+                    }
+                })
         }
 
         var id, type, feedback, group, valueName, temp,
