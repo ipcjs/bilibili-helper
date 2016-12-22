@@ -33,4 +33,4 @@ javascript:(function(){ let s = document.createElement('script'); s.src = 'https
 2. 因为biliplus的接口不支持跨域请求，所以使用了我自己的服务器做反向代理(-_-#)
 3. 因为反向代理服务器太渣，经常会加载不出来_(:3」∠)_，多刷新几次就好了
 
-[安装脚本](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6)[(备用)](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_bangumi_aera_limit_hack.user.js)
+[安装脚本](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6)[(备用)](https://github.com/ipcjs/bilibili-helper/raw/user.js/bilibili_bangumi_aera_limit_hack.user.js)[(如何安装脚本?)](https://github.com/ipcjs/bilibili-helper/wiki/%E8%A7%A3%E9%99%A4B%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6#%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC)
