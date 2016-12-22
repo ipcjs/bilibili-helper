@@ -12,27 +12,27 @@
 	'use strict';
 	let msgStyleHtml = `
 #dyn_wnd {
-    display: block!important;
-    opacity: 1!important;
-    background-color: transparent;
-    
-    left:-470px!important;
-    top: -10px!important;
-    z-index: -10000;
-    
-    box-shadow: none;
-    border: none;
+display: block!important;
+opacity: 1!important;
+background-color: transparent;
+
+left:-470px!important;
+top: -10px!important;
+z-index: -10000;
+
+box-shadow: none;
+border: none;
 }
 #dyn_wnd > .dyn_menu > .menu > .line {
-    left: 5px;
+left: 5px;
 }
 `;
 	let msgHideListStyleHtml = `
 #dyn_wnd > .dyn_menu {
-    display: block!important;
+display: block!important;
 }
 #dyn_wnd > * {
-    display: none!important;
+display: none!important;
 }
 `;
 	let msgStyle = $('<style>').attr('id','msg_style').html(msgStyleHtml);
@@ -40,8 +40,8 @@
 	let head = $('head');
 	let dynamic = $('#i_menu_msg_btn');
 	head.append(msgStyle, msgHideListStyle);
-	
-	let enterFromI = false;
+
+	let enterFromI = false, showMsgListTimeoutId;
 	dynamic.find('> .i-link').hover(function (){
 		enterFromI = true;
 		// console.log('i enter');
@@ -53,28 +53,73 @@
 			msgStyle.remove();
 			msgHideListStyle.remove();
 		} else {
-			msgHideListStyle.remove();
+			showMsgListTimeoutId = setTimeout(msgHideListStyle.remove.bind(msgHideListStyle), 300); // 使用bind, 绑定this
+			// msgHideListStyle.remove();
 		}
-		// console.log('enter');
+		console.log('enter');
 	}, function(){
 		if(enterFromI){
 			head.append(msgStyle, msgHideListStyle);
 			enterFromI = false;
 		} else {
+			clearTimeout(showMsgListTimeoutId);
 			msgHideListStyle.appendTo(head);
 		}
-		// console.log('exit');
+		console.log('exit');
 	});
-	$(window).load(function(){
-		 let li = dynamic.find('.dyn_menu > .menu > ul > li').mouseenter(function(){
-		 	if(!enterFromI) {
-		 		$(this).click();
-		 		if ($(this).attr('mode') === window.defaultDynObj.params.type){
+	
+	function hoverToPopupMsg(){
+		function autoClick(){
+			if(!enterFromI) {
+				$(this).click();
+				if ($(this).attr('mode') === window.defaultDynObj.params.type){
 					var b = window.defaultDynObj;
-    			    b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
-		 		}
-		 	}
+					b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
+				}
+			}
 			// console.log('click');
+		}
+		let timeoutId;
+		dynamic.find('.dyn_menu > .menu > ul > li').mouseenter(function(){
+			timeoutId = setTimeout(autoClick.bind(this), 100);
+		}).mouseleave(function(){
+			clearTimeout(timeoutId);
 		});
+	}
+
+	/** 使顶栏的中的"游戏中心"/"直播"等条目的详细内容的窗口延时弹出 */
+	function delayPopupInfoOnTop(){
+		jQuery.fn.getEvents = function() {
+			if (typeof(jQuery._data) == 'function') {
+				return jQuery._data(this.get(0), 'events') || {};
+			} else if (typeof(this.data) == 'function') { // jQuery version < 1.7.?
+				return this.data('events') || {};
+			}
+			return {};
+		};
+		let frameItems = $(".z_top .z_top_nav [hasframe]");
+		console.log(frameItems);
+		frameItems.each(function(){
+			let item = $(this);
+			let mouseoverEvents = item.getEvents().mouseover;
+			for(let event of mouseoverEvents){
+				if (event.handler && event.namespace === ''){ // 命名空间为空的事件, 对应弹出详细内容的事件
+					let timeoutId;
+					item.off('mouseenter', event.handler); // 先移除该事件
+					// console.log(item, event);
+					item.mouseenter(function(){
+						timeoutId = setTimeout(event.handler.bind(this), 300); // 重新添加延迟执行的事件
+					}).mouseleave(function(){
+						clearTimeout(timeoutId);
+					});
+					break;
+				}
+			}
+		});
+	}
+
+	$(window).load(function(){
+		hoverToPopupMsg();
+		delayPopupInfoOnTop();
 	});
 })();
