@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Toggle Sidebar For underscorejs.org & liaoxuefeng
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  RT.
 // @author       ipcjs
 // @include      http://underscorejs.org/
@@ -70,12 +70,9 @@
 	sidebar.style.position = 'fixed';
 
 	/* set toggleBtn attr */
-	toggleBtn = document.createElement('button');
-	toggleBtn.innerText = 'Toggle';
-	toggleBtn.style.position = 'fixed';
-	toggleBtn.style.left =  '0px';
-	toggleBtn.style.top =  '0px';
-	toggleBtn.style.zIndex = 1000;
+	toggleBtn = document.createElement('a');
+	toggleBtn.id = 'toggle_btn';
+	toggleBtn.innerText = '>';
 	body.appendChild(toggleBtn);
 	toggleBtn.addEventListener('click', function(){
 		if( snapper.state().state=="right" ){
@@ -85,5 +82,31 @@
 		}
 
 	});
+	
+    /* other */
 	config.func && config.func();
+	let style = document.createElement('style');
+	style.innerHTML = `
+/* css.start */
+#toggle_btn {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    z-index: 1000;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: transparent;
+    text-align: center;
+    color: black;
+    line-height: 25px;
+}
+#toggle_btn:hover {
+    background-color: black;
+    color: white;
+    text-decoration: none;
+}
+/* css.end */
+    `;
+	document.querySelector('head').appendChild(style);
 })();
