@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Toggle Sidebar For underscorejs.org & liaoxuefeng
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  RT.
 // @author       ipcjs
 // @include      http://underscorejs.org/
@@ -27,7 +27,7 @@
 			sidebar: '#main .x-sidebar-left', container: '#main .x-center', 
 			maxPosition: 270, minPosition: -270,
 			top: '48px', width: '216px',
-			marginLeft: '216px', 
+			marginLeft: '220px', 
 			func: function(){
 				document.querySelector('#footer').style.display = 'none';
 			}
