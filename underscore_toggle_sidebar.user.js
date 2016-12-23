@@ -15,11 +15,11 @@
 	'use strict';
 
 	var  defaultConfig = {
-		sidebar: '#sidebar', container: 'body > .container',
-		maxPosition: 266, minPosition: -266,
-		top: '0px', width: '200px',
-		marginLeft: '260px',
-		func: null
+		sidebar: '#sidebar', container: 'body > .container', // element selector
+		maxPosition: 266, minPosition: -266, // Snap setting
+		top: '0px', width: '200px', // sidebar attr
+		marginLeft: '260px', // container attr
+		func: null // to run funcation
 	}, configMap = {
 		'underscorejs.org': defaultConfig,
 		'learningcn.com': defaultConfig,
