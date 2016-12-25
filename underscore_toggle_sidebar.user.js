@@ -30,6 +30,8 @@
 			marginLeft: '220px', 
 			func: function(){
 				document.querySelector('#footer').style.display = 'none';
+				var id = window.location.pathname.split('/').reverse()[0];
+				$(sidebar).scrollTop($('#' + id).offset().top - $(sidebar).offset().top);
 			}
 		}
 	}, config = configMap[location.host];
