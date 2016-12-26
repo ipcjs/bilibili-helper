@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频; 
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
@@ -15,10 +15,10 @@
 // ==/UserScript==
 
 /**
-* 把获取视频地址相关接口的返回值替换成biliplus的接口的返回值, 
-* 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#); 
-* 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
-*/
+ * 把获取视频地址相关接口的返回值替换成biliplus的接口的返回值,
+ * 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#);
+ * 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
+ */
 
 (function () {
     'use strict';
@@ -42,7 +42,7 @@
     function injectDataFilter() {
         unsafeWindow.jQuery.ajaxSetup({
             dataFilter: function (data, type) {
-                var json, obj, group;
+                var json, obj, group, params;
                 // console.log(arguments, this);
                 if (this.url.startsWith('http://bangumi.bilibili.com/web_api/get_source')) {
                     // 获取cid API
@@ -79,28 +79,24 @@
                     console.log(data);
                     json = JSON.parse(data);
                     if (json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627) {
-                        group = unsafeWindow.location.href.match(/cid=(\d+)/);
+                        // https://bangumi.bilibili.com/player/web_api/playurl?cid=10482695&appkey=84956560bc028eb7&otype=json&type=flv&quality=4&module=bangumi&sign=f77367cf031933161a5b6ff8c29a011e
+                        // https://biliplus.com/BPplayurl.php?cid=10482695|bangumi&player=1&ts=12345678
+                        // ==> http://biliplus.ipcjsdev.tk/BPplayurl.php?cid=10482695|bangumi&otype=json&type=flv&quality=4
+                        params = {
+                            cid: this.url.match(/[?|&]cid=(\w+)/)[1] + '|bangumi',
+                            otype: this.url.match(/[?|&]otype=(\w+)/)[1],
+                            type: this.url.match(/[?|&]type=(\w+)/)[1],
+                            quality: this.url.match(/[?|&]quality=(\w+)/)[1]
+                        };
                         $.ajax({
-                            // url: biliplusHost+'/BPplayurl.php?cid=' + group[1] +'|bangumi&player=1&ts=' + parseInt(new Date().getTime() / 1000),
-                            url: biliplusHost + '/BPplayurl.php?cid=' + group[1] + '|bangumi',
+                            url: biliplusHost + '/BPplayurl.php?' + Object.keys(params).map(function (key) {
+                                return key + '=' + params[key];
+                            }).join('&'),
                             async: false,
                             xhrFields: {withCredentials: true},
                             success: function (result) {
                                 // console.log('success', arguments, this);
-                                obj = xml2obj(result.documentElement);
-                                obj.accept_quality && (obj.accept_quality = obj.accept_quality.split(',').map(function (item) {
-                                    return Number(item);
-                                }));
-                                if (!obj.durl.push) {
-                                    obj.durl = [obj.durl];
-                                }
-                                obj.durl.forEach(function (item) {
-                                    if (item.backup_url === '') {
-                                        item.backup_url = undefined;
-                                    } else if (item.backup_url && item.backup_url.url) {
-                                        item.backup_url = item.backup_url.url;
-                                    }
-                                });
+                                obj = result;
                                 if (obj.durl.length === 1 && obj.durl[0].length == 15126 && obj.durl[0].size === 124627) {
                                     if (unsafeWindow.confirm('试图获取视频地址失败, 请登录biliplus' +
                                             '\n注意: 只支持"使用bilibili账户密码进行登录"'
@@ -132,42 +128,5 @@
                 return data;
             }
         });
-    }
-
-    function xml2obj(xml) {
-        try {
-            var obj = {}, text;
-            var children = xml.children;
-            if (children.length > 0) {
-                for (var i = 0; i < children.length; i++) {
-                    var item = children.item(i);
-                    var nodeName = item.nodeName;
-
-                    if (typeof (obj[nodeName]) == "undefined") { // 若是新的属性, 则往obj中添加
-                        obj[nodeName] = xml2obj(item);
-                    } else {
-                        if (typeof (obj[nodeName].push) == "undefined") { // 若老的属性没有push方法, 则把属性改成Array
-                            var old = obj[nodeName];
-
-                            obj[nodeName] = [];
-                            obj[nodeName].push(old);
-                        }
-                        obj[nodeName].push(xml2obj(item));
-                    }
-                }
-            } else {
-                text = xml.textContent;
-                if (/^\d+(\.\d+)?$/.test(text)) {
-                    obj = Number(text);
-                } else if (text === 'true' || text === 'false') {
-                    obj = Boolean(text);
-                } else {
-                    obj = text;
-                }
-            }
-            return obj;
-        } catch (e) {
-            console.log(e.message);
-        }
     }
 })();
