@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频; 
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
@@ -83,10 +83,10 @@
                         // https://biliplus.com/BPplayurl.php?cid=10482695|bangumi&player=1&ts=12345678
                         // ==> http://biliplus.ipcjsdev.tk/BPplayurl.php?cid=10482695|bangumi&otype=json&type=flv&quality=4
                         params = {
-                            cid: this.url.match(/[?|&]cid=(\w+)/)[1] + '|bangumi',
-                            otype: this.url.match(/[?|&]otype=(\w+)/)[1],
-                            type: this.url.match(/[?|&]type=(\w+)/)[1],
-                            quality: this.url.match(/[?|&]quality=(\w+)/)[1]
+                            cid: getParam(this.url, 'cid') + '|bangumi',
+                            otype: getParam(this.url, 'otype'),
+                            type: getParam(this.url, 'type'),
+                            quality: getParam(this.url, 'quality')
                         };
                         $.ajax({
                             url: biliplusHost + '/BPplayurl.php?' + Object.keys(params).map(function (key) {
@@ -128,5 +128,9 @@
                 return data;
             }
         });
+    }
+
+    function getParam(url, key) {
+        return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
     }
 })();
