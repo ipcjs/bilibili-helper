@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Toggle Sidebar For underscorejs.org & liaoxuefeng
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  RT.
 // @author       ipcjs
 // @include      http://underscorejs.org/
@@ -70,7 +70,7 @@
     sidebar.style.top = config.top;
     sidebar.style.bottom = '0px';
     sidebar.style.position = 'fixed';
-	sidebar.className += ' hide-scrollbar-ipcjs';
+    sidebar.className += ' hide-scrollbar-ipcjs';
 
     /* set toggleBtn attr */
     toggleBtn = document.createElement('a');
@@ -126,4 +126,15 @@ pre .comment {
 /* css.end */
     `;
     document.querySelector('head').appendChild(style);
+
+    /* auto show/hide sidebar */
+    window.addEventListener('resize', resetSnap);
+    resetSnap();
+    function resetSnap() {
+        if (window.innerWidth < 768) {
+            snapper.open('right'); // open() to close...
+        } else {
+            snapper.close(); // close() to open...
+        }
+    }
 })();
