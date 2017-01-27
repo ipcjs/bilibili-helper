@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频; 
 // @author       ipcjs
 // @include      http://bangumi.bilibili.com/anime/*
@@ -42,7 +42,7 @@
     function injectDataFilter() {
         unsafeWindow.jQuery.ajaxSetup({
             dataFilter: function (data, type) {
-                var json, obj, group, params;
+                var json, obj, group, params, curIndex;
                 // console.log(arguments, this);
                 if (this.url.startsWith('http://bangumi.bilibili.com/web_api/get_source')) {
                     // 获取cid API
@@ -62,9 +62,33 @@
                                     }
                                 };
                                 obj.result.aid = result.id;
-                                obj.result.cid = result.list[0].cid;
-                                obj.result.player = result.list[0].type;
-                                obj.result.vid = result.list[0].vid;
+                                if (result.list.length === 1) {
+                                    curIndex = 0;
+                                } else {
+                                    $.ajax({
+                                        url: biliplusHost + '/api/bangumi?season=' + unsafeWindow.season_id,
+                                        async: false,
+                                        xhrFields: {withCredentials: true},
+                                        success: function (data) {
+                                            var i, item;
+                                            for (i in data.result.episodes) {
+                                                item = data.result.episodes[i];
+                                                // console.log(item.episode_id, unsafeWindow.episode_id);
+                                                if (item.episode_id.toString() === unsafeWindow.episode_id.toString()) { // 有的时候不是string类型, 需要转换_(:3」∠)_
+                                                    curIndex = parseInt(item.page) - 1;
+                                                    break;
+                                                }
+                                            }
+                                        },
+                                        error: function () {
+                                            console.log('error', arguments, this);
+                                        }
+                                    });
+                                }
+                                console.log('curIndex:', curIndex);
+                                obj.result.cid = result.list[curIndex].cid;
+                                obj.result.player = result.list[curIndex].type;
+                                obj.result.vid = result.list[curIndex].vid;
                                 data = JSON.stringify(obj);
                                 console.log('==>', data);
                                 // console.log('success', arguments, this);
