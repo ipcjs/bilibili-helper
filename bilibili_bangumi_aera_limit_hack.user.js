@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
-// @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频; 
+// @version      2.0.2
+// @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频; 不支持https;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/anime/v/*
@@ -43,7 +43,7 @@
             dataFilter: function (data, type) {
                 var json, obj, group, params, curIndex;
                 // console.log(arguments, this);
-                if (this.url.startsWith('http://bangumi.bilibili.com/web_api/get_source')) {
+                if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/get_source')) {
                     // 获取cid API
                     console.log(data);
                     json = JSON.parse(data);
@@ -136,7 +136,7 @@
                             }
                         });
                     }
-                } else if (this.url.startsWith('http://bangumi.bilibili.com/web_api/season_area')) {
+                } else if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/season_area')) {
                     // 番剧页面是否要隐藏番剧列表 API
                     console.log(data);
                     json = JSON.parse(data);

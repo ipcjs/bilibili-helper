@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.9.1
+// @version      0.9.2
 // @description  点击消息中心的评论后, 自动定位评论; (Update: 修复番剧页面跳转问题: 通过监听消息页面的点击事件获取真实原来的url, 需要等到消息页面载入完成后才有效;)
 // @author       ipcjs
 // @include      *://*.bilibili.com/*?*aid=*
@@ -27,7 +27,7 @@
                 '#message_right ul > li > .message-main-right > div > span.message-context > a',
                 function () {
                     var group;
-                    if (group = this.href.match(/^http:\/\/bangumi\.bilibili\.com\/anime\/v\/(\d+)\?aid=(\d+)#reply(\d+)$/)) {
+                    if (group = this.href.match(/^https?:\/\/bangumi\.bilibili\.com\/anime\/v\/(\d+)\?aid=(\d+)#reply(\d+)$/)) {
                         GM_setValue('bangumi_id=' + group[1], this.href); // 点击番剧页面的链接时存储真实的url
                         console.log('click', this.href);
                     }

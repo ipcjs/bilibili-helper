@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         B萌无需投票查看数据
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  不投票就可以查看数据
 // @author       ipcjs
 // @match        *://bangumi.bilibili.com/moe/*/schedule/*
@@ -15,7 +15,7 @@
         dataFilter: function (data, type) {
             var r;
             // console.log(arguments, this);
-            if (this.url.startsWith('http://bangumi.bilibili.com/moe/2016/2/api/vote/my_vote')) {
+            if (this.url.startsWith((window.location.protocol + '//bangumi.bilibili.com/moe/2016/2/api/vote/my_vote')) {
                 r = JSON.parse(data);
                 if (!r.result) {
                     data = '{"code": 0, "message": "success", "result": [{"group_id": 74, "list": [' +
