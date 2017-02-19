@@ -1,12 +1,10 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.9.2
-// @description  点击消息中心的评论后, 自动定位评论; (Update: 修复番剧页面跳转问题: 通过监听消息页面的点击事件获取真实原来的url, 需要等到消息页面载入完成后才有效;)
+// @version      0.10.0
+// @description  点击消息中心的评论后, 自动定位评论; (Update: B站番剧页面的跳转似乎正常了, 当前该脚本只在2016B萌界面生效;)
 // @author       ipcjs
 // @include      *://*.bilibili.com/*?*aid=*
-// @include      *://bangumi.bilibili.com/anime/*/play
-// @include      *://message.bilibili.com/
 // @exclude      *://www.bilibili.com/html/html5player.html*
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -14,10 +12,12 @@
 // @grant        GM_listValues
 // @grant        unsafeWindow
 // ==/UserScript==
-
+// @include      *://bangumi.bilibili.com/anime/*/play
+// @include      *://message.bilibili.com/
 (function () {
     'use strict';
     function jumpToComment() {
+        /*
         if (unsafeWindow.location.host === 'message.bilibili.com' && unsafeWindow.location.pathname === '/') {
             // 使用委托事件的方式监听点击
             $('#message_center_box').on(
@@ -33,10 +33,12 @@
                     }
                 })
         }
+        */
 
         var id, type, feedback, group, valueName, temp,
             title = '[' + GM_info.script.name + ']',
             realUrl = unsafeWindow.location.href;
+        /*
         if (group = realUrl.match(/\/anime\/\d+\/play#(\d+)/)) { // 若为番剧页面
             valueName = 'bangumi_id=' + group[1];
             if (temp = GM_getValue(valueName)) { // 读取存储的真实url
@@ -45,6 +47,7 @@
                 console.log('readUrl:', realUrl, 'GM_listValues', GM_listValues());
             }
         }
+        */
 
         if (unsafeWindow.aid) {
             id = unsafeWindow.aid;
