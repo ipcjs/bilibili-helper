@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Bilibili HTML5播放器网页全屏模式优化 脚本版
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  移植自：http://userstyles.org/styles/131642
 // @author       ipcjs
-// @include      http://www.bilibili.com/video/av*
-// @include      http://www.bilibili.com/html/html5player.html*
+// @include      *://www.bilibili.com/video/av*
+// @include      *://www.bilibili.com/html/html5player.html*
 // @grant        none
 // ==/UserScript==
 

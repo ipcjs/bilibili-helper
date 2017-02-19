@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      0.9.1
 // @description  点击消息中心的评论后, 自动定位评论; (Update: 修复番剧页面跳转问题: 通过监听消息页面的点击事件获取真实原来的url, 需要等到消息页面载入完成后才有效;)
 // @author       ipcjs
-// @include      http://*.bilibili.com/*?*aid=*
-// @include      http://bangumi.bilibili.com/anime/*/play
-// @include      http://message.bilibili.com/
-// @exclude      http://www.bilibili.com/html/html5player.html*
+// @include      *://*.bilibili.com/*?*aid=*
+// @include      *://bangumi.bilibili.com/anime/*/play
+// @include      *://message.bilibili.com/
+// @exclude      *://www.bilibili.com/html/html5player.html*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue

@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         B萌无需投票查看数据
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  不投票就可以查看数据
 // @author       ipcjs
-// @match        http://bangumi.bilibili.com/moe/*/schedule/*
+// @match        *://bangumi.bilibili.com/moe/*/schedule/*
 // @grant        none
 // ==/UserScript==
 (function () {
