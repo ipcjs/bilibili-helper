@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.1.1
+// @version      2.1.2
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -23,6 +23,7 @@
     'use strict';
     var biliplusHost = 'http://biliplus.ipcjsdev.tk';
     // var biliplusHost = 'https://www.biliplus.com';
+    var i_am_a_big_member_who_is_permanently_banned = false; // "我是一位被永久封号的大会员"(by Google翻译)
     console.log('[' + GM_info.script.name + '] run on: ' + window.location.href);
     if (!window.jQuery) { // 若还未加载jQuery, 则监听
         var jQuery;
@@ -117,7 +118,7 @@
                     // 获取视频地址 API
                     console.log(data);
                     json = JSON.parse(data);
-                    if (json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627) {
+                    if (json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627 || i_am_a_big_member_who_is_permanently_banned) {
                         // https://bangumi.bilibili.com/player/web_api/playurl?cid=10482695&appkey=84956560bc028eb7&otype=json&type=flv&quality=4&module=bangumi&sign=f77367cf031933161a5b6ff8c29a011e
                         // https://biliplus.com/BPplayurl.php?cid=10482695|bangumi&player=1&ts=12345678
                         // ==> http://biliplus.ipcjsdev.tk/BPplayurl.php?cid=10482695|bangumi&otype=json&type=flv&quality=4
