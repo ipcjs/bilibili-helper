@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.1.0
+// @version      2.1.1
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -51,17 +51,17 @@
                         $.ajax({
                             url: '/web_api/episode/' + window.episode_id + '.json', // 查询episode_id对应的实际av号和index
                             async: false,
-                            xhrFields: {withCredentials: true},                            
+                            xhrFields: {withCredentials: true},
                             success: function (info) {
                                 var episode = info.result.currentEpisode;
-                                // console.log(episode.avId, episode.index, episode.page);
+                                // console.log(window.episode_id, '=>', episode.avId, episode.index, episode.page);
                                 aid = episode.avId;
-                                curIndex = episode.index;
+                                curIndex = parseInt(episode.page) - 1;
                             },
                             error: function () {
                                 console.log('error', arguments, this);
                             }
-                        })
+                        });
                         $.ajax({
                             url: biliplusHost + '/api/view?id=' + aid,
                             async: false,
