@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.1.2
+// @version      2.1.3
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -102,6 +102,13 @@
                                 }
                                 */
                                 console.log('curIndex:', curIndex);
+                                if (curIndex >= list.length) {
+                                    curIndex = list.length - 1;
+                                    console.warn('reset curIndex to:', curIndex);
+                                } else if (curIndex < 0) {
+                                    curIndex = 0;
+                                    console.warn('reset curIndex to:', curIndex);
+                                }
                                 obj.result.cid = result.list[curIndex].cid;
                                 obj.result.player = result.list[curIndex].type;
                                 obj.result.vid = result.list[curIndex].vid;
