@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Fuck Baidu Cursor
 // @namespace    https://github.com/ipcjs
-// @version      0.0.3
+// @version      0.0.4
 // @description  cursor image design by [@mariotaku](https://twitter.com/mariotaku/status/842375672404164610). [get cursor](http://www.cursor.cc/?action=icon&file_id=74960)
 // @author       ipcjs
 // @match        *://www.baidu.com/*
 // @grant        GM_addStyle
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
