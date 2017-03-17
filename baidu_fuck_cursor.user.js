@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Fuck Baidu
+// @name         Fuck Baidu Curor
 // @namespace    https://github.com/ipcjs
-// @version      0.0.1
+// @version      0.0.2
 // @description  curor image design by [@mariotaku](https://twitter.com/mariotaku/status/842375672404164610). [get cursor](http://www.cursor.cc/?action=icon&file_id=74960)
 // @author       ipcjs
 // @match        *://www.baidu.com/*
