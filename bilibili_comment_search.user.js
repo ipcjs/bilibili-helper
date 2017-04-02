@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Bilibili评论定位
 // @namespace    http://tampermonkey.net/
-// @version      0.10.0
+// @version      0.10.1
 // @description  点击消息中心的评论后, 自动定位评论; (Update: B站番剧页面的跳转似乎正常了, 当前该脚本只在2016B萌界面生效;)
 // @author       ipcjs
 // @include      *://*.bilibili.com/*?*aid=*
 // @exclude      *://www.bilibili.com/html/html5player.html*
+// @include      *://www.bilibili.com/blackboard/html5player.html*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
