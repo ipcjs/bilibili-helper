@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.1.5
+// @version      2.1.6
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -10,8 +10,6 @@
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @run-at       document-start
 // @grant        none
-// @connect      biliplus.com
-// @connect      biliplus.ipcjsdev.tk
 // ==/UserScript==
 
 /**
@@ -22,9 +20,10 @@
 
 (function () {
     'use strict';
-    var biliplusHost = 'http://biliplus.ipcjsdev.tk';
-    // var biliplusHost = 'https://www.biliplus.com';
+    var biliplusHost = 'http://biliplus.ipcjsdev.tk'; // 我的反向代理服务器
+    // var biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
     var i_am_a_big_member_who_is_permanently_banned = false; // "我是一位被永久封号的大会员"(by Google翻译)
+
     console.log('[' + GM_info.script.name + '] run on: ' + window.location.href);
     if (!window.jQuery) { // 若还未加载jQuery, 则监听
         var jQuery;
@@ -53,7 +52,7 @@
                         $.ajax({
                             url: '/web_api/episode/' + window.episode_id + '.json', // 查询episode_id对应的实际av号和index
                             async: false,
-                            xhrFields: {withCredentials: true},
+                            xhrFields: { withCredentials: true },
                             success: function (info) {
                                 var episode = info.result.currentEpisode;
                                 // console.log(window.episode_id, '=>', episode.avId, episode.index, episode.page);
@@ -67,7 +66,7 @@
                         $.ajax({
                             url: biliplusHost + '/api/view?id=' + aid,
                             async: false,
-                            xhrFields: {withCredentials: true},
+                            xhrFields: { withCredentials: true },
                             success: function (result) {
                                 obj = {
                                     code: 0, message: 'success', result: {
@@ -77,31 +76,6 @@
                                     }
                                 };
                                 obj.result.aid = result.id;
-                                /*
-                                if (result.list.length === 1) {
-                                    curIndex = 0;
-                                } else {
-                                    $.ajax({
-                                        url: biliplusHost + '/api/bangumi?season=' + window.season_id,
-                                        async: false,
-                                        xhrFields: {withCredentials: true},
-                                        success: function (data) {
-                                            var i, item;
-                                            for (i in data.result.episodes) {
-                                                item = data.result.episodes[i];
-                                                // console.log(item.episode_id, window.episode_id);
-                                                if (item.episode_id.toString() === window.episode_id.toString()) { // 有的时候不是string类型, 需要转换_(:3」∠)_
-                                                    curIndex = parseInt(item.page) - 1;
-                                                    break;
-                                                }
-                                            }
-                                        },
-                                        error: function () {
-                                            console.log('error', arguments, this);
-                                        }
-                                    });
-                                }
-                                */
                                 console.log('curIndex:', curIndex);
                                 if (curIndex >= result.list.length) {
                                     curIndex = result.list.length - 1;
@@ -141,14 +115,16 @@
                                 return key + '=' + params[key];
                             }).join('&'),
                             async: false,
-                            xhrFields: {withCredentials: true},
+                            xhrFields: { withCredentials: true },
                             success: function (result) {
                                 // console.log('success', arguments, this);
                                 obj = result;
-                                if (obj.durl.length === 1 && obj.durl[0].length == 15126 && obj.durl[0].size === 124627) {
+                                if (obj.code === -403) {
+                                    window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
+                                } else if (obj.durl.length === 1 && obj.durl[0].length == 15126 && obj.durl[0].size === 124627) {
                                     if (window.confirm('试图获取视频地址失败, 请登录biliplus' +
-                                            '\n注意: 只支持"使用bilibili账户密码进行登录"'
-                                        )) {
+                                        '\n注意: 只支持"使用bilibili账户密码进行登录"'
+                                    )) {
                                         window.top.location = biliplusHost + '/login';
                                     }
                                 } else {
