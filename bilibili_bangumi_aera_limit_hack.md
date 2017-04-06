@@ -45,11 +45,9 @@ B站当前是支持https的，但默认还是用http。因为我的反向代理�
 
 ### 想自定义服务器？
 
-1. 打开浏览器的`开发者工具`（快捷键一般为`F12`）
-2. 在`控制台/Console`中执行如下代码，将服务器地址存到cookie中（其中`https://www.your_server.com`替换成你自己的服务器）：
-```javascript
-    document.cookie=`bangumi_aera_limit_hack_server=https://www.your_server.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`; 
-```
+1. 打开[B站主页](http://bilibili.com)，按`F12`，打开浏览器的`开发者工具`
+2. 在`开发者工具`的`控制台/Console`中执行`document.cookie='bangumi_aera_limit_hack_server=https://www.your_server.com; domain=.bilibili.com; path=/; expires=' + new Date("2020-01-01").toUTCString();`（其中`https://www.your_server.com`替换成你自己的服务器地址），将服务器地址存到cookie中
+3. 脚本会优先取cookie中保存的服务器地址，使用`开发者工具`可以手动删除这条名为`bangumi_aera_limit_hack_server`的cookie
 
 ### 想要帮忙维护？
 
