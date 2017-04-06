@@ -47,9 +47,9 @@ B站当前是支持https的，但默认还是用http。因为我的反向代理�
 
 1. 打开浏览器的`开发者工具`（快捷键一般为`F12`）
 2. 在`控制台/Console`中执行如下代码，将服务器地址存到cookie中（其中`https://www.your_server.com`替换成你自己的服务器）：
-    <pre lang="javascript">
-        document.cookie=`bangumi_aera_limit_hack_server=https://www.your_server.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`; 
-    </pre>
+```javascript
+    document.cookie=`bangumi_aera_limit_hack_server=https://www.your_server.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`; 
+```
 
 ### 想要帮忙维护？
 
