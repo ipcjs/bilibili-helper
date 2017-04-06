@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.2.0
+// @version      2.2.1
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -21,11 +21,11 @@
 (function () {
     'use strict';
     var biliplusHost = getCookie('bangumi_aera_limit_hack_server'); // 优先从cookie中读取服务器地址
+    var i_am_a_big_member_who_is_permanently_banned = getCookie('bangumi_aera_limit_hack_blocked_forever'); // "我是一位被永久封号的大会员"(by Google翻译)
     if (!biliplusHost) {
-        var biliplusHost = 'http://biliplus.ipcjsdev.tk'; // 我的反向代理服务器
-        // var biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
+        biliplusHost = 'http://biliplus.ipcjsdev.tk'; // 我的反向代理服务器
+        // biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
     }
-    var i_am_a_big_member_who_is_permanently_banned = false; // "我是一位被永久封号的大会员"(by Google翻译)
 
     console.log('[' + GM_info.script.name + '] run on: ' + window.location.href);
     if (!window.jQuery) { // 若还未加载jQuery, 则监听
@@ -168,11 +168,17 @@
         }, {});
         return map[key];
     }
-    // document.cookie=`bangumi_aera_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;    
+    // document.cookie=`bangumi_aera_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
     function setCookie(key, value, options) {
-        options || (options = {});
-        document.cookie = Object.keys(options).reduce(function (str, key) {
+        options || (options = { domain: '.bilibili.com', path: '/', expires: new Date('2020-01-01').toUTCString() });
+        var c = Object.keys(options).reduce(function (str, key) {
             return str + '; ' + key + '=' + options[key];
         }, key + '=' + value);
+        document.cookie = c;
+        return c;
     }
+    window.bangumi_aera_limit_hack = {
+        setCookie: setCookie,
+        getCookie: getCookie
+    };
 })();
