@@ -10,6 +10,9 @@
 
 (function () {
     'use strict';
+    function log(...args) {
+        // console.log(...args);
+    }
     let msgStyleHtml = `
 #dyn_wnd {
     display: block!important;
@@ -44,9 +47,9 @@
     let enterFromI = false, showMsgListTimeoutId;
     dynamic.find('> .i-link').hover(function () {
         enterFromI = true;
-        // console.log('i enter');
+        log('i enter');
     }, function () {
-        // console.log('i exit');
+        log('i exit');
     });
     dynamic.hover(function () {
         if (enterFromI) {
@@ -56,7 +59,7 @@
             showMsgListTimeoutId = setTimeout(msgHideListStyle.remove.bind(msgHideListStyle), 300); // 使用bind, 绑定this
             // msgHideListStyle.remove();
         }
-        // console.log('enter');
+        log('enter');
     }, function () {
         if (enterFromI) {
             head.append(msgStyle, msgHideListStyle);
@@ -65,7 +68,7 @@
             clearTimeout(showMsgListTimeoutId);
             msgHideListStyle.appendTo(head);
         }
-        // console.log('exit');
+        log('exit');
     });
 
     function hoverToPopupMsg() {
@@ -77,7 +80,7 @@
                     b.target.attr("loaded") || (b.initMenu(), b.init(), b.target.attr("loaded", 1));// 加载默认的视频动态
                 }
             }
-            // console.log('click');
+            log('click');
         }
 
         let timeoutId;
@@ -94,11 +97,12 @@
         frameItems.each(function () {
             let item = $(this);
             let mouseoverEvents = item.getEvents().mouseover;
+            if (!mouseoverEvents) return; // 可能没有mouseover事件
             for (let event of mouseoverEvents) {
                 if (event.handler && event.namespace === namespace) { // 命名空间为空的事件, 对应弹出详细内容的事件
                     let timeoutId;
                     item.off('mouseenter', event.handler); // 先移除该事件
-                    // console.log(item, event);
+                    log(item, event);
                     item.mouseenter(function () {
                         timeoutId = setTimeout(event.handler.bind(this), 300); // 重新添加延迟执行的事件
                     }).mouseleave(function () {
@@ -112,9 +116,9 @@
 
     $(window).load(function () {
         jQuery.fn.getEvents = function () {
-            if (typeof(jQuery._data) == 'function') {
+            if (typeof (jQuery._data) == 'function') {
                 return jQuery._data(this.get(0), 'events') || {};
-            } else if (typeof(this.data) == 'function') { // jQuery version < 1.7.?
+            } else if (typeof (this.data) == 'function') { // jQuery version < 1.7.?
                 return this.data('events') || {};
             }
             return {};
