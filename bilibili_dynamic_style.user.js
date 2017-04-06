@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         B站主页动态提醒直接显示在顶栏
 // @namespace    http://tampermonkey.net/
-// @version      0.7.2
+// @version      0.7.3
 // @description  可以直接看到当前的提醒的类型, 省去鼠标移过去的麻烦...
 // @author       ipcjs
-// @match        *://www.bilibili.com/
+// @include      *://www.bilibili.com/
+// @include      *://www.bilibili.com/index.html
 // @grant        none
 // ==/UserScript==
 
