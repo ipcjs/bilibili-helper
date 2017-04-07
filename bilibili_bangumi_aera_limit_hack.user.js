@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      2.2.1
+// @version      2.2.2
 // @description  把获取视频地址相关接口的返回值替换成我的反向代理服务器的返回值; 因为替换值的操作是同步的, 所有会卡几下..., 普通视频不受影响; 我的服务器有点渣, 没获取成功请多刷新几下; 当前只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/anime/*
@@ -51,7 +51,8 @@
                     // 获取cid API
                     console.log(data);
                     json = JSON.parse(data);
-                    if (json.code === -40301) {
+                    if (json.code === -40301 // 区域限制
+                        || json.result.pay_user && i_am_a_big_member_who_is_permanently_banned) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用biliplus的接口
                         $.ajax({
                             url: '/web_api/episode/' + window.episode_id + '.json', // 查询episode_id对应的实际av号和index
                             async: false,
@@ -98,12 +99,19 @@
                                 console.log('error', arguments, this);
                             }
                         });
+                    } else if (i_am_a_big_member_who_is_permanently_banned && json.code === 0) {
+                        // json.result.pay_user && (json.result.pay_user.status = 1); // 是否付过费, 
+                        // 实际判断貌似不是使用该变量, 而是使用`http://bangumi.bilibili.com/web_api/season/user_status`中的json.result.pay_user.status
+                        if (json.result.pre_ad) {
+                            json.result.pre_ad = 0; // 去除前置广告
+                            data = JSON.stringify(json);
+                        }
                     }
                 } else if (this.url.startsWith('https://bangumi.bilibili.com/player/web_api/playurl')) {
                     // 获取视频地址 API
                     console.log(data);
                     json = JSON.parse(data);
-                    if (json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627 || i_am_a_big_member_who_is_permanently_banned) {
+                    if (i_am_a_big_member_who_is_permanently_banned || isAeraLimit(json)) {
                         // https://bangumi.bilibili.com/player/web_api/playurl?cid=10482695&appkey=84956560bc028eb7&otype=json&type=flv&quality=4&module=bangumi&sign=f77367cf031933161a5b6ff8c29a011e
                         // https://biliplus.com/BPplayurl.php?cid=10482695|bangumi&player=1&ts=12345678
                         // ==> http://biliplus.ipcjsdev.tk/BPplayurl.php?cid=10482695|bangumi&otype=json&type=flv&quality=4
@@ -124,7 +132,9 @@
                                 obj = result;
                                 if (obj.code === -403) {
                                     window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
-                                } else if (obj.durl.length === 1 && obj.durl[0].length == 15126 && obj.durl[0].size === 124627) {
+                                } else if (obj.code) {
+                                    console.error(obj);
+                                } else if (isAeraLimit(obj)) {
                                     if (window.confirm('试图获取视频地址失败, 请登录biliplus' +
                                         '\n注意: 只支持"使用bilibili账户密码进行登录"'
                                     )) {
@@ -155,6 +165,10 @@
                 return data;
             }
         });
+    }
+
+    function isAeraLimit(json){
+        return json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627;
     }
 
     function getParam(url, key) {
