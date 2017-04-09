@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
+// @version     0.0.2
 // @description 在帖子的第一页尾部, 列出帖子的所有内容, 省得翻页
+// @author       ipcjs
 // @include     http://bbs.saraba1st.com/2b/thread-*-1-1.html
-// @version     0.0.1
 // @grant       GM_xmlhttpRequest
 // @grant       GM_addStyle
 // @grant       unsafeWindow
