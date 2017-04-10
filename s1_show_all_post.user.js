@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.0.3
+// @version     0.0.4
 // @description 在帖子的第一页尾部, 列出帖子的所有内容, 省得翻页
 // @author       ipcjs
 // @include     http://bbs.saraba1st.com/2b/thread-*-1-1.html
@@ -15,7 +15,7 @@
     let group, filter;
     if (!(group = /thread-(\d+)-1-1/.exec(location.pathname))) return; // 不匹配则返回
 
-    const POST_PAGE_MAX_COUNT = 10000; // 一次最多拉取多少条
+    const POST_PAGE_MAX_COUNT = 1000; // 一次最多拉取多少条
     let tid = group[1];
 
     switch (tid) {
