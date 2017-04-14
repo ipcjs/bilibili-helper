@@ -36,18 +36,24 @@ B站当前是支持https的，但默认还是用http。因为我的反向代理�
 - Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
 - Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
 
-### 大会员账号被B站永封了？<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="懵逼"/>
+### 大会员账号被B站永封了？<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="(懵逼"/>
 
 0. 注册并登录一个小号
 1. 打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_blocked_forever', 'true');`
 2. 在[我的反向代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
-3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="扭曲"/>
+3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
 ### 想自定义服务器？
+
+#### 方法一
 
 1. 打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_server', 'https://www.your_server.com');`，其中`https://www.your_server.com`替换成你自己的服务器地址；
 3. 脚本会优先取cookie中保存的服务器地址。
 2. 要清除设置，执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_server', '');`，或者手动到`开发者工具`中删除对应的cookie。
+
+#### 方法二
+
+1. 使用脚本：[自定義服務器(解除B站區域限制輔助腳本)](https://greasyfork.org/zh-TW/scripts/28907-%E8%87%AA%E5%AE%9A%E7%BE%A9%E6%9C%8D%E5%8B%99%E5%99%A8-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8D%80%E5%9F%9F%E9%99%90%E5%88%B6%E8%BC%94%E5%8A%A9%E8%85%B3%E6%9C%AC)
 
 ### 想要帮忙维护？
 
