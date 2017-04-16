@@ -85,11 +85,11 @@
 	        			"result":{
 	        				"aid":found.av_id,
 	        				"cid":found.danmaku,
-	        				"episode_status":found.season_status,
+	        				"episode_status":found.episode_status,
 	        				"payment":{"price":"0"},
 	        				"player":"vupload",
 	        				"pre_ad":0,
-	        				"season_status":data.season_status
+	        				"season_status":data.result.season_status
 	        			}
 	        		} : {
         				code:-404,
