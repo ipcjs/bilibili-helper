@@ -83,11 +83,11 @@ function injectDataFilter() {
                     "result": {
                         "aid": found.av_id,
                         "cid": found.danmaku,
-                        "episode_status": found.episode_status,
-                        "payment": {"price": "0"},
+                        "episode_status": i_am_a_big_member_who_is_permanently_banned ? 2 : found.episode_status,
+                        "payment": {"price": "100000000"},
                         "player": "vupload",
                         "pre_ad": 0,
-                        "season_status": data.result.season_status
+                        "season_status": i_am_a_big_member_who_is_permanently_banned ? 2 : data.result.season_status
                     }
                 } : {
                     code: -404,

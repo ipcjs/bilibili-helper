@@ -1,3 +1,14 @@
+## 更新日志
+
+### 3.0.0+更新内容
+
+主要代码由[@esterTion](https://github.com/esterTion)提供。因为改的比较多，有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)。
+
+1. 获取视频播放地址的请求全部直接转发给代理服务器，不会卡界面。但会出现如下副作用：
+    1. [付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额显示`100000000`：因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
+    2. 所有番剧视频都有可能出现加载失败：默认代理服务器不稳定的原因，多刷新几下，或者[使用其他代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#想自定义代理服务器)
+2. 在第一次使用时会弹登录提示框
+
 ## 问&答
 
 ### 如何安装脚本？
@@ -13,25 +24,27 @@
     * 国内的360极速浏览器、猎豹浏览器等其实上就是Chrome加个壳，装Tampermonkey就行了
     * 搜狗高速浏览器：[Tampermonkey Legacy](http://ie.sogou.com/app/app_4326.html)
 
-### 安装脚本后打开番剧视频的播放页面变卡？
+### 安装脚本后打开番剧视频的播放页面变卡？（3.0.0+没这问题）
 
-1. 因为该脚本是通过拦截获取视频地址的请求，从另一个服务器获取真实视频地址的方式实现的。获取真实视频地址的操作是在主线程中进行的，所以必然会卡一下。。。不过大家请放心，在不需要替换视频地址的页面是不会去进行这些操作的。
+1. 因为该脚本是通过拦截获取视频地址的请求，从代理服务器获取真实视频地址的方式实现的。获取真实视频地址的操作是在主线程中进行的，所以必然会卡一下。。。不过大家请放心，在不需要替换视频地址的页面是不会去进行这些操作的。
 
 ### 安装脚本后无效？
 
 0. 确定你使用的播放器是HTML5版的。Flash版请在播放器界面的右上角切换成HTML5版。
 1. 确定你打开的页面的域名是`bangumi.bilibili.com`开头的，当前该脚本只在这个域名下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com`域名下的。  
-2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。我服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
+2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
 3. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
 
 ### 看不了1080P画质？
 
 1. 确定你是B站的[大会员](http://big.bilibili.com/site/big.html)
 2. 确定当前视频拥有1080P画质的版本
-3. 确定你登录了[我的反向代理服务器](http://biliplus.ipcjsdev.tk/login)；注意，当前只支持“使用bilibili账号密码进行登录”
+3. 确定你登录了[代理服务器](http://biliplus.ipcjsdev.tk/login)；注意，当前只支持“使用bilibili账号密码进行登录”
 
 ### https下无效？
-B站当前是支持https的，但默认还是用http。因为我的反向代理服务器还没有支持https的原因，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。。
+
+B站当前是支持https的，但默认还是用http。因为默认代理服务器还没有支持https的原因，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。  
+可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#想自定义代理服务器)，或者解除阻止：
 
 - Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
 - Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
@@ -40,15 +53,15 @@ B站当前是支持https的，但默认还是用http。因为我的反向代理�
 
 0. 注册并登录一个小号
 1. 打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_blocked_forever', 'true');`
-2. 在[我的反向代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
+2. 在[默认代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
-### 想自定义服务器？
+### 想自定义代理服务器？
 
 #### 方法一
 
 1. 打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_server', 'https://www.your_server.com');`，其中`https://www.your_server.com`替换成你自己的服务器地址；
-3. 脚本会优先取cookie中保存的服务器地址。
+3. 脚本会优先取cookie中保存的代理服务器地址。
 2. 要清除设置，执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_server', '');`，或者手动到`开发者工具`中删除对应的cookie。
 
 #### 方法二
