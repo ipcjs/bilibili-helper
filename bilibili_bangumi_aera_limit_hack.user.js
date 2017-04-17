@@ -99,7 +99,8 @@
         		}
         		return originalAjax.apply(this,[param])
         	}else if( param.url.match('/player/web_api/playurl') ){
-        		param.url = biliplusHost+'/BPplayurl.php?'+param.url.split('?')[1].replace(/cid=\d+/,function(s){return s+'|bangumii'});
+        		var module=param.url.match(/module=(\w+)/)[1];
+        		param.url = biliplusHost+'/BPplayurl.php?'+param.url.split('?')[1].replace(/cid=\d+/,function(s){return s+'|'+module});
         		console.log('[' + GM_info.script.name + '] Redirected request: bangumi playurl -> ',param.url);
         		return originalAjax.apply(this,[param]);
         	}else{
