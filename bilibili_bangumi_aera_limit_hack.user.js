@@ -18,7 +18,6 @@
  * 因为替换值的操作是同步的, 所有会卡几下..., 又因为biliplus的接口不支持跨域请求, 所以使用了我自己的服务器做反向代理(-_-#);
  * 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
  */
-(function () {
     'use strict';
     var biliplusHost = getCookie('bangumi_aera_limit_hack_server'); // 优先从cookie中读取服务器地址
     var i_am_a_big_member_who_is_permanently_banned = getCookie('bangumi_aera_limit_hack_blocked_forever'); // "我是一位被永久封号的大会员"(by Google翻译)
@@ -201,4 +200,3 @@
     	script.src=biliplusHost+'/login?act=expiretime';
     	document.head.appendChild(script);
     }
-})();
