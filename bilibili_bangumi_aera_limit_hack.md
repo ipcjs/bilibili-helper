@@ -43,8 +43,7 @@
 
 ### https下无效？
 
-B站当前是支持https的，但默认还是用http。因为默认代理服务器还没有支持https的原因，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。  
-可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#想自定义代理服务器)，或者解除阻止：
+B站当前是支持https的，但默认还是用http。默认代理服务器还没有支持https，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#想自定义代理服务器)，或者解除阻止：
 
 - Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
 - Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
@@ -53,7 +52,7 @@ B站当前是支持https的，但默认还是用http。因为默认代理服务�
 
 0. 注册并登录一个小号
 1. 打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行：`bangumi_aera_limit_hack.setCookie('bangumi_aera_limit_hack_blocked_forever', 'true');`
-2. 在[默认代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
+2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
 ### 想自定义代理服务器？
@@ -74,5 +73,5 @@ B站当前是支持https的，但默认还是用http。因为默认代理服务�
 2. 测试页面：
     - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
     - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
-    - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)]
+    - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
     - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
