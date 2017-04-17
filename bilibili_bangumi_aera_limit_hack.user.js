@@ -139,9 +139,9 @@
     	
     	var div = document.createElement('div');
       div.id='GMBiliPlusLoginContainer';
-      div.innerHTML='<div style="position:fixed;top:0;left:0;z-index:10000;width:100%;height:100%;background:rgba(0,0,0,.5);animation-fill-mode:forwards;animation-name:pop-iframe-in;animation-duration:.5s;cursor:pointer"><iframe src="'+iframeSrc+'" style="background:#e4e7ee;position:absolute;top:10%;left:10%;width:80%;height:80%"></iframe><div style="position:absolute;top:5%;right:8%;font-size:40px;color:#FFF">×</div></div>'
+      div.innerHTML='<div style="position:fixed;top:0;left:0;z-index:10000;width:100%;height:100%;background:rgba(0,0,0,.5);animation-fill-mode:forwards;animation-name:pop-iframe-in;animation-duration:.5s;cursor:pointer"><iframe src="'+iframeSrc+'" style="background:#e4e7ee;position:absolute;top:10%;left:10%;width:80%;height:80%"></iframe><div class="GMBiliPlusCloseBox">×</div></div>'
       div.firstChild.addEventListener('click',function(e){
-        if(e.target==this || e.target.className=='GMPixivCloseBox'){
+        if(e.target==this || e.target.className=='GMBiliPlusCloseBox'){
         	if(!confirm('确认关闭？'))
         		return false;
           div.firstChild.style.animationName='pop-iframe-out'
@@ -154,7 +154,7 @@
       delete localStorage.balh_login;
     }
     //add some style
-    document.head.appendChild(document.createElement('style')).innerHTML='@keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}}@keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}}'
+    document.head.appendChild(document.createElement('style')).innerHTML='@keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}}@keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}}.GMBiliPlusCloseBox{position:absolute;top:5%;right:8%;font-size:40px;color:#FFF}'
     window.bangumi_aera_limit_hack = {
         setCookie: setCookie,
         getCookie: getCookie,
