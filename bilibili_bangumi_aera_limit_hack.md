@@ -4,15 +4,15 @@
 
 这回改的有点乱Σ( ￣□￣||)，有BUG要[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)呀
 
-1. 增加三种代理模式，默认代理模式下，理论上来说，应该不会经常卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)
+1. 增加三种代理模式，默认代理模式下，理论上来说，应该不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)
 
 ### 3.0.0+更新内容
 
-主要代码由[@esterTion](https://github.com/esterTion)提供。因为改的比较多，有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)。
+主要代码由[@esterTion](https://github.com/esterTion)提供。
 
 1. 获取视频播放地址的请求全部直接转发给代理服务器，不会卡界面。但会出现如下副作用：（该功能即为重定向代理模式）
     1. [付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额显示`100000000`：因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
-    2. 所有番剧视频都有可能出现加载失败：默认代理服务器不稳定的原因，多刷新几下，或者[使用其他代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#想自定义代理服务器)
+    2. 所有番剧视频都有可能出现加载失败：默认代理服务器不稳定的原因，多刷新几下，或者[使用其他代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#自定义代理服务器)
 2. 在第一次使用时会弹登录提示框
 
 ## 问&答
@@ -50,15 +50,6 @@ B站当前是支持https的，但默认还是用http。默认代理服务器还�
 - Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
 - Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
 
-### 想要帮忙维护？
-
-1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
-2. 测试页面：
-    - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
-    - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
-    - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
-    - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
-
 ## 高级设置
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907-%E8%87%AA%E5%AE%9A%E7%BE%A9%E6%9C%8D%E5%8B%99%E5%99%A8-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8D%80%E5%9F%9F%E9%99%90%E5%88%B6%E8%BC%94%E5%8A%A9%E8%85%B3%E6%9C%AC)可以帮助你进行一些选项的设置。
@@ -86,3 +77,12 @@ key为`'balh_server'`，可选的`value`为：
 1. 在控制台执行命令：`bangumi_aera_limit_hack.setCookie('balh_blocked_vip', 'true');`
 2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
+
+## 源码&测试页
+
+1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
+2. 测试页面：
+    - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
+    - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
+    - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
+    - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
