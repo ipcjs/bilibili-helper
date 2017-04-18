@@ -1,27 +1,104 @@
 ﻿// ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      3.0.0
-// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频; 源码仓库: https://github.com/ipcjs/bilibili-helper/tree/user.js
+// @version      3.1.0
+// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/anime/v/*
-// @include      *://www.bilibili.com/html/html5player.html*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
 'use strict';
-var biliplusHost = getCookie('bangumi_aera_limit_hack_server'); // 优先从cookie中读取服务器地址
-var i_am_a_big_member_who_is_permanently_banned = getCookie('bangumi_aera_limit_hack_blocked_forever'); // "我是一位被永久封号的大会员"(by Google翻译)
+log('[' + GM_info.script.name + '] run on: ' + window.location.href);
+
+var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
+var MODE_REPLACE = 'replace'; // 替换模式, 替换有区域限制的视频的接口的返回值; 因为替换的操作是同步的会卡一下界面, 但没有区域限制的视频不会受到影响;
+var MODE_REDIRECT = 'redirect'; // 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
+
+var settings = getCookies();
+var biliplusHost = settings.balh_server; // 优先从cookie中读取服务器地址
+var isBlockedVip = settings.balh_blocked_vip; // "我是一位被永久封号的大会员"(by Google翻译)
+var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); // 若账号是被永封的大会员, 默认使用重定向模式
 if (!biliplusHost) {
     biliplusHost = 'http://biliplus.ipcjsdev.tk'; // 我的反向代理服务器
     // biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
 }
 
-log('[' + GM_info.script.name + '] run on: ' + window.location.href);
+log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', biliplusHost);
+
+var api = {
+    syncAjax: function (one_api, originUrl) {
+        var data;
+        $.ajax({
+            url: one_api.transUrl(originUrl),
+            async: false,
+            xhrFields: {withCredentials: true},
+            success: function (result) {
+                data = JSON.stringify(one_api.processSuccess(result));
+                log('==>', data);
+                // log('success', arguments, this);
+            },
+            error: function () {
+                log('error', arguments, this);
+            }
+        });
+        return data;
+    },
+    _get_source: {
+        transUrl: function (url) {
+            return biliplusHost + '/api/bangumi?season=' + window.season_id;
+        },
+        processSuccess: function (data) {
+            var found = null;
+            for (var i = 0; i < data.result.episodes.length; i++) {
+                if (data.result.episodes[i].episode_id == window.episode_id) {
+                    found = data.result.episodes[i];
+                }
+            }
+            var returnVal = found !== null ? {
+                "code": 0,
+                "message": "success",
+                "result": {
+                    "aid": found.av_id,
+                    "cid": found.danmaku,
+                    "episode_status": isBlockedVip ? 2 : found.episode_status,
+                    "payment": {"price": "100000000"},
+                    "player": "vupload",
+                    "pre_ad": 0,
+                    "season_status": isBlockedVip ? 2 : data.result.season_status
+                }
+            } : {
+                code: -404,
+                message: '不存在该剧集'
+            };
+            return returnVal;
+        }
+    },
+    _playurl: {
+        transUrl: function (url) {
+            return biliplusHost + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
+        },
+        processSuccess: function (data) {
+            if (data.code === -403) {
+                window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
+            } else if (data.code) {
+                console.error(data);
+            } else if (isAreaLimitForPlayUrl(data)) {
+                console.error('>>aera limit');
+                // if (window.confirm('试图获取视频地址失败, 请登录biliplus' +
+                //         '\n注意: 只支持"使用bilibili账户密码进行登录"'
+                //     )) {
+                //     window.top.location = biliplusHost + '/login';
+                // }
+            }
+            return data;
+        }
+    }
+};
+
 if (!window.jQuery) { // 若还未加载jQuery, 则监听
     var jQuery;
     Object.defineProperty(window, 'jQuery', {
@@ -45,71 +122,77 @@ function injectDataFilter() {
         dataFilter: function (data, type) {
             var json, obj, group, params, curIndex, aid;
             // log(arguments, this);
-            if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/season_area')) {
+            if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/get_source')) {
+                // 获取cid API
+                log(data);
+                json = JSON.parse(data);
+                if (json.code === -40301 // 区域限制
+                    || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用biliplus的接口
+                    data = api.syncAjax(api._get_source, this.url) || data;
+                    mode === MODE_DEFAULT && setAreaLimitSeason(true); // 只要默认模式才要跟踪是否有区域限制
+                } else {
+                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
+                    if (isBlockedVip && json.code === 0 && json.result.pre_ad) {
+                        json.result.pre_ad = 0; // 去除前置广告
+                        data = JSON.stringify(json);
+                    }
+                }
+            } else if (this.url.startsWith('https://bangumi.bilibili.com/player/web_api/playurl')) {
+                // 获取视频地址 API
+                log(data);
+                json = JSON.parse(data);
+                if (isBlockedVip || isAreaLimitForPlayUrl(json)) {
+                    data = api.syncAjax(api._playurl, this.url) || data;
+                    mode === MODE_DEFAULT && setAreaLimitSeason(true);
+                } else {
+                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
+                }
+            } else if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/season_area')) {
                 // 番剧页面是否要隐藏番剧列表 API
                 log(data);
                 json = JSON.parse(data);
                 // 限制区域时的data为:
                 // {"code":0,"message":"success","result":{"play":0}}
                 if (json.code === 0 && json.result && json.result.play === 0) {
+                    mode === MODE_DEFAULT && setAreaLimitSeason(true);
                     json.result.play = 1; // 改成1就能够显示
                     data = JSON.stringify(json);
                     log('==>', data);
+                } else {
+                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
                 }
             }
             return data;
         }
     });
+    if (mode === MODE_DEFAULT || mode === MODE_REDIRECT) { // 替换模式不需要修改ajax
+        redirectAjax();
+    }
+}
     /*
      {"code":0,"message":"success","result":{"aid":9854952,"cid":16292628,"episode_status":2,"payment":{"price":"0"},"player":"vupload","pre_ad":0,"season_status":2}}
      */
+function redirectAjax() {
     var originalAjax = $.ajax;
     $.ajax = function (param) {
-        if (param.url.match('/web_api/get_source')) {
-            param.url = biliplusHost + '/api/bangumi?season=' + window.season_id;
+        if (param.url.match('/web_api/get_source') && (mode === MODE_REDIRECT || isAreaLimitSeason())) { // 重定向模式不需要判断是否有区域限制
+            param.url = api._get_source.transUrl(param.url);
             param.type = 'GET';
             delete param.data;
             var oriSuccess = param.success;
             param.success = function (data) {
-                var found = null;
-                for (var i = 0; i < data.result.episodes.length; i++) {
-                    if (data.result.episodes[i].episode_id == window.episode_id) {
-                        found = data.result.episodes[i];
-                    }
-                }
-                var returnVal = found !== null ? {
-                    "code": 0,
-                    "message": "success",
-                    "result": {
-                        "aid": found.av_id,
-                        "cid": found.danmaku,
-                        "episode_status": i_am_a_big_member_who_is_permanently_banned ? 2 : found.episode_status,
-                        "payment": {"price": "100000000"},
-                        "player": "vupload",
-                        "pre_ad": 0,
-                        "season_status": i_am_a_big_member_who_is_permanently_banned ? 2 : data.result.season_status
-                    }
-                } : {
-                    code: -404,
-                    message: '不存在该剧集'
-                };
-                log('[' + GM_info.script.name + '] Replaced request: get_source', returnVal);
+                var returnVal = api._get_source.processSuccess(data);
+                log('Redirected request: get_source', returnVal);
                 oriSuccess(returnVal);
             };
             return originalAjax.apply(this, [param])
-        } else if (param.url.match('/player/web_api/playurl')) {
-            var module = param.url.match(/module=(\w+)/)[1] || 'bangumi';
+        } else if (param.url.match('/player/web_api/playurl') && (mode === MODE_REDIRECT || isAreaLimitSeason())) {
             var oriSuccess = param.success;
-            param.url = biliplusHost + '/BPplayurl.php?' + param.url.split('?')[1].replace(/(cid=\d+)/, '$1|' + module);
+            param.url = api._playurl.transUrl(param.url);
             param.success = function (data) {
-                if (data.code === -403) {
-                    window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
-                } else if (data.code) {
-                    console.error(data);
-                }
-                oriSuccess(data);
+                oriSuccess(api._playurl.processSuccess(data));
             };
-            log('[' + GM_info.script.name + '] Redirected request: bangumi playurl -> ', param.url);
+            log('Redirected request: bangumi playurl -> ', param.url);
             return originalAjax.apply(this, [param]);
         } else {
             return originalAjax.apply(this, arguments);
@@ -117,24 +200,62 @@ function injectDataFilter() {
     }
 }
 
-function isAeraLimit(json) {
+function isAreaLimitSeason() {
+    return getCookie('balh_season_' + getSeasonId());
+}
+function setAreaLimitSeason(limit) {
+    var season_id = getSeasonId();
+    setCookie('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
+    log('setAreaLimitSeason', season_id, limit);
+}
+
+function getSeasonId() {
+    try {
+        return window.season_id || window.top.season_id;
+    } catch (e) {
+        console.error(e);
+        return (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', '000'])[1];
+    }
+}
+
+function isAreaLimitForPlayUrl(json) {
     return json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627;
 }
 
 function getParam(url, key) {
     return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
 }
-function getCookie(key) {
+
+function getCookies() {
     var map = document.cookie.split('; ').reduce(function (obj, item) {
         var entry = item.split('=');
         obj[entry[0]] = entry[1];
         return obj;
     }, {});
-    return map[key];
+    return map;
+}
+
+function getCookie(key) {
+    return getCookies()[key];
 }
 // document.cookie=`bangumi_aera_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
+
+/**
+ * @key     key
+ * @value   为undefined时, 表示删除cookie
+ * @options 为undefined时, 表示过期时间为3年
+ *          为''时, 表示Session cookie
+ *          为数字时, 表示指定过期时间
+ *          为{}时, 表示指定所有的属性
+ * */
 function setCookie(key, value, options) {
-    options || (options = {domain: '.bilibili.com', path: '/', expires: new Date('2020-01-01').toUTCString()});
+    if (typeof options !== 'object') {
+        options = {
+            domain: '.bilibili.com',
+            path: '/',
+            'max-age': value === undefined ? 0 : (options === undefined ? 94608000 : options)
+        };
+    }
     var c = Object.keys(options).reduce(function (str, key) {
         return str + '; ' + key + '=' + options[key];
     }, key + '=' + value);
@@ -224,8 +345,12 @@ function log() {
 
 // 暴露接口
 window.bangumi_aera_limit_hack = {
-    setCookie: setCookie,
-    getCookie: getCookie,
+    setCookie: function (key, value, options) {
+        return setCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key, value, options);
+    },
+    getCookie: function (key) {
+        return getCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key);
+    },
     login: showLogin,
     _clear_login_state: function () {
         delete localStorage.balh_notFirst;
