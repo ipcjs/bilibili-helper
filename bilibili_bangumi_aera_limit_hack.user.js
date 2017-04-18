@@ -1,13 +1,13 @@
 ﻿// ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      3.1.0
+// @version      3.1.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
-// @run-at       document-end
+// @run-at       document-start
 // @grant        none
 // ==/UserScript==
 
@@ -27,7 +27,7 @@ if (!biliplusHost) {
     // biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
 }
 
-log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', biliplusHost);
+log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', biliplusHost, 'readyState:', document.readyState);
 
 var api = {
     syncAjax: function (one_api, originUrl) {
@@ -113,65 +113,89 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
     injectDataFilter();
 }
 
-if (window.location.hostname === 'bangumi.bilibili.com') {
-    checkLoginState();
-}
+documentReady(function () {
+    if (window.location.hostname === 'bangumi.bilibili.com') {
+        checkLoginState();
+    }
+});
+
+// 暴露接口
+window.bangumi_aera_limit_hack = {
+    setCookie: function (key, value, options) {
+        return setCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key, value, options);
+    },
+    getCookie: function (key) {
+        return getCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key);
+    },
+    login: showLogin,
+    _clear_login_state: function () {
+        delete localStorage.balh_notFirst;
+        delete localStorage.balh_login;
+        delete localStorage.balh_mainLogin;
+        delete localStorage.oauthTime;
+    }
+};
+
+////////////////接下来全是函数/////////////////
 
 function injectDataFilter() {
     window.jQuery.ajaxSetup({
-        dataFilter: function (data, type) {
-            var json, obj, group, params, curIndex, aid;
-            // log(arguments, this);
-            if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/get_source')) {
-                // 获取cid API
-                log(data);
-                json = JSON.parse(data);
-                if (json.code === -40301 // 区域限制
-                    || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用biliplus的接口
-                    data = api.syncAjax(api._get_source, this.url) || data;
-                    mode === MODE_DEFAULT && setAreaLimitSeason(true); // 只要默认模式才要跟踪是否有区域限制
-                } else {
-                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
-                    if (isBlockedVip && json.code === 0 && json.result.pre_ad) {
-                        json.result.pre_ad = 0; // 去除前置广告
-                        data = JSON.stringify(json);
-                    }
-                }
-            } else if (this.url.startsWith('https://bangumi.bilibili.com/player/web_api/playurl')) {
-                // 获取视频地址 API
-                log(data);
-                json = JSON.parse(data);
-                if (isBlockedVip || isAreaLimitForPlayUrl(json)) {
-                    data = api.syncAjax(api._playurl, this.url) || data;
-                    mode === MODE_DEFAULT && setAreaLimitSeason(true);
-                } else {
-                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
-                }
-            } else if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/season_area')) {
-                // 番剧页面是否要隐藏番剧列表 API
-                log(data);
-                json = JSON.parse(data);
-                // 限制区域时的data为:
-                // {"code":0,"message":"success","result":{"play":0}}
-                if (json.code === 0 && json.result && json.result.play === 0) {
-                    mode === MODE_DEFAULT && setAreaLimitSeason(true);
-                    json.result.play = 1; // 改成1就能够显示
-                    data = JSON.stringify(json);
-                    log('==>', data);
-                } else {
-                    mode === MODE_DEFAULT && setAreaLimitSeason(false);
-                }
-            }
-            return data;
-        }
+        dataFilter: jqueryDataFilter
     });
     if (mode === MODE_DEFAULT || mode === MODE_REDIRECT) { // 替换模式不需要修改ajax
         redirectAjax();
     }
 }
-    /*
-     {"code":0,"message":"success","result":{"aid":9854952,"cid":16292628,"episode_status":2,"payment":{"price":"0"},"player":"vupload","pre_ad":0,"season_status":2}}
-     */
+
+function jqueryDataFilter(data, type) {
+    var json, group;
+    // log(arguments, this);
+    if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/get_source')) {
+        // 获取cid API
+        log(data);
+        json = JSON.parse(data);
+        if (json.code === -40301 // 区域限制
+            || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用biliplus的接口
+            data = api.syncAjax(api._get_source, this.url) || data;
+            mode === MODE_DEFAULT && setAreaLimitSeason(true); // 只要默认模式才要跟踪是否有区域限制
+        } else {
+            mode === MODE_DEFAULT && setAreaLimitSeason(false);
+            if (isBlockedVip && json.code === 0 && json.result.pre_ad) {
+                json.result.pre_ad = 0; // 去除前置广告
+                data = JSON.stringify(json);
+            }
+        }
+    } else if (this.url.startsWith('https://bangumi.bilibili.com/player/web_api/playurl')) {
+        // 获取视频地址 API
+        log(data);
+        json = JSON.parse(data);
+        if (isBlockedVip || isAreaLimitForPlayUrl(json)) {
+            data = api.syncAjax(api._playurl, this.url) || data;
+            mode === MODE_DEFAULT && setAreaLimitSeason(true);
+        } else {
+            mode === MODE_DEFAULT && setAreaLimitSeason(false);
+        }
+    } else if (this.url.startsWith(window.location.protocol + '//bangumi.bilibili.com/web_api/season_area')) {
+        // 番剧页面是否要隐藏番剧列表 API
+        log(data);
+        json = JSON.parse(data);
+        // 限制区域时的data为:
+        // {"code":0,"message":"success","result":{"play":0}}
+        if (json.code === 0 && json.result && json.result.play === 0) {
+            mode === MODE_DEFAULT && setAreaLimitSeason(true);
+            json.result.play = 1; // 改成1就能够显示
+            data = JSON.stringify(json);
+            log('==>', data);
+        } else {
+            mode === MODE_DEFAULT && setAreaLimitSeason(false);
+        }
+    }
+    return data;
+}
+
+/*
+ {"code":0,"message":"success","result":{"aid":9854952,"cid":16292628,"episode_status":2,"payment":{"price":"0"},"player":"vupload","pre_ad":0,"season_status":2}}
+ */
 function redirectAjax() {
     var originalAjax = $.ajax;
     $.ajax = function (param) {
@@ -339,24 +363,19 @@ function checkLoginState() {
     }
 }
 
+// document载入完成后回调, 相当于$(cb);
+function documentReady(cb) {
+    if (document.readyState !== 'loading') {
+        return setTimeout(cb, 1);
+    }
+    var cbWrapper = function () {
+        document.removeEventListener('DOMContentLoaded', cbWrapper);
+        cb();
+    };
+    document.addEventListener('DOMContentLoaded', cbWrapper);
+}
+
 function log() {
     console.log.apply(console, arguments);
 }
-
-// 暴露接口
-window.bangumi_aera_limit_hack = {
-    setCookie: function (key, value, options) {
-        return setCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key, value, options);
-    },
-    getCookie: function (key) {
-        return getCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key);
-    },
-    login: showLogin,
-    _clear_login_state: function () {
-        delete localStorage.balh_notFirst;
-        delete localStorage.balh_login;
-        delete localStorage.balh_mainLogin;
-        delete localStorage.oauthTime;
-    }
-};
 
