@@ -1,13 +1,10 @@
 ## 更新日志
 
-### 5.0.0+更新内容
+有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
 
-代码贡献者：[@esterTion](https://github.com/esterTion)、[@ipcjs](https://github.com/ipcjs)
-
-这回改的有点乱Σ( ￣□￣||)，有BUG要[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)呀
-
-1. 增加三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)
-2. 在第一次使用时会弹登录提示框
+1. 5.0.2：检测到区域限制番剧时显示通知提示；
+1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)；
+2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
 
 ## 问&答
 
@@ -78,7 +75,9 @@ key为`'balh_server'`，可选的`value`为：
 ## 源码&测试页
 
 1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
-2. 测试页面：
+2. 代码贡献者：[@esterTion](https://github.com/esterTion)、[@ipcjs](https://github.com/ipcjs)
+3. 部分源码取自：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
+4. 测试页面：
     - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
     - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
     - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
