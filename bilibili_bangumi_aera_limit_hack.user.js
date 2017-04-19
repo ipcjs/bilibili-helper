@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.0.1
+// @version      5.0.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -99,16 +99,21 @@ var api = {
         },
         processSuccess: function (data) {
             if (data.code === -403) {
-                window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
+                //window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
+                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，我们未能穿透敌人的盔甲', '//bangumi.bilibili.com/favicon.ico', 3e3);
             } else if (data.code) {
                 console.error(data);
+                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n'+JSON.stringify(data), '//bangumi.bilibili.com/favicon.ico', 3e3);
             } else if (isAreaLimitForPlayUrl(data)) {
                 console.error('>>aera limit');
+                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，需要登录\n点此进行登录', '//bangumi.bilibili.com/favicon.ico', 3e3, showLogin);
                 // if (window.confirm('试图获取视频地址失败, 请登录biliplus' +
                 //         '\n注意: 只支持"使用bilibili账户密码进行登录"'
                 //     )) {
                 //     window.top.location = biliplusHost + '/login';
                 // }
+            } else {
+            	showNotification(Date.now(), GM_info.script.name, '已突破黑洞，开始加载视频', '//bangumi.bilibili.com/favicon.ico', 2e3);
             }
             return data;
         }
@@ -177,6 +182,7 @@ function jqueryDataFilter(data, type) {
             json.result.play = 1; // 改成1就能够显示
             data = JSON.stringify(json);
             log('==>', data);
+            showNotification(Date.now(), GM_info.script.name, '检测到区域限制番剧，准备启动黑洞突破程序', '//bangumi.bilibili.com/favicon.ico', 2e3);
         } else {
             mode === MODE_DEFAULT && setAreaLimitSeason(false);
         }
@@ -364,7 +370,7 @@ function checkLoginState() {
         checkExpiretime(function () {
             if (localStorage.oauthTime === undefined) {
                 localStorage.balh_login = 0;
-                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_aera_limit_hack.login() 来打开授权页面')) {
+                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_aera_limit_hack.login() 来打开授权页面')) {
                     showLogin();
                 }
             } else {
@@ -420,3 +426,133 @@ function log() {
     console.log.apply(console, arguments);
 }
 
+/*
+通知模块
+剽窃自 YAWF 用户脚本
+硬广：https://tiansh.github.io/yawf/
+*/
+var notify = (function () {
+  var avaliable = {};
+  var shown = [];
+  var use = {
+    'hasPermission': function () { return null; },
+    'requestPermission': function (callback) { return null; },
+    'hideNotification': function (notify) { return null; },
+    'showNotification': function (id, title, body, icon, delay, onclick) { return null; }
+  };
+
+  // 检查一个微博是不是已经被显示过了，如果显示过了不重复显示
+  var shownFeed = function (id) {
+    return false;
+  };
+
+  // webkitNotifications
+  // Tab Notifier 扩展实现此接口，但显示的桌面提示最多只能显示前两行
+  if (typeof webkitNotifications !== 'undefined') avaliable.webkit = {
+    'hasPermission': function () {
+      return [true, null, false][webkitNotifications.checkPermission()];
+    },
+    'requestPermission': function (callback) {
+      return webkitNotifications.requestPermission(callback);
+    },
+    'hideNotification': function (notify) {
+      notify.cancel();
+      afterHideNotification(notify);
+    },
+    'showNotification': function (id, title, body, icon, delay, onclick) {
+      if (shownFeed(id)) return null;
+      var notify = webkitNotifications.createNotification(icon, title, body);
+      if (delay && delay > 0) notify.addEventListener('display', function () {
+        setTimeout(function () { hideNotification(notify); }, delay);
+      });
+      if (onclick) notify.addEventListener('click', onclick);
+      notify.show();
+      return notify;
+    },
+  };
+
+  // Notification
+  // Firefox 22+
+  // 显示4秒会自动关闭 https://bugzil.la/875114
+  if (typeof Notification !== 'undefined') avaliable.standard = {
+    'hasPermission': function () {
+      return {
+        'granted': true,
+        'denied': false,
+        'default': null,
+      }[Notification.permission];
+    },
+    'requestPermission': function (callback) {
+      return Notification.requestPermission(callback);
+    },
+    'hideNotification': function (notify) {
+      notify.close();
+      afterHideNotification(notify);
+    },
+    'showNotification': function (id, title, body, icon, delay, onclick) {
+      if (shownFeed(id)) return null;
+      var notify = new Notification(title, { 'body': body, 'icon': icon, 'requireInteraction': !delay });
+      if (delay && delay > 0) notify.addEventListener('show', function () {
+        setTimeout(function () { hideNotification(notify); }, delay);
+      });
+      if (onclick) notify.addEventListener('click', onclick);
+      return notify;
+    },
+  };
+
+  // 有哪些接口可用
+  var avaliableNotification = function () {
+    return Object.keys(avaliable);
+  };
+  // 选择用哪个接口
+  var choseNotification = function (prefer) {
+    return (use = prefer && avaliable[prefer] || avaliable.standard);
+  };
+  choseNotification();
+  // 检查权限
+  var hasPermission = function () {
+    return use.hasPermission.apply(this, arguments);
+  };
+  // 请求权限
+  var requestPermission = function () {
+    return use.requestPermission.apply(this, arguments);
+  };
+  // 显示消息
+  var showNotification = function (title, body, icon, delay, onclick) {
+    var notify = use.showNotification.apply(this, arguments);
+    shown.push(notify);
+    return notify;
+  };
+  // 隐藏已经显示的消息
+  var hideNotification = function (notify) {
+    use.hideNotification.apply(this, arguments);
+    return notify;
+  };
+  var afterHideNotification = function (notify) {
+    shown = shown.filter(function (x) { return x !== notify; });
+  };
+
+  document.addEventListener('unload', function () {
+    shown.forEach(hideNotification);
+    shown = [];
+  });
+
+  return {
+    'avaliableNotification': avaliableNotification,
+    'choseNotification': choseNotification,
+    'hasPermission': hasPermission,
+    'requestPermission': requestPermission,
+    'showNotification': showNotification,
+    'hideNotification': hideNotification
+  };
+
+}());
+
+var hasNotificationPermission = notify.hasPermission();
+if (hasNotificationPermission === null) notify.requestPermission(function () {
+  hasNotificationPermission = true;
+});
+var showNotification = function(){
+	if(hasNotificationPermission)
+		notify.showNotification.apply(null, arguments);
+}
