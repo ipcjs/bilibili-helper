@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.0.2
+// @version      5.0.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -81,7 +81,7 @@ var api = {
                     "aid": found.av_id,
                     "cid": found.danmaku,
                     "episode_status": isBlockedVip ? 2 : found.episode_status,
-                    "payment": {"price": "100000000"},
+                    "payment": {"price": "9876547210.33"},
                     "player": "vupload",
                     "pre_ad": 0,
                     "season_status": isBlockedVip ? 2 : data.result.season_status
