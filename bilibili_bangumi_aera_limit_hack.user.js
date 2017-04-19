@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.0.0
+// @version      5.0.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -132,6 +132,7 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
 documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         checkLoginState();
+        checkHtml5();
     }
 });
 
@@ -144,11 +145,12 @@ window.bangumi_aera_limit_hack = {
         return getCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key);
     },
     login: showLogin,
-    _clear_login_state: function () {
+    _clear_local_value: function () {
         delete localStorage.balh_notFirst;
         delete localStorage.balh_login;
         delete localStorage.balh_mainLogin;
         delete localStorage.oauthTime;
+        delete localStorage.balh_h5_not_first;
     }
 };
 
@@ -362,7 +364,7 @@ function checkLoginState() {
         checkExpiretime(function () {
             if (localStorage.oauthTime === undefined) {
                 localStorage.balh_login = 0;
-                if (confirm('看起来你是第一次使用解除区域限制\n要不要考虑进行一下授权？\n\n授权后可以观看1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_aera_limit_hack.login() 来打开授权页面')) {
+                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_aera_limit_hack.login() 来打开授权页面')) {
                     showLogin();
                 }
             } else {
@@ -384,6 +386,21 @@ function checkLoginState() {
         script.src = biliplusHost + '/login?act=expiretime';
         loadCallback && script.addEventListener('load', loadCallback);
         document.head.appendChild(script);
+    }
+}
+
+function checkHtml5() {
+    if (!localStorage.balh_h5_not_first && localStorage.defaulth5 == 0 && window.GrayManager) {
+        new MutationObserver(function (mutations, observer) {
+            observer.disconnect();
+            localStorage.balh_h5_not_first = 'yes';
+            if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
+                window.GrayManager.clickMenu('change_h5');// change_flash, change_h5
+            }
+        }).observe(document.querySelector('.player-content'), {
+            childList: true, // 监听child的增减
+            attributes: false, // 监听属性的变化
+        });
     }
 }
 
