@@ -1,18 +1,12 @@
 ## 更新日志
 
-### 3.1.0+更新内容
+### 5.0.0+更新内容
+
+代码贡献者：[@esterTion](https://github.com/esterTion)、[@ipcjs](https://github.com/ipcjs)
 
 这回改的有点乱Σ( ￣□￣||)，有BUG要[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)呀
 
-1. 增加三种代理模式，默认代理模式下，理论上来说，应该不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)
-
-### 3.0.0+更新内容
-
-主要代码由[@esterTion](https://github.com/esterTion)提供。
-
-1. 获取视频播放地址的请求全部直接转发给代理服务器，不会卡界面。但会出现如下副作用：（该功能即为重定向代理模式）
-    1. [付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额显示`100000000`：因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
-    2. 所有番剧视频都有可能出现加载失败：默认代理服务器不稳定的原因，多刷新几下，或者[使用其他代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#自定义代理服务器)
+1. 增加三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)
 2. 在第一次使用时会弹登录提示框
 
 ## 问&答
@@ -61,8 +55,11 @@ B站当前是支持https的，但默认还是用http。默认代理服务器还�
 `key`为`'balh_mode'`，可选的`value`为：
 
 1. `'default'`或`undefined`：默认模式, 自动判断使用何种模式; **推荐**;
-2. `'replace'`：替换模式, 替换有区域限制的视频的接口的返回值; 因为替换的操作是同步的会卡一下界面, 但没有区域限制的视频不会受到影响; (代理服务器不稳定时, 推荐该模式)
-3. `'redirect'`：重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频; (代理服务器足够快时, 推荐该模式)
+2. `'replace'`：替换模式, 只替换有区域限制的视频的接口的返回值; 
+    - 进行了两次请求, 若代理服务器不稳定, 普通番剧不受影响; (代理服务器不稳定时, 推荐该模式)
+3. `'redirect'`：重定向模式, 重定向所有番剧视频的接口到代理服务器; 
+    - 进行一次请求, 若代理服务器不稳定, 普通番剧也可能加载不出视频; (代理服务器足够快时, 推荐该模式)
+    - [付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额会显示`100000000`：因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
 
 ### 自定义代理服务器
 
