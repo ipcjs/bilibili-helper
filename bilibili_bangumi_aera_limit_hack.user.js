@@ -204,6 +204,7 @@ function replaceAjax() {
             }
             i++;
         }
+        var oriSuccess = param.success;
         var one_api;
         if (param.url.match('/web_api/get_source')) {
             one_api = api._get_source;
