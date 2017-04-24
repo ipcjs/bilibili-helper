@@ -195,14 +195,14 @@ function jqueryDataFilter(data, type) {
  */
 function replaceAjax() {
     var originalAjax = $.ajax;
-    $.ajax = function () {
-        var param, i=0;
-        while(i < arguments.length){
-            if(arguments[i]){
-                param = arguments[i];
-                break;
-            }
-            i++;
+    $.ajax = function (arg0, arg1) {
+        // log(arguments);
+        var param;
+        if (arg1 === undefined) {
+            param = arg0;
+        } else {
+            arg0 && (arg1.url = arg0);
+            param = arg1;
         }
         var oriSuccess = param.success;
         var one_api;
@@ -260,7 +260,7 @@ function replaceAjax() {
             }
         }
         // default
-        return originalAjax.apply(this, arguments);
+        return originalAjax.apply(this, [param]);
     }
 }
 
