@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.0.6
+// @version      5.0.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -67,7 +67,7 @@ var api = {
     _get_view: {
         transUrl: function (url) {
             var id = url.replace(/.*av(\d+).*/, '$1');
-            return 'https://www.biliplus.com/api/view?id=' + id;
+            return biliplusHost + '/api/view?id=' + id;
         },
         processSuccess: function (data) {
             var bangumi = data.bangumi;
@@ -628,7 +628,7 @@ function tryBangumiRedirect() {
 
 function bangumiRedirect(season_id, ep_index) {
     $.ajax({
-        url: `${biliplusHost}/api/bangumi?season=${season_id}`,
+        url: biliplusHost + '/api/bangumi?season=' + season_id,
         async: true,
         xhrFields: {withCredentials: true},
         success: function (result) {
@@ -642,7 +642,7 @@ function bangumiRedirect(season_id, ep_index) {
             const episode_ids = result.episodes.map(ep => ep.episode_id);
             episode_ids.reverse();
             const episode_id = episode_ids[ep_index];
-            location.assign(`https://bangumi.bilibili.com/anime/${season_id}/play#${episode_id}`);
+            location.href = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
         },
         error: function (e) {
             log('error', arguments, this);
