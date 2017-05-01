@@ -2,6 +2,7 @@
 
 有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
 
+1. 5.2.0：默认代理服务器支持HTTPS
 1. 5.1.0：由[@FlandreDaisuki](https://github.com/FlandreDaisuki)增加从AVxxx自动跳转到番剧页的功能
 1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
 1. 5.0.3：紧急更新，修正一个逸单位的换算错误！
@@ -36,13 +37,6 @@
 1. 确定你是B站的[大会员](http://big.bilibili.com/site/big.html)
 2. 确定当前视频拥有1080P画质的版本
 3. 确定你登录了[代理服务器](http://biliplus.ipcjsdev.tk/login)；注意，当前默认代理服务器只支持“使用bilibili账号密码进行登录”
-
-### https下无效？
-
-B站当前是支持https的，但默认还是用http。默认代理服务器还没有支持https，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#自定义代理服务器)，或者解除阻止：
-
-- Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
-- Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
 
 ## 高级设置
 
@@ -80,8 +74,13 @@ key为`'balh_server'`，可选的`value`为：
 1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
 2. 代码贡献者：[@esterTion](https://github.com/esterTion)、[@FlandreDaisuki](https://github.com/FlandreDaisuki)、[@ipcjs](https://github.com/ipcjs)
 3. 部分源码取自：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
-4. 测试页面：
+4. 解除区域限制测试：
     - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
     - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
     - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
     - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
+5. 自动跳转到番剧页测试
+    - 舊番、av_id共用、不分P：https://www.bilibili.com/video/av4044639/ → https://bangumi.bilibili.com/anime/3398/play#84776
+    - 舊番、av_id共用、分P：https://www.bilibili.com/video/av2182637/index_3.html → https://bangumi.bilibili.com/anime/4300/play#88679
+    - 舊番、av_id獨立：https://www.bilibili.com/video/av2229121/ → https://bangumi.bilibili.com/anime/1559/play#29944
+    - 連載中：https://www.bilibili.com/video/av9910182/ → https://bangumi.bilibili.com/anime/6001/play#103883
