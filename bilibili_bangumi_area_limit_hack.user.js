@@ -91,7 +91,7 @@ var bilibiliApis = (function () {
                     console.error(data);
                     showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n' + JSON.stringify(data), '//bangumi.bilibili.com/favicon.ico', 3e3);
                 } else if (isAreaLimitForPlayUrl(data)) {
-                    console.error('>>aera limit');
+                    console.error('>>area limit');
                     showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，需要登录\n点此进行登录', '//bangumi.bilibili.com/favicon.ico', 3e3, showLogin);
                     // if (window.confirm('试图获取视频地址失败, 请登录代理服务器' +
                     //         '\n注意: 只支持"使用bilibili账户密码进行登录"'
@@ -131,7 +131,7 @@ documentReady(function () {
 });
 
 // 暴露接口
-window.bangumi_aera_limit_hack = {
+window.bangumi_area_limit_hack = {
     setCookie: setCookie,
     getCookie: getCookie,
     login: showLogin,
@@ -143,6 +143,7 @@ window.bangumi_aera_limit_hack = {
         delete localStorage.balh_h5_not_first;
     }
 };
+window.bangumi_aera_limit_hack = window.bangumi_area_limit_hack; // 兼容...
 
 ////////////////接下来全是函数/////////////////
 
@@ -287,7 +288,7 @@ function getCookies() {
 function getCookie(key) {
     return getCookies()[key];
 }
-// document.cookie=`bangumi_aera_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
+// document.cookie=`bangumi_area_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
 
 /**
  * @key     key
@@ -363,7 +364,7 @@ function checkLoginState() {
         checkExpiretime(function () {
             if (localStorage.oauthTime === undefined) {
                 localStorage.balh_login = 0;
-                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_aera_limit_hack.login() 来打开授权页面')) {
+                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_area_limit_hack.login() 来打开授权页面')) {
                     showLogin();
                 }
             } else {

@@ -6,7 +6,7 @@
 1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
 1. 5.0.3：紧急更新，修正一个逸单位的换算错误！
 1. 5.0.2：检测到区域限制番剧时显示通知提示；
-1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#代理模式)；
+1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#代理模式)；
 2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
 
 ## 问&答
@@ -39,7 +39,7 @@
 
 ### https下无效？
 
-B站当前是支持https的，但默认还是用http。默认代理服务器还没有支持https，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_aera_limit_hack.md#自定义代理服务器)，或者解除阻止：
+B站当前是支持https的，但默认还是用http。默认代理服务器还没有支持https，获取真实播放地址的网络请求默认会被Chrome、Firefox阻止。可以[使用其他支持https的代理服务器](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#自定义代理服务器)，或者解除阻止：
 
 - Chrome永久解除阻止的方法是，启动时添加参数`--allow-running-insecure-content`（**不推荐**）
 - Firefox临时解除阻止的方法是，点击地址栏左侧的锁状图标，选择`暂时解除保护`
@@ -48,7 +48,7 @@ B站当前是支持https的，但默认还是用http。默认代理服务器还�
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907-%E8%87%AA%E5%AE%9A%E7%BE%A9%E6%9C%8D%E5%8B%99%E5%99%A8-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8D%80%E5%9F%9F%E9%99%90%E5%88%B6%E8%BC%94%E5%8A%A9%E8%85%B3%E6%9C%AC)可以帮助你进行一些选项的设置。
 
-或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行命令：`bangumi_aera_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
+或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
 ### 代理模式
 
@@ -71,7 +71,7 @@ key为`'balh_server'`，可选的`value`为：
 ### 大会员账号被B站永封了？<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="(懵逼"/>
 
 0. 注册并登录一个小号
-1. 在控制台执行命令：`bangumi_aera_limit_hack.setCookie('balh_blocked_vip', 'true');`
+1. 在控制台执行命令：`bangumi_area_limit_hack.setCookie('balh_blocked_vip', 'true');`
 2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
