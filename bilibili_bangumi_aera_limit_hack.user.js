@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.0.7
+// @version      5.1.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持bangumi.bilibili.com域名下的番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -20,42 +20,26 @@ var MODE_REPLACE = 'replace'; // 替换模式, 替换有区域限制的视频的
 var MODE_REDIRECT = 'redirect'; // 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
 
 var settings = getCookies();
-var biliplusHost = settings.balh_server; // 优先从cookie中读取服务器地址
+var proxyServer = settings.balh_server || 'http://biliplus.ipcjsdev.tk'; // 优先从cookie中读取服务器地址
 var isBlockedVip = settings.balh_blocked_vip; // "我是一位被永久封号的大会员"(by Google翻译)
 var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); // 若账号是被永封的大会员, 默认使用重定向模式
-if (!biliplusHost) {
-    biliplusHost = 'http://biliplus.ipcjsdev.tk'; // 我的反向代理服务器
-    // biliplusHost = 'https://www.biliplus.com'; // 支持https的服务器
-}
 
-log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', biliplusHost, 'readyState:', document.readyState);
+log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', proxyServer, 'readyState:', document.readyState);
 
-var api = {
-    syncAjax: function (one_api, originUrl) {
-        var data;
+var bilibiliApis = (function () {
+    function BilibiliApi(props) {
+        Object.assign(this, props);
+    }
+
+    BilibiliApi.prototype.asyncAjaxByProxy = function (originUrl, success, error) {
+        var one_api = this;
         $.ajax({
-            url: one_api.transUrl(originUrl),
-            async: false,
-            xhrFields: {withCredentials: true},
-            success: function (result) {
-                data = JSON.stringify(one_api.processSuccess(result));
-                log('==>', data);
-                // log('success', arguments, this);
-            },
-            error: function () {
-                log('error', arguments, this);
-            }
-        });
-        return data;
-    },
-    asyncAjax: function (one_api, originUrl, success, error) {
-        $.ajax({
-            url: one_api.transUrl(originUrl),
+            url: one_api.transToProxyUrl(originUrl),
             async: true,
             xhrFields: {withCredentials: true},
             success: function (result) {
                 log('==>', result);
-                success(one_api.processSuccess(result));
+                success(one_api.processProxySuccess(result));
                 // log('success', arguments, this);
             },
             error: function (e) {
@@ -63,87 +47,65 @@ var api = {
                 error(e);
             }
         });
-    },
-    _get_view: {
-        transUrl: function (url) {
-            var id = url.replace(/.*av(\d+).*/, '$1');
-            return biliplusHost + '/api/view?id=' + id;
-        },
-        processSuccess: function (data) {
-            var bangumi = data.bangumi;
-            if (!bangumi) {
-                return null;
-            }
-            var int = parseInt,
-                old_ep_id = location.pathname.replace(/.*av\d+.(?:index_(\d+).*)?/, '$1'),
-                ep_index = (int(old_ep_id) -1) ||
-                    (int(data.season_index) - 1) ||
-                    (int(data.description.replace(/\D(\d+)/, '$1')) - 1);
-
-            ep_index = (isNaN(ep_index) || ep_index < 1) ? 0 : ep_index;
-
-            return {
-                ep_index: ep_index,
-                season_id: bangumi.season_id
-            };
-        }
-    },
-    _get_source: {
-        transUrl: function (url) {
-            return biliplusHost + '/api/bangumi?season=' + window.season_id;
-        },
-        processSuccess: function (data) {
-            var found = null;
-            for (var i = 0; i < data.result.episodes.length; i++) {
-                if (data.result.episodes[i].episode_id == window.episode_id) {
-                    found = data.result.episodes[i];
+    };
+    return {
+        _get_source: new BilibiliApi({
+            transToProxyUrl: function (url) {
+                return proxyServer + '/api/bangumi?season=' + window.season_id;
+            },
+            processProxySuccess: function (data) {
+                var found = null;
+                for (var i = 0; i < data.result.episodes.length; i++) {
+                    if (data.result.episodes[i].episode_id == window.episode_id) {
+                        found = data.result.episodes[i];
+                    }
                 }
+                var returnVal = found !== null ? {
+                    "code": 0,
+                    "message": "success",
+                    "result": {
+                        "aid": found.av_id,
+                        "cid": found.danmaku,
+                        "episode_status": isBlockedVip ? 2 : found.episode_status,
+                        "payment": {"price": "9876547210.33"},
+                        "player": "vupload",
+                        "pre_ad": 0,
+                        "season_status": isBlockedVip ? 2 : data.result.season_status
+                    }
+                } : {
+                    code: -404,
+                    message: '不存在该剧集'
+                };
+                return returnVal;
             }
-            var returnVal = found !== null ? {
-                "code": 0,
-                "message": "success",
-                "result": {
-                    "aid": found.av_id,
-                    "cid": found.danmaku,
-                    "episode_status": isBlockedVip ? 2 : found.episode_status,
-                    "payment": {"price": "9876547210.33"},
-                    "player": "vupload",
-                    "pre_ad": 0,
-                    "season_status": isBlockedVip ? 2 : data.result.season_status
+        }),
+        _playurl: new BilibiliApi({
+            transToProxyUrl: function (url) {
+                return proxyServer + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
+            },
+            processProxySuccess: function (data) {
+                if (data.code === -403) {
+                    // window.alert('当前使用的服务器(' + proxyServer + ')依然有区域限制');
+                    showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，我们未能穿透敌人的盔甲\n当前代理服务器（' + proxyServer + '）依然有区域限制Σ( ￣□￣||)', '//bangumi.bilibili.com/favicon.ico', 3e3);
+                } else if (data.code) {
+                    console.error(data);
+                    showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n' + JSON.stringify(data), '//bangumi.bilibili.com/favicon.ico', 3e3);
+                } else if (isAreaLimitForPlayUrl(data)) {
+                    console.error('>>aera limit');
+                    showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，需要登录\n点此进行登录', '//bangumi.bilibili.com/favicon.ico', 3e3, showLogin);
+                    // if (window.confirm('试图获取视频地址失败, 请登录代理服务器' +
+                    //         '\n注意: 只支持"使用bilibili账户密码进行登录"'
+                    //     )) {
+                    //     window.top.location = proxyServer + '/login';
+                    // }
+                } else {
+                    // showNotification(Date.now(), GM_info.script.name, '已突破黑洞，开始加载视频', '//bangumi.bilibili.com/favicon.ico', 2e3);
                 }
-            } : {
-                code: -404,
-                message: '不存在该剧集'
-            };
-            return returnVal;
-        }
-    },
-    _playurl: {
-        transUrl: function (url) {
-            return biliplusHost + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
-        },
-        processSuccess: function (data) {
-            if (data.code === -403) {
-                // window.alert('当前使用的服务器(' + biliplusHost + ')依然有区域限制');
-                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，我们未能穿透敌人的盔甲\n当前代理服务器（' + biliplusHost + '）依然有区域限制Σ( ￣□￣||)', '//bangumi.bilibili.com/favicon.ico', 3e3);
-            } else if (data.code) {
-                console.error(data);
-                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n' + JSON.stringify(data), '//bangumi.bilibili.com/favicon.ico', 3e3);
-            } else if (isAreaLimitForPlayUrl(data)) {
-                console.error('>>aera limit');
-                showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，需要登录\n点此进行登录', '//bangumi.bilibili.com/favicon.ico', 3e3, showLogin);
-                // if (window.confirm('试图获取视频地址失败, 请登录biliplus' +
-                //         '\n注意: 只支持"使用bilibili账户密码进行登录"'
-                //     )) {
-                //     window.top.location = biliplusHost + '/login';
-                // }
-            } else {
-                // showNotification(Date.now(), GM_info.script.name, '已突破黑洞，开始加载视频', '//bangumi.bilibili.com/favicon.ico', 2e3);
+                return data;
             }
-            return data;
-        }
-    }
-};
+        })
+    };
+})();
 
 if (!window.jQuery) { // 若还未加载jQuery, 则监听
     var jQuery;
@@ -163,19 +125,15 @@ documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         checkLoginState();
         checkHtml5();
-    } else if(location.href.includes('www.bilibili.com/video/av')) {
+    } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
         tryBangumiRedirect();
     }
 });
 
 // 暴露接口
 window.bangumi_aera_limit_hack = {
-    setCookie: function (key, value, options) {
-        return setCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key, value, options);
-    },
-    getCookie: function (key) {
-        return getCookie(key === 'bangumi_aera_limit_hack_server' ? 'balh_server' : key);
-    },
+    setCookie: setCookie,
+    getCookie: getCookie,
     login: showLogin,
     _clear_local_value: function () {
         delete localStorage.balh_notFirst;
@@ -234,13 +192,13 @@ function replaceAjax() {
         var oriSuccess = param.success;
         var one_api;
         if (param.url.match('/web_api/get_source')) {
-            one_api = api._get_source;
+            one_api = bilibiliApis._get_source;
             if (mode === MODE_REDIRECT || (mode === MODE_DEFAULT && isAreaLimitSeason())) { // 对应redirect模式
-                param.url = one_api.transUrl(param.url);
+                param.url = one_api.transToProxyUrl(param.url);
                 param.type = 'GET';
                 delete param.data;
                 param.success = function (data) {
-                    var returnVal = one_api.processSuccess(data);
+                    var returnVal = one_api.processProxySuccess(data);
                     log('Redirected request: get_source', returnVal);
                     oriSuccess(returnVal);
                 };
@@ -248,8 +206,8 @@ function replaceAjax() {
                 param.success = function (json) {
                     log(json);
                     if (json.code === -40301 // 区域限制
-                        || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用biliplus的接口
-                        api.asyncAjax(one_api, param.url, oriSuccess, function (e) {
+                        || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用代理服务器的接口
+                        one_api.asyncAjaxByProxy(param.url, oriSuccess, function (e) {
                             oriSuccess(json); // 新的请求报错, 也应该返回原来的数据
                         });
                         mode === MODE_DEFAULT && setAreaLimitSeason(true); // 只要默认模式才要跟踪是否有区域限制
@@ -263,11 +221,11 @@ function replaceAjax() {
                 };
             }
         } else if (param.url.match('/player/web_api/playurl')) {
-            one_api = api._playurl;
+            one_api = bilibiliApis._playurl;
             if (mode === MODE_REDIRECT || (mode === MODE_DEFAULT && isAreaLimitSeason())) {
-                param.url = one_api.transUrl(param.url);
+                param.url = one_api.transToProxyUrl(param.url);
                 param.success = function (data) {
-                    oriSuccess(one_api.processSuccess(data));
+                    oriSuccess(one_api.processProxySuccess(data));
                 };
                 log('Redirected request: bangumi playurl -> ', param.url);
             } else {
@@ -275,7 +233,7 @@ function replaceAjax() {
                     // 获取视频地址 API
                     log(json);
                     if (isBlockedVip || isAreaLimitForPlayUrl(json)) {
-                        api.asyncAjax(one_api, param.url, oriSuccess, function (e) {
+                        one_api.asyncAjaxByProxy(param.url, oriSuccess, function (e) {
                             oriSuccess(json);
                         });
                         mode === MODE_DEFAULT && setAreaLimitSeason(true);
@@ -361,7 +319,7 @@ function showLogin() {
         document.head.appendChild(style).innerHTML = '@keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}}@keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}}.GMBiliPlusCloseBox{position:absolute;top:5%;right:8%;font-size:40px;color:#FFF}';
     }
 
-    var loginUrl = biliplusHost + '/login',
+    var loginUrl = proxyServer + '/login',
         iframeSrc = 'https://passport.bilibili.com/login?appkey=27eb53fc9058f8c3&api=' + encodeURIComponent(loginUrl) + '&sign=' + hex_md5('api=' + loginUrl + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
 
     var div = document.createElement('div');
@@ -424,7 +382,7 @@ function checkLoginState() {
 
     function checkExpiretime(loadCallback) {
         var script = document.createElement('script');
-        script.src = biliplusHost + '/login?act=expiretime';
+        script.src = proxyServer + '/login?act=expiretime';
         loadCallback && script.addEventListener('load', loadCallback);
         document.head.appendChild(script);
     }
@@ -615,37 +573,57 @@ function showNotification() {
 }
 
 function tryBangumiRedirect() {
-    const one_api = api._get_view;
-    const originUrl = location.pathname;
-    api.asyncAjax(one_api, originUrl, function(result) {
-        if (result === null) {
-            console.error('Bangumi redirect failed.'); //No bangumi in api response
-        } else {
-            bangumiRedirect(result.season_id, result.ep_index);
-        }
-    }, console.error);
+    var msgBox;
+    if (!(msgBox = document.querySelector('.b-page-body > .z-msg > .z-msg-box'))) {
+        return;
+    }
+    var msg = document.createElement('a');
+    msgBox.insertBefore(msg, msgBox.firstChild);
+    msg.innerText = '获取番剧页Url中...';
+
+    var season_id, ep_index, av_id = location.pathname.replace(/.*av(\d+).*/, '$1');
+    ajaxPromise(proxyServer + '/api/view?id=' + av_id)
+        .then(function (data) {
+            if (!data.bangumi) {
+                return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
+            }
+            var int = parseInt,
+                old_ep_id = location.pathname.replace(/.*av\d+.(?:index_(\d+).*)?/, '$1');
+            ep_index = (int(old_ep_id) - 1) ||
+                (int(data.season_index) - 1) ||
+                (int(data.description.replace(/\D(\d+)/, '$1')) - 1);
+            ep_index = (isNaN(ep_index) || ep_index < 1) ? 0 : ep_index;
+            season_id = data.bangumi.season_id;
+            return ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id);
+        })
+        .then(function (result) {
+            if (result.code !== 0) {
+                return Promise.reject(result);
+            }
+            var episode_id = result.result.episodes.reverse()[ep_index].episode_id;
+            var bangumi_url = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
+            log('Redirect av:', av_id, '==>', bangumi_url);
+            msg.innerText = '即将跳转到：' + bangumi_url;
+            location.href = bangumi_url;
+        })
+        .catch(function (e) {
+            log('error:', arguments);
+            msg.innerText = 'error:' + e;
+        });
 }
 
-function bangumiRedirect(season_id, ep_index) {
-    $.ajax({
-        url: biliplusHost + '/api/bangumi?season=' + season_id,
-        async: true,
-        xhrFields: {withCredentials: true},
-        success: function (result) {
-            log('==>', result);
-            if (result.code !== 0) {
-                log('error', result);
-                return;
-            }
-            result = result.result;
+function ajaxPromise(options) {
+    return new Promise(function (resolve, reject) {
+        typeof options !== 'object' && (options = {url: options});
 
-            const episode_ids = result.episodes.map(ep => ep.episode_id);
-            episode_ids.reverse();
-            const episode_id = episode_ids[ep_index];
-            location.href = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
-        },
-        error: function (e) {
-            log('error', arguments, this);
-        }
-    });
+        options.async === undefined && (options.async = true);
+        options.xhrFields === undefined && (options.xhrFields = {withCredentials: true});
+        options.success = function (data) {
+            resolve(data);
+        };
+        options.error = function (err) {
+            reject(err);
+        };
+        $.ajax(options);
+    })
 }
