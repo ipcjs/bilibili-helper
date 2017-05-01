@@ -80,7 +80,7 @@ key为`'balh_server'`，可选的`value`为：
     - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
     - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
 5. 自动跳转到番剧页测试
-    - 舊番、av_id共用、不分P：https://www.bilibili.com/video/av4044639/ → https://bangumi.bilibili.com/anime/3398/play#84776
-    - 舊番、av_id共用、分P：https://www.bilibili.com/video/av2182637/index_3.html → https://bangumi.bilibili.com/anime/4300/play#88679
-    - 舊番、av_id獨立：https://www.bilibili.com/video/av2229121/ → https://bangumi.bilibili.com/anime/1559/play#29944
-    - 連載中：https://www.bilibili.com/video/av9910182/ → https://bangumi.bilibili.com/anime/6001/play#103883
+    - 舊番、av_id共用、不分P: https://www.bilibili.com/video/av4044639/ → https://bangumi.bilibili.com/anime/3398/play#84776
+    - 舊番、av_id共用、分P: https://www.bilibili.com/video/av2182637/index_3.html → https://bangumi.bilibili.com/anime/4300/play#88679
+    - 舊番、av_id獨立: https://www.bilibili.com/video/av2229121/ → https://bangumi.bilibili.com/anime/1559/play#29944
+    - 連載中: https://www.bilibili.com/video/av9910182/ → https://bangumi.bilibili.com/anime/6001/play#103883
