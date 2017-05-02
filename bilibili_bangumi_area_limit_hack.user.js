@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.2.0
+// @version      5.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -588,12 +588,6 @@ function tryBangumiRedirect() {
             if (!data.bangumi) {
                 return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
             }
-            var int = parseInt,
-                old_ep_id = location.pathname.replace(/.*av\d+.(?:index_(\d+).*)?/, '$1');
-            ep_index = (int(old_ep_id) - 1) ||
-                (int(data.season_index) - 1) ||
-                (int(data.description.replace(/\D(\d+)/, '$1')) - 1);
-            ep_index = (isNaN(ep_index) || ep_index < 1) ? 0 : ep_index;
             season_id = data.bangumi.season_id;
             return ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id);
         })
@@ -601,7 +595,21 @@ function tryBangumiRedirect() {
             if (result.code !== 0) {
                 return Promise.reject(result);
             }
-            var episode_id = result.result.episodes.reverse()[ep_index].episode_id;
+            var episodes = result.result.episodes.filter(x => x.av_id === av_id);
+            // if av_id unique, need not ep_index
+            if (episodes.length > 1) {
+                var int = parseInt,
+                    old_ep_id = location.pathname.replace(/.*av\d+.(?:index_(\d+).*)?/, '$1');
+                ep_index = int(old_ep_id) || int(result.result.season_index);
+                ep_index = (isNaN(ep_index) || ep_index < 1) ? 1 : ep_index;
+
+                episodes = episodes.filter(x => int(x.index) === ep_index);
+            }
+            if(episodes.length !== 1) {
+                log('ep_ids ===>', episodes);
+                return Promise.reject('该AV号不属于任何番剧页');
+            }
+            var episode_id = episodes[0].episode_id;
             var bangumi_url = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
             log('Redirect av:', av_id, '==>', bangumi_url);
             msg.innerText = '即将跳转到：' + bangumi_url;
