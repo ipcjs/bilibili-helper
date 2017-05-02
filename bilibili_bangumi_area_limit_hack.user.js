@@ -611,6 +611,7 @@ function tryBangumiRedirect() {
             var ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
                 episodes = result.result.episodes,
                 ep;
+            // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127                
             for (var i = 0; i < episodes.length; i++) {
                 ep = episodes[i];
                 if (ep.danmaku == cid) {
