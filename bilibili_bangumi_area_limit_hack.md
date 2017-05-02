@@ -73,7 +73,7 @@ key为`'balh_server'`，可选的`value`为：
 
 1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
 2. 代码贡献者：[@esterTion](https://github.com/esterTion)、[@FlandreDaisuki](https://github.com/FlandreDaisuki)、[@ipcjs](https://github.com/ipcjs)
-3. 部分源码取自：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
+3. 部分源码取自：通知相关：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)、自动跳转相关：[我就是要跳轉(B站番劇投稿頁跳轉去番劇頁)](https://greasyfork.org/zh-CN/scripts/29151)
 4. 解除区域限制测试：
     - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
     - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
@@ -84,3 +84,4 @@ key为`'balh_server'`，可选的`value`为：
     - 舊番、av_id共用、分P：[/av2182637/index_3.html](https://www.bilibili.com/video/av2182637/index_3.html) → [/4300/play#88679](https://bangumi.bilibili.com/anime/4300/play#88679)
     - 舊番、av_id獨立：[/av2229121/](https://www.bilibili.com/video/av2229121/) → [/1559/play#29944](https://bangumi.bilibili.com/anime/1559/play#29944)
     - 連載中：[/av9910182/](https://www.bilibili.com/video/av9910182/) → [/6001/play#103883](https://bangumi.bilibili.com/anime/6001/play#103883)
+    - 连载中、av_id独立：[/av10181128/](http://www.bilibili.com/video/av10181128/) → [/6078/play#105028](http://bangumi.bilibili.com/anime/6078/play#105028)

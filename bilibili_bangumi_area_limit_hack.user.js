@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.2.0
+// @version      5.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -582,30 +582,56 @@ function tryBangumiRedirect() {
     msgBox.insertBefore(msg, msgBox.firstChild);
     msg.innerText = '获取番剧页Url中...';
 
-    var season_id, ep_index, av_id = location.pathname.replace(/.*av(\d+).*/, '$1');
-    ajaxPromise(proxyServer + '/api/view?id=' + av_id)
+    var aid = location.pathname.replace(/.*av(\d+).*/, '$1'),
+        page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1],
+        cid,
+        season_id,
+        episode_id;
+    ajaxPromise(proxyServer + '/api/view?id=' + aid + '&update=true')
         .then(function (data) {
+            if (data.code) {
+                return Promise.reject(JSON.stringify(data));
+            }
             if (!data.bangumi) {
                 return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
             }
-            var int = parseInt,
-                old_ep_id = location.pathname.replace(/.*av\d+.(?:index_(\d+).*)?/, '$1');
-            ep_index = (int(old_ep_id) - 1) ||
-                (int(data.season_index) - 1) ||
-                (int(data.description.replace(/\D(\d+)/, '$1')) - 1);
-            ep_index = (isNaN(ep_index) || ep_index < 1) ? 0 : ep_index;
             season_id = data.bangumi.season_id;
+            for (var i = 0; i < data.list.length; i++) {
+                if (data.list[i].page == page) {
+                    cid = data.list[i].cid;
+                    break;
+                }
+            }
             return ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id);
         })
         .then(function (result) {
-            if (result.code !== 0) {
-                return Promise.reject(result);
+            if (result.code) {
+                return Promise.reject(JSON.stringify(result));
             }
-            var episode_id = result.result.episodes.reverse()[ep_index].episode_id;
-            var bangumi_url = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
-            log('Redirect av:', av_id, '==>', bangumi_url);
-            msg.innerText = '即将跳转到：' + bangumi_url;
-            location.href = bangumi_url;
+            var ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
+                episodes = result.result.episodes,
+                ep;
+            for (var i = 0; i < episodes.length; i++) {
+                ep = episodes[i];
+                if (ep.danmaku == cid) {
+                    ep_id_by_cid = ep.episode_id;
+                }
+                if (ep.av_id == aid && ep.page == page) {
+                    ep_id_by_aid_page = ep.episode_id;
+                }
+                if (ep.av_id == aid) {
+                    ep_id_by_aid = ep.episode_id;
+                }
+            }
+            episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
+            if (episode_id) {
+                var bangumi_url = '//bangumi.bilibili.com/anime/' + season_id + '/play#' + episode_id;
+                log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, '(ep_id:', ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid, ')');
+                msg.innerText = '即将跳转到：' + bangumi_url;
+                location.href = bangumi_url;
+            } else {
+                return Promise.reject('查询episode_id失败');
+            }
         })
         .catch(function (e) {
             log('error:', arguments);
