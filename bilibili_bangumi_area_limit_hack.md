@@ -1,16 +1,6 @@
-## 更新日志
-
-有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
-
-1. 5.2.0：默认代理服务器支持HTTPS
-1. 5.1.0：由[@FlandreDaisuki](https://github.com/FlandreDaisuki)增加从AVxxx自动跳转到番剧页的功能
-1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
-1. 5.0.3：紧急更新，修正一个逸单位的换算错误！
-1. 5.0.2：检测到区域限制番剧时显示通知提示；
-1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#代理模式)；
-2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
-
 ## 问&答
+
+### 注意！该脚本只支持HTML5播放器！！
 
 ### 如何安装脚本？
 
@@ -27,10 +17,10 @@
 
 ### 安装脚本后无效？
 
-0. 确定你使用的播放器是HTML5版的。Flash版请在播放器界面的右上角切换成HTML5版。
-1. 确定你打开的页面的域名是`bangumi.bilibili.com`开头的，当前该脚本只在这个域名下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com`域名下的。  
+0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
+1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`开头的，当前该脚本只在这个域名下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com/anime`开头的。  
 2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
-3. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
+4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
 
 ### 看不了1080P画质？
 
@@ -68,6 +58,18 @@ key为`'balh_server'`，可选的`value`为：
 1. 在控制台执行命令：`bangumi_area_limit_hack.setCookie('balh_blocked_vip', 'true');`
 2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
+
+## 更新日志
+
+有BUG请积极[反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
+
+1. 5.2.0：默认代理服务器支持HTTPS
+1. 5.1.0：由[@FlandreDaisuki](https://github.com/FlandreDaisuki)增加从AVxxx自动跳转到番剧页的功能
+1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
+1. 5.0.3：紧急更新，修正一个逸单位的换算错误！
+1. 5.0.2：检测到区域限制番剧时显示通知提示；
+1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#代理模式)；
+2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
 
 ## 源码&测试页
 
