@@ -1,4 +1,4 @@
-<p align="center">注意，该脚本<b><font color="red">只支持HTML5版</font></b>播放器，在播放器右上角可以切换成HTML5版。</p>
+<font size=5>注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。</font>
 
 ## 问&答
 
