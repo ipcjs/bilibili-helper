@@ -59,6 +59,13 @@ key为`'balh_server'`，可选的`value`为：
 2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
+### 登录/登出
+
+在控制台执行:
+
+1. `bangumi_area_limit_hack.login()`，弹出登录窗口
+2. `bangumi_area_limit_hack.logout()`，弹出登出窗口
+
 ## 更新日志
 
 1. 5.2.0：默认代理服务器支持HTTPS
