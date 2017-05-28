@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.2.3
+// @version      5.3.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -135,6 +135,7 @@ window.bangumi_area_limit_hack = {
     setCookie: setCookie,
     getCookie: getCookie,
     login: showLogin,
+    logout: showLogout,
     _clear_local_value: function () {
         delete localStorage.balh_notFirst;
         delete localStorage.balh_login;
@@ -314,14 +315,22 @@ function setCookie(key, value, options) {
 }
 
 function showLogin() {
+    var loginUrl = proxyServer + '/login',
+        iframeSrc = 'https://passport.bilibili.com/login?appkey=27eb53fc9058f8c3&api=' + encodeURIComponent(loginUrl) + '&sign=' + hex_md5('api=' + loginUrl + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
+    showPopWindow(iframeSrc);
+    delete localStorage.balh_login;
+}
+
+function showLogout() {
+    showPopWindow(proxyServer + '/login?act=logout');
+}
+
+function showPopWindow(iframeSrc) {
     if (!document.getElementById('balh-style-login')) {
         var style = document.createElement('style');
         style.id = 'balh-style-login';
         document.head.appendChild(style).innerHTML = '@keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}}@keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}}.GMBiliPlusCloseBox{position:absolute;top:5%;right:8%;font-size:40px;color:#FFF}';
     }
-
-    var loginUrl = proxyServer + '/login',
-        iframeSrc = 'https://passport.bilibili.com/login?appkey=27eb53fc9058f8c3&api=' + encodeURIComponent(loginUrl) + '&sign=' + hex_md5('api=' + loginUrl + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
 
     var div = document.createElement('div');
     div.id = 'GMBiliPlusLoginContainer';
@@ -339,7 +348,6 @@ function showLogin() {
         }
     });
     document.body.appendChild(div);
-    delete localStorage.balh_login;
 }
 
 // 逻辑有点乱, 当前在如下情况才会弹一次登录提示框:
