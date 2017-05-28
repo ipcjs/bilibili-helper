@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Boism Style
 // @namespace    https://github.com/ipcjs
-// @version      0.1
+// @version      0.0.1
 // @description  目前黑白两条Bar太丑的, 实在看不下去
 // @author       ipcjs
 // @match        https://boism.org/*
@@ -17,7 +17,7 @@ let css = `
 }
 
 #header {
-    background: none;
+    background: none!important;
 }`;
 
 GM_addStyle(css);
