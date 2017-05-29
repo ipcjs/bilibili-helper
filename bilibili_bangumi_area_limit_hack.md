@@ -1,6 +1,9 @@
 注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
-推广→_→：[B站弹幕实时刷新](https://greasyfork.org/zh-CN/scripts/30094)
+推广→_→：
+
+> **[自动刷新B站弹幕](https://greasyfork.org/zh-CN/scripts/30094)**  
+> 再也不用为了养肥弹幕等半个小时了，直接开始看吧(°∀°)ﾉ
 
 ## 问&答
 
