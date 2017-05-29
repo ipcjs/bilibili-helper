@@ -122,7 +122,8 @@ AutoRefreshDanmaku.prototype = {
                         log('当前弹幕数量: %s/%s, delay: %s', dTags.length, maxlimit, delay);
                     } else {
                         for (var i = that.size; i < dTags.length; i++) {
-                            that.send(dTags[i].getAttribute('p'), dTags[i].textContent.replace(/(\/n|\\n|\n|\r\n)/g, "\r"));
+                            // 貌似需要第九个参数不重复...
+                            that.send(dTags[i].getAttribute('p') + ',' + i, dTags[i].textContent.replace(/(\/n|\\n|\n|\r\n)/g, "\r"));
                         }
                         log('新增了%s条弹幕, delay: %s', dTags.length - that.size, delay);
                     }
