@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         B站弹幕实时刷新(伪)
+// @name         B站弹幕实时刷新
 // @namespace    https://github.com/ipcjs
-// @version      0.1.0
+// @version      0.1.1
 // @description  B站的弹幕居然不能实时刷新, 只能用脚本来自动刷新了(-_-#); 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次;
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
