@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         自动刷新B站弹幕
 // @namespace    https://github.com/ipcjs
-// @version      0.0.2
+// @version      0.0.3
 // @description  B站的弹幕居然不能实时刷新, 只能用脚本来手动刷新了(-_-#); 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次; 初版(也可能是最终版_(:3」∠)_), 可能有未知BUG;
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
@@ -117,13 +117,16 @@ AutoRefreshDanmaku.prototype = {
                 var maxlimit = maxlimitTags.length > 0 && +maxlimitTags[0].textContent || 999999;
                 var dTags = data.getElementsByTagName('d');
                 if (dTags.length < maxlimit) {
-                    var delay = (that.maxInterval - that.minInterval) * Math.pow(dTags.length / maxlimit, 3) + that.minInterval;
+                    var delay = (that.maxInterval - that.minInterval) * Math.pow(dTags.length / maxlimit, 3) + that.minInterval,
+                        infos;
                     if (that.size < 0) {
                         log('当前弹幕数量: %s/%s, delay: %s', dTags.length, maxlimit, delay);
                     } else {
                         for (var i = that.size; i < dTags.length; i++) {
-                            // 貌似需要第九个参数不重复...
-                            that.send(dTags[i].getAttribute('p') + ',' + i, dTags[i].textContent.replace(/(\/n|\\n|\n|\r\n)/g, "\r"));
+                            // 这里的数据与xml中的数据相比, 在index=5上多个一个参数si, 这里把它设成'0'
+                            infos = dTags[i].getAttribute('p').split(',');
+                            infos.splice(5, 0, '0'); // 插入si
+                            that.send(infos.join(','), dTags[i].textContent.replace(/(\/n|\\n|\n|\r\n)/g, "\r"));
                         }
                         log('新增了%s条弹幕, delay: %s', dTags.length - that.size, delay);
                     }
