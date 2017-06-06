@@ -1,12 +1,10 @@
 // ==UserScript==
 // @name         自动刷新B站弹幕
 // @namespace    https://github.com/ipcjs
-// @version      0.1.2
-// @description  B站的弹幕居然不能实时更新, 只能用脚本来自动刷新了(-_-#); 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次;
+// @version      0.1.3
+// @description  更新: B站已经开始通过WebSocket实时推送弹幕了, 但推的并不全, 会漏掉一些..., 所以这个脚本还是有点用的(-_-#); OLD: B站的弹幕居然不能实时更新, 只能用脚本来自动刷新了(-_-#); 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次;
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
-// @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @run-at       document-start
 // @grant        none
