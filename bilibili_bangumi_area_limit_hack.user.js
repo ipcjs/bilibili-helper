@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.3.0
+// @version      5.3.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -51,32 +51,10 @@ var bilibiliApis = (function () {
     return {
         _get_source: new BilibiliApi({
             transToProxyUrl: function (url) {
-                return proxyServer + '/api/bangumi?season=' + window.season_id;
+                return proxyServer + '/api/ep?ep=' + window.episode_id;
             },
             processProxySuccess: function (data) {
-                var found = null;
-                for (var i = 0; i < data.result.episodes.length; i++) {
-                    if (data.result.episodes[i].episode_id == window.episode_id) {
-                        found = data.result.episodes[i];
-                    }
-                }
-                var returnVal = found !== null ? {
-                    "code": 0,
-                    "message": "success",
-                    "result": {
-                        "aid": found.av_id,
-                        "cid": found.danmaku,
-                        "episode_status": isBlockedVip ? 2 : found.episode_status,
-                        "payment": {"price": "9876547210.33"},
-                        "player": "vupload",
-                        "pre_ad": 0,
-                        "season_status": isBlockedVip ? 2 : data.result.season_status
-                    }
-                } : {
-                    code: -404,
-                    message: '不存在该剧集'
-                };
-                return returnVal;
+                return data;
             }
         }),
         _playurl: new BilibiliApi({
