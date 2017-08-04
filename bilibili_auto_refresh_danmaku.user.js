@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         自动刷新B站弹幕
 // @namespace    https://github.com/ipcjs
-// @version      0.1.4
-// @description  2017-05-29：B站的弹幕居然不能实时更新, 只能用脚本来自动刷新了; 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次; 2017-06-06：B站已经开始通过WebSocket实时推送弹幕了, 但推的并不全, 会漏掉一些..., 所以这个脚本还是有点用的(-_-#);
+// @version      0.1.5
+// @description  [目前已经停止更新, 因为B站现在会主动推弹幕了]2017-05-29：B站的弹幕居然不能实时更新, 只能用脚本来自动刷新了; 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次; 2017-06-06：B站已经开始通过WebSocket实时推送弹幕了, 但推的并不全, 会漏掉一些..., 所以这个脚本还是有点用的(-_-#);
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
@@ -10,6 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
+return; // close
 'use strict';
 
 // https://github.com/wendux/Ajax-hook
