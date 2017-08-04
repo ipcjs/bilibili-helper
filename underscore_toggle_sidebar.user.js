@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Toggle Sidebar For underscorejs.org & liaoxuefeng
-// @namespace    http://tampermonkey.net/
-// @version      0.9
+// @namespace    https://tampermonkey.net/
+// @version      0.9.1
 // @description  RT.
 // @author       ipcjs
 // @include      http://underscorejs.org/
 // @include      http://learningcn.com/underscore/
 // @include      http://www.liaoxuefeng.com/wiki/*
+// @include      https://www.liaoxuefeng.com/wiki/*
 // @grant        none
 // @require      https://rawgit.com/jakiestfu/Snap.js/develop/snap.min.js
 // ==/UserScript==
