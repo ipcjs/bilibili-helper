@@ -84,7 +84,7 @@ function fetchDataFilter(resp, data) {
             );
         }
     } else if (url.startsWith(window.location.protocol + '//bangumi.bilibili.com/moe/2017/2/api/vote/my_current_vote')) {
-        if (data.result && !data.result.has_ticket) {
+        if (data.result && !data.result.has_ticket) { // 没有取票之前才改变has_voted, 否则取票后没法投票...
             data.result.has_voted = 1;
         }
     }
