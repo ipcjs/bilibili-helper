@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         B萌无需投票查看数据
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
+// @version      0.2.1
 // @description  不投票就可以查看数据; 适配2016, 2017B萌;
 // @author       ipcjs
 // @include      *://bangumi.bilibili.com/moe/*/schedule/*
@@ -84,7 +84,7 @@ function fetchDataFilter(resp, data) {
             );
         }
     } else if (url.startsWith(window.location.protocol + '//bangumi.bilibili.com/moe/2017/2/api/vote/my_current_vote')) {
-        if (data.result) {
+        if (data.result && !data.result.has_ticket) {
             data.result.has_voted = 1;
         }
     }
