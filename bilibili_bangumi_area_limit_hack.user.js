@@ -193,6 +193,7 @@ function replaceAjax() {
             param = arg1;
         }
         var oriSuccess = param.success;
+        var mySuccess;
         var one_api;
         if (param.url.match('/web_api/get_source')) {
             one_api = bilibiliApis._get_source;
@@ -246,9 +247,41 @@ function replaceAjax() {
                     }
                 }
             }
+        } else if (param.url.match('//interface.bilibili.com/player?')) {
+            if (isBlockedVip) {
+                mySuccess = function (data) {
+                    try {
+                        var xml = new window.DOMParser().parseFromString('<userstatus>' + data.replace(/\&/g, '&amp;') + '</userstatus>', 'text/xml');
+                        var vipTag = xml.querySelector('vip');
+                        var vip = JSON.parse(vipTag.innerHTML);
+                        vip.vipType = 2; // 类型, 年度大会员
+                        vip.vipStatus = 1; // 状态, 启用
+                        vipTag.innerHTML = JSON.stringify(vip);
+                        data = xml.documentElement.innerHTML;
+                    } catch (e) {
+                        log('parse xml error: ', e);
+                    }
+                    oriSuccess(data);
+                }
+            }
+        }
+
+        // 若外部使用param.success处理结果, 则替换param.success
+        if (oriSuccess && mySuccess) {
+            param.success = mySuccess;
         }
         // default
-        return originalAjax.apply(this, [param]);
+        var xhr = originalAjax.apply(this, [param]);
+
+        // 若外部使用xhr.done()处理结果, 则替换xhr.done()
+        if (!oriSuccess && mySuccess) {
+            xhr.done(mySuccess);
+            xhr.done = function (success) {
+                oriSuccess = success; // 保存外部设置的success函数
+                return xhr;
+            }
+        }
+        return xhr;
     }
 }
 
