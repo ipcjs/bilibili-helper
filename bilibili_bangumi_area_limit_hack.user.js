@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.3.5
+// @version      5.3.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -37,7 +37,7 @@ var bilibiliApis = (function () {
         $.ajax({
             url: one_api.transToProxyUrl(originUrl),
             async: true,
-            xhrFields: {withCredentials: true},
+            xhrFields: { withCredentials: true },
             success: function (result) {
                 log('==>', result);
                 success(one_api.processProxySuccess(result));
@@ -56,10 +56,14 @@ var bilibiliApis = (function () {
             },
             processProxySuccess: function (data) {
                 var found = null;
-                for (var i = 0; i < data.result.episodes.length; i++) {
-                    if (data.result.episodes[i].episode_id == window.episode_id) {
-                        found = data.result.episodes[i];
+                if (!data.code) {
+                    for (var i = 0; i < data.result.episodes.length; i++) {
+                        if (data.result.episodes[i].episode_id == window.episode_id) {
+                            found = data.result.episodes[i];
+                        }
                     }
+                } else {
+                    notify.showNotification(Date.now(), GM_info.script.name, '代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', '//bangumi.bilibili.com/favicon.ico', 3e3, window.location.reload.bind(window.location));
                 }
                 var returnVal = found !== null ? {
                     "code": 0,
@@ -68,15 +72,15 @@ var bilibiliApis = (function () {
                         "aid": found.av_id,
                         "cid": found.danmaku,
                         "episode_status": isBlockedVip ? 2 : found.episode_status,
-                        "payment": {"price": "9876547210.33"},
+                        "payment": { "price": "9876547210.33" },
                         "player": "vupload",
                         "pre_ad": 0,
                         "season_status": isBlockedVip ? 2 : data.result.season_status
                     }
                 } : {
-                    code: -404,
-                    message: '不存在该剧集'
-                };
+                        code: -404,
+                        message: '不存在该剧集'
+                    };
                 return returnVal;
             }
         }),
@@ -537,7 +541,7 @@ var notify = (function () {
         },
         'showNotification': function (id, title, body, icon, delay, onclick) {
             if (shownFeed(id)) return null;
-            var notify = new Notification(title, {'body': body, 'icon': icon, 'requireInteraction': !delay});
+            var notify = new Notification(title, { 'body': body, 'icon': icon, 'requireInteraction': !delay });
             if (delay && delay > 0) notify.addEventListener('show', function () {
                 setTimeout(function () {
                     hideNotification(notify);
@@ -566,7 +570,7 @@ var notify = (function () {
         return use.requestPermission.apply(this, arguments);
     };
     // 显示消息
-    var showNotification = function (title, body, icon, delay, onclick) {
+    var showNotification = function (id, title, body, icon, delay, onclick) {
         var notify = use.showNotification.apply(this, arguments);
         shown.push(notify);
         return notify;
@@ -684,10 +688,10 @@ function tryBangumiRedirect() {
 
 function ajaxPromise(options) {
     return new Promise(function (resolve, reject) {
-        typeof options !== 'object' && (options = {url: options});
+        typeof options !== 'object' && (options = { url: options });
 
         options.async === undefined && (options.async = true);
-        options.xhrFields === undefined && (options.xhrFields = {withCredentials: true});
+        options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
         options.success = function (data) {
             resolve(data);
         };
