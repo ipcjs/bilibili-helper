@@ -744,7 +744,8 @@ function tryBangumiRedirect2() {
         })
         .catch(function (error) {
             log('season>catch', error)
-            msg.innerText = 'error:' + JSON.stringify(error);
+            msg.innerText = 'error:' + JSON.stringify(error) + '\n点击跳转到播放界面 (不一定能够正常播放...)';
+            msg.href = '//bangumi.bilibili.com/anime/' + season_id + '/play';
         });
 }
 
