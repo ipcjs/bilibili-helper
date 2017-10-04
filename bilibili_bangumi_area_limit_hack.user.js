@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.4.0
+// @version      5.4.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -733,8 +733,8 @@ function tryBangumiRedirect2() {
                 }
             }
             if (data.result) {
-                msg.innerText = data.result.title;
                 document.title = data.result.title;
+                msg.innerText = data.result.title + '\n简介:' + data.result.evaluate;
                 createArray(data.result.seasons, createSeason);
                 createArray(data.result.episodes, createEpisode);
                 error_container.querySelector('.error-panel').remove();
