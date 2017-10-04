@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.3.6
+// @version      5.4.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -130,6 +130,9 @@ documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         checkLoginState();
         checkHtml5();
+        if (window.location.pathname.match(/^\/anime\/\d+$/)) {
+            tryBangumiRedirect2();
+        }
     } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
         tryBangumiRedirect();
     }
@@ -683,6 +686,65 @@ function tryBangumiRedirect() {
         .catch(function (e) {
             log('error:', arguments);
             msg.innerText = 'error:' + e;
+        });
+}
+
+function tryBangumiRedirect2() {
+    var error_container, season_id;
+    if (!(error_container = document.querySelector('div.error-container'))) {
+        return;
+    }
+    if (!(season_id = window.location.pathname.match(/^\/anime\/(\d+)$/)[1])) {
+        return;
+    }
+    var msg = document.createElement('a'),
+        content = document.createElement('div');
+    msg.innerText = '尝试获取视频列表中...'
+
+    error_container.insertBefore(content, error_container.firstChild);
+    content.appendChild(msg);
+    log('season>:', season_id);
+    ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id)
+        .then(function (data) {
+            log('season>then:', data);
+            if (data.code) {
+                return Promise.reject(data);
+            }
+            function createSeason(season) {
+                var a = document.createElement('a');
+                a.innerText = season.title;
+                a.href = '//bangumi.bilibili.com/anime/' + season.season_id;
+                a.target = '_blank';
+                var ele = document.createElement('div');
+                ele.appendChild(a);
+                return ele;
+            }
+
+            function createEpisode(episode) {
+                var ele = document.createElement('div');
+                ele.innerHTML = '<a href="' + '//bangumi.bilibili.com/anime/' + season_id + '/play/#' + episode.episode_id + '" target="_blank"><img src="' + episode.cover + '" width="200">' + episode.index_title + '</a>';
+                return ele;
+            }
+
+            function createArray(arr, creator) {
+                if (!arr || !creator) return;
+                for (var i = 0; i < arr.length; i++) {
+                    content.appendChild(creator(arr[i]));
+                }
+            }
+            if (data.result) {
+                msg.innerText = data.result.title;
+                document.title = data.result.title;
+                createArray(data.result.seasons, createSeason);
+                createArray(data.result.episodes, createEpisode);
+                error_container.querySelector('.error-panel').remove();
+                error_container.querySelector('.error-split').remove();
+                error_container.querySelector('.error-manga').remove();
+            }
+        })
+        .catch(function (error) {
+            log('season>catch', error)
+            msg.innerText = 'error:' + JSON.stringify(error);
         });
 }
 
