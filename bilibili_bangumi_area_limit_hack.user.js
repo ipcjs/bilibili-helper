@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.4.3
+// @version      5.4.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -89,12 +89,13 @@ var bilibiliApis = (function () {
                 return proxyServer + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
             },
             processProxySuccess: function (data) {
-                if (data.code === -403) {
+                // data有可能为null
+                if (data && data.code === -403) {
                     // window.alert('当前使用的服务器(' + proxyServer + ')依然有区域限制');
                     showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，我们未能穿透敌人的盔甲\n当前代理服务器（' + proxyServer + '）依然有区域限制Σ( ￣□￣||)', '//bangumi.bilibili.com/favicon.ico', 3e3);
-                } else if (data.code) {
+                } else if (data === null || data.code) {
                     console.error(data);
-                    showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n' + JSON.stringify(data), '//bangumi.bilibili.com/favicon.ico', 3e3);
+                    showNotification(Date.now(), GM_info.script.name, '突破黑洞失败\n' + JSON.stringify(data) + '\n点击刷新界面', '//bangumi.bilibili.com/favicon.ico', 3e3, window.location.reload.bind(window.location));
                 } else if (isAreaLimitForPlayUrl(data)) {
                     console.error('>>area limit');
                     showNotification(Date.now(), GM_info.script.name, '突破黑洞失败，需要登录\n点此进行登录', '//bangumi.bilibili.com/favicon.ico', 3e3, showLogin);
@@ -518,7 +519,10 @@ var notify = (function () {
                     hideNotification(notify);
                 }, delay);
             });
-            if (onclick) notify.addEventListener('click', onclick);
+            if (onclick) notify.addEventListener('click', function () {
+                onclick.apply(this, arguments);
+                hideNotification(notify);
+            });
             notify.show();
             return notify;
         },
@@ -550,7 +554,10 @@ var notify = (function () {
                     hideNotification(notify);
                 }, delay);
             });
-            if (onclick) notify.addEventListener('click', onclick);
+            if (onclick) notify.addEventListener('click', function () {
+                onclick.apply(this, arguments);
+                hideNotification(notify);
+            });
             return notify;
         },
     };
@@ -700,7 +707,7 @@ function tryBangumiRedirect2() {
     var msg = document.createElement('a'),
         content = document.createElement('div');
     msg.innerText = '尝试获取视频列表中...'
-    msg.href = '//bangumi.bilibili.com/anime/' + season_id + '/play';    
+    msg.href = '//bangumi.bilibili.com/anime/' + season_id + '/play';
 
     error_container.insertBefore(content, error_container.firstChild);
     content.appendChild(msg);
