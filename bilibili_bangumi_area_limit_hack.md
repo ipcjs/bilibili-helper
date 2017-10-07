@@ -1,12 +1,5 @@
 注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
-[自动刷新B站弹幕](https://greasyfork.org/zh-CN/scripts/30094)
-
-- 2017-05-29：B站的弹幕居然不能实时更新, 只能用脚本来自动刷新了(-_-#); 目前的策略是如果弹幕池没满, 就隔5-50秒刷新一次;
-- 2017-06-06：B站已经开始通过WebSocket实时推送弹幕了, 但推的并不全, 会漏掉一些..., 所以这个脚本还是有点用的(-_-#);
-- 2017-08-05：关闭。B站现在会主动推弹幕了，并且数据改成bit了，解析太麻烦_(:3」∠)_
-
-
 ## 问&答
 
 ### 如何安装脚本？
@@ -26,8 +19,9 @@
 
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
 1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`开头的，当前该脚本只在这个URL下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com/anime`开头的。  
+3. 确定[代理服务器](http://biliplus.ipcjsdev.tk)可以正常访问。如果访问不了，[通知我一下](mailto:gipcjs@gmail.com)，我来手动重启下 (-_-#)
 2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
-    - 如果脚本弹的提示窗中包含`点击刷新界面`，大部分情况下就是服务器抽风的原因，点击弹窗，刷新界面就行了
+    - 如果脚本弹的提示窗文字中包含`点击刷新界面`，大部分情况下就是服务器抽风的原因，点击弹窗，刷新界面就行了
 4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
 
 ### 看不了1080P画质？
@@ -52,6 +46,7 @@
 3. `'redirect'`：重定向模式, 重定向所有番剧视频的接口到代理服务器; 
     - 进行一次请求, 若代理服务器不稳定, 普通番剧也可能加载不出视频; (代理服务器足够快时, 推荐该模式)
     - [付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额会显示`9876547210.33`：因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
+        - [有人反馈有些番剧付费后依然看不了](https://greasyfork.org/zh-CN/forum/discussion/29953/x)，所以付费前请谨慎
 
 ### 自定义代理服务器
 
@@ -76,6 +71,7 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 更新日志
 
+1. 5.4.0: 支持新的返回403的番剧页
 1. 5.2.0：默认代理服务器支持HTTPS
 1. 5.1.0：由[@FlandreDaisuki](https://github.com/FlandreDaisuki)增加从AVxxx自动跳转到番剧页的功能
 1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
