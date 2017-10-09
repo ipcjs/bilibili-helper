@@ -22,7 +22,7 @@
 3. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，说明服务器挂了，[通知我一下](mailto:gipcjs@gmail.com)，我来手动重启下 (-_-#)
 2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
     - 如果脚本弹的提示窗文字中包含`点击刷新界面`，大部分情况下就是服务器抽风的原因，点击弹窗，刷新界面就行了
-4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)
+4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://leeon.gitbooks.io/devtools/content/learn_basic/using_console.html)截图。
 
 ### 看不了1080P画质？
 
