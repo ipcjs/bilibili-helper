@@ -22,7 +22,7 @@
 3. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，说明服务器挂了，[通知我一下](mailto:gipcjs@gmail.com)，我来手动重启下 (-_-#)
 2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
     - 如果脚本弹的提示窗文字中包含`点击刷新界面`，大部分情况下就是服务器抽风的原因，点击弹窗，刷新界面就行了
-4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://leeon.gitbooks.io/devtools/content/learn_basic/using_console.html)截图。
+4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)截图。
 
 ### 看不了1080P画质？
 
@@ -34,7 +34,7 @@
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907)或[BiliBili proxy setting helper](https://greasyfork.org/zh-TW/scripts/29378)可以帮助你进行一些选项的设置。
 
-或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，按`F12`进入`开发者工具`，在`控制台/Console`中执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
+或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
 ### 代理模式
 
@@ -79,6 +79,16 @@ key为`'balh_server'`，可选的`value`为：
 1. 5.0.2：检测到区域限制番剧时显示通知提示；
 1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#代理模式)；
 2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
+
+## 名词解析
+
+### 控制台
+
+控制台可以用于运行命令，查看log等。
+
+打开方式：Windows上，先按`F12`打开`开发者工具`，再切换到`控制台/Console`选项卡
+
+反馈问题时，最好附上控制台截图。特别的，Edge浏览器，不会保留控制台log，需要先打开控制台，再刷新网页，才能记录下log。
 
 ## 源码&测试页
 
