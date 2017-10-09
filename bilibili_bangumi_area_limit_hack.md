@@ -19,10 +19,14 @@
 
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
 1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`开头的，当前该脚本只在这个URL下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com/anime`开头的。  
-3. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，说明服务器挂了，[通知我一下](mailto:gipcjs@gmail.com)，我来手动重启下 (-_-#)
-2. 如果还是无效的话，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
-    - 如果脚本弹的提示窗文字中包含`点击刷新界面`，大部分情况下就是服务器抽风的原因，点击弹窗，刷新界面就行了
-4. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)截图。
+2. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
+3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
+    1. 提示`代理服务器错误:{"code":-502,"message":"网络错误"}`：代理服务器内部问题，点击弹窗，刷新界面就行了
+    1. 提示`突破黑洞失败 null`：同上
+    1. 提示`突破黑洞失败，需要登录`：点击弹窗，登录代理服务器就行了
+    1. 提示`突破黑洞失败，我们未能穿透敌人的盔甲...当前代理服务器（...）依然有区域限制`：换个代理服务器，或者尝试登录当前代理服务器
+4. 其他弹窗提示，或者没有任何提示，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
+5. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)截图。
 
 ### 看不了1080P画质？
 
