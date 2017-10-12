@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.4.4
+// @version      5.5.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://bangumi.bilibili.com/anime/*
+// @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @include      *://www.bilibili.com/blackboard/html5playerbeta.html*
 // @run-at       document-start
@@ -24,6 +25,9 @@ var settings = getCookies();
 var proxyServer = settings.balh_server || 'https://biliplus.ipcjsdev.tk'; // 优先从cookie中读取服务器地址
 var isBlockedVip = settings.balh_blocked_vip; // "我是一位被永久封号的大会员"(by Google翻译)
 var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); // 若账号是被永封的大会员, 默认使用重定向模式
+// movie页面使用window.aid, 保存当前页面av号
+// anime页面使用window.season_id, 保存当前页面season号
+var isMoviePage = window.location.href.indexOf('bangumi.bilibili.com/movie/') !== -1;
 
 log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', proxyServer, 'readyState:', document.readyState);
 
@@ -49,41 +53,75 @@ var bilibiliApis = (function () {
             }
         });
     };
-    return {
-        _get_source: new BilibiliApi({
-            transToProxyUrl: function (url) {
-                return proxyServer + '/api/bangumi?season=' + window.season_id;
-            },
-            processProxySuccess: function (data) {
-                var found = null;
-                if (!data.code) {
-                    for (var i = 0; i < data.result.episodes.length; i++) {
-                        if (data.result.episodes[i].episode_id == window.episode_id) {
-                            found = data.result.episodes[i];
+    var get_source_by_aid = new BilibiliApi({
+        transToProxyUrl: function (url) {
+            return proxyServer + '/api/view?id=' + window.aid + '&update=true';
+        },
+        processProxySuccess: function (data) {
+            if (data && data.list && data.list[0] && data.movie) {
+                return {
+                    code: 0,
+                    message: 'success',
+                    result: {
+                        cid: data.list[0].cid,
+                        formal_aid: data.aid,
+                        movie_status: isBlockedVip ? 2 : data.movie.movie_status, // 2, 大概是免费的意思?
+                        pay_begin_time: 1507708800,
+                        pay_timestamp: 0,
+                        pay_user_status: data.movie.pay_user.status, // 一般都是0
+                        player: data.list[0].type, // 一般为movie
+                        vid: data.list[0].vid,
+                        vip: { // 2+1, 表示年度大会员; 0+0, 表示普通会员
+                            vipType: isBlockedVip ? 2 : 0,
+                            vipStatus: isBlockedVip ? 1 : 0,
                         }
                     }
-                } else {
-                    notify.showNotification(Date.now(), GM_info.script.name, '代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', '//bangumi.bilibili.com/favicon.ico', 3e3, window.location.reload.bind(window.location));
-                }
-                var returnVal = found !== null ? {
-                    "code": 0,
-                    "message": "success",
-                    "result": {
-                        "aid": found.av_id,
-                        "cid": found.danmaku,
-                        "episode_status": isBlockedVip ? 2 : found.episode_status,
-                        "payment": { "price": "9876547210.33" },
-                        "player": "vupload",
-                        "pre_ad": 0,
-                        "season_status": isBlockedVip ? 2 : data.result.season_status
-                    }
-                } : {
-                        code: -404,
-                        message: '不存在该剧集'
-                    };
-                return returnVal;
+                };
+            } else {
+                return {
+                    code: -404,
+                    message: '不存在该剧集'
+                };
             }
-        }),
+        }
+    });
+    var get_source_by_season_id = new BilibiliApi({
+        transToProxyUrl: function (url) {
+            return proxyServer + '/api/bangumi?season=' + window.season_id;
+        },
+        processProxySuccess: function (data) {
+            var found = null;
+            if (!data.code) {
+                for (var i = 0; i < data.result.episodes.length; i++) {
+                    if (data.result.episodes[i].episode_id == window.episode_id) {
+                        found = data.result.episodes[i];
+                    }
+                }
+            } else {
+                notify.showNotification(Date.now(), GM_info.script.name, '代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', '//bangumi.bilibili.com/favicon.ico', 3e3, window.location.reload.bind(window.location));
+            }
+            var returnVal = found !== null ? {
+                "code": 0,
+                "message": "success",
+                "result": {
+                    "aid": found.av_id,
+                    "cid": found.danmaku,
+                    "episode_status": isBlockedVip ? 2 : found.episode_status,
+                    "payment": { "price": "9876547210.33" },
+                    "player": "vupload",
+                    "pre_ad": 0,
+                    "season_status": isBlockedVip ? 2 : data.result.season_status
+                }
+            } : {
+                code: -404,
+                message: '不存在该剧集'
+            };
+            return returnVal;
+        }
+    });
+
+    return {
+        _get_source: isMoviePage ? get_source_by_aid : get_source_by_season_id,
         _playurl: new BilibiliApi({
             transToProxyUrl: function (url) {
                 return proxyServer + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
@@ -132,7 +170,7 @@ documentReady(function () {
         checkLoginState();
         checkHtml5();
         if (window.location.pathname.match(/^\/anime\/\d+$/)) {
-            tryBangumiRedirect2();
+            tryFillSeasonList();
         }
     } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
         tryBangumiRedirect();
@@ -261,11 +299,13 @@ function replaceAjax() {
                     try {
                         var xml = new window.DOMParser().parseFromString('<userstatus>' + data.replace(/\&/g, '&amp;') + '</userstatus>', 'text/xml');
                         var vipTag = xml.querySelector('vip');
-                        var vip = JSON.parse(vipTag.innerHTML);
-                        vip.vipType = 2; // 类型, 年度大会员
-                        vip.vipStatus = 1; // 状态, 启用
-                        vipTag.innerHTML = JSON.stringify(vip);
-                        data = xml.documentElement.innerHTML;
+                        if (vipTag) {
+                            var vip = JSON.parse(vipTag.innerHTML);
+                            vip.vipType = 2; // 类型, 年度大会员
+                            vip.vipStatus = 1; // 状态, 启用
+                            vipTag.innerHTML = JSON.stringify(vip);
+                            data = xml.documentElement.innerHTML;
+                        }
                     } catch (e) {
                         log('parse xml error: ', e);
                     }
@@ -296,6 +336,7 @@ function replaceAjax() {
 function isAreaLimitSeason() {
     return getCookie('balh_season_' + getSeasonId());
 }
+
 function setAreaLimitSeason(limit) {
     var season_id = getSeasonId();
     setCookie('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
@@ -303,12 +344,18 @@ function setAreaLimitSeason(limit) {
 }
 
 function getSeasonId() {
-    try {
-        return window.season_id || window.top.season_id;
-    } catch (e) {
-        console.error(e);
-        return (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', '000'])[1];
+    var seasonId;
+    if (isMoviePage) { // 对于movie页面, 使用'm+数字', 表示seasonId
+        seasonId = 'm' + (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
+    } else {
+        try {
+            seasonId = window.season_id || window.top.season_id;
+        } catch (e) {
+            console.error(e);
+            seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+        }
     }
+    return seasonId || '000';
 }
 
 function isAreaLimitForPlayUrl(json) {
@@ -331,6 +378,7 @@ function getCookies() {
 function getCookie(key) {
     return getCookies()[key];
 }
+
 // document.cookie=`bangumi_area_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
 
 /**
@@ -696,7 +744,7 @@ function tryBangumiRedirect() {
         });
 }
 
-function tryBangumiRedirect2() {
+function tryFillSeasonList() {
     var error_container, season_id;
     if (!(error_container = document.querySelector('div.error-container'))) {
         return;
@@ -718,6 +766,7 @@ function tryBangumiRedirect2() {
             if (data.code) {
                 return Promise.reject(data);
             }
+
             function createSeason(season) {
                 var a = document.createElement('a');
                 a.innerText = season.title;
@@ -740,6 +789,7 @@ function tryBangumiRedirect2() {
                     content.appendChild(creator(arr[i]));
                 }
             }
+
             if (data.result) {
                 document.title = data.result.title;
                 msg.innerText = data.result.title + '\n简介:' + data.result.evaluate;
