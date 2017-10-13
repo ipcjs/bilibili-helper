@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.5.0
+// @version      5.5.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -113,9 +113,9 @@ var bilibiliApis = (function () {
                     "season_status": isBlockedVip ? 2 : data.result.season_status
                 }
             } : {
-                code: -404,
-                message: '不存在该剧集'
-            };
+                    code: -404,
+                    message: '不存在该剧集'
+                };
             return returnVal;
         }
     });
@@ -345,14 +345,22 @@ function setAreaLimitSeason(limit) {
 
 function getSeasonId() {
     var seasonId;
-    if (isMoviePage) { // 对于movie页面, 使用'm+数字', 表示seasonId
-        seasonId = 'm' + (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
-    } else {
-        try {
-            seasonId = window.season_id || window.top.season_id;
-        } catch (e) {
-            console.error(e);
-            seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+    // 取anime页面的seasonId
+    try {
+        // 若w, 是其frame的window, 则有可能没有权限, 而抛异常
+        seasonId = window.season_id || window.top.season_id;
+    } catch (e) {
+        console.error(e);
+    }
+    if (!seasonId) {
+        seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+    }
+
+    // 若没取到, 则取movie页面的seasonId, 以m开头
+    if (!seasonId) {
+        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1]
+        if (seasonId) {
+            seasonId = 'm' + seasonId;
         }
     }
     return seasonId || '000';
