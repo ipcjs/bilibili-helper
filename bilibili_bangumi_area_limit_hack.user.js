@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.5.1
+// @version      5.5.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -15,6 +15,7 @@
 // ==/UserScript==
 
 'use strict';
+function _(e, t, n) { var r = null; if ("text" === e) return document.createTextNode(t); r = document.createElement(e); for (var l in t) if ("style" === l) for (var a in t.style) r.style[a] = t.style[a]; else if ("className" === l) r.className = t[l]; else if ("event" === l) for (var a in t[l]) r.addEventListener(a, t[l][a]); else r.setAttribute(l, t[l]); if (n) for (var s = 0; s < n.length; s++)null != n[s] && r.appendChild(n[s]); return r; }
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
 var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
@@ -291,7 +292,7 @@ function replaceAjax() {
                         mode === MODE_DEFAULT && setAreaLimitSeason(false);
                         oriSuccess(json);
                     }
-                }
+                };
             }
         } else if (param.url.match('//interface.bilibili.com/player?')) {
             if (isBlockedVip) {
@@ -310,7 +311,7 @@ function replaceAjax() {
                         log('parse xml error: ', e);
                     }
                     oriSuccess(data);
-                }
+                };
             }
         }
 
@@ -327,10 +328,10 @@ function replaceAjax() {
             xhr.done = function (success) {
                 oriSuccess = success; // 保存外部设置的success函数
                 return xhr;
-            }
+            };
         }
         return xhr;
-    }
+    };
 }
 
 function isAreaLimitSeason() {
@@ -358,7 +359,7 @@ function getSeasonId() {
 
     // 若没取到, 则取movie页面的seasonId, 以m开头
     if (!seasonId) {
-        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1]
+        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
         if (seasonId) {
             seasonId = 'm' + seasonId;
         }
@@ -456,7 +457,7 @@ function checkLoginState() {
         //未登录主站，强制指定值
         localStorage.balh_notFirst = 1;
         localStorage.balh_login = 0;
-        localStorage.balh_mainLogin = 0
+        localStorage.balh_mainLogin = 0;
     } else if (localStorage.balh_mainLogin !== undefined) {
         //主站未登录变为登录，重置显示弹窗
         delete localStorage.balh_notFirst;
@@ -480,7 +481,7 @@ function checkLoginState() {
     } else if (localStorage.balh_login === undefined) {
         //非第一次打开，登录状态被重置，重新检测
         checkExpiretime(function () {
-            localStorage.balh_login = (localStorage.oauthTime === undefined) ? 0 : 1
+            localStorage.balh_login = (localStorage.oauthTime === undefined) ? 0 : 1;
         });
     } else if (localStorage.balh_login == 1 && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) {
         //已登录，每天为周期检测key有效期，过期前五天会自动续期
@@ -760,10 +761,23 @@ function tryFillSeasonList() {
     if (!(season_id = window.location.pathname.match(/^\/anime\/(\d+)$/)[1])) {
         return;
     }
-    var msg = document.createElement('a'),
-        content = document.createElement('div');
-    msg.innerText = '尝试获取视频列表中...'
-    msg.href = '//bangumi.bilibili.com/anime/' + season_id + '/play';
+
+    //尝试解决怪异模式渲染
+    /*
+    会造成变量丢失，等待官方重写doctype
+    try{
+    window.stop();
+        var xhr = new XMLHttpRequest();
+    xhr.open('GET',location.href,false);
+    xhr.send();
+    document.head.appendChild(_('script',{},[_('text',
+        'document.write(unescape("'+escape(xhr.response.replace(/<!DOCTYPE.+?>/,'<!DOCTYPE HTML>'))+'"));window.stop()'
+    )]));
+    }catch(e){console.error(e);}
+    */
+
+    var msg = _('a', { href: '//bangumi.bilibili.com/anime/' + season_id + '/play', style: { fontSize: '20px' } }, [_('text', '【' + GM_info.script.name + '】尝试获取视频列表中...')]),
+        content = _('div');
 
     error_container.insertBefore(content, error_container.firstChild);
     content.appendChild(msg);
@@ -797,19 +811,65 @@ function tryFillSeasonList() {
                     content.appendChild(creator(arr[i]));
                 }
             }
+            function generateEpisodeList(episodes) {
+                var childs = [];
+                episodes.forEach(function (i) {
+                    childs.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
+                        _('div', { className: 'img-wrp' }, [_('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
+                        _('div', { className: 'text-wrp' }, [
+                            _('div', { className: 'text-wrp-num' }, [_('div', { className: 'text-wrp-num-content' }, [_('text', '第' + i.index + '话')])]),
+                            _('div', { className: 'text-wrp-title trunc' }, [_('text', i.index_title)])
+                        ])
+                    ])]));
+                });
+                return childs;
+            }
 
             if (data.result) {
                 document.title = data.result.title;
+                /*
                 msg.innerText = data.result.title + '\n简介:' + data.result.evaluate;
                 createArray(data.result.seasons, createSeason);
                 createArray(data.result.episodes, createEpisode);
                 error_container.querySelector('.error-panel').remove();
                 error_container.querySelector('.error-split').remove();
                 error_container.querySelector('.error-manga').remove();
+                */
+                document.head.appendChild(_('link', { href: 'https://s3.hdslb.com/bfs/static/anime/css/tag-index.css?v=110', rel: 'stylesheet' }));
+                document.head.appendChild(_('link', { href: 'https://s1.hdslb.com/bfs/static/anime/css/bangumi-index.css?v=110', rel: 'stylesheet' }));
+                document.body.insertBefore(_('div', { className: 'main-container-wrapper' }, [_('div', { className: 'main-container' }, [
+                    _('div', { className: 'page-info-wrp' }, [_('div', { className: 'bangumi-info-wrapper' }, [
+                        _('div', { className: 'bangumi-info-blurbg-wrapper' }, [_('div', { className: 'bangumi-info-blurbg blur', style: { backgroundImage: 'url(' + data.result.cover + ')' } })]),
+                        _('div', { className: 'main-inner' }, [_('div', { className: 'info-content' }, [
+                            _('div', { className: 'bangumi-preview' }, [_('img', { alt: data.result.title, src: data.result.cover })]),
+                            _('div', { className: 'bangumi-info-r' }, [
+                                _('div', { className: 'b-head' }, [_('h1', { className: 'info-title', 'data-seasonid': season_id, title: data.result.title }, [_('text', data.result.title)])]),
+                                _('div', { className: 'info-count' }, [
+                                    _('span', { className: 'info-count-item info-count-item-play' }, [_('span', { className: 'info-label' }, [_('text', '总播放')]), _('em', {}, [_('text', data.result.play_count)])]),
+                                    _('span', { className: 'info-count-item info-count-item-fans' }, [_('span', { className: 'info-label' }, [_('text', '追番人数')]), _('em', {}, [_('text', data.result.favorites)])]),
+                                    _('span', { className: 'info-count-item info-count-item-review' }, [_('span', { className: 'info-label' }, [_('text', '弹幕总数')]), _('em', {}, [_('text', data.result.danmaku_count)])])
+                                ]),
+                                //_('div',{className:'info-row info-update'},[]),
+                                //_('div',{className:'info-row info-cv'},[]),
+                                _('div', { className: 'info-row info-desc-wrp' }, [
+                                    _('div', { className: 'info-row-label' }, [_('text', '简介：')]),
+                                    _('div', { className: 'info-desc' }, [_('text', data.result.evaluate)])
+                                ]),
+                            ])
+                        ])])
+                    ])]),
+                    _('div', { className: 'main-inner' }, [_('div', { className: 'v1-bangumi-list-wrapper clearfix' }, [
+                        //_('div',{className:'v1-bangumi-list-season-wrapper'}),
+                        _('div', { className: 'v1-bangumi-list-part-wrapper slider-part-wrapper' }, [_('div', { className: 'v1-bangumi-list-part clearfix', 'data-current-season-id': season_id, style: { display: 'block' } }, [
+                            _('div', { className: 'complete-list', style: { display: 'block' } }, [_('div', { className: 'video-slider-list-wrapper' }, [_('div', { className: 'slider-part-wrapper' }, [_('ul', { className: 'slider-part clearfix hide', style: { display: 'block' } }, generateEpisodeList(data.result.episodes))])])])
+                        ])])
+                    ])])
+                ])]), msg.parentNode.parentNode);
+                msg.parentNode.parentNode.remove();
             }
         })
         .catch(function (error) {
-            log('season>catch', error)
+            log('season>catch', error);
             msg.innerText = 'error:' + JSON.stringify(error) + '\n点击跳转到播放界面 (不一定能够正常播放...)';
         });
 }
@@ -827,5 +887,5 @@ function ajaxPromise(options) {
             reject(err);
         };
         $.ajax(options);
-    })
+    });
 }
