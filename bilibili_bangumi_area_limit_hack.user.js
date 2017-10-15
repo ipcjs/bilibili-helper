@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.5.2
+// @version      5.5.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -16,12 +16,6 @@
 
 'use strict';
 
-/**
- * @param e string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
- * @param t object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
- * @param n array, 子元素;
- */
-function _(e, t, n) { var r = null; if ("text" === e) return document.createTextNode(t); r = document.createElement(e); for (var l in t) if ("style" === l) for (var a in t.style) r.style[a] = t.style[a]; else if ("className" === l) r.className = t[l]; else if ("event" === l) for (var a in t[l]) r.addEventListener(a, t[l][a]); else r.setAttribute(l, t[l]); if (n) for (var s = 0; s < n.length; s++)null != n[s] && r.appendChild(n[s]); return r; }
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
 var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
@@ -120,9 +114,9 @@ var bilibiliApis = (function () {
                     "season_status": isBlockedVip ? 2 : data.result.season_status
                 }
             } : {
-                    code: -404,
-                    message: '不存在该剧集'
-                };
+                code: -404,
+                message: '不存在该剧集'
+            };
             return returnVal;
         }
     });
@@ -692,6 +686,43 @@ function showNotification() {
     }
 }
 
+/**
+ * 创建元素的快捷方法
+ * @param type string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
+ * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
+ * @param children array, 子元素;
+ */
+function _(type, props, children) {
+    var elem = null;
+    if (type === "text") {
+        return document.createTextNode(props);
+    } else {
+        elem = document.createElement(type);
+    }
+    for (var n in props) {
+        if (n === "style") {
+            for (var x in props.style) {
+                elem.style[x] = props.style[x];
+            }
+        } else if (n === "className") {
+            elem.className = props[n];
+        } else if (n === "event") {
+            for (var x in props.event) {
+                elem.addEventListener(x, props.event[x]);
+            }
+        } else {
+            elem.setAttribute(n, props[n]);
+        }
+    }
+    if (children) {
+        for (var i = 0; i < children.length; i++) {
+            if (children[i] != null)
+                elem.appendChild(children[i]);
+        }
+    }
+    return elem;
+}
+
 function tryBangumiRedirect() {
     var msgBox;
     if (!(msgBox = document.querySelector('.b-page-body > .error-container > .error-panel'))) {
@@ -795,28 +826,6 @@ function tryFillSeasonList() {
                 return Promise.reject(data);
             }
 
-            function createSeason(season) {
-                var a = document.createElement('a');
-                a.innerText = season.title;
-                a.href = '//bangumi.bilibili.com/anime/' + season.season_id;
-                a.target = '_blank';
-                var ele = document.createElement('div');
-                ele.appendChild(a);
-                return ele;
-            }
-
-            function createEpisode(episode) {
-                var ele = document.createElement('div');
-                ele.innerHTML = '<a href="' + '//bangumi.bilibili.com/anime/' + season_id + '/play/#' + episode.episode_id + '" target="_blank"><img src="' + episode.cover + '" width="200">' + episode.index_title + '</a>';
-                return ele;
-            }
-
-            function createArray(arr, creator) {
-                if (!arr || !creator) return;
-                for (var i = 0; i < arr.length; i++) {
-                    content.appendChild(creator(arr[i]));
-                }
-            }
             function generateEpisodeList(episodes) {
                 var childs = [];
                 episodes.forEach(function (i) {
@@ -831,16 +840,18 @@ function tryFillSeasonList() {
                 return childs;
             }
 
+            function generateSeasonList(seasons) {
+                function onSeasonClick(event) {
+                    window.location.href = '//bangumi.bilibili.com/anime/' + event.target.attributes['data-season-id'].value;
+                }
+
+                return seasons.map(function (season) {
+                    return _('li', { className: season.season_id == season_id ? 'cur' : '', 'data-season-id': season.season_id, event: { click: onSeasonClick } }, [_('text', season.title)]);
+                });
+            }
+
             if (data.result) {
                 document.title = data.result.title;
-                /*
-                msg.innerText = data.result.title + '\n简介:' + data.result.evaluate;
-                createArray(data.result.seasons, createSeason);
-                createArray(data.result.episodes, createEpisode);
-                error_container.querySelector('.error-panel').remove();
-                error_container.querySelector('.error-split').remove();
-                error_container.querySelector('.error-manga').remove();
-                */
                 document.head.appendChild(_('link', { href: 'https://s3.hdslb.com/bfs/static/anime/css/tag-index.css?v=110', rel: 'stylesheet' }));
                 document.head.appendChild(_('link', { href: 'https://s1.hdslb.com/bfs/static/anime/css/bangumi-index.css?v=110', rel: 'stylesheet' }));
                 document.body.insertBefore(_('div', { className: 'main-container-wrapper' }, [_('div', { className: 'main-container' }, [
@@ -865,7 +876,13 @@ function tryFillSeasonList() {
                         ])])
                     ])]),
                     _('div', { className: 'main-inner' }, [_('div', { className: 'v1-bangumi-list-wrapper clearfix' }, [
-                        //_('div',{className:'v1-bangumi-list-season-wrapper'}),
+                        _('div', { className: 'v1-bangumi-list-season-wrapper' }, [
+                            _('div', { className: 'v1-bangumi-list-season-content slider-list-content' }, [
+                                _('div', {}, [
+                                    _('ul', { className: 'v1-bangumi-list-season clearfix slider-list', 'data-current-season-id': season_id, style: { opacity: 1 } }, generateSeasonList(data.result.seasons))
+                                ])
+                            ])
+                        ]),
                         _('div', { className: 'v1-bangumi-list-part-wrapper slider-part-wrapper' }, [_('div', { className: 'v1-bangumi-list-part clearfix', 'data-current-season-id': season_id, style: { display: 'block' } }, [
                             _('div', { className: 'complete-list', style: { display: 'block' } }, [_('div', { className: 'video-slider-list-wrapper' }, [_('div', { className: 'slider-part-wrapper' }, [_('ul', { className: 'slider-part clearfix hide', style: { display: 'block' } }, generateEpisodeList(data.result.episodes))])])])
                         ])])
