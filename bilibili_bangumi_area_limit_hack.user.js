@@ -15,6 +15,12 @@
 // ==/UserScript==
 
 'use strict';
+
+/**
+ * @param e string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
+ * @param t object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
+ * @param n array, 子元素;
+ */
 function _(e, t, n) { var r = null; if ("text" === e) return document.createTextNode(t); r = document.createElement(e); for (var l in t) if ("style" === l) for (var a in t.style) r.style[a] = t.style[a]; else if ("className" === l) r.className = t[l]; else if ("event" === l) for (var a in t[l]) r.addEventListener(a, t[l][a]); else r.setAttribute(l, t[l]); if (n) for (var s = 0; s < n.length; s++)null != n[s] && r.appendChild(n[s]); return r; }
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
