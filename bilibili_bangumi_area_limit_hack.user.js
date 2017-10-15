@@ -15,7 +15,7 @@
 // ==/UserScript==
 
 'use strict';
-function _(e, t, n) { var r = null; if ("text" === e) return document.createTextNode(t); r = document.createElement(e); for (var l in t) if ("style" === l) for (var a in t.style) r.style[a] = t.style[a]; else if ("className" === l) r.className = t[l]; else if ("event" === l) for (var a in t[l]) r.addEventListener(a, t[l][a]); else r.setAttribute(l, t[l]); if (n) for (var s = 0; s < n.length; s++)null != n[s] && r.appendChild(n[s]); return r }
+function _(e, t, n) { var r = null; if ("text" === e) return document.createTextNode(t); r = document.createElement(e); for (var l in t) if ("style" === l) for (var a in t.style) r.style[a] = t.style[a]; else if ("className" === l) r.className = t[l]; else if ("event" === l) for (var a in t[l]) r.addEventListener(a, t[l][a]); else r.setAttribute(l, t[l]); if (n) for (var s = 0; s < n.length; s++)null != n[s] && r.appendChild(n[s]); return r; }
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
 var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
@@ -292,7 +292,7 @@ function replaceAjax() {
                         mode === MODE_DEFAULT && setAreaLimitSeason(false);
                         oriSuccess(json);
                     }
-                }
+                };
             }
         } else if (param.url.match('//interface.bilibili.com/player?')) {
             if (isBlockedVip) {
@@ -311,7 +311,7 @@ function replaceAjax() {
                         log('parse xml error: ', e);
                     }
                     oriSuccess(data);
-                }
+                };
             }
         }
 
@@ -328,10 +328,10 @@ function replaceAjax() {
             xhr.done = function (success) {
                 oriSuccess = success; // 保存外部设置的success函数
                 return xhr;
-            }
+            };
         }
         return xhr;
-    }
+    };
 }
 
 function isAreaLimitSeason() {
@@ -359,7 +359,7 @@ function getSeasonId() {
 
     // 若没取到, 则取movie页面的seasonId, 以m开头
     if (!seasonId) {
-        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1]
+        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
         if (seasonId) {
             seasonId = 'm' + seasonId;
         }
@@ -457,7 +457,7 @@ function checkLoginState() {
         //未登录主站，强制指定值
         localStorage.balh_notFirst = 1;
         localStorage.balh_login = 0;
-        localStorage.balh_mainLogin = 0
+        localStorage.balh_mainLogin = 0;
     } else if (localStorage.balh_mainLogin !== undefined) {
         //主站未登录变为登录，重置显示弹窗
         delete localStorage.balh_notFirst;
@@ -481,7 +481,7 @@ function checkLoginState() {
     } else if (localStorage.balh_login === undefined) {
         //非第一次打开，登录状态被重置，重新检测
         checkExpiretime(function () {
-            localStorage.balh_login = (localStorage.oauthTime === undefined) ? 0 : 1
+            localStorage.balh_login = (localStorage.oauthTime === undefined) ? 0 : 1;
         });
     } else if (localStorage.balh_login == 1 && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) {
         //已登录，每天为周期检测key有效期，过期前五天会自动续期
@@ -817,10 +817,10 @@ function tryFillSeasonList() {
                     childs.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
                         _('div', { className: 'img-wrp' }, [_('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
                         _('div', { className: 'text-wrp' }, [
-                            _('div', { className: 'text-wrp-num' }, _('div', { className: 'text-wrp-num-content' }, [_('text', '第' + i.index + '话')])),
+                            _('div', { className: 'text-wrp-num' }, [_('div', { className: 'text-wrp-num-content' }, [_('text', '第' + i.index + '话')])]),
                             _('div', { className: 'text-wrp-title trunc' }, [_('text', i.index_title)])
                         ])
-                    ])]))
+                    ])]));
                 });
                 return childs;
             }
@@ -869,7 +869,7 @@ function tryFillSeasonList() {
             }
         })
         .catch(function (error) {
-            log('season>catch', error)
+            log('season>catch', error);
             msg.innerText = 'error:' + JSON.stringify(error) + '\n点击跳转到播放界面 (不一定能够正常播放...)';
         });
 }
@@ -887,5 +887,5 @@ function ajaxPromise(options) {
             reject(err);
         };
         $.ajax(options);
-    })
+    });
 }
