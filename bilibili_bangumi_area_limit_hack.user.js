@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.5.3
+// @version      5.5.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -109,14 +109,17 @@ var bilibiliApis = (function () {
                     "cid": found.danmaku,
                     "episode_status": isBlockedVip ? 2 : found.episode_status,
                     "payment": { "price": "9876547210.33" },
+                    "pay_user": {
+                        "status": isBlockedVip ? 1 : 0 // 是否已经支付过
+                    },
                     "player": "vupload",
                     "pre_ad": 0,
                     "season_status": isBlockedVip ? 2 : data.result.season_status
                 }
             } : {
-                code: -404,
-                message: '不存在该剧集'
-            };
+                    code: -404,
+                    message: '不存在该剧集'
+                };
             return returnVal;
         }
     });
@@ -257,7 +260,7 @@ function replaceAjax() {
                 param.success = function (json) {
                     log(json);
                     if (json.code === -40301 // 区域限制
-                        || json.result.pay_user && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用代理服务器的接口
+                        || json.result.payment && json.result.payment.price != 0 && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用代理服务器的接口
                         one_api.asyncAjaxByProxy(param.url, oriSuccess, function (e) {
                             oriSuccess(json); // 新的请求报错, 也应该返回原来的数据
                         });
