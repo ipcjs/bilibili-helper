@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.6.0
+// @version      5.6.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -15,6 +15,7 @@
 // ==/UserScript==
 
 'use strict';
+var log = window.console.log.bind(window.console); // console.log简写为log
 
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
@@ -181,6 +182,12 @@ documentReady(function () {
     }
 });
 
+windowReady(function () {
+    if (window.location.hostname === 'bangumi.bilibili.com') {
+        addSettingsButton();
+    }
+});
+
 // 监听登录message
 window.addEventListener('message', function (e) {
     switch (e.data) {
@@ -202,64 +209,45 @@ window.addEventListener('message', function (e) {
 });
 
 // 添加设置入口节点
-if (location.host == 'bangumi.bilibili.com')
-    window.addEventListener('DOMContentLoaded', function () {
-        var indexNav = document.getElementById('index_nav'), bottom = '110px';
-        if (indexNav == null) {
-            document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
-            indexNav = document.body.appendChild(_('div', {
-                id: 'index_nav',
-                className: 'index-nav'
-            }));
-            bottom = 0;
-        }
-        indexNav.appendChild(_('div', { className: 'n-i gotop balh_settings', style: { bottom: bottom }, title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn_gotop', style: { background: '#f6f9fa' } })]));
-        indexNav.lastChild.firstChild.innerHTML = '<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg style="width:30px;height:50px;fill:rgb(153,162,170)" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>';
-    });
-var settingsDOM = _('div', {
-    id: 'balh-settings',
-    style: {
-        position: 'fixed',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(0,0,0,.7)',
-        animationName: 'balh-settings-bg',
-        animationDuration: '.5s',
-        zIndex: 1000,
-        cursor: 'pointer'
-    },
-    event: {
-        click: function (e) {
-            if (e.target === this) this.remove();
-        }
+function addSettingsButton() {
+    var indexNav = document.getElementById('index_nav'), bottom = '110px';
+    if (indexNav == null) {
+        document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
+        indexNav = document.body.appendChild(_('div', {
+            id: 'index_nav',
+            className: 'index-nav'
+        }));
+        bottom = 0;
     }
-}, [_('style', {}, [_('text', '@keyframes balh-settings-bg{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.7)}}#balh-settings label{width:100%;display:inline-block;cursor:pointer}#balh-settings label:after{content:"";width:0;height:1px;background:#4285f4;transition:width .3s;display:block}#balh-settings label:hover:after{width:100%}form{margin:0}')]), _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
-    _('h1', {}, [_('text', GM_info.script.name + ' 参数设置')]),
-    _('br'),
-    _('form', {
-        id: 'balh-settings-form', event: {
-            change: function (e) {
-                var name = e.target.name;
-                console.log(name, ' => ', e.target.value, e.target.checked);
-                switch (name) {
-                    case 'balh_proxy_server':
-                        proxyServer = e.target.value;
-                        setCookie('balh_server', proxyServer);
-                        break;
-                    case 'balh_mode':
-                        mode = e.target.value;
-                        setCookie('balh_mode', mode);
-                        break;
-                    case 'balh_blocked_vip':
-                        isBlockedVip = e.target.checked ? 'Y' : '';
-                        setCookie('balh_blocked_vip', isBlockedVip);
-                        break;
-                }
-            }
-        }
-    }, [
+    indexNav.appendChild(_('div', { className: 'n-i gotop balh_settings', style: { bottom: bottom }, title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn_gotop', style: { background: '#f6f9fa' } })]));
+    indexNav.lastChild.firstChild.innerHTML = '<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg style="width:30px;height:50px;fill:rgb(153,162,170)" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>';
+}
+
+function onSettingsFormChange(e) {
+    var name = e.target.name;
+    console.log(name, ' => ', e.target.value, e.target.checked);
+    switch (name) {
+        case 'balh_proxy_server':
+            proxyServer = e.target.value;
+            setCookie('balh_server', proxyServer);
+            break;
+        case 'balh_mode':
+            mode = e.target.value;
+            setCookie('balh_mode', mode);
+            break;
+        case 'balh_blocked_vip':
+            isBlockedVip = e.target.checked ? 'Y' : '';
+            setCookie('balh_blocked_vip', isBlockedVip);
+            break;
+    }
+}
+
+var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 1000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) this.remove(); } } }, [
+    _('style', {}, [_('text', '@keyframes balh-settings-bg{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.7)}}#balh-settings label{width:100%;display:inline-block;cursor:pointer}#balh-settings label:after{content:"";width:0;height:1px;background:#4285f4;transition:width .3s;display:block}#balh-settings label:hover:after{width:100%}form{margin:0}')]),
+    _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
+        _('h1', {}, [_('text', GM_info.script.name + ' 参数设置')]),
+        _('br'),
+        _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
             _('text', '使用的服务器：'), _('br'),
             _('div', { style: { display: 'flex' } }, [
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_proxy_server', value: 'https://biliplus.ipcjsdev.tk' }), _('text', 'https://biliplus.ipcjsdev.tk')]),
@@ -283,8 +271,9 @@ var settingsDOM = _('div', {
                 _('text', '作者: ipcjs\n代码贡献: esterTion FlandreDaisuki\n接口提供：BiliPlus')
             ])
         ])
-])
-    ]);
+    ])
+]);
+
 function showSettings() {
     document.body.appendChild(settingsDOM);
     var form = settingsDOM.querySelector('form');
@@ -332,7 +321,7 @@ function jqueryDataFilter(data, type) {
             json.result.play = 1; // 改成1就能够显示
             data = JSON.stringify(json);
             log('==>', data);
-            showNotification(Date.now(), GM_info.script.name, '检测到区域限制番剧，准备启动黑洞突破程序\n\n刷下存在感(°∀°)ﾉ', '//bangumi.bilibili.com/favicon.ico', 2e3);
+            // showNotification(Date.now(), GM_info.script.name, '检测到区域限制番剧，准备启动黑洞突破程序\n\n刷下存在感(°∀°)ﾉ', '//bangumi.bilibili.com/favicon.ico', 2e3);
         } else {
             mode === MODE_DEFAULT && setAreaLimitSeason(false);
         }
@@ -506,9 +495,9 @@ function getCookie(key) {
 // document.cookie=`bangumi_area_limit_hack_server=https://www.biliplus.com; domain=.bilibili.com; path=/; expires=${new Date("2020-01-01").toUTCString()}`;
 
 /**
- * @key     key
- * @value   为undefined时, 表示删除cookie
- * @options 为undefined时, 表示过期时间为3年
+ * @param key     key
+ * @param value   为undefined时, 表示删除cookie
+ * @param options 为undefined时, 表示过期时间为3年
  *          为''时, 表示Session cookie
  *          为数字时, 表示指定过期时间
  *          为{}时, 表示指定所有的属性
@@ -637,8 +626,9 @@ function documentReady(cb) {
     document.addEventListener('DOMContentLoaded', cbWrapper);
 }
 
-function log() {
-    console.log.apply(console, arguments);
+// window载入完成后回掉
+function windowReady(cb) {
+    window.addEventListener('DOMContentLoaded', cb);
 }
 
 /**

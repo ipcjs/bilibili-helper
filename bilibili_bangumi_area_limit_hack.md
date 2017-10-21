@@ -46,7 +46,7 @@
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907)或[BiliBili proxy setting helper](https://greasyfork.org/zh-TW/scripts/29378)可以帮助你进行一些选项的设置。
 
-从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](http://bangumi.bilibili.com/anime/5551)的右下角的“地球”按钮打开。
+从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](http://bangumi.bilibili.com/anime/5551)的右下角的“土星”按钮打开。
 
 或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
