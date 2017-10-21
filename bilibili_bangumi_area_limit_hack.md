@@ -18,7 +18,7 @@
 ### 安装脚本后无效？
 
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
-1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`开头的，当前该脚本只在这个URL下开启了。以京吹为例，在[这个页面](http://bangumi.bilibili.com/anime/5551/)下点开的链接就是`bangumi.bilibili.com/anime`开头的。  
+1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`或`bangumi.bilibili.com/movie`开头的，当前该脚本只在这些URL下开启了。  
 2. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
 3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
     1. 提示`代理服务器错误:{"code":-502,"message":"网络错误"}`：代理服务器内部问题，点击弹窗，刷新界面就行了
@@ -45,6 +45,8 @@
 ## 高级设置
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907)或[BiliBili proxy setting helper](https://greasyfork.org/zh-TW/scripts/29378)可以帮助你进行一些选项的设置。
+
+从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](http://bangumi.bilibili.com/anime/5551)的右下角的“地球”按钮打开。
 
 或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
@@ -81,6 +83,7 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 更新日志
 
+1. 5.6.0: 添加设置界面
 1. 5.5.0: 尝试支持`/movie/`页面
 1. 5.4.0: 支持新的返回403的番剧页
 1. 5.2.0：默认代理服务器支持HTTPS

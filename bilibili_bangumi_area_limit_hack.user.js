@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.5.7
+// @version      5.6.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -242,7 +242,7 @@ var settingsDOM = _('div', {
         id: 'balh-settings-form', event: {
             change: function (e) {
                 var name = e.target.name;
-                console.log(name, ' => ', e.target.value);
+                console.log(name, ' => ', e.target.value, e.target.checked);
                 switch (name) {
                     case 'balh_proxy_server':
                         proxyServer = e.target.value;
@@ -251,6 +251,10 @@ var settingsDOM = _('div', {
                     case 'balh_mode':
                         mode = e.target.value;
                         setCookie('balh_mode', mode);
+                        break;
+                    case 'balh_blocked_vip':
+                        isBlockedVip = e.target.checked ? 'Y' : '';
+                        setCookie('balh_blocked_vip', isBlockedVip);
                         break;
                 }
             }
@@ -267,6 +271,10 @@ var settingsDOM = _('div', {
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REPLACE }), _('text', '替换：在需要时处理视频')]),
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REDIRECT }), _('text', '重定向：完全代理所有视频')])
             ]), _('br'),
+            _('text', '其他：'), _('br'),
+            _('div', { style: { display: 'flex' } }, [
+                _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
+            ]), _('br'),
             _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogin(); } } }, [_('text', '授权代理服务器')]),
             _('text', '　'),
             _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogout(); } } }, [_('text', '取消授权')]),
@@ -282,6 +290,7 @@ function showSettings() {
     var form = settingsDOM.querySelector('form');
     form.elements['balh_proxy_server'].value = proxyServer;
     form.elements['balh_mode'].value = mode;
+    form.elements['balh_blocked_vip'].checked = isBlockedVip;
 }
 
 // 暴露接口
