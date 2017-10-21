@@ -181,6 +181,25 @@ documentReady(function () {
     }
 });
 
+window.addEventListener('message', function (e) {
+    console.log(e.data);
+    switch (e.data) {
+        case 'BiliPlus-Login-Success':
+            //登入
+            document.head.appendChild(_('script', {
+                src: proxyServer + '/login?act=getlevel',
+                event: {
+                    load: function () { location.reload(); }
+                }
+            }));
+            break;
+        case 'BiliPlus-Logout-Success':
+            //登出
+            location.reload();
+            break;
+    }
+});
+
 // 暴露接口
 window.bangumi_area_limit_hack = {
     setCookie: setCookie,
