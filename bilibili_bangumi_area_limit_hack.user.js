@@ -783,7 +783,7 @@ function tryBangumiRedirect() {
             var ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
                 episodes = result.result.episodes,
                 ep;
-            // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127                
+            // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
             for (var i = 0; i < episodes.length; i++) {
                 ep = episodes[i];
                 if (ep.danmaku == cid) {
@@ -850,7 +850,7 @@ function tryFillSeasonList() {
 
             function generateEpisodeList(episodes) {
                 var childs = [];
-                episodes.forEach(function (i) {
+                episodes.reverse().forEach(function (i) {
                     childs.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
                         _('div', { className: 'img-wrp' }, [_('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
                         _('div', { className: 'text-wrp' }, [
