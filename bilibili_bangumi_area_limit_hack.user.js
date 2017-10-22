@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.6.1
+// @version      5.6.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -257,7 +257,7 @@ var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', to
             _('div', { style: { display: 'flex' } }, [
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_DEFAULT }), _('text', '默认：自动判断')]),
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REPLACE }), _('text', '替换：在需要时处理视频')]),
-                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REDIRECT }), _('text', '重定向：完全代理所有视频')])
+                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REDIRECT }), _('text', '重定向：代理所有番剧视频')])
             ]), _('br'),
             _('text', '其他：'), _('br'),
             _('div', { style: { display: 'flex' } }, [
@@ -600,14 +600,15 @@ function checkLoginState() {
 }
 
 function checkHtml5() {
-    if (!localStorage.balh_h5_not_first && localStorage.defaulth5 !== '1' && window.GrayManager) {
+    var playerContent = document.querySelector('.player-content');
+    if (!localStorage.balh_h5_not_first && localStorage.defaulth5 !== '1' && window.GrayManager && playerContent) {
         new MutationObserver(function (mutations, observer) {
             observer.disconnect();
             localStorage.balh_h5_not_first = 'yes';
             if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
                 window.GrayManager.clickMenu('change_h5');// change_flash, change_h5
             }
-        }).observe(document.querySelector('.player-content'), {
+        }).observe(playerContent, {
             childList: true, // 监听child的增减
             attributes: false, // 监听属性的变化
         });
@@ -626,7 +627,7 @@ function documentReady(cb) {
     document.addEventListener('DOMContentLoaded', cbWrapper);
 }
 
-// window载入完成后回掉
+// 同样是在document载入完成后回调, 但是会在documentReady()的回调之后触发...
 function windowReady(cb) {
     window.addEventListener('DOMContentLoaded', cb);
 }
