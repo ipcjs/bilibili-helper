@@ -170,6 +170,24 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
     injectDataFilter();
 }
 
+var documentReadyQueue = [];
+var windowReadyQueue = [];
+document.addEventListener('readystatechange', function(){
+    if (document.readyState === 'interactive') {
+        // DOMContentLoad
+        for(var i in documentReadyQueue) {
+            documentReadyQueue[i]();
+        }
+    } else if (document.readyState === 'complete') {
+        // window.load
+        for(var i in windowReadyQueue) {
+            windowReadyQueue[i]();
+        }
+    } else {
+        // loading
+    }
+});
+
 documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         checkLoginState();
@@ -616,19 +634,12 @@ function checkHtml5() {
 
 // document载入完成后回调, 相当于$(cb);
 function documentReady(cb) {
-    if (document.readyState !== 'loading') {
-        return setTimeout(cb, 1);
-    }
-    var cbWrapper = function () {
-        document.removeEventListener('DOMContentLoaded', cbWrapper);
-        cb();
-    };
-    document.addEventListener('DOMContentLoaded', cbWrapper);
+    documentReadyQueue.push(cb);
 }
 
 // window载入完成后回掉
 function windowReady(cb) {
-    window.addEventListener('DOMContentLoaded', cb);
+    windowReadyQueue.push(cb);
 }
 
 /**
