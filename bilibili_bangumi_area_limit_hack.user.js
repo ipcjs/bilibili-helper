@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.6.1
+// @version      5.6.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -172,7 +172,6 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
 
 documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
-        checkLoginState();
         checkHtml5();
         if (window.location.pathname.match(/^\/anime\/\d+$/)) {
             tryFillSeasonList();
@@ -185,6 +184,7 @@ documentReady(function () {
 windowReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         addSettingsButton();
+        checkLoginState();
     }
 });
 
@@ -209,7 +209,14 @@ window.addEventListener('message', function (e) {
 });
 
 // 添加设置入口节点
+/*
+ MessageBox -> from base.core.js
+ MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
+ MessageBox.close()
+ */
+var popMessage = null;
 function addSettingsButton() {
+    popMessage == null && (popMessage = new MessageBox);
     var indexNav = document.getElementById('index_nav'), bottom = '110px';
     if (indexNav == null) {
         document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
@@ -218,6 +225,9 @@ function addSettingsButton() {
             className: 'index-nav'
         }));
         bottom = 0;
+    } else {
+        window.dispatchEvent(new Event('resize'));
+        indexNav.style.display = 'block';
     }
     indexNav.appendChild(_('div', { className: 'n-i gotop balh_settings', style: { bottom: bottom }, title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn_gotop', style: { background: '#f6f9fa' } })]));
     indexNav.lastChild.firstChild.innerHTML = '<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg style="width:30px;height:50px;fill:rgb(153,162,170)" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>';
@@ -225,7 +235,7 @@ function addSettingsButton() {
 
 function onSettingsFormChange(e) {
     var name = e.target.name;
-    console.log(name, ' => ', e.target.value, e.target.checked);
+    console.log(name, ' => ', e.target.type == 'checkbox' ? e.target.checked : e.target.value);
     switch (name) {
         case 'balh_proxy_server':
             proxyServer = e.target.value;
@@ -242,7 +252,7 @@ function onSettingsFormChange(e) {
     }
 }
 
-var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 1000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) this.remove(); } } }, [
+var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 1000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) popMessage.msgbox != null && popMessage.close(), document.body.style.overflow = '', this.remove(); } } }, [
     _('style', {}, [_('text', '@keyframes balh-settings-bg{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.7)}}#balh-settings label{width:100%;display:inline-block;cursor:pointer}#balh-settings label:after{content:"";width:0;height:1px;background:#4285f4;transition:width .3s;display:block}#balh-settings label:hover:after{width:100%}form{margin:0}')]),
     _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
         _('h1', {}, [_('text', GM_info.script.name + ' 参数设置')]),
@@ -253,33 +263,66 @@ var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', to
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_proxy_server', value: 'https://biliplus.ipcjsdev.tk' }), _('text', 'https://biliplus.ipcjsdev.tk')]),
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_proxy_server', value: 'https://www.biliplus.com' }), _('text', 'https://www.biliplus.com')])
             ]), _('br'),
+            _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: runPing } }, [_('text', '服务器测速')])]), _('br'),
             _('text', '脚本工作模式：'), _('br'),
             _('div', { style: { display: 'flex' } }, [
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_DEFAULT }), _('text', '默认：自动判断')]),
-                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REPLACE }), _('text', '替换：在需要时处理视频')]),
-                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REDIRECT }), _('text', '重定向：完全代理所有视频')])
+                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REPLACE }), _('text', '替换：在需要时处理番剧')]),
+                _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: MODE_REDIRECT }), _('text', '重定向：完全代理所有番剧')])
             ]), _('br'),
             _('text', '其他：'), _('br'),
             _('div', { style: { display: 'flex' } }, [
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
             ]), _('br'),
-            _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogin(); } } }, [_('text', '授权代理服务器')]),
+            _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogin(); } } }, [_('text', '帐号授权')]),
             _('text', '　'),
             _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogout(); } } }, [_('text', '取消授权')]),
+            _('text', '　　'),
+            _('a', { href: 'javascript:', event: { click: function () { popMessage.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4)[0]; } } }, [_('text', '（这是什么？）')]),
             _('br'), _('br'),
             _('div', { style: { whiteSpace: 'pre-wrap' } }, [
-                _('text', '作者: ipcjs\n代码贡献: esterTion FlandreDaisuki\n接口提供：BiliPlus')
+                _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),
+                _('text', '\n作者: ipcjs\n代码贡献: esterTion FlandreDaisuki\n接口提供：BiliPlus')
             ])
         ])
     ])
 ]);
 
+var pingOutput;
 function showSettings() {
     document.body.appendChild(settingsDOM);
     var form = settingsDOM.querySelector('form');
     form.elements['balh_proxy_server'].value = proxyServer;
     form.elements['balh_mode'].value = mode;
     form.elements['balh_blocked_vip'].checked = isBlockedVip;
+    pingOutput = document.getElementById('balh_server_ping');
+    document.body.style.overflow = 'hidden';
+}
+
+// 测速
+function runPing() {
+    var xhr = new XMLHttpRequest(), testUrl = ['https://biliplus.ipcjsdev.tk', 'https://www.biliplus.com'], testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
+    pingOutput.textContent = '正在进行服务器测速…';
+    pingOutput.style.height = '100px';
+    xhr.open('GET', '', true);
+    xhr.onreadystatechange = function () {
+        this.readyState == 4 && pingResult();
+    };
+    var pingLoop = function () {
+        prevNow = performance.now();
+        xhr.open('GET', testUrl[testUrlIndex] + '/api/bangumi', true);
+        xhr.send();
+    };
+    var pingResult = function () {
+        var duration = (performance.now() - prevNow) | 0;
+        if (isReused)
+            outputArr.push('\t复用连接：' + duration + 'ms'), isReused = false, testUrlIndex++;
+        else
+            outputArr.push(testUrl[testUrlIndex] + ':'), outputArr.push('\t初次连接：' + duration + 'ms'), isReused = true;
+        pingOutput.textContent = outputArr.join('\n');
+        testUrlIndex < testUrl.length ? pingLoop() : pingOutput.appendChild(_('a', { href: 'javascript:', event: { click: runPing } }, [_('text', '\n再测一次？')]));
+    };
+    pingLoop();
 }
 
 // 暴露接口
@@ -574,9 +617,11 @@ function checkLoginState() {
         checkExpiretime(function () {
             if (localStorage.oauthTime === undefined) {
                 localStorage.balh_login = 0;
-                if (confirm('看起来你是第一次使用' + GM_info.script.name + '\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P（如果你是大会员或承包过的话）\n\n你可以随时通过执行 bangumi_area_limit_hack.login() 来打开授权页面')) {
+                popMessage.show($('.balh_settings'), '看起来你是第一次使用' + GM_info.script.name + '<br>要不要考虑进行一下授权？<br><br>授权后可以观看区域限定番剧的1080P<br>（如果你是大会员或承包过这部番的话）<br><br>你可以随时在设置中打开授权页面', 0, 'button', showLogin);
+                popMessage.msgbox[0].style.position = 'fixed';
+                /*if (confirm()) {
                     showLogin();
-                }
+                }*/
             } else {
                 localStorage.balh_login = 1;
             }
