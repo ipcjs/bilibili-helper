@@ -7,19 +7,19 @@
 使用脚本前必须安装扩展，各浏览器对应的扩展如下：
 
 1. Firefox浏览器：[Greasemonkey](https://addons.mozilla.org/zh-CN/firefox/addon/greasemonkey/)
-2. 傲游浏览器：[Violentmonkey](http://extension.maxthon.com/detail/index.php?view_id=1680)
+2. 傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)
 3. Chrome浏览器：[Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
     * 访问不了[Chrome 网上应用店](https://chrome.google.com/webstore/category/extensions)的同鞋可以到下面的地址下载crx文件。下载下来的crx文件可能不能直接安装，需要手动拖到扩展管理界面（一般为`chrome://extensions/`）中，应该就能安装成功了：
-        * [Tampermonkey各版本百度网盘](http://pan.baidu.com/s/1nuCc4Al)
+        * [Tampermonkey各版本百度网盘](https://pan.baidu.com/s/1nuCc4Al)
         * [常用Crx离线安装包下载](https://yurl.sinaapp.com/crx2.php)
     * 国内的360极速浏览器、猎豹浏览器等其实上就是Chrome加个壳，装Tampermonkey就行了
-    * 搜狗高速浏览器：[Tampermonkey Legacy](http://ie.sogou.com/app/app_4326.html)
+    * 搜狗高速浏览器：[Tampermonkey Legacy](https://ie.sogou.com/app/app_4326.html)
 
 ### 安装脚本后无效？
 
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
 1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`或`bangumi.bilibili.com/movie`开头的，当前该脚本只在这些URL下开启了。  
-2. 确定可以打开[代理服务器上的链接](http://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
+2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
 3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
     1. 提示`代理服务器错误:{"code":-502,"message":"网络错误"}`：代理服务器内部问题，点击弹窗，刷新界面就行了
     1. 提示`突破黑洞失败 null`：同上
@@ -30,13 +30,13 @@
 
 ### 看不了1080P画质？
 
-1. 确定你是B站的[大会员](http://big.bilibili.com/site/big.html)
+1. 确定你是B站的[大会员](https://big.bilibili.com/site/big.html)
 2. 确定当前视频拥有1080P画质的版本
-3. 确定你登录了[代理服务器](http://biliplus.ipcjsdev.tk/login)；注意，当前默认代理服务器只支持“使用bilibili账号密码进行登录”
+3. 确定你登录了[代理服务器](https://biliplus.ipcjsdev.tk/login)；注意，当前默认代理服务器只支持“使用bilibili账号密码进行登录”
 
 ### 关于付费番剧/影视
 
-[付费抢先看番剧](http://bangumi.bilibili.com/anime/6012/play#103819)支付金额在特定情况下会显示`9876547210.33`的问题，这是因为代理服务器的接口获取不到金额，为了防止[手抖误操作](http://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
+[付费抢先看番剧](https://bangumi.bilibili.com/anime/6012/play#103819)支付金额在特定情况下会显示`9876547210.33`的问题，这是因为代理服务器的接口获取不到金额，为了防止[手抖误操作](https://bangumi.bilibili.com/anime/5852/play?aid=9815508#103960#reply238854223)，默认显示一个逸。使用支付宝/微信扫码可以看到真实金额。
 
 以前的付费接口是不会检测区域的，但最近（2017-10-12）的[一些动画电影](https://bangumi.bilibili.com/movie/12116)的付费接口也会检测区域了，所以即使使用该脚本解除了视频的区域限制，依然没办法付费，只能看前面几分钟。一个解决办法是直接冲B站的大会员，大会员看所有的视频都是不需要付费的🙄。
 
@@ -46,9 +46,9 @@
 
 该脚本包含一些可设置项, 使用[解除B站區域限制輔助腳本](https://greasyfork.org/zh-TW/scripts/28907)或[BiliBili proxy setting helper](https://greasyfork.org/zh-TW/scripts/29378)可以帮助你进行一些选项的设置。
 
-从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](http://bangumi.bilibili.com/anime/5551)的右下角的图标打开。
+从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](https://bangumi.bilibili.com/anime/5551)的右下角的图标打开。
 
-或者直接手动设置：打开[这个番剧页面](http://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
+或者直接手动设置：打开[这个番剧页面](https://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
 ### 代理模式
 
@@ -67,12 +67,12 @@ key为`'balh_server'`，可选的`value`为：
 1. `undefined`：默认代理服务器
 2. `'https://www.your_server.com'`：自定义的代理服务器
 
-### 大会员账号被B站永封了？<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="(懵逼"/>
+### 大会员账号被B站永封了？<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="(懵逼"/>
 
 0. 注册并登录一个小号
 1. 在控制台执行命令：`bangumi_area_limit_hack.setCookie('balh_blocked_vip', 'true');`
-2. 在[代理服务器](http://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
-3. 就可以用小号看1080P了<img src="http://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
+2. 在[代理服务器](https://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
+3. 就可以用小号看1080P了<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
 ### 登录/登出
 
@@ -112,11 +112,11 @@ key为`'balh_server'`，可选的`value`为：
     - 通知相关：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
     - 自动跳转相关：[我就是要跳轉(B站番劇投稿頁跳轉去番劇頁)](https://greasyfork.org/zh-CN/scripts/29151)
 4. 解除区域限制测试：
-    - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](http://bangumi.bilibili.com/anime/5551)[[第1话](http://bangumi.bilibili.com/anime/5551/play#96703)]
-    - 内地：[小魔女学园 TV版_番剧](http://bangumi.bilibili.com/anime/5788)[[第1话](http://bangumi.bilibili.com/anime/5788/play#101761)]
+    - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](https://bangumi.bilibili.com/anime/5551)[[第1话](https://bangumi.bilibili.com/anime/5551/play#96703)]
+    - 内地：[小魔女学园 TV版_番剧](https://bangumi.bilibili.com/anime/5788)[[第1话](https://bangumi.bilibili.com/anime/5788/play#101761)]
     - 内地(新): [品酒要在成为夫妻后](https://bangumi.bilibili.com/anime/6423)
-    - 付费抢先看：[全职高手_国产动画](http://bangumi.bilibili.com/anime/5852)[[第3话](http://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](http://bangumi.bilibili.com/anime/6012/play#103819)]
-    - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](http://bangumi.bilibili.com/anime/4124)[[第13话](http://bangumi.bilibili.com/anime/4124/play#100947)]
+    - 付费抢先看：[全职高手_国产动画](https://bangumi.bilibili.com/anime/5852)[[第3话](https://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](https://bangumi.bilibili.com/anime/6012/play#103819)]
+    - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](https://bangumi.bilibili.com/anime/4124)[[第13话](https://bangumi.bilibili.com/anime/4124/play#100947)]
     - 影视：
         - 付费：[声之形 - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/12116)
         - 免费：[哆啦A梦：新·大雄的日本诞生（国语） - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/11871)
@@ -125,4 +125,4 @@ key为`'balh_server'`，可选的`value`为：
     - 舊番、av_id共用、分P：[/av2182637/index_3.html](https://www.bilibili.com/video/av2182637/index_3.html) → [/4300/play#88679](https://bangumi.bilibili.com/anime/4300/play#88679)
     - 舊番、av_id獨立：[/av2229121/](https://www.bilibili.com/video/av2229121/) → [/1559/play#29944](https://bangumi.bilibili.com/anime/1559/play#29944)
     - 連載中：[/av9910182/](https://www.bilibili.com/video/av9910182/) → [/6001/play#103883](https://bangumi.bilibili.com/anime/6001/play#103883)
-    - 连载中、av_id独立：[/av10181128/](http://www.bilibili.com/video/av10181128/) → [/6078/play#105028](http://bangumi.bilibili.com/anime/6078/play#105028)
+    - 连载中、av_id独立：[/av10181128/](https://www.bilibili.com/video/av10181128/) → [/6078/play#105028](https://bangumi.bilibili.com/anime/6078/play#105028)
