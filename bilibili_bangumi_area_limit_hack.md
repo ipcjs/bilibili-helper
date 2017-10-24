@@ -83,6 +83,7 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 更新日志
 
+1. 5.7.0: 尝试支持[港澳台限定的av页面](http://search.bilibili.com/all?keyword=%E4%BB%85%E9%99%90%E5%8F%B0%E6%B9%BE%E5%9C%B0%E5%8C%BA)
 1. 5.6.0: 添加设置界面
 1. 5.5.0: 尝试支持`/movie/`页面
 1. 5.4.0: 支持新的返回403的番剧页
@@ -120,6 +121,8 @@ key为`'balh_server'`，可选的`value`为：
     - 影视：
         - 付费：[声之形 - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/12116)
         - 免费：[哆啦A梦：新·大雄的日本诞生（国语） - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/11871)
+    - av页面：
+        - 港澳台：[【日剧/医疗】产科医鸿鸟2 02【2017】【仅限台湾地区】](http://www.bilibili.com/video/av15659129/?from=search&seid=12221877300500108753)
 5. 自动跳转到番剧页测试
     - 舊番、av_id共用、不分P：[/av4044639/](https://www.bilibili.com/video/av4044639/) → [/3398/play#84776](https://bangumi.bilibili.com/anime/3398/play#84776)
     - 舊番、av_id共用、分P：[/av2182637/index_3.html](https://www.bilibili.com/video/av2182637/index_3.html) → [/4300/play#88679](https://bangumi.bilibili.com/anime/4300/play#88679)

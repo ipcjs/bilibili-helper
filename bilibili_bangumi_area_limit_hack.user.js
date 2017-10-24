@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.6.3
+// @version      5.7.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -129,7 +129,12 @@ var bilibiliApis = (function () {
         _get_source: isMoviePage ? get_source_by_aid : get_source_by_season_id,
         _playurl: new BilibiliApi({
             transToProxyUrl: function (url) {
-                return proxyServer + '/BPplayurl.php?' + url.split('?')[1].replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]);
+                var params = url.split('?')[1];
+                // 只有在av页面中的iframe标签形式的player, 不需要插入'bangumi'参数, 其他页面都要插入这个参数
+                if (!isPlayerFrameInAvPage()) {
+                    params = params.replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1])
+                }
+                return proxyServer + '/BPplayurl.php?' + params;
             },
             processProxySuccess: function (data) {
                 // data有可能为null
@@ -177,7 +182,7 @@ documentReady(function () {
             tryFillSeasonList();
         }
     } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
-        tryBangumiRedirect();
+        tryRedirectToBangumiOrInsertPlayer();
     }
 });
 
@@ -498,20 +503,46 @@ function getSeasonId() {
         // 若w, 是其frame的window, 则有可能没有权限, 而抛异常
         seasonId = window.season_id || window.top.season_id;
     } catch (e) {
-        console.error(e);
+        log(e);
     }
     if (!seasonId) {
-        seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+        try {
+            seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+        } catch (e) {
+            log(e);
+        }
     }
 
     // 若没取到, 则取movie页面的seasonId, 以m开头
     if (!seasonId) {
-        seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
+        try {
+            seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
+            if (seasonId) {
+                seasonId = 'm' + seasonId;
+            }
+        } catch (e) {
+            log(e);
+        }
+    }
+
+    // 最后, 若没取到, 则试图取出当前页面url中的aid
+    if (!seasonId) {
+        seasonId = getParam(window.location.href, 'aid');
         if (seasonId) {
-            seasonId = 'm' + seasonId;
+            seasonId = 'av' + seasonId;
         }
     }
     return seasonId || '000';
+}
+
+// 在av页面中的iframe标签形式的player
+function isPlayerFrameInAvPage() {
+    try {
+        return window.location.href.indexOf('www.bilibili.com/blackboard/html5player.html') !== -1 && window.top.location.href.indexOf('www.bilibili.com/video/av') !== -1;
+    } catch (e) {
+        log(e);
+    }
+    return false;
 }
 
 function isAreaLimitForPlayUrl(json) {
@@ -873,7 +904,8 @@ function _(type, props, children) {
     return elem;
 }
 
-function tryBangumiRedirect() {
+// 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
+function tryRedirectToBangumiOrInsertPlayer() {
     var msgBox;
     if (!(msgBox = document.querySelector('.b-page-body > .error-container > .error-panel'))) {
         return;
@@ -892,17 +924,45 @@ function tryBangumiRedirect() {
             if (data.code) {
                 return Promise.reject(JSON.stringify(data));
             }
-            if (!data.bangumi) {
-                return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
-            }
-            season_id = data.bangumi.season_id;
+            // 计算当前页面的cid
             for (var i = 0; i < data.list.length; i++) {
                 if (data.list[i].page == page) {
                     cid = data.list[i].cid;
                     break;
                 }
             }
-            return ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id);
+            if (!data.bangumi) {
+                // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
+                var pageBodyEle = document.querySelector('.b-page-body');
+                var iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
+                function generatePageList(pages) {
+                    function onPageBtnClick(e) {
+                        var index = e.target.attributes['data-index'];
+                        iframe.src = generateSrc(aid, pages[index].cid);
+                    }
+                    return pages.map(function (item, index) {
+                        return _('a', { 'data-index': index, event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)]);
+                    });
+                }
+                function generateSrc(aid, cid) {
+                    return '//www.bilibili.com/blackboard/html5player.html?cid=' + cid + '&aid=' + aid + '&player_type=1';
+                }
+                pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
+                    _('div', { className: 'main-inner' }, [
+                        _('div', { className: 'v-plist' }, [
+                            _('div', { id: 'plist', className: 'plist-content' }, generatePageList(data.list))
+                        ])
+                    ]),
+                    _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
+                ]), pageBodyEle.firstChild);
+                document.title = data.title;
+                msgBox.parentNode.remove(); // 移除 .error-container
+                // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response                
+            } else {
+                // 当前av属于番剧页面, 继续处理
+                season_id = data.bangumi.season_id;
+                return ajaxPromise(proxyServer + '/api/bangumi?season=' + season_id);
+            }
         })
         .then(function (result) {
             if (result.code) {
