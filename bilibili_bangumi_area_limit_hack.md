@@ -119,10 +119,11 @@ key为`'balh_server'`，可选的`value`为：
     - 付费抢先看：[全职高手_国产动画](https://bangumi.bilibili.com/anime/5852)[[第3话](https://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](https://bangumi.bilibili.com/anime/6012/play#103819)]
     - 一个AV下多个视频：[普通女高中生要做当地偶像_番剧](https://bangumi.bilibili.com/anime/4124)[[第13话](https://bangumi.bilibili.com/anime/4124/play#100947)]
     - 影视：
-        - 付费：[声之形 - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/12116)
-        - 免费：[哆啦A梦：新·大雄的日本诞生（国语） - 哔哩哔哩弹幕视频网](https://bangumi.bilibili.com/movie/11871)
+        - 付费：[声之形](https://bangumi.bilibili.com/movie/12116)
+        - 免费：[哆啦A梦：新·大雄的日本诞生（国语）](https://bangumi.bilibili.com/movie/11871)
     - av页面：
-        - 港澳台：[【日剧/医疗】产科医鸿鸟2 02【2017】【仅限台湾地区】](http://www.bilibili.com/video/av15659129/?from=search&seid=12221877300500108753)
+        - 港澳台：[【日剧/医疗】产科医鸿鸟2 02【2017】](https://www.bilibili.com/video/av15659129/)
+        - 国内：[【5月】游戏王VRAINS 24【VRAINSTORM】](https://www.bilibili.com/video/av15730139/)
 5. 自动跳转到番剧页测试
     - 舊番、av_id共用、不分P：[/av4044639/](https://www.bilibili.com/video/av4044639/) → [/3398/play#84776](https://bangumi.bilibili.com/anime/3398/play#84776)
     - 舊番、av_id共用、分P：[/av2182637/index_3.html](https://www.bilibili.com/video/av2182637/index_3.html) → [/4300/play#88679](https://bangumi.bilibili.com/anime/4300/play#88679)
