@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.7.0
+// @version      5.7.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -947,6 +947,7 @@ function tryRedirectToBangumiOrInsertPlayer() {
                 function generateSrc(aid, cid) {
                     return '//www.bilibili.com/blackboard/html5player.html?cid=' + cid + '&aid=' + aid + '&player_type=1';
                 }
+                // 添加播放器
                 pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
                     _('div', { className: 'main-inner' }, [
                         _('div', { className: 'v-plist' }, [
@@ -955,6 +956,19 @@ function tryRedirectToBangumiOrInsertPlayer() {
                     ]),
                     _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
                 ]), pageBodyEle.firstChild);
+                // 添加评论区
+                pageBodyEle.appendChild(_('div', { className: 'main-inner' }, [
+                    _('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
+                        _('div', { className: 'b-head' }, [
+                            _('span', { className: 'b-head-t results' }),
+                            _('span', { className: 'b-head-t' }, [_('text', '评论')]),
+                            _('a', { className: 'del-log', href: '//www.bilibili.com/replydeletelog?aid=' + aid + '&title=' + data.title, target: '_blank' }, [_('text', '查看删除日志')])
+                        ]),
+                        _('div', { className: 'comm', id: 'bbComment' }, [
+                            _('div', { id: 'load_comment', className: 'comm_open_btn', onclick: "var fb = new bbFeedback('.comm', 'arc');fb.show(" + aid + ", 1);", style: { cursor: 'pointer' } })
+                        ])
+                    ])
+                ]));
                 document.title = data.title;
                 msgBox.parentNode.remove(); // 移除 .error-container
                 // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response                
