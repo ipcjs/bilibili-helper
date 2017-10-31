@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.7.1
+// @version      5.7.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -178,7 +178,7 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
 documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') {
         checkHtml5();
-        if (window.location.pathname.match(/^\/anime\/\d+$/)) {
+        if (window.location.pathname.match(/^\/anime\/\d+\/?$/)) {
             tryFillSeasonList();
         }
     } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
@@ -1019,7 +1019,7 @@ function tryFillSeasonList() {
     if (!(error_container = document.querySelector('div.error-container'))) {
         return;
     }
-    if (!(season_id = window.location.pathname.match(/^\/anime\/(\d+)$/)[1])) {
+    if (!(season_id = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)[1])) {
         return;
     }
 
