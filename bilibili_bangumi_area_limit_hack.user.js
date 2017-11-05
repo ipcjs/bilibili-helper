@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.7.2
+// @version      5.7.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -380,6 +380,11 @@ function jqueryDataFilter(data, type) {
 /*
  {"code":0,"message":"success","result":{"aid":9854952,"cid":16292628,"episode_status":2,"payment":{"price":"0"},"player":"vupload","pre_ad":0,"season_status":2}}
  */
+function warnServerConnection(e) {
+    if (e.readyState == 0) {
+        popMessage.show($('.balh_settings'), '哎呀，服务器连不上了，确认一下连接？', 0, 'button', showSettings);
+    }
+}
 function replaceAjax() {
     var originalAjax = $.ajax;
     $.ajax = function (arg0, arg1) {
@@ -405,12 +410,18 @@ function replaceAjax() {
                     log('Redirected request: get_source', returnVal);
                     oriSuccess(returnVal);
                 };
+                var oriError = param.error;
+                param.error = function (e) {
+                    warnServerConnection(e);
+                    oriError(e);
+                };
             } else { // 对应replace模式
                 param.success = function (json) {
                     log(json);
                     if (json.code === -40301 // 区域限制
                         || json.result.payment && json.result.payment.price != 0 && isBlockedVip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用代理服务器的接口
                         one_api.asyncAjaxByProxy(param.url, oriSuccess, function (e) {
+                            warnServerConnection(e);
                             oriSuccess(json); // 新的请求报错, 也应该返回原来的数据
                         });
                         mode === MODE_DEFAULT && setAreaLimitSeason(true); // 只要默认模式才要跟踪是否有区域限制
@@ -430,6 +441,11 @@ function replaceAjax() {
                 param.success = function (data) {
                     oriSuccess(one_api.processProxySuccess(data));
                 };
+                var oriError = param.error;
+                param.error = function (e) {
+                    warnServerConnection(e);
+                    oriError(e);
+                };
                 log('Redirected request: bangumi playurl -> ', param.url);
             } else {
                 param.success = function (json) {
@@ -437,6 +453,7 @@ function replaceAjax() {
                     log(json);
                     if (isBlockedVip || json.code || isAreaLimitForPlayUrl(json)) {
                         one_api.asyncAjaxByProxy(param.url, oriSuccess, function (e) {
+                            warnServerConnection(e);
                             oriSuccess(json);
                         });
                         mode === MODE_DEFAULT && setAreaLimitSeason(true);
