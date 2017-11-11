@@ -4,9 +4,10 @@
 // @version      0.0.1
 // @description  微薄分组管理帮助脚本(有bug...)
 // @author       ipcjs
-// @match        *://weibo.com/p/*/myfollow*
+// @include        *://weibo.com/p/*/myfollow*
+// @include        *://weibo.com/*/follow*
 // @grant        none
-// @run-at       document-idle
+// @run-at       document-end
 // ==/UserScript==
 
 /**
@@ -46,18 +47,34 @@ function _(type, props, children) {
     return elem;
 }
 
+function insertInvertSelection() {
+    let $menu = document.querySelector('div.opt_bar[node-type=batnavTools] > div.W_fl');
+    if (!$menu) {
+        log('$menu no found');
+        return;
+    }
+    function onInvertSelectionClick() {
+        document.querySelectorAll('.member_wrap').forEach(item => item.click());
+    }
+    $menu.insertBefore(_('a', { id: 'invert_selection', href: 'javascript:void(0);', event: { click: onInvertSelectionClick } }, [_('text', '[反选]')]), $menu.lastElementChild);
+}
+
 function main() {
-    window.addEventListener('load', function () {
-        let $menu = document.querySelector('div.opt_bar[node-type=batnavTools] > div.W_fl');
-        if (!$menu) {
-            log('$menu no found');
-            return;
-        }
-        function onInvertSelectionClick() {
-            document.querySelectorAll('.member_li').forEach(item => item.click());
-        }
-        $menu.insertBefore(_('a', { href: 'javascript:void(0);', event: { click: onInvertSelectionClick } }, [_('text', '[反选]')]), $menu.lastElementChild);
-    });
+    let $main = document.getElementById('plc_frame');
+    if ($main) {
+        new MutationObserver((mutations, observer) => {
+            let $invert_selection = document.getElementById('invert_selection');
+            if (!$invert_selection) {
+                insertInvertSelection();
+            }
+        }).observe($main, {
+            childList: true,
+            attributes: false,
+            subtree: true
+        });
+    }
+
+    // window.addEventListener('load', );
 }
 
 let log = window.console.log.bind(window.console);
