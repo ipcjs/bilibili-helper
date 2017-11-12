@@ -19,7 +19,7 @@
 
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
 1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`或`bangumi.bilibili.com/movie`开头的，当前该脚本只在这些URL下开启了。  
-2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjsdev.tk/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
+2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjs.win/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#高级设置)
 3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
     1. 提示`代理服务器错误:{"code":-502,"message":"网络错误"}`：代理服务器内部问题，点击弹窗，刷新界面就行了
     1. 提示`突破黑洞失败 null`：同上
@@ -32,7 +32,7 @@
 
 1. 确定你是B站的[大会员](https://big.bilibili.com/site/big.html)
 2. 确定当前视频拥有1080P画质的版本
-3. 确定你登录了[代理服务器](https://biliplus.ipcjsdev.tk/login)；注意，当前默认代理服务器只支持“使用bilibili账号密码进行登录”
+3. 确定你登录了[代理服务器](https://biliplus.ipcjs.win/login)；注意，当前默认代理服务器只支持“使用bilibili账号密码进行登录”
 
 ### 关于付费番剧/影视
 
@@ -71,7 +71,7 @@ key为`'balh_server'`，可选的`value`为：
 
 0. 注册并登录一个小号
 1. 在控制台执行命令：`bangumi_area_limit_hack.setCookie('balh_blocked_vip', 'true');`
-2. 在[代理服务器](https://biliplus.ipcjsdev.tk/login)中使用账号密码登录被永封的大会员账号
+2. 在[代理服务器](https://biliplus.ipcjs.win/login)中使用账号密码登录被永封的大会员账号
 3. 就可以用小号看1080P了<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
 ### 登录/登出
