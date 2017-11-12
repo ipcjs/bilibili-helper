@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.7.5
+// @version      5.7.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -22,11 +22,14 @@ log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
 var MODE_REPLACE = 'replace'; // 替换模式, 替换有区域限制的视频的接口的返回值; 因为替换的操作是同步的会卡一下界面, 但没有区域限制的视频不会受到影响;
 var MODE_REDIRECT = 'redirect'; // 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
+var DEFAULT_RPOXY_SERVER = 'https://biliplus.ipcjs.win'; // 默认代理服务器
 
 var settings = getCookies();
-var proxyServer = settings.balh_server || 'https://biliplus.ipcjs.win'; // 优先从cookie中读取服务器地址
+var proxyServer = settings.balh_server || DEFAULT_RPOXY_SERVER; // 优先从cookie中读取服务器地址
+// 从tk域名迁移到新的win域名
 if (proxyServer.indexOf('biliplus.ipcjsdev.tk') !== -1) {
-    proxyServer = 'https://biliplus.ipcjs.win'; // 强制使用新的.win域名
+    proxyServer = DEFAULT_RPOXY_SERVER;
+    setCookie('balh_server', proxyServer);
 }
 var isBlockedVip = settings.balh_blocked_vip; // "我是一位被永久封号的大会员"(by Google翻译)
 var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); // 若账号是被永封的大会员, 默认使用重定向模式
