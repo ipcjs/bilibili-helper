@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.1.0
-// @description 在帖子的第一页添加[显示全部]按钮, 列出帖子的所有内容
+// @version     0.1.1
+// @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
-// @include     http://bbs.saraba1st.com/2b/thread-*-1-1.html
+// @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
+// @include     *://bbs.saraba1st.com/2b/forum.php*
 // @grant       GM_xmlhttpRequest
 // @grant       GM_addStyle
 // @grant       unsafeWindow
@@ -13,7 +14,10 @@
 
 (function () {
     let group, filter;
-    if (!(group = /thread-(\d+)-1-1/.exec(location.pathname))) return; // 不匹配则返回
+    if (!(group = /thread-(\d+)-(\d+)-(\d+)/.exec(location.pathname))
+        && !(group = /tid=(\d+)/.exec(location.search))) {
+        return; // 不匹配则返回
+    }
 
     const POST_PAGE_MAX_COUNT = 1000; // 一次最多拉取多少条
     const TID = group[1];
