@@ -16,6 +16,7 @@
 
 'use strict';
 var log = window.console.log.bind(window.console); // console.log简写为log
+compatES6();
 
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
@@ -33,11 +34,12 @@ if (proxyServer.indexOf('biliplus.ipcjsdev.tk') !== -1) {
 }
 var isBlockedVip = settings.balh_blocked_vip; // "我是一位被永久封号的大会员"(by Google翻译)
 var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); // 若账号是被永封的大会员, 默认使用重定向模式
+var flvPreferWS = settings.balh_flv_prefer_ws; // 优先使用ws.acgvideo.com服务器上的视频文件
 // movie页面使用window.aid, 保存当前页面av号
 // anime页面使用window.season_id, 保存当前页面season号
 var isMoviePage = window.location.href.indexOf('bangumi.bilibili.com/movie/') !== -1;
 
-log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', proxyServer, 'readyState:', document.readyState);
+log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', proxyServer, 'flvPreferWS:', flvPreferWS, 'readyState:', document.readyState);
 
 var bilibiliApis = (function () {
     function BilibiliApi(props) {
@@ -159,7 +161,24 @@ var bilibiliApis = (function () {
                     //     window.top.location = proxyServer + '/login';
                     // }
                 } else {
-                    // showNotification(Date.now(), GM_info.script.name, '已突破黑洞，开始加载视频', '//bangumi.bilibili.com/favicon.ico', 2e3);
+                    if (flvPreferWS) {
+                        data.durl.forEach(function (seg) {
+                            var t, url, i;
+                            if (!seg.url.includes('ws.acgvideo.com')) {
+                                for (i in seg.backup_url) {
+                                    url = seg.backup_url[i];
+                                    if (url.includes('ws.acgvideo.com')) {
+                                        log('flv prefer use:', url);
+                                        t = seg.url;
+                                        seg.url = url;
+                                        url = t;
+                                        break;
+                                    }
+                                }
+
+                            }
+                        });
+                    }
                 }
                 return data;
             }
@@ -260,6 +279,10 @@ function onSettingsFormChange(e) {
             isBlockedVip = e.target.checked ? 'Y' : '';
             setCookie('balh_blocked_vip', isBlockedVip);
             break;
+        case 'balh_flv_prefer_ws':
+            flvPreferWS = e.target.checked ? 'Y' : '';
+            setCookie('balh_flv_prefer_ws', flvPreferWS);
+            break;
     }
 }
 
@@ -284,6 +307,7 @@ var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', to
             _('text', '其他：'), _('br'),
             _('div', { style: { display: 'flex' } }, [
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
+                _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws.acgvideo.com')]),
             ]), _('br'),
             _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogin(); } } }, [_('text', '帐号授权')]),
             _('text', '　'),
@@ -306,6 +330,7 @@ function showSettings() {
     form.elements['balh_proxy_server'].value = proxyServer;
     form.elements['balh_mode'].value = mode;
     form.elements['balh_blocked_vip'].checked = isBlockedVip;
+    form.elements['balh_flv_prefer_ws'].checked = flvPreferWS;
     pingOutput = document.getElementById('balh_server_ping');
     document.body.style.overflow = 'hidden';
 }
@@ -1158,4 +1183,12 @@ function ajaxPromise(options) {
         };
         $.ajax(options);
     });
+}
+
+function compatES6() {
+    if (!String.prototype.includes) {
+        String.prototype.includes = function (s) {
+            return this.indexOf(s) !== -1;
+        }
+    }
 }
