@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.7.7
+// @version      5.8.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://www.bilibili.com/video/av*
+// @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
@@ -17,6 +18,7 @@
 'use strict';
 var log = window.console.log.bind(window.console); // console.log简写为log
 compatES6();
+installHookAjaxTo(window);
 
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
@@ -37,7 +39,7 @@ var mode = settings.balh_mode || (isBlockedVip ? MODE_REDIRECT : MODE_DEFAULT); 
 var flvPreferWS = settings.balh_flv_prefer_ws; // 优先使用ws.acgvideo.com服务器上的视频文件
 // movie页面使用window.aid, 保存当前页面av号
 // anime页面使用window.season_id, 保存当前页面season号
-var isMoviePage = window.location.href.indexOf('bangumi.bilibili.com/movie/') !== -1;
+var isMoviePage = window.location.href.includes('bangumi.bilibili.com/movie/');
 
 log('Mode:', mode, 'isBlockedVip:', isBlockedVip, 'server:', proxyServer, 'flvPreferWS:', flvPreferWS, 'readyState:', document.readyState);
 
@@ -199,20 +201,40 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
 } else {
     injectDataFilter();
 }
+window.hookAjax(window, 'XMLHttpRequest', {
+    onreadystatechange: function () {
+        var xhr = this._XMLHttpRequest, json;
+        if (xhr.readyState === 4) {
+            // https://bangumi.bilibili.com/view/web_api/season/user/status?season_id=6421&season_type=1
+            if (xhr.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')) {
+                log('/season/user/status:', xhr.responseText);
+                json = JSON.parse(xhr.responseText);
+                if (json.code === 0 && json.result && json.result.area_limit) {
+                    json.result.area_limit = 0; // 取消区域限制
+                    this.responseText = JSON.stringify(json);
+                    this._onreadystatechange.apply(this, arguments); // 使用修改之后的数据, 返回给原始的onreadystatechange处理
+                    return true; // 拦截
+                }
+            }
+        }
+    }
+});
 
 documentReady(function () {
-    if (window.location.hostname === 'bangumi.bilibili.com') {
+    if (window.location.hostname === 'bangumi.bilibili.com') { // 老的番剧列表和播放页面
         checkHtml5();
-        if (window.location.pathname.match(/^\/anime\/\d+\/?$/)) {
+        if (window.location.pathname.match(/^\/anime\/\d+\/?$/)) { // 番剧列表页面
             tryFillSeasonList();
         }
-    } else if (window.location.href.indexOf('www.bilibili.com/video/av') !== -1) {
+    } else if (window.location.href.includes('www.bilibili.com/bangumi/play/ep')) { // 新的番剧播放页面
+        checkHtml5();
+    } else if (window.location.href.includes('www.bilibili.com/video/av')) { // av页面
         tryRedirectToBangumiOrInsertPlayer();
     }
 });
 
 windowReady(function () {
-    if (window.location.hostname === 'bangumi.bilibili.com') {
+    if (window.location.hostname === 'bangumi.bilibili.com' || window.location.href.includes('www.bilibili.com/bangumi/play/ep')) {
         addSettingsButton();
         checkLoginState();
     }
@@ -246,8 +268,13 @@ window.addEventListener('message', function (e) {
  */
 var popMessage = null;
 function addSettingsButton() {
+    var MessageBox = window.MessageBox || function () {
+        var logInvoke = function () { log('需要实现MessageBox:', arguments) };
+        this.show = logInvoke;
+        this.close = logInvoke;
+    };
     popMessage == null && (popMessage = new MessageBox);
-    var indexNav = document.getElementById('index_nav'), bottom = '110px';
+    var indexNav = document.getElementById('index_nav') || document.querySelector('.bangumi-nav-right'), bottom = '110px';
     if (indexNav == null) {
         document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
         indexNav = document.body.appendChild(_('div', {
@@ -568,6 +595,15 @@ function getSeasonId() {
             if (seasonId) {
                 seasonId = 'm' + seasonId;
             }
+        } catch (e) {
+            log(e);
+        }
+    }
+
+    // 若没取到, 则去新的番剧播放页面的ep
+    if (!seasonId) {
+        try {
+            seasonId = (window.top.location.pathname.match(/\/bangumi\/play\/(ep\d+)/) || ['', ''])[1];
         } catch (e) {
             log(e);
         }
@@ -1190,5 +1226,74 @@ function compatES6() {
         String.prototype.includes = function (s) {
             return this.indexOf(s) !== -1;
         }
+    }
+}
+
+// https://github.com/wendux/Ajax-hook , 被我改过, 现在看不懂了_(:3」∠)_
+function installHookAjaxTo(global) {
+    global.hookAjax = function (object, name, hookObj) {
+        var oriName = '_' + name;
+        object[oriName] = object[oriName] || object[name];
+        object[name] = function (...args) {
+            this[oriName] = new object[oriName](...args);
+            for (var attr in this[oriName]) {
+                var type = "";
+                try {
+                    type = typeof this[oriName][attr]
+                } catch (e) { }
+                if (type === "function") {
+                    this[attr] = hookfun(attr);
+                } else {
+                    Object.defineProperty(this, attr, {
+                        get: getterFactory(attr),
+                        set: setterFactory(attr)
+                    })
+                }
+            }
+        }
+
+        function getterFactory(attr) {
+            return function () {
+                return this.hasOwnProperty(attr + "_") ? this[attr + "_"] : this[oriName][attr];
+            }
+        }
+
+        function setterFactory(attr) {
+            return function (value) {
+                var origin = this[oriName];
+                var that = this;
+                // 设置不是onXxx的回调属性时, 保存到hook对象里面, 因为大多数回调函数中不是使用this来取属性(如xhr.responseText), 而是直接使用之前创建的hook对象
+                if (attr.indexOf("on") != 0) {
+                    this[attr + "_"] = value;
+                    return;
+                }
+                if (hookObj[attr]) {
+                    this['_' + attr] = value; // 保存原始的回调, 供之后使用
+                    origin[attr] = function () {
+                        if (hookObj[attr].apply(that, arguments)) {
+                            return;
+                        }
+                        return value.apply(origin, arguments);
+                    };
+                } else {
+                    origin[attr] = value;
+                }
+            }
+        }
+
+        function hookfun(attr) {
+            return function () {
+                if (hookObj[attr] && hookObj[attr].apply(this, arguments)) {
+                    return;
+                }
+                return this[oriName][attr].apply(this[oriName], arguments);
+            }
+        }
+        return object[oriName];
+    }
+    global.unHookAjax = function (object, name) {
+        var oriName = '_' + name;
+        if (object[oriName]) object[name] = object[oriName];
+        object[oriName] = undefined;
     }
 }
