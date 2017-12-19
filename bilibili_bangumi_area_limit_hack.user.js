@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      5.8.0
+// @version      5.8.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
+// @require      https://raw.githubusercontent.com/ipcjs/Ajax-hook/master/src/ajaxhook.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://bangumi.bilibili.com/anime/*
@@ -18,7 +19,6 @@
 'use strict';
 var log = window.console.log.bind(window.console); // console.log简写为log
 compatES6();
-installHookAjaxTo(window);
 
 log('[' + GM_info.script.name + '] run on: ' + window.location.href);
 
@@ -188,6 +188,10 @@ var bilibiliApis = (function () {
     };
 })();
 
+if (window.location.href.includes('www.bilibili.com/bangumi/play/ep')) {
+    injectXHR();
+}
+
 if (!window.jQuery) { // 若还未加载jQuery, 则监听
     var jQuery;
     Object.defineProperty(window, 'jQuery', {
@@ -201,24 +205,6 @@ if (!window.jQuery) { // 若还未加载jQuery, 则监听
 } else {
     injectDataFilter();
 }
-window.hookAjax(window, 'XMLHttpRequest', {
-    onreadystatechange: function () {
-        var xhr = this._XMLHttpRequest, json;
-        if (xhr.readyState === 4) {
-            // https://bangumi.bilibili.com/view/web_api/season/user/status?season_id=6421&season_type=1
-            if (xhr.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')) {
-                log('/season/user/status:', xhr.responseText);
-                json = JSON.parse(xhr.responseText);
-                if (json.code === 0 && json.result && json.result.area_limit) {
-                    json.result.area_limit = 0; // 取消区域限制
-                    this.responseText = JSON.stringify(json);
-                    this._onreadystatechange.apply(this, arguments); // 使用修改之后的数据, 返回给原始的onreadystatechange处理
-                    return true; // 拦截
-                }
-            }
-        }
-    }
-});
 
 documentReady(function () {
     if (window.location.hostname === 'bangumi.bilibili.com') { // 老的番剧列表和播放页面
@@ -405,6 +391,30 @@ window.bangumi_area_limit_hack = {
 window.bangumi_aera_limit_hack = window.bangumi_area_limit_hack; // 兼容...
 
 ////////////////接下来全是函数/////////////////
+
+/**
+ * 这种注入方式有问题, 会导致 www.bilibili.com/blackboard/html5player.html 页面不能正常获取登录状态...
+ */
+function injectXHR() {
+    window.hookObject(window, 'XMLHttpRequest', {
+        onreadystatechange: function () {
+            var xhr = this._XMLHttpRequest, json;
+            if (xhr.readyState === 4) {
+                // https://bangumi.bilibili.com/view/web_api/season/user/status?season_id=6421&season_type=1
+                if (xhr.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')) {
+                    log('/season/user/status:', xhr.responseText);
+                    json = JSON.parse(xhr.responseText);
+                    if (json.code === 0 && json.result && json.result.area_limit) {
+                        json.result.area_limit = 0; // 取消区域限制
+                        this.responseText = JSON.stringify(json);
+                        this._onreadystatechange.apply(this, arguments); // 使用修改之后的数据, 返回给原始的onreadystatechange处理
+                        return true; // 拦截
+                    }
+                }
+            }
+        }
+    });
+}
 
 function injectDataFilter() {
     window.jQuery.ajaxSetup({
@@ -1226,74 +1236,5 @@ function compatES6() {
         String.prototype.includes = function (s) {
             return this.indexOf(s) !== -1;
         }
-    }
-}
-
-// https://github.com/wendux/Ajax-hook , 被我改过, 现在看不懂了_(:3」∠)_
-function installHookAjaxTo(global) {
-    global.hookAjax = function (object, name, hookObj) {
-        var oriName = '_' + name;
-        object[oriName] = object[oriName] || object[name];
-        object[name] = function (...args) {
-            this[oriName] = new object[oriName](...args);
-            for (var attr in this[oriName]) {
-                var type = "";
-                try {
-                    type = typeof this[oriName][attr]
-                } catch (e) { }
-                if (type === "function") {
-                    this[attr] = hookfun(attr);
-                } else {
-                    Object.defineProperty(this, attr, {
-                        get: getterFactory(attr),
-                        set: setterFactory(attr)
-                    })
-                }
-            }
-        }
-
-        function getterFactory(attr) {
-            return function () {
-                return this.hasOwnProperty(attr + "_") ? this[attr + "_"] : this[oriName][attr];
-            }
-        }
-
-        function setterFactory(attr) {
-            return function (value) {
-                var origin = this[oriName];
-                var that = this;
-                // 设置不是onXxx的回调属性时, 保存到hook对象里面, 因为大多数回调函数中不是使用this来取属性(如xhr.responseText), 而是直接使用之前创建的hook对象
-                if (attr.indexOf("on") != 0) {
-                    this[attr + "_"] = value;
-                    return;
-                }
-                if (hookObj[attr]) {
-                    this['_' + attr] = value; // 保存原始的回调, 供之后使用
-                    origin[attr] = function () {
-                        if (hookObj[attr].apply(that, arguments)) {
-                            return;
-                        }
-                        return value.apply(origin, arguments);
-                    };
-                } else {
-                    origin[attr] = value;
-                }
-            }
-        }
-
-        function hookfun(attr) {
-            return function () {
-                if (hookObj[attr] && hookObj[attr].apply(this, arguments)) {
-                    return;
-                }
-                return this[oriName][attr].apply(this[oriName], arguments);
-            }
-        }
-        return object[oriName];
-    }
-    global.unHookAjax = function (object, name) {
-        var oriName = '_' + name;
-        if (object[oriName]) object[name] = object[oriName];
-        object[oriName] = undefined;
     }
 }
