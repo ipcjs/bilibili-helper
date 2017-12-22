@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         Bilibili Comment Spoiler Folder
-// @name:zh      B站评论区剧透折叠
+// @name:zh-CN   B站评论区剧透折叠
+// @name:zh-HK   B站评论区剧透折叠
+// @name:zh-TW   B站评论区剧透折叠
 // @namespace    https://github.com/ipcjs
-// @version      0.0.2
+// @version      0.0.3
 // @description  折叠评论中含"剧透"的楼层
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
