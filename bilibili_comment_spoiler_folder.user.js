@@ -4,7 +4,7 @@
 // @name:zh-HK   B站评论区剧透折叠
 // @name:zh-TW   B站评论区剧透折叠
 // @namespace    https://github.com/ipcjs
-// @version      0.0.3
+// @version      1.0.0
 // @description  折叠评论中含"剧透"的楼层
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
@@ -17,7 +17,6 @@
 // ==/UserScript==
 
 'use strict'
-
 GM_addStyle("a.ep_spoiler_fold_toggle {display:block;color:#bbb;margin-top:5px}")
 const regex = /(剧透|劇透|R\.?I\.?P|走好)/i
 const message = '可能有剧透！单击此处显示 / 隐藏'
