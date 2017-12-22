@@ -4,7 +4,7 @@
 // @name:zh-HK         B站評論區劇透摺疊
 // @name:zh-TW         B站評論區劇透摺疊
 // @namespace          https://github.com/ipcjs
-// @version            1.0.2
+// @version            1.0.3
 // @description        折叠评论中包含"剧透"的楼层
 // @description:zh-CN  折叠评论中包含"剧透"的楼层
 // @description:zh-HK  摺疊評論中包含“劇透”的樓層
@@ -28,7 +28,7 @@ $('.comm').arrive('.list-item.reply-wrap', ele => {
     const processSpoiler = (replyCount) => {
         if ($('.ep_spoiler_fold_toggle', ele).length > 0) return // 已经添加了剧透警告, 着不需要再处理了
 
-        const $content = $('.con', ele).find('>.text, >.info, >.reply-box, >.paging-box')
+        const $content = $('.con', ele).find('>.text, >.reply-box, >.paging-box')
         $content.hide()
         $($content[0]).before(`<a class="ep_spoiler_fold_toggle" href="javascript:">(+${replyCount}) ${message}</a>`)
         $('.ep_spoiler_fold_toggle', ele).on('click', (event) => {
