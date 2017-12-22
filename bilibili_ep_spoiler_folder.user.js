@@ -1,10 +1,14 @@
 // ==UserScript==
-// @name         Bilibili EpSpoilerFolder
+// @name         Bilibili Comment Spoiler Folder
+// @name:zh      B站评论区剧透折叠
 // @namespace    https://github.com/ipcjs
-// @version      0.0.1
-// @description  折叠章节评论中含"剧透"的楼层
+// @version      0.0.2
+// @description  折叠评论中含"剧透"的楼层
 // @author       ipcjs
-// @match        *://bangumi.bilibili.com/*
+// @include      *://www.bilibili.com/video/av*
+// @include      *://bangumi.bilibili.com/anime/*
+// @include      *://bangumi.bilibili.com/movie/*
+// @include      *://www.bilibili.com/bangumi/play/ep*
 // @require      https://code.jquery.com/jquery-2.2.4.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/arrive/2.4.1/arrive.min.js
 // @grant        GM_addStyle
