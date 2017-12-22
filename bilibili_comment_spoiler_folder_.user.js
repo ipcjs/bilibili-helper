@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name               Bilibili Comment Spoiler Folder
 // @name:zh-CN         B站评论区剧透折叠
-// @name:zh-HK         B站评论区剧透折叠
-// @name:zh-TW         B站评论区剧透折叠
+// @name:zh-HK         B站評論區劇透摺疊
+// @name:zh-TW         B站評論區劇透摺疊
 // @namespace          https://github.com/ipcjs
-// @version            1.0.1
-// @description        折叠评论中含"剧透"的楼层
-// @description:zh-CN  折叠评论中含"剧透"的楼层
-// @description:zh-HK  折叠评论中含"剧透"的楼层
-// @description:zh-TW  折叠评论中含"剧透"的楼层
+// @version            1.0.2
+// @description        折叠评论中包含"剧透"的楼层
+// @description:zh-CN  折叠评论中包含"剧透"的楼层
+// @description:zh-HK  摺疊評論中包含“劇透”的樓層
+// @description:zh-TW  摺疊評論中包含“劇透”的樓層
 // @author             ipcjs
 // @include            *://www.bilibili.com/video/av*
 // @include            *://bangumi.bilibili.com/anime/*
