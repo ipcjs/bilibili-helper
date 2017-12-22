@@ -1,19 +1,22 @@
 // ==UserScript==
-// @name         Bilibili Comment Spoiler Folder
-// @name:zh-CN   B站评论区剧透折叠
-// @name:zh-HK   B站评论区剧透折叠
-// @name:zh-TW   B站评论区剧透折叠
-// @namespace    https://github.com/ipcjs
-// @version      1.0.0
-// @description  折叠评论中含"剧透"的楼层
-// @author       ipcjs
-// @include      *://www.bilibili.com/video/av*
-// @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/movie/*
-// @include      *://www.bilibili.com/bangumi/play/ep*
-// @require      https://code.jquery.com/jquery-2.2.4.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/arrive/2.4.1/arrive.min.js
-// @grant        GM_addStyle
+// @name               Bilibili Comment Spoiler Folder
+// @name:zh-CN         B站评论区剧透折叠
+// @name:zh-HK         B站评论区剧透折叠
+// @name:zh-TW         B站评论区剧透折叠
+// @namespace          https://github.com/ipcjs
+// @version            1.0.1
+// @description        折叠评论中含"剧透"的楼层
+// @description:zh-CN  折叠评论中含"剧透"的楼层
+// @description:zh-HK  折叠评论中含"剧透"的楼层
+// @description:zh-TW  折叠评论中含"剧透"的楼层
+// @author             ipcjs
+// @include            *://www.bilibili.com/video/av*
+// @include            *://bangumi.bilibili.com/anime/*
+// @include            *://bangumi.bilibili.com/movie/*
+// @include            *://www.bilibili.com/bangumi/play/ep*
+// @require            https://code.jquery.com/jquery-2.2.4.min.js
+// @require            https://cdnjs.cloudflare.com/ajax/libs/arrive/2.4.1/arrive.min.js
+// @grant              GM_addStyle
 // ==/UserScript==
 
 'use strict'
