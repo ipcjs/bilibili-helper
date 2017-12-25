@@ -112,25 +112,24 @@ var bilibiliApis = (function () {
             } else {
                 notify.showNotification(Date.now(), GM_info.script.name, '代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', '//bangumi.bilibili.com/favicon.ico', 3e3, window.location.reload.bind(window.location));
             }
-            var returnVal = found !== null ? {
-                "code": 0,
-                "message": "success",
-                "result": {
-                    "aid": found.av_id,
-                    "cid": found.danmaku,
-                    "episode_status": isBlockedVip ? 2 : found.episode_status,
-                    "payment": { "price": "9876547210.33" },
-                    "pay_user": {
-                        "status": isBlockedVip ? 1 : 0 // 是否已经支付过
-                    },
-                    "player": "vupload",
-                    "pre_ad": 0,
-                    "season_status": isBlockedVip ? 2 : data.result.season_status
+            var returnVal = found !== null
+                ? {
+                    "code": 0,
+                    "message": "success",
+                    "result": {
+                        "aid": found.av_id,
+                        "cid": found.danmaku,
+                        "episode_status": isBlockedVip ? 2 : found.episode_status,
+                        "payment": { "price": "9876547210.33" },
+                        "pay_user": {
+                            "status": isBlockedVip ? 1 : 0 // 是否已经支付过
+                        },
+                        "player": "vupload",
+                        "pre_ad": 0,
+                        "season_status": isBlockedVip ? 2 : data.result.season_status
+                    }
                 }
-            } : {
-                    code: -404,
-                    message: '不存在该剧集'
-                };
+                : { code: -404, message: '不存在该剧集' };
             return returnVal;
         }
     });
@@ -253,6 +252,7 @@ window.addEventListener('message', function (e) {
  MessageBox.close()
  */
 var popMessage = null;
+
 function addSettingsButton() {
     var MessageBox = window.MessageBox || function () {
         var logInvoke = function () { log('需要实现MessageBox:', arguments) };
@@ -260,7 +260,8 @@ function addSettingsButton() {
         this.close = logInvoke;
     };
     popMessage == null && (popMessage = new MessageBox);
-    var indexNav = document.getElementById('index_nav') || document.querySelector('.bangumi-nav-right'), bottom = '110px';
+    var indexNav = document.getElementById('index_nav') || document.querySelector('.bangumi-nav-right'),
+        bottom = '110px';
     if (indexNav == null) {
         document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
         indexNav = document.body.appendChild(_('div', {
@@ -322,9 +323,9 @@ var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', to
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
                 _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws.acgvideo.com')]),
             ]), _('br'),
-            _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogin(); } } }, [_('text', '帐号授权')]),
+            _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
             _('text', '　'),
-            _('a', { href: 'javascript:', event: { click: function () { settingsDOM.click(); showLogout(); } } }, [_('text', '取消授权')]),
+            _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
             _('text', '　　'),
             _('a', { href: 'javascript:', event: { click: function () { popMessage.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4)[0]; } } }, [_('text', '（这是什么？）')]),
             _('br'), _('br'),
@@ -337,6 +338,7 @@ var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', to
 ]);
 
 var pingOutput;
+
 function showSettings() {
     document.body.appendChild(settingsDOM);
     var form = settingsDOM.querySelector('form');
@@ -350,7 +352,8 @@ function showSettings() {
 
 // 测速
 function runPing() {
-    var xhr = new XMLHttpRequest(), testUrl = ['https://biliplus.ipcjs.win', 'https://www.biliplus.com'], testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
+    var xhr = new XMLHttpRequest(), testUrl = ['https://biliplus.ipcjs.win', 'https://www.biliplus.com'],
+        testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
     pingOutput.textContent = '正在进行服务器测速…';
     pingOutput.style.height = '100px';
     xhr.open('GET', '', true);
@@ -453,6 +456,7 @@ function warnServerConnection(e) {
         popMessage.show($('.balh_settings'), '哎呀，服务器连不上了，确认一下连接？', 0, 'button', showSettings);
     }
 }
+
 function replaceAjax() {
     var originalAjax = $.ajax;
     $.ajax = function (arg0, arg1) {
@@ -683,6 +687,19 @@ function setCookie(key, value, options) {
     }, key + '=' + value);
     document.cookie = c;
     return c;
+}
+
+function onSignClick(event) {
+    settingsDOM.click();
+    switch (event.target.attributes['data-sign']) {
+        default:
+        case 'in':
+            showLogin();
+            break;
+        case 'out':
+            showLogout();
+            break;
+    }
 }
 
 function showLogin() {
@@ -1029,18 +1046,22 @@ function tryRedirectToBangumiOrInsertPlayer() {
                 // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
                 var pageBodyEle = document.querySelector('.b-page-body');
                 var iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
+
                 function generatePageList(pages) {
                     function onPageBtnClick(e) {
                         var index = e.target.attributes['data-index'];
                         iframe.src = generateSrc(aid, pages[index].cid);
                     }
+
                     return pages.map(function (item, index) {
                         return _('a', { 'data-index': index, event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)]);
                     });
                 }
+
                 function generateSrc(aid, cid) {
                     return '//www.bilibili.com/blackboard/html5player.html?cid=' + cid + '&aid=' + aid + '&player_type=1';
                 }
+
                 // 添加播放器
                 pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
                     _('div', { className: 'main-inner' }, [
