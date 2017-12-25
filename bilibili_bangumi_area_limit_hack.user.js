@@ -15,12 +15,492 @@
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
+const r = {
+    text: {
+        ok: { en: 'OK', zh_cn: '确定', },
+    },
+    html: {},
+    attr: {},
+    const: {
+        MODE: {
+            DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
+            REPLACE: 'replace', // 替换模式, 替换有区域限制的视频的接口的返回值;
+            REDIRECT: 'redirect',// 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
+        },
+        SERVER: {
+            DEFAULT: 'https://biliplus.ipcjs.win',// 默认代理服务器
+            OLD_HOST: 'biliplus.ipcjsdev.tk',
+        }
+    }
+}
+const util_func_noop = function () { }
+const util_func_catched = function (func, onError) {
+    let ret = function () {
+        try {
+            return func.apply(this, arguments)
+        } catch (e) {
+            util_error('Exception while run %o: %o\n%o', func, e, e.stack)
+            if (onError) onError(e)
+        }
+    }
+    ret.name = func.name
+    return ret
+}
+
+const util_log = window.console.log.bind(window.console, 'log:')
+const util_error = window.console.error.bind(window.console, 'error:')
+
+const util_init = (function () {
+    const RUN_AT = {
+        DOM_LOADED: 0,
+        DOM_LOADED_AFTER: 1,
+        COMPLETE: 2,
+    }
+    const PRIORITY = {
+        FIRST: 1e6,
+        HIGH: 1e5,
+        BEFORE: 1e3,
+        DEFAULT: 0,
+        AFTER: -1e3,
+        LOW: -1e5,
+        LAST: -1e6,
+    }
+    const callbacks = {
+        [RUN_AT.DOM_LOADED]: [],
+        [RUN_AT.DOM_LOADED_AFTER]: [],
+        [RUN_AT.COMPLETE]: [],
+    }
+    const util_page_valid = () => true // 是否要运行
+    const dclCreator = function (runAt) {
+        let dcl = function () {
+            util_init.atRun = runAt // 更新运行状态
+            const valid = util_page_valid()
+            // 优先级从大到小, index从小到大, 排序
+            callbacks[runAt].sort((a, b) => b.priority - a.priority || a.index - b.index)
+                .filter(item => valid || item.always)
+                .forEach(item => item.func(valid))
+        }
+        return dcl
+    }
+
+    if (window.document.readyState !== 'loading') {
+        throw new Error('must run at loading')
+    }
+
+    window.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
+    window.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED_AFTER))
+    window.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
+
+    const util_init = function (func, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
+        func = util_func_catched(func)
+        if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去 
+            callbacks[runAt].push({
+                priority,
+                index: callbacks[runAt].length, // 使用callback数组的长度, 作为添加元素的index属性
+                func,
+                always
+            })
+        } else { // 否则直接运行
+            let valid = util_page_valid()
+            setTimeout(() => (valid || always) && func(valid), 1)
+        }
+        return func
+    }
+    util_init.atRun = -1 // 用来表示当前运行到什么状态
+    util_init.RUN_AT = RUN_AT
+    util_init.PRIORITY = PRIORITY
+    return util_init
+}())
+/** 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/ */
+const util_notify = (function () {
+    var avaliable = {};
+    var shown = [];
+    var use = {
+        'hasPermission': function () { return null; },
+        'requestPermission': function (callback) { return null; },
+        'hideNotification': function (notify) { return null; },
+        'showNotification': function (id, title, body, icon, delay, onclick) { return null; }
+    };
+
+    // 检查一个微博是不是已经被显示过了，如果显示过了不重复显示
+    var shownFeed = function (id) {
+        return false;
+    };
+
+    // webkitNotifications
+    // Tab Notifier 扩展实现此接口，但显示的桌面提示最多只能显示前两行
+    if (typeof webkitNotifications !== 'undefined') avaliable.webkit = {
+        'hasPermission': function () {
+            return [true, null, false][webkitNotifications.checkPermission()];
+        },
+        'requestPermission': function (callback) {
+            return webkitNotifications.requestPermission(callback);
+        },
+        'hideNotification': function (notify) {
+            notify.cancel();
+            afterHideNotification(notify);
+        },
+        'showNotification': function (id, title, body, icon, delay, onclick) {
+            if (shownFeed(id)) return null;
+            var notify = webkitNotifications.createNotification(icon, title, body);
+            if (delay && delay > 0) notify.addEventListener('display', function () {
+                setTimeout(function () { hideNotification(notify); }, delay);
+            });
+            if (onclick) notify.addEventListener('click', function () {
+                onclick.apply(this, arguments);
+                hideNotification(notify);
+            });
+            notify.show();
+            return notify;
+        },
+    };
+
+    // Notification
+    // Firefox 22+
+    // 显示4秒会自动关闭 https://bugzil.la/875114
+    if (typeof Notification !== 'undefined') avaliable.standard = {
+        'hasPermission': function () {
+            return {
+                'granted': true,
+                'denied': false,
+                'default': null,
+            }[Notification.permission];
+        },
+        'requestPermission': function (callback) {
+            return Notification.requestPermission(callback);
+        },
+        'hideNotification': function (notify) {
+            notify.close();
+            afterHideNotification(notify);
+        },
+        'showNotification': function (id, title, body, icon, delay, onclick) {
+            if (shownFeed(id)) return null;
+            var notify = new Notification(title, { 'body': body, 'icon': icon, 'requireInteraction': !delay });
+            if (delay && delay > 0) notify.addEventListener('show', function () {
+                setTimeout(function () {
+                    hideNotification(notify);
+                }, delay);
+            });
+            if (onclick) notify.addEventListener('click', function () {
+                onclick.apply(this, arguments);
+                hideNotification(notify);
+            });
+            return notify;
+        },
+    };
+
+    // 有哪些接口可用
+    var avaliableNotification = function () {
+        return Object.keys(avaliable);
+    };
+    // 选择用哪个接口
+    var choseNotification = function (prefer) {
+        return (use = prefer && avaliable[prefer] || avaliable.standard);
+    };
+    choseNotification();
+    // 检查权限
+    var hasPermission = function () {
+        return use.hasPermission.apply(this, arguments);
+    };
+    // 请求权限
+    var requestPermission = function () {
+        return use.requestPermission.apply(this, arguments);
+    };
+    // 显示消息
+    var showNotification = function (id, title, body, icon, delay, onclick) {
+        var notify = use.showNotification.apply(this, arguments);
+        shown.push(notify);
+        return notify;
+    };
+    // 隐藏已经显示的消息
+    var hideNotification = function (notify) {
+        use.hideNotification.apply(this, arguments);
+        return notify;
+    };
+    var afterHideNotification = function (notify) {
+        shown = shown.filter(function (x) { return x !== notify; });
+    };
+
+    document.addEventListener('unload', function () {
+        shown.forEach(hideNotification);
+        shown = [];
+    });
+    var showNotificationAnyway = function () {
+        var that = this, thatArguments = arguments;
+        switch (that.hasPermission()) {
+            case null: // default
+                that.requestPermission(function () {
+                    showNotificationAnyway.apply(that, thatArguments);
+                });
+                break;
+            case true: // granted
+                that.showNotification.apply(that, thatArguments);
+                break;
+            case false: // denied
+                log('Notification permission: denied');
+                break;
+        }
+    }
+
+    return {
+        'avaliableNotification': avaliableNotification,
+        'choseNotification': choseNotification,
+        'hasPermission': hasPermission,
+        'requestPermission': requestPermission,
+        'showNotification': showNotification,
+        'hideNotification': hideNotification,
+        show: showNotificationAnyway
+    };
+}())
+const util_cookie = (function () {
+    function getCookies() {
+        var map = document.cookie.split('; ').reduce(function (obj, item) {
+            var entry = item.split('=');
+            obj[entry[0]] = entry[1];
+            return obj;
+        }, {});
+        return map;
+    }
+
+    function getCookie(key) {
+        return getCookies()[key];
+    }
+
+    /**
+     * @param key     key
+     * @param value   为undefined时, 表示删除cookie
+     * @param options 为undefined时, 表示过期时间为3年
+     *          为''时, 表示Session cookie
+     *          为数字时, 表示指定过期时间
+     *          为{}时, 表示指定所有的属性
+     * */
+    function setCookie(key, value, options) {
+        if (typeof options !== 'object') {
+            options = {
+                domain: '.bilibili.com',
+                path: '/',
+                'max-age': value === undefined ? 0 : (options === undefined ? 94608000 : options)
+            };
+        }
+        var c = Object.keys(options).reduce(function (str, key) {
+            return str + '; ' + key + '=' + options[key];
+        }, key + '=' + value);
+        document.cookie = c;
+        return c;
+    }
+
+    return new Proxy({ set: setCookie, get: getCookie, all: getCookies }, {
+        get: function (target, prop) {
+            util_log('getter', arguments)
+            if (prop in target) return target[prop]
+            return getCookie(prop)
+        },
+        set: function (target, prop, value) {
+            util_log('setter', arguments)
+            setCookie(prop, value)
+            return true
+        }
+    })
+}())
+const util_ajax = function (options) {
+    return new Promise(function (resolve, reject) {
+        typeof options !== 'object' && (options = { url: options });
+
+        options.async === undefined && (options.async = true);
+        options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
+        options.success = function (data) {
+            resolve(data);
+        };
+        options.error = function (err) {
+            reject(err);
+        };
+        $.ajax(options);
+    });
+}
+/*
+ MessageBox -> from base.core.js
+ MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
+ MessageBox.close()
+ */
+const util_ui_msg = (function () {
+    let popMessage = null
+    let mockPopMessage = function MockMessageBox() {
+        this.show = (...args) => util_log(MockMessageBox.name, 'show', args)
+        this.close = (...args) => util_log(MockMessageBox.name, 'close', args)
+    }
+
+    util_init(() => {
+        if (!popMessage && window.MessageBox) {
+            popMessage = new window.MessageBox()
+        }
+    }, util_init.PRIORITY.FIRST)
+
+    return {
+        show: function () {
+            return (popMessage || mockPopMessage).show.apply(this, arguments)
+        },
+        close: function () {
+            return (popMessage || mockPopMessage).close.apply(this, arguments)
+        }
+    }
+}())
+
+/**
+ * 创建元素的快捷方法
+ * @param type string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
+ * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
+ * @param children array, 子元素;
+ */
+const _2 = (type, props, children) => {
+    let elem = null;
+    if (type === "text") {
+        return document.createTextNode(props);
+    } else {
+        elem = document.createElement(type);
+    }
+    for (let n in props) {
+        if (n === "style") {
+            for (let x in props.style) {
+                elem.style[x] = props.style[x];
+            }
+        } else if (n === "className") {
+            elem.className = props[n];
+        } else if (n === "event") {
+            for (let x in props.event) {
+                elem.addEventListener(x, props.event[x]);
+            }
+        } else {
+            elem.setAttribute(n, props[n]);
+        }
+    }
+    if (children) {
+        for (let i = 0; i < children.length; i++) {
+            if (children[i] != null)
+                elem.appendChild(children[i]);
+        }
+    }
+    return elem;
+}
+
+const util_page_player = function () {}
+const util_page_av = () => location.href.includes('www.bilibili.com/video/av')
+const util_page_bangumi = () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$'))
+const util_page_movie = () => location.href.includes('bangumi.bilibili.com/movie/')
+const util_page_anime = () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/play.*'))
+const util_page_anime_ep = () => location.href.includes('www.bilibili.com/bangumi/play/ep')
+const util_page_anime_ss = () => location.href.includes('www.bilibili.com/bangumi/play/ss')
+const balh_config = (function () {
+    const cookies = util_cookie.all() // 缓存的cookies
+    return new Proxy({ /*保存config的对象*/ }, {
+        get: function (target, prop) {
+            if (prop in target) {
+                return target[prop]
+            } else { // 若target中不存在指定的属性, 则从缓存的cookies中读取, 并保存到target中
+                let value = cookies['balh_' + prop]
+                switch (prop) {
+                    case 'server':
+                        value = value || r.const.SERVER.DEFAULT
+                        // 从tk域名迁移到新的win域名
+                        if (value.includes(r.const.SERVER.OLD_HOST)) {
+                            value = r.const.SERVER.DEFAULT
+                            balh_config.server = value
+                        }
+                        break
+                    case 'mode':
+                        value = value || balh_config.blocked_vip ? r.const.MODE.REDIRECT : r.const.MODE.DEFAULT
+                        break
+                    default:
+                        // case 'blocked_vip':
+                        // case 'flv_prefer_ws':
+                        break
+                }
+                target[prop] = value
+                return value
+            }
+        },
+        set: function (target, prop, value) {
+            target[prop] = value // 更新值
+            util_cookie['balh_' + prop] = value // 更新cookie中的值
+            return true
+        }
+    })
+}())
+const api_plus_playurl = function (aid, update = true) {
+    return util_ajax(`${balh_config.server}/api/view?id=${aid}&update=${update}`)
+}
+const api_plus_view = function (season_id) {
+    return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}`)
+}
+const inject_xhr = (function () {
+    window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
+        construct: function (target, args) {
+            let container = {} // 用来替换responseText等变量
+            return new Proxy(new target(...args), {
+                set: function (target, prop, value, receiver) {
+                    if (prop === 'onreadystatechange') {
+                        let cb = value
+                        value = function () {
+                            let replace = false
+                            if (target.readyState === 4) {
+                                if (target.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')) {
+                                    log('/season/user/status:', target.responseText)
+                                    let json = JSON.parse(target.responseText)
+                                    if (json.code === 0 && json.result && json.result.area_limit) {
+                                        json.result.area_limit = 0; // 取消区域限制
+                                        container.responseText = JSON.stringify(json)
+                                        replace = true
+                                    }
+                                } else if (target.responseURL.includes('bangumi.bilibili.com/web_api/season_area')) {
+                                    log('/season_area', target.responseText)
+                                    let json = JSON.parse(target.responseText)
+                                    if (json.code === 0 && json.result && json.result.play === 0) {
+                                        json.result.play = 1
+                                        container.responseText = JSON.stringify(json)
+                                        replace = true
+                                    }
+                                }
+                            }
+                            // 这里的this是原始的xhr, 需要替换成代理对象
+                            cb.apply(replace ? receiver : this, arguments)
+                        }
+                    }
+                    target[prop] = value
+                    return true
+                },
+                get: function (target, prop, receiver) {
+                    if (prop in container) return container[prop]
+                    let value = target[prop]
+                    if (typeof  value === 'function') {
+                        let func = value
+                        // open等方法, 必须在原始的xhr对象上才能调用...
+                        value = function () {
+                            return func.apply(target, arguments)
+                        }
+                    }
+                    return value
+                }
+            })
+        }
+    })
+}())
+
+function main() {
+    util_log(
+        'mode:', balh_config.mode,
+        'blocked_vip:', balh_config.blocked_vip,
+        'server:', balh_config.server,
+        'flv_prefer_ws:', balh_config.flv_prefer_ws,
+        'readyState:', document.readyState
+    )
+}
+
+main()
 
 'use strict';
 var log = window.console.log.bind(window.console); // console.log简写为log
 compatES6();
 
-log('[' + GM_info.script.name + '] run on: ' + window.location.href);
+log(`[${GM_info.script.name}] run on: ${window.location.href}`);
 
 var MODE_DEFAULT = 'default'; // 默认模式, 自动判断使用何种模式, 推荐;
 var MODE_REPLACE = 'replace'; // 替换模式, 替换有区域限制的视频的接口的返回值; 因为替换的操作是同步的会卡一下界面, 但没有区域限制的视频不会受到影响;
@@ -188,7 +668,7 @@ var bilibiliApis = (function () {
 })();
 
 if (window.location.href.includes('www.bilibili.com/bangumi/play/ep')) {
-    injectXHR();
+    // injectXHR();
 }
 
 if (!window.jQuery) { // 若还未加载jQuery, 则监听
@@ -420,9 +900,9 @@ function injectXHR() {
 }
 
 function injectDataFilter() {
-    window.jQuery.ajaxSetup({
-        dataFilter: jqueryDataFilter
-    });
+    // window.jQuery.ajaxSetup({
+    //     dataFilter: jqueryDataFilter
+    // });
     replaceAjax();
 }
 
@@ -453,7 +933,7 @@ function jqueryDataFilter(data, type) {
  */
 function warnServerConnection(e) {
     if (e.readyState == 0) {
-        popMessage.show($('.balh_settings'), '哎呀，服务器连不上了，确认一下连接？', 0, 'button', showSettings);
+        popMessage && popMessage.show($('.balh_settings'), '哎呀，服务器连不上了，确认一下连接？', 0, 'button', showSettings);
     }
 }
 
