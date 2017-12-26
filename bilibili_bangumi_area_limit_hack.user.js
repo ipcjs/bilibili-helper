@@ -16,7 +16,7 @@
 // @grant        none
 // ==/UserScript==
 
-;'use strict';
+'use strict';
 const r = {
     text: {
         ok: { en: 'OK', zh_cn: '确定', },
@@ -555,7 +555,7 @@ const balh_feature_area_limit = (function () {
                     get: function (target, prop, receiver) {
                         if (prop in container) return container[prop]
                         let value = target[prop]
-                        if (typeof  value === 'function') {
+                        if (typeof value === 'function') {
                             let func = value
                             // open等方法, 必须在原始的xhr对象上才能调用...
                             value = function () {

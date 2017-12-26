@@ -83,6 +83,7 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 更新日志
 
+1. 6.0.0: 适配B站的新页面
 1. 5.7.0: 尝试支持[港澳台限定的av页面](http://search.bilibili.com/all?keyword=%E4%BB%85%E9%99%90%E5%8F%B0%E6%B9%BE%E5%9C%B0%E5%8C%BA)
 1. 5.6.0: 添加设置界面
 1. 5.5.0: 尝试支持`/movie/`页面
