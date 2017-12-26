@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.0.0
+// @version      6.0.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -364,7 +364,7 @@ const _ = (type, props, children) => {
     return elem;
 }
 
-const util_ui_popframe = function (frameSrc) {
+const util_ui_popframe = function (iframeSrc) {
     if (!document.getElementById('balh-style-login')) {
         var style = document.createElement('style');
         style.id = 'balh-style-login';
@@ -422,11 +422,16 @@ const util_ui_msg = (function () {
     }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED_AFTER)
 
     return {
+        _impl: function () {
+            return popMessage || notifyPopMessage
+        },
         show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-            return (popMessage || notifyPopMessage).show.apply(this, arguments)
+            let pop = this._impl()
+            return pop.show.apply(pop, arguments)
         },
         close: function () {
-            return (popMessage || notifyPopMessage).close.apply(this, arguments)
+            let pop = this._impl()
+            return pop.close.apply(pop, arguments)
         },
         setMsgBoxFixed: function (fixed) {
             if (popMessage) {
@@ -1382,7 +1387,7 @@ const balh_ui_setting = (function () {
                 _('text', '　'),
                 _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
                 _('text', '　　'),
-                _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4)[0]; } } }, [_('text', '（这是什么？）')]),
+                _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
                 _('br'), _('br'),
                 _('div', { style: { whiteSpace: 'pre-wrap' } }, [
                     _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),
