@@ -742,7 +742,7 @@ function onSettingsFormChange(e) {
 }
 
 var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 1000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) popMessage.msgbox != null && popMessage.close(), document.body.style.overflow = '', this.remove(); } } }, [
-    _('style', {}, [_('text', '@keyframes balh-settings-bg{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.7)}}#balh-settings label{width:100%;display:inline-block;cursor:pointer}#balh-settings label:after{content:"";width:0;height:1px;background:#4285f4;transition:width .3s;display:block}#balh-settings label:hover:after{width:100%}form{margin:0}')]),
+    _('style', {}, [_('text', '@keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;}')]),
     _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
         _('h1', {}, [_('text', GM_info.script.name + ' 参数设置')]),
         _('br'),
