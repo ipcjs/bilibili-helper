@@ -1,3 +1,5 @@
+![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/476/original/aaaaaaaaaaaaScreenClip.jpg)
+
 注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
 ## 问&答
