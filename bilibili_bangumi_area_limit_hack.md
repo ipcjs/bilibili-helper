@@ -2,6 +2,8 @@
 
 注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
+**反馈问题，请去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
+
 ## 问&答
 
 ### 如何安装脚本？
@@ -28,7 +30,7 @@
     1. 提示`突破黑洞失败，需要登录`：点击弹窗，登录代理服务器就行了
     1. 提示`突破黑洞失败，我们未能穿透敌人的盔甲...当前代理服务器（...）依然有区域限制`：换个代理服务器，或者尝试登录当前代理服务器
 4. 其他弹窗提示，或者没有任何提示，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
-5. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6/feedback)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)截图。
+5. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://github.com/ipcjs/bilibili-helper/issues)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#控制台)截图。
 
 ### 看不了1080P画质？
 
