@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.0.2
+// @version      6.0.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -35,6 +35,13 @@ const r = {
         }
     }
 }
+
+const util_log = window.console.log.bind(window.console, 'log:')
+const util_debug = window.console.debug.bind(window.console, 'debug:')
+const util_error = window.console.error.bind(window.console, 'error:')
+const log = util_log
+log(`[${GM_info.script.name}] run on: ${window.location.href}`);
+
 const util_func_noop = function () { }
 const util_func_catched = function (func, onError) {
     let ret = function () {
@@ -47,14 +54,10 @@ const util_func_catched = function (func, onError) {
             return undefined
         }
     }
-    ret.name = func.name
+    // 函数的name属性是不可写+可配置的, 故需要如下代码实现类似这样的效果: ret.name = func.name
+    Object.defineProperty(ret, 'name', Object.getOwnPropertyDescriptor(func, 'name'))
     return ret
 }
-
-const util_log = window.console.log.bind(window.console, 'log:')
-const util_error = window.console.error.bind(window.console, 'error:')
-const log = util_log
-log(`[${GM_info.script.name}] run on: ${window.location.href}`);
 
 const util_init = (function () {
     const RUN_AT = {
@@ -515,6 +518,7 @@ const balh_api_plus_season = function (season_id) {
 
 const balh_feature_area_limit = (function () {
     function injectXHR() {
+        util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
         window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
             construct: function (target, args) {
                 let container = {} // 用来替换responseText等变量
