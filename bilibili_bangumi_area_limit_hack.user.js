@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.0.3
+// @version      6.1.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -23,6 +23,9 @@ const r = {
     },
     html: {},
     attr: {},
+    url: {
+        issue: 'https://github.com/ipcjs/bilibili-helper/issues/new'
+    },
     const: {
         MODE: {
             DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
@@ -36,11 +39,51 @@ const r = {
     }
 }
 
-const util_log = window.console.log.bind(window.console, 'log:')
-const util_debug = window.console.debug.bind(window.console, 'debug:')
-const util_error = window.console.error.bind(window.console, 'error:')
+const util_arr_stringify = function (arr) {
+    return arr.map(item => {
+        if (typeof item === 'object') {
+            try {
+                return JSON.stringify(item)
+            } catch (e) {
+                console.debug(e)
+                return item.toString()
+            }
+        } else {
+            return item
+        }
+    }).join(' ')
+}
+
+const util_log_hub = (function () {
+    let isTopWindow = window === window.top
+    let msgList = []
+    if (isTopWindow) {
+        window.addEventListener('message', (event) => {
+            if (event.data instanceof Array && event.data[0] === GM_info.script.name) {
+                let [/*脚本名*/, fromTop, msg] = event.data
+                msgList.push((fromTop ? '' : '    ') + msg)
+            }
+        })
+    }
+    return {
+        msg: function (msg) {
+            window.top.postMessage([GM_info.script.name, isTopWindow, msg], '*')
+        },
+        getAllMsg: function () {
+            return msgList.join('\n')
+        }
+    }
+}())
+const util_log_impl = function (type, ...args) {
+    args.unshift(type + ':')
+    window.console[type].apply(window.console, args)
+    util_log_hub.msg(util_arr_stringify(args))
+}
+const util_log = util_log_impl.bind(null, 'log')
+const util_debug = util_log_impl.bind(null, 'debug')
+const util_error = util_log_impl.bind(null, 'error')
 const log = util_log
-log(`[${GM_info.script.name}] run on: ${window.location.href}`);
+log(`[${GM_info.script.name} v${GM_info.script.version} (${GM_info.scriptHandler})] run on: ${window.location.href}`);
 
 const util_func_noop = function () { }
 const util_func_catched = function (func, onError) {
@@ -417,6 +460,20 @@ const util_ui_msg = (function () {
             }
         }
     }
+    let alertPopMessage = {
+        show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
+            setTimeout(() => {
+                if (boxType === 'button') {
+                    if (window.confirm(message)) {
+                        buttonTypeConfirmCallback()
+                    }
+                } else {
+                    alert(message)
+                }
+            }, 500)
+        },
+        close: util_func_noop
+    }
 
     util_init(() => {
         if (!popMessage && window.MessageBox) {
@@ -430,7 +487,7 @@ const util_ui_msg = (function () {
 
     return {
         _impl: function () {
-            return popMessage || notifyPopMessage
+            return popMessage || alertPopMessage
         },
         show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
             let pop = this._impl()
@@ -454,6 +511,16 @@ const util_ui_msg = (function () {
         }
     }
 }())
+const util_ui_copy = function (text, textarea) {
+    textarea.value = text
+    textarea.select()
+    try {
+        return document.execCommand('copy')
+    } catch (e) {
+        util_error('复制文本出错', e)
+    }
+    return false
+}
 const util_url_param = function (url, key) {
     return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
 }
@@ -1329,8 +1396,7 @@ const balh_ui_setting = (function () {
         indexNav.appendChild(_('div', { className: 'n-i gotop balh_settings', style: { bottom: bottom }, title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn_gotop', style: { background: '#f6f9fa' } })]));
         indexNav.lastChild.firstChild.innerHTML = '<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg style="width:30px;height:50px;fill:rgb(153,162,170)" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>';
     }
-
-    function showSettings() {
+    function _showSettings() {
         document.body.appendChild(settingsDOM);
         var form = settingsDOM.querySelector('form');
         // elements包含index的属性, 和以name命名的属性, 其中以name命名的属性是不可枚举的, 只能通过这种方式获取出来
@@ -1346,6 +1412,20 @@ const balh_ui_setting = (function () {
             }
         })
         document.body.style.overflow = 'hidden';
+    }
+
+    // 往顶层窗口发显示设置的请求
+    function showSettings() {
+        window.top.postMessage('balh-show-setting', '*')
+    }
+
+    // 只有顶层窗口才接收请求
+    if (window === window.top) {
+        window.addEventListener('message', (event) => {
+            if (event.data === 'balh-show-setting') {
+                _showSettings()
+            }
+        })
     }
 
     function onSignClick(event) {
@@ -1368,10 +1448,47 @@ const balh_ui_setting = (function () {
         log(name, ' => ', value);
     }
 
+    // 第一次点击时:
+    // 1. '复制日志&问题反馈' => '复制日志'
+    // 2. 显示'问题反馈'
+    // 3. 复制成功后请求跳转到GitHub
+    // 之后的点击, 这是正常的复制功能~~
+    function onCopyClick(event) {
+        let issueLink = document.getElementById('balh-issue-link')
+        let continueToIssue = issueLink.style.display === 'none'
+        if (continueToIssue) {
+            issueLink.style.display = 'inline'
+            let copyBtn = document.getElementById('balh-copy-log')
+            copyBtn.innerText = '复制日志'
+        }
+
+        let textarea = document.getElementById('balh-textarea-copy')
+        textarea.style.display = 'inline-block'
+        if (util_ui_copy(util_log_hub.getAllMsg(), textarea)) {
+            textarea.style.display = 'none'
+            util_ui_msg.show($(this),
+                continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',
+                continueToIssue ? 0 : 3e3,
+                continueToIssue ? 'button' : undefined,
+                continueToIssue ? () => window.open(r.url.issue) : undefined)
+        } else {
+            util_ui_msg.show($(this), '复制失败, 请从下面的文本框手动复制', 5e3)
+        }
+    }
+
+    let printSystemInfoOk = false
+    // 鼠标移入设置底部的时候, 打印一些系统信息, 方便问题反馈
+    function onMouseEnterSettingBottom(event) {
+        if (!printSystemInfoOk) {
+            printSystemInfoOk = true
+            util_debug('userAgent', navigator.userAgent)
+        }
+    }
+
     var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 1000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
         _('style', {}, [_('text', '@keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;}')]),
         _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
-            _('h1', {}, [_('text', GM_info.script.name + ' 参数设置')]),
+            _('h1', {}, [_('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
             _('br'),
             _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                 _('text', '使用的服务器：'), _('br'),
@@ -1397,10 +1514,17 @@ const balh_ui_setting = (function () {
                 _('text', '　　'),
                 _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
                 _('br'), _('br'),
-                _('div', { style: { whiteSpace: 'pre-wrap' } }, [
+                _('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
                     _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),
-                    _('text', '\n作者: ipcjs\n代码贡献: esterTion FlandreDaisuki\n接口提供：BiliPlus')
-                ])
+                    _('text', '　'),
+                    _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md', target: '_blank' }, [_('text', '帮助说明')]),
+                    _('text', '　'),
+                    _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
+                    _('text', '　'),
+                    _('a', { id: 'balh-issue-link', href: r.url.issue, target: '_blank', style: { display: 'none' } }, [_('text', '问题反馈')]),
+                    _('text', '\n作者: ipcjs esterTion FlandreDaisuki　接口：BiliPlus')
+                ]),
+                _('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
             ])
         ])
     ]);
