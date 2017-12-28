@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.1.2
+// @version      6.1.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -99,7 +99,7 @@ const util_func_catched = function (func, onError) {
     }
     // 函数的name属性是不可写+可配置的, 故需要如下代码实现类似这样的效果: ret.name = func.name
     // 在Edge上匿名函数的name的描述符会为undefined, 需要做特殊处理, fuck
-    funcNameDescriptor = Object.getOwnPropertyDescriptor(func, 'name') || {
+    let funcNameDescriptor = Object.getOwnPropertyDescriptor(func, 'name') || {
         value: '',
         writable: false,
         configurable: true,
