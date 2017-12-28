@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.1.0
+// @version      6.1.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -98,7 +98,13 @@ const util_func_catched = function (func, onError) {
         }
     }
     // 函数的name属性是不可写+可配置的, 故需要如下代码实现类似这样的效果: ret.name = func.name
-    Object.defineProperty(ret, 'name', Object.getOwnPropertyDescriptor(func, 'name'))
+    // 在Edge上匿名函数的name的描述符会为undefined, 需要做特殊处理, fuck
+    funcNameDescriptor = Object.getOwnPropertyDescriptor(func, 'name') || {
+        value: '',
+        writable: false,
+        configurable: true,
+    }
+    Object.defineProperty(ret, 'name', funcNameDescriptor)
     return ret
 }
 
@@ -1452,7 +1458,7 @@ const balh_ui_setting = (function () {
     // 1. '复制日志&问题反馈' => '复制日志'
     // 2. 显示'问题反馈'
     // 3. 复制成功后请求跳转到GitHub
-    // 之后的点击, 这是正常的复制功能~~
+    // 之后的点击, 只是正常的复制功能~~
     function onCopyClick(event) {
         let issueLink = document.getElementById('balh-issue-link')
         let continueToIssue = issueLink.style.display === 'none'

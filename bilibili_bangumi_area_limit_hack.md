@@ -1,8 +1,8 @@
-![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/476/original/aaaaaaaaaaaaScreenClip.jpg)
-
-注意，该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
+该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
 **反馈问题，请去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
+
+![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/476/original/aaaaaaaaaaaaScreenClip.jpg)
 
 ## 问&答
 
