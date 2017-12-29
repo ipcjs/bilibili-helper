@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.2.0
+// @version      6.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -17,7 +17,7 @@
 // ==/UserScript==
 
 'use strict';
-const log = console.log.bind(console, 'console.log:')
+const log = console.log.bind(console, 'injector:')
 
 function injector() {
     // @require      https://static.hdslb.com/js/md5.js
@@ -35,7 +35,7 @@ function injector() {
     $script.appendChild(document.createTextNode(`
         ;(function(GM_info){
             ${scriptSource.toString()}
-            ${scriptSource.name}('${injector.name}')
+            ${scriptSource.name}('${GM_info.scriptHandler}.${injector.name}')
         })(${JSON.stringify(GM_info)})
     `))
     document.head.appendChild($script)
@@ -48,12 +48,13 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
     return
 }
 
+/** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
     'use strict';
-    let log = console.log.bind(console, 'console.log:')
+    let log = console.log.bind(console, 'injector:')
     if (document.readyState === 'uninitialized') { // Firefox上, 对于ifame中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
         log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态')
-        setTimeout(() => scriptSource(invokeBy + '.timeout'), 0)
+        setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
         return
     }
     const r = {
@@ -93,20 +94,37 @@ function scriptSource(invokeBy) {
         }).join(' ')
     }
 
+    const util_str_multiply = function (str, multiplier) {
+        let result = ''
+        for (let i = 0; i < multiplier; i++) {
+            result += str
+        }
+        return result
+    }
+
     const util_log_hub = (function () {
-        let isTopWindow = window === window.top
+        const tag = GM_info.script.name + '.msg'
+        // 计算"楼层", 若当前window就是顶层的window, 则floor为0, 以此类推
+        function computefloor(w = window, floor = 0) {
+            if (w === window.top) {
+                return floor
+            } else {
+                return computefloor(w.parent, floor + 1)
+            }
+        }
+        let floor = computefloor()
         let msgList = []
-        if (isTopWindow) {
+        if (floor === 0) { // 只有顶层的Window才需要收集日志
             window.addEventListener('message', (event) => {
-                if (event.data instanceof Array && event.data[0] === GM_info.script.name) {
-                    let [/*脚本名*/, fromTop, msg] = event.data
-                    msgList.push((fromTop ? '' : '    ') + msg)
+                if (event.data instanceof Array && event.data[0] === tag) {
+                    let [/*tag*/, fromFloor, msg] = event.data
+                    msgList.push(util_str_multiply('    ', fromFloor) + msg)
                 }
             })
         }
         return {
             msg: function (msg) {
-                window.top.postMessage([GM_info.script.name, isTopWindow, msg], '*')
+                window.top.postMessage([tag, floor, msg], '*')
             },
             getAllMsg: function () {
                 return msgList.join('\n')
@@ -122,7 +140,7 @@ function scriptSource(invokeBy) {
     const util_debug = util_log_impl.bind(null, 'debug')
     const util_error = util_log_impl.bind(null, 'error')
     log = util_log
-    log(`[${GM_info.script.name} v${GM_info.script.version} (${GM_info.scriptHandler})] run on: ${window.location.href}`);
+    log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
     const util_func_noop = function () { }
     const util_func_catched = function (func, onError) {
