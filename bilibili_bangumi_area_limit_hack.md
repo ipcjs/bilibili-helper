@@ -10,7 +10,7 @@
 
 使用脚本前必须安装扩展，各浏览器对应的扩展如下：
 
-1. Firefox浏览器：[Tampermonkey](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/) （该脚本不支持 Greasemonkey 4）
+1. Firefox浏览器：[Tampermonkey](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/) 、Greasemonkey 4
 2. 傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)
 3. Chrome浏览器：[Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
     * 访问不了[Chrome 网上应用店](https://chrome.google.com/webstore/category/extensions)的同鞋可以到下面的地址下载crx文件。下载下来的crx文件可能不能直接安装，需要手动拖到扩展管理界面（一般为`chrome://extensions/`）中，应该就能安装成功了：
@@ -87,6 +87,7 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 更新日志
 
+1. 6.1.0: 通过绕过的方式兼容GM4
 1. 6.0.0: 适配B站的新页面
 1. 5.7.0: 尝试支持[港澳台限定的av页面](http://search.bilibili.com/all?keyword=%E4%BB%85%E9%99%90%E5%8F%B0%E6%B9%BE%E5%9C%B0%E5%8C%BA)
 1. 5.6.0: 添加设置界面
