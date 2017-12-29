@@ -108,6 +108,16 @@ const util_func_catched = function (func, onError) {
     return ret
 }
 
+const util_injector = function (func) {
+    document.head.appendChild(_('script', { id: 'injector' }, [_('text', `
+        // 使用匿名函数包裹一下, 防止变量泄漏
+        ;(function () {
+            ${func.toString()}
+            ${func.name}()
+        })()
+    `)]))
+}
+
 const util_init = (function () {
     const RUN_AT = {
         DOM_LOADED: 0,
