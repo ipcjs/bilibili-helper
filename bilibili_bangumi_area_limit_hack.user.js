@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.2.1
+// @version      6.2.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -20,6 +20,10 @@
 const log = console.log.bind(console, 'injector:')
 
 function injector() {
+    if (document.getElementById('balh-injector-source')) {
+        log(`脚本已经注入过, 不需要执行`)
+        return
+    }
     // @require      https://static.hdslb.com/js/md5.js
     GM_info.scriptMetaStr.replace(new RegExp('// @require\\s+https?:(//.*)'), (match, /*p1:*/url) => {
         log('@require:', url)
@@ -31,7 +35,7 @@ function injector() {
         return match
     })
     let $script = document.createElement('script')
-    $script.className = 'balh-injector-source'
+    $script.id = 'balh-injector-source'
     $script.appendChild(document.createTextNode(`
         ;(function(GM_info){
             ${scriptSource.toString()}
@@ -52,6 +56,12 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 function scriptSource(invokeBy) {
     'use strict';
     let log = console.log.bind(console, 'injector:')
+    if (document.getElementById('balh-injector-source') && invokeBy === GM_info.scriptHandler) {
+        // 当前, 在Firefox+GM4中, 当返回缓存的页面时, 脚本会重新执行, 并且此时XMLHttpRequest是可修改的(为什么会这样?) + 页面中存在注入的代码
+        // 导致scriptSource的invokeBy直接是GM4...
+        log(`页面中存在注入的代码, 但invokeBy却等于${GM_info.scriptHandler}, 这种情况不合理, 终止脚本执行`)
+        return
+    }
     if (document.readyState === 'uninitialized') { // Firefox上, 对于ifame中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
         log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态')
         setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
