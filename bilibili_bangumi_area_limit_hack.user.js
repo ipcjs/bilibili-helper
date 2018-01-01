@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.2.2
+// @version      6.3.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -635,6 +635,7 @@ function scriptSource(invokeBy) {
                         default:
                             // case 'blocked_vip':
                             // case 'flv_prefer_ws':
+                            // case 'remove_pre_ad':
                             break
                     }
                     target[prop] = value
@@ -764,7 +765,7 @@ function scriptSource(invokeBy) {
                                 areaLimit(true); // 只要默认模式才要跟踪是否有区域限制
                             } else {
                                 areaLimit(false);
-                                if (balh_config.blocked_vip && json.code === 0 && json.result.pre_ad) {
+                                if ((balh_config.blocked_vip || balh_config.remove_pre_ad) && json.code === 0 && json.result.pre_ad) {
                                     json.result.pre_ad = 0; // 去除前置广告
                                 }
                                 oriSuccess(json); // 保证一定调用了原来的success
@@ -1063,6 +1064,15 @@ function scriptSource(invokeBy) {
             });
         } else {
             injectAjax();
+        }
+    }())
+    const balh_feature_remove_pre_ad = (function () {
+        if (util_page.player()) {
+            // 播放页面url中的pre_ad参数, 决定是否播放广告...
+            if (balh_config.remove_pre_ad && util_url_param(location.href, 'pre_ad') == 1) {
+                log('需要跳转到不含广告的url')
+                location.href = location.href.replace(/&?pre_ad=1/, '')
+            }
         }
     }())
     const balh_feature_check_html5 = (function () {
@@ -1580,6 +1590,7 @@ function scriptSource(invokeBy) {
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws.acgvideo.com')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '移除前置广告')]),
                     ]), _('br'),
                     _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                     _('text', '　'),
