@@ -2,7 +2,7 @@
 
 **反馈问题，请去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
 
-![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/476/original/aaaaaaaaaaaaScreenClip.jpg)
+![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/536/original/Image.png)
 
 ## 问&答
 
