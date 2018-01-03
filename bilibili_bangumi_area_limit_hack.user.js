@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.3
+// @version      6.3.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -11,7 +11,6 @@
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
-// @include      *://www.bilibili.com/blackboard/html5playerbeta.html*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
@@ -782,7 +781,7 @@ function scriptSource(invokeBy) {
                             }
                         };
                     }
-                } else if (param.url.match('/player/web_api/playurl')) {
+                } else if (param.url.match('/player/web_api/playurl') || param.url.match('/player/web_api/v2/playurl')) {
                     one_api = bilibiliApis._playurl;
                     if (needRedirect()) {
                         param.url = one_api.transToProxyUrl(param.url);
