@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.2
+// @version      6.3.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -462,7 +462,7 @@ function scriptSource(invokeBy) {
      * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
      * @param children array, 子元素;
      */
-    const _ = (type, props, children) => {
+    const util_ui_element_creator = (type, props, children) => {
         let elem = null;
         if (type === "text") {
             return document.createTextNode(props);
@@ -492,7 +492,7 @@ function scriptSource(invokeBy) {
         }
         return elem;
     }
-
+    const _ = util_ui_element_creator
     const util_ui_popframe = function (iframeSrc) {
         if (!document.getElementById('balh-style-login')) {
             var style = document.createElement('style');
@@ -1266,13 +1266,20 @@ function scriptSource(invokeBy) {
                             return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
                         }
                         var generatePageList = function (pages) {
+                            var $curPage = null;
                             function onPageBtnClick(e) {
-                                var index = e.target.attributes['data-index'];
+                                e.target.className = 'curPage'
+                                $curPage && ($curPage.className = '')
+
+                                var index = e.target.attributes['data-index'].value;
                                 iframe.src = generateSrc(aid, pages[index].cid);
                             }
 
                             return pages.map(function (item, index) {
-                                return _('a', { 'data-index': index, event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)]);
+                                var isCurPage = item.page == page
+                                var $item = _('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)])
+                                if (isCurPage) $curPage = $item
+                                return $item
                             });
                         }
                         // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
@@ -1283,7 +1290,7 @@ function scriptSource(invokeBy) {
                         pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
                             _('div', { className: 'main-inner' }, [
                                 _('div', { className: 'v-plist' }, [
-                                    _('div', { id: 'plist', className: 'plist-content' }, generatePageList(data.list))
+                                    _('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
                                 ])
                             ]),
                             _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
