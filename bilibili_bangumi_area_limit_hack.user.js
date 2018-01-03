@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.1
+// @version      6.3.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -143,14 +143,22 @@ function scriptSource(invokeBy) {
             }
         }
     }())
-    const util_log_impl = function (type, ...args) {
-        args.unshift(type + ':')
-        window.console[type].apply(window.console, args)
-        util_log_hub.msg(util_arr_stringify(args))
+    const util_log_impl = function (type) {
+        if (false) {
+            // 直接打印, 会显示行数
+            return window.console[type].bind(window.console, type + ':');
+        } else {
+            // 将log收集到util_log_hub中, 显示的行数是错误的...
+            return function (...args) {
+                args.unshift(type + ':')
+                window.console[type].apply(window.console, args)
+                util_log_hub.msg(util_arr_stringify(args))
+            }
+        }
     }
-    const util_log = util_log_impl.bind(null, 'log')
-    const util_debug = util_log_impl.bind(null, 'debug')
-    const util_error = util_log_impl.bind(null, 'error')
+    const util_log = util_log_impl('log')
+    const util_debug = util_log_impl('debug')
+    const util_error = util_log_impl('error')
     log = util_log
     log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
@@ -1254,10 +1262,9 @@ function scriptSource(invokeBy) {
                         }
                     }
                     if (!data.bangumi) {
-                        // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
-                        var pageBodyEle = document.querySelector('.b-page-body');
-                        var iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
-
+                        var generateSrc = function (aid, cid) {
+                            return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
+                        }
                         var generatePageList = function (pages) {
                             function onPageBtnClick(e) {
                                 var index = e.target.attributes['data-index'];
@@ -1268,10 +1275,9 @@ function scriptSource(invokeBy) {
                                 return _('a', { 'data-index': index, event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)]);
                             });
                         }
-
-                        var generateSrc = function (aid, cid) {
-                            return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
-                        }
+                        // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
+                        var pageBodyEle = document.querySelector('.b-page-body');
+                        var iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
 
                         // 添加播放器
                         pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
@@ -1295,6 +1301,9 @@ function scriptSource(invokeBy) {
                                 ])
                             ])
                         ]));
+                        // 添加包含bbFeedback的js
+                        document.head.appendChild(_('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }))
+
                         document.title = data.title;
                         msgBox.parentNode.remove(); // 移除 .error-container
                         // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
@@ -1305,6 +1314,7 @@ function scriptSource(invokeBy) {
                     }
                 })
                 .then(function (result) {
+                    if (result === undefined) return // 上一个then不返回内容时, 不需要处理
                     if (result.code) {
                         return Promise.reject(JSON.stringify(result));
                     }
@@ -1634,6 +1644,7 @@ function scriptSource(invokeBy) {
             'blocked_vip:', balh_config.blocked_vip,
             'server:', balh_config.server,
             'flv_prefer_ws:', balh_config.flv_prefer_ws,
+            'remove_pre_ad:', balh_config.remove_pre_ad,
             'readyState:', document.readyState
         )
         // 暴露接口
