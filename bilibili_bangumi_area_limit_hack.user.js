@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.5
+// @version      6.3.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -75,6 +75,9 @@ function scriptSource(invokeBy) {
         url: {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues/new'
         },
+        script: {
+            is_local: GM_info.script.name.includes('.local')
+        },
         const: {
             MODE: {
                 DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
@@ -143,7 +146,7 @@ function scriptSource(invokeBy) {
         }
     }())
     const util_log_impl = function (type) {
-        if (GM_info.script.name.includes('.local')) {
+        if (r.script.is_local) {
             // 直接打印, 会显示行数
             return window.console[type].bind(window.console, type + ':');
         } else {
@@ -669,8 +672,14 @@ function scriptSource(invokeBy) {
     const balh_feature_area_limit = (function () {
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
+            let firstCreateXHR = true
             window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
                 construct: function (target, args) {
+                    // 第一次创建XHR时, 打上断点...
+                    if (firstCreateXHR && r.script.is_local) {
+                        firstCreateXHR = false
+                        debugger
+                    }
                     let container = {} // 用来替换responseText等变量
                     return new Proxy(new target(...args), {
                         set: function (target, prop, value, receiver) {
@@ -705,6 +714,14 @@ function scriptSource(invokeBy) {
                                                     json.result.play = 1
                                                     container.responseText = JSON.stringify(json)
                                                 }
+                                            }
+                                        } else if (target.responseURL.includes('api.bilibili.com/x/web-interface/nav')) {
+                                            log('/x/web-interface/nav', target.responseText)
+                                            let json = JSON.parse(target.responseText)
+                                            if (json.code === 0 && json.data && balh_config.blocked_vip) {
+                                                json.data.vipType = 2; // 类型, 年度大会员
+                                                json.data.vipStatus = 1; // 状态, 启用
+                                                container.responseText = JSON.stringify(json)
                                             }
                                         }
                                     }
