@@ -25,13 +25,6 @@ key为`'balh_server'`，可选的`value`为：
 1. `undefined`：默认代理服务器
 2. `'https://www.your_server.com'`：自定义的代理服务器
 
-### 大会员账号被B站永封了？<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/010.gif" alt="(懵逼"/>
-
-0. 注册并登录一个小号
-1. 在控制台执行命令：`bangumi_area_limit_hack.setCookie('balh_blocked_vip', 'true');`
-2. 在[代理服务器](https://biliplus.ipcjs.win/login)中使用账号密码登录被永封的大会员账号
-3. 就可以用小号看1080P了<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
-
 ### 登录/登出
 
 在控制台执行:
