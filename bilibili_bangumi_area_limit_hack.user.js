@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.6
+// @version      6.3.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -76,7 +76,7 @@ function scriptSource(invokeBy) {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues/new'
         },
         script: {
-            is_local: GM_info.script.name.includes('.local')
+            is_dev: GM_info.script.name.includes('.dev'),
         },
         const: {
             MODE: {
@@ -146,7 +146,7 @@ function scriptSource(invokeBy) {
         }
     }())
     const util_log_impl = function (type) {
-        if (r.script.is_local) {
+        if (r.script.is_dev) {
             // 直接打印, 会显示行数
             return window.console[type].bind(window.console, type + ':');
         } else {
@@ -676,7 +676,7 @@ function scriptSource(invokeBy) {
             window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
                 construct: function (target, args) {
                     // 第一次创建XHR时, 打上断点...
-                    if (firstCreateXHR && r.script.is_local) {
+                    if (firstCreateXHR && r.script.is_dev) {
                         firstCreateXHR = false
                         debugger
                     }
@@ -1635,7 +1635,7 @@ function scriptSource(invokeBy) {
                     ]), _('br'),
                     _('text', '其他：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws.acgvideo.com')]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '移除前置广告')]),
                     ]), _('br'),
