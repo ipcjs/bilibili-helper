@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.3.9
+// @version      6.4.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -71,6 +71,9 @@ function scriptSource(invokeBy) {
             ok: { en: 'OK', zh_cn: '确定', },
         },
         html: {},
+        css: {
+            settings: '#balh-settings {font-size: 12px;color: #6d757a;}  #balh-settings h1 {color: #161a1e}  #balh-settings a {color: #00a1d6;}  #balh-settings a:hover {color: #f25d8e}  #balh-settings input {margin-left: 3px;margin-right: 3px;}  @keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;} ',
+        },
         attr: {},
         url: {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues/new'
@@ -79,14 +82,17 @@ function scriptSource(invokeBy) {
             is_dev: GM_info.script.name.includes('.dev'),
         },
         const: {
-            MODE: {
+            mode: {
                 DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
                 REPLACE: 'replace', // 替换模式, 替换有区域限制的视频的接口的返回值;
                 REDIRECT: 'redirect',// 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
             },
-            SERVER: {
-                DEFAULT: 'https://biliplus.ipcjs.win',// 默认代理服务器
-                OLD_HOST: 'biliplus.ipcjsdev.tk',
+            server: {
+                S0: 'https://biliplus.ipcjs.win',
+                S1: 'https://www.biliplus.com',
+                defaultServer: function () {
+                    return this.S1
+                },
             }
         }
     }
@@ -634,15 +640,15 @@ function scriptSource(invokeBy) {
                     let value = cookies['balh_' + prop]
                     switch (prop) {
                         case 'server':
-                            value = value || r.const.SERVER.DEFAULT
-                            // 从tk域名迁移到新的win域名
-                            if (value.includes(r.const.SERVER.OLD_HOST)) {
-                                value = r.const.SERVER.DEFAULT
+                            value = value || r.const.server.defaultServer()
+                            if (value.includes('biliplus.ipcjsdev.tk') // 从tk域名迁移到新的默认域名
+                                || value.includes('biliplus.ipcjs.win')) { // biliplus.ipcjs.win当前有一些问题, 不要用它
+                                value = r.const.server.defaultServer()
                                 balh_config.server = value
                             }
                             break
                         case 'mode':
-                            value = value || (balh_config.blocked_vip ? r.const.MODE.REDIRECT : r.const.MODE.DEFAULT)
+                            value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT)
                             break
                         default:
                             // case 'blocked_vip':
@@ -884,11 +890,11 @@ function scriptSource(invokeBy) {
         }
 
         function needRedirect() {
-            return balh_config.mode === r.const.MODE.REDIRECT || (balh_config.mode === r.const.MODE.DEFAULT && isAreaLimitSeason())
+            return balh_config.mode === r.const.mode.REDIRECT || (balh_config.mode === r.const.mode.DEFAULT && isAreaLimitSeason())
         }
 
         function areaLimit(limit) {
-            balh_config.mode === r.const.MODE.DEFAULT && setAreaLimitSeason(limit)
+            balh_config.mode === r.const.mode.DEFAULT && setAreaLimitSeason(limit)
         }
 
         function setAreaLimitSeason(limit) {
@@ -1145,7 +1151,7 @@ function scriptSource(invokeBy) {
     const balh_feature_runPing = function () {
         var pingOutput = document.getElementById('balh_server_ping');
 
-        var xhr = new XMLHttpRequest(), testUrl = ['https://biliplus.ipcjs.win', 'https://www.biliplus.com'],
+        var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0, r.const.server.S1],
             testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
         pingOutput.textContent = '正在进行服务器测速…';
         pingOutput.style.height = '100px';
@@ -1176,19 +1182,19 @@ function scriptSource(invokeBy) {
         function checkLoginState() {
             if (util_cookie["DedeUserID"] === undefined) {
                 //未登录主站，强制指定值
-                localStorage.balh_notFirst = 1;
+                localStorage.balh_not_first_v3 = 1;
                 localStorage.balh_login = 0;
                 localStorage.balh_mainLogin = 0;
             } else if (localStorage.balh_mainLogin !== undefined) {
                 //主站未登录变为登录，重置显示弹窗
-                delete localStorage.balh_notFirst;
+                delete localStorage.balh_not_first_v3;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
             }
-            if (!localStorage.balh_notFirst) {
+            if (!localStorage.balh_not_first_v3) {
                 //第一次打开，确认是否已登陆；未登录显示确认弹窗
-                localStorage.balh_notFirst = 1;
+                localStorage.balh_not_first_v3 = 1;
                 checkExpiretime(function () {
                     if (localStorage.oauthTime === undefined) {
                         localStorage.balh_login = 0;
@@ -1618,22 +1624,22 @@ function scriptSource(invokeBy) {
         }
 
         var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
-            _('style', {}, [_('text', '#balh-settings {font-size: 12px;color: #6d757a;}  #balh-settings h1 {color: #161a1e}  #balh-settings a {color: #00a1d6;}  #balh-settings a:hover {color: #f25d8e}  #balh-settings input {margin-left: 3px;margin-right: 3px;}  @keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;} ')]),
+            _('style', {}, [_('text', r.css.settings)]),
             _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
                 _('h1', {}, [_('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
                 _('br'),
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '使用的服务器：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: 'https://biliplus.ipcjs.win' }), _('text', 'https://biliplus.ipcjs.win')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: 'https://www.biliplus.com' }), _('text', 'https://www.biliplus.com')])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0, disabled: 'disabled' }), _('text', `${r.const.server.S0} （暂时不可用）`)]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', r.const.server.S1)])
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
                     _('text', '脚本工作模式：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.MODE.DEFAULT }), _('text', '默认：自动判断')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.MODE.REPLACE }), _('text', '替换：在需要时处理番剧')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.MODE.REDIRECT }), _('text', '重定向：完全代理所有番剧')])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), _('text', '默认：自动判断')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), _('text', '替换：在需要时处理番剧')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), _('text', '重定向：完全代理所有番剧')])
                     ]), _('br'),
                     _('text', '其他：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
@@ -1689,7 +1695,7 @@ function scriptSource(invokeBy) {
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
             _clear_local_value: function () {
-                delete localStorage.balh_notFirst;
+                delete localStorage.balh_not_first_v3;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
