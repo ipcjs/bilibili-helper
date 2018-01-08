@@ -1,19 +1,20 @@
 // ==UserScript==
 // @name         Bilibili HTML5播放器网页全屏模式优化 脚本版
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.4
 // @description  移植自：http://userstyles.org/styles/131642
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
+// @include      *://www.bilibili.com/bangumi/play/*
 // @include      *://www.bilibili.com/html/html5player.html*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @include      *://www.bilibili.com/blackboard/html5playerbeta.html*
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
-	let css = `@namespace url(http://www.w3.org/1999/xhtml);
+'use strict'
+const css = `
+@namespace url(http://www.w3.org/1999/xhtml);
 #bilibiliPlayer.mode-fullscreen .bilibili-player-video-sendbar {
     transition: 0.2s;
     opacity: 0!important;
@@ -68,8 +69,7 @@
   
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-float-lastplay{
     bottom:30px;
-  }`;
-	let style = document.createElement('style');
-	style.innerHTML = css;
-	document.querySelector('head').appendChild(style);
-})();
+  }`
+let style = document.createElement('style')
+style.innerHTML = css
+document.querySelector('head').appendChild(style)
