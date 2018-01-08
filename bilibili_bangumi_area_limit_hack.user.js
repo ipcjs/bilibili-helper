@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.0
+// @version      6.4.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -91,7 +91,7 @@ function scriptSource(invokeBy) {
                 S0: 'https://biliplus.ipcjs.win',
                 S1: 'https://www.biliplus.com',
                 defaultServer: function () {
-                    return this.S1
+                    return this.S0
                 },
             }
         }
@@ -641,8 +641,8 @@ function scriptSource(invokeBy) {
                     switch (prop) {
                         case 'server':
                             value = value || r.const.server.defaultServer()
-                            if (value.includes('biliplus.ipcjsdev.tk') // 从tk域名迁移到新的默认域名
-                                || value.includes('biliplus.ipcjs.win')) { // biliplus.ipcjs.win当前有一些问题, 不要用它
+                            // 从tk域名迁移到新的默认域名
+                            if (value.includes('biliplus.ipcjsdev.tk')) {
                                 value = r.const.server.defaultServer()
                                 balh_config.server = value
                             }
@@ -1631,7 +1631,7 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '使用的服务器：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0, disabled: 'disabled' }), _('text', `${r.const.server.S0} （暂时不可用）`)]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', r.const.server.S0)]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', r.const.server.S1)])
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
