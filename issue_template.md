@@ -1,3 +1,8 @@
+<!-- 
+提交bug前，先看“帮助>安装脚本后无效？”，绝大多数问题都是能直接解决的！！
+直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC%E5%90%8E%E6%97%A0%E6%95%88），
+-->
+
 ## 描述
 <!-- 描述你的问题 -->
 
