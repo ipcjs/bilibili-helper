@@ -2,6 +2,8 @@
 
 **反馈问题，请去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
 
+脚本最近进行了一次重构，改用最新的ES6标准编写，国产各种加壳浏览器（360、傲游、搜狗）或许会出现不兼容的情况，**推荐换用最新版的[Firefox](https://www.mozilla.org/en-US/firefox/new/)或者[Chrome](https://www.google.com/chrome/browser/desktop/index.html)**
+
 ![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/536/original/Image.png)
 
 ## 问&答
@@ -11,13 +13,14 @@
 使用脚本前必须安装扩展，各浏览器对应的扩展如下：
 
 1. Firefox浏览器：[Tampermonkey](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/) 、Greasemonkey 4
-2. 傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)
 3. Chrome浏览器：[Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
     * 访问不了[Chrome 网上应用店](https://chrome.google.com/webstore/category/extensions)的同鞋可以到下面的地址下载crx文件。下载下来的crx文件可能不能直接安装，需要手动拖到扩展管理界面（一般为`chrome://extensions/`）中，应该就能安装成功了：
         * [Tampermonkey各版本百度网盘](https://pan.baidu.com/s/1nuCc4Al)
         * [常用Crx离线安装包下载](https://yurl.sinaapp.com/crx2.php)
     * 国内的360极速浏览器、猎豹浏览器等其实上就是Chrome加个壳，装Tampermonkey就行了
     * 搜狗高速浏览器：[Tampermonkey Legacy](https://ie.sogou.com/app/app_4326.html)
+    * ~~傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)~~（不兼容最新版脚本）
+    * ~~360安全浏览器~~（不兼容最新版脚本）
 
 ### 安装脚本后无效？
 
