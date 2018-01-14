@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.4
+// @version      6.4.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -591,6 +591,7 @@ function scriptSource(invokeBy) {
                 popMessage = new window.MessageBox()
                 let orignShow = popMessage.show
                 popMessage.show = function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
+                    // 这个窗，有一定机率弹不出来。。。不知道为什么
                     orignShow.call(this, referenceElement, message.replace('\n', '<br>'), closeTime, boxType, buttonTypeConfirmCallback)
                 }
                 popMessage.close = function () {
@@ -1237,7 +1238,7 @@ function scriptSource(invokeBy) {
                     updateLoginFlag(() => localStorage.balh_must_updateLoginFlag = r.const.FALSE);
                 }
             }
-            localStorage.balh_old_isLoginBiliBili = isLoginBiliBili()
+            localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? r.const.TRUE : r.const.FALSE
         }
 
         function showLogin() {
