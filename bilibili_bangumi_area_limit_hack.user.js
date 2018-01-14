@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.3
+// @version      6.4.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -93,7 +93,9 @@ function scriptSource(invokeBy) {
                 defaultServer: function () {
                     return this.S1
                 },
-            }
+            },
+            TRUE: 'Y',
+            FALSE: '',
         }
     }
 
@@ -501,6 +503,21 @@ function scriptSource(invokeBy) {
         return elem;
     }
     const _ = util_ui_element_creator
+    const util_jsonp = function (url, callback) {
+        return new Promise((resolve, reject) => {
+            document.head.appendChild(_('script', {
+                src: url,
+                event: {
+                    load: function () {
+                        resolve()
+                    },
+                    error: function () {
+                        reject()
+                    }
+                }
+            }));
+        })
+    }
     const util_ui_popframe = function (iframeSrc) {
         if (!document.getElementById('balh-style-login')) {
             var style = document.createElement('style');
@@ -525,6 +542,17 @@ function scriptSource(invokeBy) {
         document.body.appendChild(div);
     }
 
+    const util_ui_alert = function (message, callback) {
+        setTimeout(() => {
+            if (callback) {
+                if (window.confirm(message)) {
+                    callback()
+                }
+            } else {
+                alert(message)
+            }
+        }, 500)
+    }
     /**
      * MessageBox -> from base.core.js
      * MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
@@ -553,15 +581,7 @@ function scriptSource(invokeBy) {
         }
         let alertPopMessage = {
             show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-                setTimeout(() => {
-                    if (boxType === 'button') {
-                        if (window.confirm(message)) {
-                            buttonTypeConfirmCallback()
-                        }
-                    } else {
-                        alert(message)
-                    }
-                }, 500)
+                util_ui_alert(message, buttonTypeConfirmCallback)
             },
             close: util_func_noop
         }
@@ -569,6 +589,10 @@ function scriptSource(invokeBy) {
         util_init(() => {
             if (!popMessage && window.MessageBox) {
                 popMessage = new window.MessageBox()
+                let orignShow = popMessage.show
+                popMessage.show = function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
+                    orignShow.call(this, referenceElement, message.replace('\n', '<br>'), closeTime, boxType, buttonTypeConfirmCallback)
+                }
                 popMessage.close = function () {
                     // 若没调用过show, 就调用close, msgbox会为null, 导致报错
                     this.msgbox != null && window.MessageBox.prototype.close.apply(this, arguments)
@@ -1129,7 +1153,7 @@ function scriptSource(invokeBy) {
             if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
                 new MutationObserver(function (mutations, observer) {
                     observer.disconnect();
-                    localStorage.balh_h5_not_first = 'yes';
+                    localStorage.balh_h5_not_first = r.const.TRUE;
                     if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
                         window.GrayManager.clickMenu('change_h5');// change_flash, change_h5
                     }
@@ -1176,65 +1200,54 @@ function scriptSource(invokeBy) {
         pingLoop();
     }
     const balh_feature_sign = (function () {
-        // 逻辑有点乱, 当前在如下情况才会弹一次登录提示框:
+        function isLogin() {
+            return localStorage.oauthTime !== undefined
+        }
+        function clearLoginFlag() {
+            delete localStorage.oauthTime
+        }
+
+        function updateLoginFlag(loadCallback) {
+            util_jsonp(balh_config.server + '/login?act=expiretime')
+                .then(() => loadCallback && loadCallback(true))
+            // .catch(() => loadCallback && loadCallback(false)) // 请求失败不需要回调
+        }
+        function isLoginBiliBili() {
+            return util_cookie['DedeUserID'] !== undefined
+        }
+        // 当前在如下情况才会弹一次登录提示框:
         // 1. 第一次使用
         // 2. 主站+服务器都退出登录后, 再重新登录主站
         function checkLoginState() {
-            if (util_cookie["DedeUserID"] === undefined) {
-                //未登录主站，强制指定值
-                localStorage.balh_not_first_v11 = 1;
-                localStorage.balh_login = 0;
-                localStorage.balh_mainLogin = 0;
-            } else if (localStorage.balh_mainLogin !== undefined) {
-                //主站未登录变为登录，重置显示弹窗
-                delete localStorage.balh_not_first_v11;
-                delete localStorage.balh_login;
-                delete localStorage.balh_mainLogin;
-                delete localStorage.oauthTime;
-            }
-            if (!localStorage.balh_not_first_v11) {
-                //第一次打开，确认是否已登陆；未登录显示确认弹窗
-                localStorage.balh_not_first_v11 = 1;
-                delete localStorage.oauthTime; // 清除登录标记
-                checkExpiretime(function () {
-                    if (localStorage.oauthTime === undefined) {
-                        localStorage.balh_login = 0;
-                        util_ui_msg.show($('.balh_settings'), `${GM_info.script.name}<br>要不要考虑进行一下授权？<br><br>授权后可以观看区域限定番剧的1080P<br>（如果你是大会员或承包过这部番的话）<br><br>你可以随时在设置中打开授权页面`, 0, 'button', balh_feature_sign.showLogin);
-                        util_ui_msg.setMsgBoxFixed(true)
-                        /*if (confirm()) {
-                            showLogin();
-                        }*/
-                    } else {
-                        localStorage.balh_login = 1;
-                    }
-                });
-            } else if (localStorage.balh_login === undefined) {
-                //非第一次打开，登录状态被重置，重新检测
-                checkExpiretime(function () {
-                    localStorage.balh_login = (localStorage.oauthTime === undefined) ? 0 : 1;
-                });
-            } else if (localStorage.balh_login == 1 && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) {
-                //已登录，每天为周期检测key有效期，过期前五天会自动续期
-                checkExpiretime();
-            }
+            // 给一些状态，设置初始值
+            localStorage.balh_must_remind_login_v1 === undefined && (localStorage.balh_must_remind_login_v1 = r.const.TRUE)
 
-            function checkExpiretime(loadCallback) {
-                var script = document.createElement('script');
-                script.src = balh_config.server + '/login?act=expiretime';
-                loadCallback && script.addEventListener('load', loadCallback);
-                document.head.appendChild(script);
+            if (isLoginBiliBili()) {
+                if (!localStorage.balh_old_isLoginBiliBili || localStorage.balh_must_remind_login_v1) {
+                    clearLoginFlag()
+                    updateLoginFlag(() => {
+                        if (!isLogin()) {
+                            localStorage.balh_must_remind_login_v1 = r.const.FALSE
+                            util_ui_msg.show($('.balh_settings'), `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, 0, 'button', balh_feature_sign.showLogin)
+                            util_ui_msg.setMsgBoxFixed(true)
+                        }
+                    })
+                } else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
+                    || localStorage.balh_must_updateLoginFlag) {// 某些情况下，必须更新一次
+                    updateLoginFlag(() => localStorage.balh_must_updateLoginFlag = r.const.FALSE);
+                }
             }
+            localStorage.balh_old_isLoginBiliBili = isLoginBiliBili()
         }
 
         function showLogin() {
-            var loginUrl = balh_config.server + '/login',
-                iframeSrc = 'https://passport.bilibili.com/login?appkey=27eb53fc9058f8c3&api=' + encodeURIComponent(loginUrl) + '&sign=' + hex_md5('api=' + loginUrl + 'c2ed53a74eeefe3cf99fbd01d8c9c375');
-            util_ui_popframe(iframeSrc);
-            delete localStorage.balh_login;
+            const loginUrl = balh_config.server + '/login'
+            const iframeSrc = 'https://passport.bilibili.com/login?appkey=27eb53fc9058f8c3&api=' + encodeURIComponent(loginUrl) + '&sign=' + hex_md5('api=' + loginUrl + 'c2ed53a74eeefe3cf99fbd01d8c9c375')
+            util_ui_popframe(iframeSrc)
         }
 
         function showLogout() {
-            util_ui_popframe(balh_config.server + '/login?act=logout');
+            util_ui_popframe(balh_config.server + '/login?act=logout')
         }
 
         // 监听登录message
@@ -1242,20 +1255,19 @@ function scriptSource(invokeBy) {
             switch (e.data) {
                 case 'BiliPlus-Login-Success':
                     //登入
-                    document.head.appendChild(_('script', {
-                        src: balh_config.server + '/login?act=getlevel',
-                        event: {
-                            load: function () { location.reload(); },
-                            error: function () { location.reload(); }
-                        }
-                    }));
-                    break;
+                    localStorage.balh_must_updateLoginFlag = r.const.TRUE
+                    Promise.resolve('start')
+                        .then(() => util_jsonp(balh_config.server + '/login?act=getlevel'))
+                        .then(() => location.reload())
+                        .catch(() => location.reload())
+                    break
                 case 'BiliPlus-Logout-Success':
                     //登出
-                    location.reload();
-                    break;
+                    clearLoginFlag()
+                    location.reload()
+                    break
             }
-        });
+        })
 
 
         util_init(() => {
@@ -1266,6 +1278,8 @@ function scriptSource(invokeBy) {
         return {
             showLogin,
             showLogout,
+            isLogin,
+            isLoginBiliBili,
         }
     }())
     const balh_feature_RedirectToBangumiOrInsertPlayer = (function () {
@@ -1581,7 +1595,7 @@ function scriptSource(invokeBy) {
 
         function onSettingsFormChange(e) {
             var name = e.target.name;
-            var value = e.target.type === 'checkbox' ? (e.target.checked ? 'Y' : '') : e.target.value
+            var value = e.target.type === 'checkbox' ? (e.target.checked ? r.const.TRUE : r.const.FALSE) : e.target.value
             balh_config[name.replace('balh_', '')] = value
             log(name, ' => ', value);
         }
@@ -1652,7 +1666,7 @@ function scriptSource(invokeBy) {
                     _('text', '　'),
                     _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
                     _('text', '　　'),
-                    _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，<br>进行授权之后将可以在解除限制时正常享有这些权益<br><br>你可以随时在这里授权或取消授权<br><br>不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
+                    _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
                     _('br'), _('br'),
                     _('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
                         _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),
@@ -1687,7 +1701,9 @@ function scriptSource(invokeBy) {
             'server:', balh_config.server,
             'flv_prefer_ws:', balh_config.flv_prefer_ws,
             'remove_pre_ad:', balh_config.remove_pre_ad,
-            'readyState:', document.readyState
+            'readyState:', document.readyState,
+            'isLogin:', balh_feature_sign.isLogin(),
+            'isLoginBiliBili:', balh_feature_sign.isLoginBiliBili()
         )
         // 暴露接口
         window.bangumi_area_limit_hack = {
@@ -1696,11 +1712,11 @@ function scriptSource(invokeBy) {
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
             _clear_local_value: function () {
-                delete localStorage.balh_not_first_v11;
-                delete localStorage.balh_login;
-                delete localStorage.balh_mainLogin;
-                delete localStorage.oauthTime;
-                delete localStorage.balh_h5_not_first;
+                delete localStorage.oauthTime
+                delete localStorage.balh_h5_not_first
+                delete localStorage.balh_old_isLoginBiliBili
+                delete localStorage.balh_must_remind_login_v1
+                delete localStorage.balh_must_updateLoginFlag
             }
         }
     }
