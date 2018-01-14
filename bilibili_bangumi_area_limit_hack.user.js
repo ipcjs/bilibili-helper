@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.2
+// @version      6.4.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1058,13 +1058,13 @@ function scriptSource(invokeBy) {
                     // data有可能为null
                     if (data && data.code === -403) {
                         // window.alert('当前使用的服务器(' + balh_config.server + ')依然有区域限制');
-                        util_notify.show(`突破黑洞失败，我们未能穿透敌人的盔甲\n当前代理服务器（${balh_config.server}）依然有区域限制Σ( ￣□￣||)`);
+                        util_notify.show(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制Σ( ￣□￣||)`);
                     } else if (data === null || data.code) {
                         util_error(data);
                         util_notify.show(`突破黑洞失败\n${JSON.stringify(data)}\n点击刷新界面`, window.location.reload.bind(window.location));
                     } else if (isAreaLimitForPlayUrl(data)) {
                         util_error('>>area limit');
-                        util_notify.show(`突破黑洞失败，需要登录\n点此进行登录`, balh_feature_sign.showLogin);
+                        util_notify.show(`突破黑洞失败\n需要登录\n点此进行登录`, balh_feature_sign.showLogin);
                     } else {
                         if (balh_config.flv_prefer_ws) {
                             data.durl.forEach(function (seg) {
@@ -1182,23 +1182,23 @@ function scriptSource(invokeBy) {
         function checkLoginState() {
             if (util_cookie["DedeUserID"] === undefined) {
                 //未登录主站，强制指定值
-                localStorage.balh_not_first_v3 = 1;
+                localStorage.balh_not_first_v4 = 1;
                 localStorage.balh_login = 0;
                 localStorage.balh_mainLogin = 0;
             } else if (localStorage.balh_mainLogin !== undefined) {
                 //主站未登录变为登录，重置显示弹窗
-                delete localStorage.balh_not_first_v3;
+                delete localStorage.balh_not_first_v4;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
             }
-            if (!localStorage.balh_not_first_v3) {
+            if (!localStorage.balh_not_first_v4) {
                 //第一次打开，确认是否已登陆；未登录显示确认弹窗
-                localStorage.balh_not_first_v3 = 1;
+                localStorage.balh_not_first_v4 = 1;
                 checkExpiretime(function () {
                     if (localStorage.oauthTime === undefined) {
                         localStorage.balh_login = 0;
-                        util_ui_msg.show($('.balh_settings'), `看起来你是第一次使用${GM_info.script.name}<br>要不要考虑进行一下授权？<br><br>授权后可以观看区域限定番剧的1080P<br>（如果你是大会员或承包过这部番的话）<br><br>你可以随时在设置中打开授权页面`, 0, 'button', balh_feature_sign.showLogin);
+                        util_ui_msg.show($('.balh_settings'), `${GM_info.script.name}<br>要不要考虑进行一下授权？<br><br>授权后可以观看区域限定番剧的1080P<br>（如果你是大会员或承包过这部番的话）<br><br>你可以随时在设置中打开授权页面`, 0, 'button', balh_feature_sign.showLogin);
                         util_ui_msg.setMsgBoxFixed(true)
                         /*if (confirm()) {
                             showLogin();
@@ -1695,7 +1695,7 @@ function scriptSource(invokeBy) {
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
             _clear_local_value: function () {
-                delete localStorage.balh_not_first_v3;
+                delete localStorage.balh_not_first_v4;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
