@@ -1,8 +1,10 @@
 该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
 
-**反馈问题，请去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
+**反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明**
+**反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明**
+**反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明**
 
-脚本最近进行了一次重构，改用最新的ES6标准编写，国产各种加壳浏览器（360、傲游、搜狗）或许会出现不兼容的情况，**推荐换用最新版的[Firefox](https://www.mozilla.org/en-US/firefox/new/)或者[Chrome](https://www.google.com/chrome/browser/desktop/index.html)**
+**不要在Greasyfork中提交反馈，去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
 
 ![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/536/original/Image.png)
 
@@ -19,17 +21,14 @@
         * [常用Crx离线安装包下载](https://yurl.sinaapp.com/crx2.php)
     * 国内的360极速浏览器、猎豹浏览器等其实上就是Chrome加个壳，装Tampermonkey就行了
     * 搜狗高速浏览器：[Tampermonkey Legacy](https://ie.sogou.com/app/app_4326.html)
-    * <del>傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)</del>（不兼容最新版脚本）
-    * <del>360安全浏览器</del>（不兼容最新版脚本）
+    * <del>傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)</del>（实测即使是最新版，也不兼容该脚本）
 
-### 安装脚本后无效？
+### 脚本无效？
 
+0. 如果在[番剧页面](https://bangumi.bilibili.com/anime/5551)中连设置按钮都看不到，说明你的浏览器版本太老了，请更新成最新版；如果还是不行，请换用最新版的[Firefox](https://www.mozilla.org/en-US/firefox/new/)或者[Chrome](https://www.google.com/chrome/browser/desktop/index.html)。
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
-1. 确定你打开的页面的URL是`bangumi.bilibili.com/anime`或`bangumi.bilibili.com/movie`开头的，当前该脚本只在这些URL下开启了。  
-2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjs.win/api/bangumi?season=5551)。 如果打不开，可以[换个代理服务器试试](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md#高级设置)
+2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjs.win/api/bangumi?season=5551)。 如果打不开，可以点开设置窗口，换个代理服务器试试
 3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
-    1. 提示`代理服务器错误:{"code":-502,"message":"网络错误"}`：代理服务器内部问题，点击弹窗，刷新界面就行了
-    1. 提示`突破黑洞失败 null`：同上
     1. 提示`突破黑洞失败，需要登录`：点击弹窗，登录代理服务器就行了
     1. 提示`突破黑洞失败，我们未能穿透敌人的盔甲...当前代理服务器（...）依然有区域限制`：换个代理服务器，或者尝试登录当前代理服务器
 4. 其他弹窗提示，或者没有任何提示，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  

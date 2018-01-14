@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.1
+// @version      6.4.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -91,7 +91,7 @@ function scriptSource(invokeBy) {
                 S0: 'https://biliplus.ipcjs.win',
                 S1: 'https://www.biliplus.com',
                 defaultServer: function () {
-                    return this.S0
+                    return this.S1
                 },
             }
         }
@@ -597,7 +597,7 @@ function scriptSource(invokeBy) {
             },
             showOnError: function (e) {
                 if (e.readyState === 0) {
-                    this.show($('.balh_settings'), '哎呀，服务器连不上了，确认一下连接？', 0, 'button', balh_ui_setting.show);
+                    this.show($('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', balh_ui_setting.show);
                 }
             }
         }
@@ -1631,8 +1631,8 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '使用的服务器：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', r.const.server.S0)]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', r.const.server.S1)])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', 'S0')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', 'S1（更稳定）')])
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
                     _('text', '脚本工作模式：'), _('br'),
