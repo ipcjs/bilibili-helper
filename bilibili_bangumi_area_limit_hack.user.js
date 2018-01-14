@@ -1647,8 +1647,8 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '使用的服务器：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', 'S0')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', 'S1（更稳定）')])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', '备选代理服务器（更稳定）')])
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
                     _('text', '脚本工作模式：'), _('br'),
