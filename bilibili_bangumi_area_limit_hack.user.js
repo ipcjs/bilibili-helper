@@ -684,7 +684,7 @@ function scriptSource(invokeBy) {
                     // 第一次创建XHR时, 打上断点...
                     if (firstCreateXHR && r.script.is_dev) {
                         firstCreateXHR = false
-                        debugger
+                        // debugger
                     }
                     let container = {} // 用来替换responseText等变量
                     return new Proxy(new target(...args), {
@@ -1182,19 +1182,20 @@ function scriptSource(invokeBy) {
         function checkLoginState() {
             if (util_cookie["DedeUserID"] === undefined) {
                 //未登录主站，强制指定值
-                localStorage.balh_not_first_v4 = 1;
+                localStorage.balh_not_first_v11 = 1;
                 localStorage.balh_login = 0;
                 localStorage.balh_mainLogin = 0;
             } else if (localStorage.balh_mainLogin !== undefined) {
                 //主站未登录变为登录，重置显示弹窗
-                delete localStorage.balh_not_first_v4;
+                delete localStorage.balh_not_first_v11;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
             }
-            if (!localStorage.balh_not_first_v4) {
+            if (!localStorage.balh_not_first_v11) {
                 //第一次打开，确认是否已登陆；未登录显示确认弹窗
-                localStorage.balh_not_first_v4 = 1;
+                localStorage.balh_not_first_v11 = 1;
+                delete localStorage.oauthTime; // 清除登录标记
                 checkExpiretime(function () {
                     if (localStorage.oauthTime === undefined) {
                         localStorage.balh_login = 0;
@@ -1695,7 +1696,7 @@ function scriptSource(invokeBy) {
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
             _clear_local_value: function () {
-                delete localStorage.balh_not_first_v4;
+                delete localStorage.balh_not_first_v11;
                 delete localStorage.balh_login;
                 delete localStorage.balh_mainLogin;
                 delete localStorage.oauthTime;
