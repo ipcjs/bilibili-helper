@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.6
+// @version      6.4.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -749,7 +749,7 @@ function scriptSource(invokeBy) {
                                         } else if (target.responseURL.includes('api.bilibili.com/x/web-interface/nav')) {
                                             let json = JSON.parse(target.responseText)
                                             log('/x/web-interface/nav', json.data
-                                                ? { isLogin: json.data.isLogin, vipType: json.data.vipType, vipStatus: json.data.vipStatus }
+                                                ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus }
                                                 : target.responseText)
                                             if (json.code === 0 && json.data && balh_config.blocked_vip) {
                                                 json.data.vipType = 2; // 类型, 年度大会员
