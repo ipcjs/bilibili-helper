@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.5
+// @version      6.4.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1224,13 +1224,14 @@ function scriptSource(invokeBy) {
             localStorage.balh_must_remind_login_v1 === undefined && (localStorage.balh_must_remind_login_v1 = r.const.TRUE)
 
             if (isLoginBiliBili()) {
-                if (!localStorage.balh_old_isLoginBiliBili || localStorage.balh_must_remind_login_v1) {
+                if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
+                    || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
+                    || localStorage.balh_must_remind_login_v1) { // 设置了"必须提醒"flag
                     clearLoginFlag()
                     updateLoginFlag(() => {
                         if (!isLogin()) {
                             localStorage.balh_must_remind_login_v1 = r.const.FALSE
-                            util_ui_msg.show($('.balh_settings'), `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, 0, 'button', balh_feature_sign.showLogin)
-                            util_ui_msg.setMsgBoxFixed(true)
+                            util_ui_alert(`${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, balh_feature_sign.showLogin)
                         }
                     })
                 } else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
@@ -1239,6 +1240,7 @@ function scriptSource(invokeBy) {
                 }
             }
             localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? r.const.TRUE : r.const.FALSE
+            localStorage.balh_pre_server = balh_config.server
         }
 
         function showLogin() {
