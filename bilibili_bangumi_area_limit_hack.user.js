@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.8
+// @version      6.4.9
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1047,7 +1047,7 @@ function scriptSource(invokeBy) {
                             }
                         }
                     } else {
-                        util_notify.show('代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', window.location.reload.bind(window.location));
+                        util_ui_alert('代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', window.location.reload.bind(window.location));
                     }
                     var returnVal = found !== null
                         ? {
@@ -1082,14 +1082,13 @@ function scriptSource(invokeBy) {
                 processProxySuccess: function (data) {
                     // data有可能为null
                     if (data && data.code === -403) {
-                        // window.alert('当前使用的服务器(' + balh_config.server + ')依然有区域限制');
-                        util_notify.show(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制Σ( ￣□￣||)`);
+                        util_ui_alert(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制Σ( ￣□￣||)\n请尝试“帐号授权”或者换个代理服务器`, balh_ui_setting.show)
                     } else if (data === null || data.code) {
                         util_error(data);
-                        util_notify.show(`突破黑洞失败\n${JSON.stringify(data)}\n点击刷新界面`, window.location.reload.bind(window.location));
+                        util_ui_alert(`突破黑洞失败\n${JSON.stringify(data)}\n点击确定刷新界面`, window.location.reload.bind(window.location));
                     } else if (isAreaLimitForPlayUrl(data)) {
                         util_error('>>area limit');
-                        util_notify.show(`突破黑洞失败\n需要登录\n点此进行登录`, balh_feature_sign.showLogin);
+                        util_ui_alert(`突破黑洞失败\n需要登录\n点此确定进行登录`, balh_feature_sign.showLogin);
                     } else {
                         if (balh_config.flv_prefer_ws) {
                             data.durl.forEach(function (seg) {
