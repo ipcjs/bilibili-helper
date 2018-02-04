@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.5.0
+// @version      6.5.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1237,40 +1237,6 @@ function scriptSource(invokeBy) {
         } else {
             injectAjax();
         }
-        util_init(() => {
-            if (balh_config.playurl_by_bilibili && (util_page.anime_ep() || util_page.anime_ss())) {
-                let container = document.getElementById('bofqi')
-                if (container) {
-                    new MutationObserver((mutations, observer) => {
-                        let playerNode;
-                        for (let mutation of mutations) {
-                            if (mutation.type === 'childList') {
-                                for (let node of mutation.addedNodes) {
-                                    // 匹配: <div class="player"/>
-                                    if (node.tagName === 'DIV' && node.id === '' && node.className.split(' ').includes('player')) {
-                                        playerNode = node
-                                        break
-                                    }
-                                }
-                            }
-                            if (playerNode) {
-                                break
-                            }
-                        }
-                        if (playerNode) {
-                            log('player added:', playerNode, window.aid, window.cid)
-                            playerNode.style['display'] = 'none' // 隐藏原本的播放器
-                            let balhPlayer = document.querySelector('.balh-player-iframe')
-                            if (!balhPlayer) { // 创建iframe播放器
-                                balhPlayer = _('iframe', { className: 'player balh-player-iframe', style: { position: 'relative' } })
-                                container.appendChild(balhPlayer)
-                            }
-                            balhPlayer.src = `//www.bilibili.com/blackboard/html5player.html?crossDomain=true&cid=${window.cid}&aid=${window.aid}&player_type=1`
-                        }
-                    }).observe(container, { childList: true, attributes: false })
-                }
-            }
-        })
     }())
     const balh_feature_remove_pre_ad = (function () {
         if (util_page.player()) {
