@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.4.9
+// @version      6.5.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -518,6 +518,58 @@ function scriptSource(invokeBy) {
             }));
         })
     }
+    const util_generate_sign = function (params, key) {
+        var s_keys = [];
+        for (var i in params) {
+            s_keys.push(i);
+        }
+        s_keys.sort();
+        var data = "";
+        for (var i = 0; i < s_keys.length; i++) {
+            // encodeURIComponent 返回的转义数字必须为大写( 如 %2F )
+            data += (data ? "&" : "") + s_keys[i] + "=" + encodeURIComponent(params[s_keys[i]]);
+        }
+        return {
+            "sign": hex_md5(data + key),
+            "params": data
+        };
+    }
+    const util_xml2obj = (xml) => {
+        try {
+            var obj = {}, text;
+            var children = xml.children;
+            if (children.length > 0) {
+                for (var i = 0; i < children.length; i++) {
+                    var item = children.item(i);
+                    var nodeName = item.nodeName;
+
+                    if (typeof (obj[nodeName]) == "undefined") { // 若是新的属性, 则往obj中添加
+                        obj[nodeName] = util_xml2obj(item);
+                    } else {
+                        if (typeof (obj[nodeName].push) == "undefined") { // 若老的属性没有push方法, 则把属性改成Array
+                            var old = obj[nodeName];
+
+                            obj[nodeName] = [];
+                            obj[nodeName].push(old);
+                        }
+                        obj[nodeName].push(util_xml2obj(item));
+                    }
+                }
+            } else {
+                text = xml.textContent;
+                if (/^\d+(\.\d+)?$/.test(text)) {
+                    obj = Number(text);
+                } else if (text === 'true' || text === 'false') {
+                    obj = Boolean(text);
+                } else {
+                    obj = text;
+                }
+            }
+            return obj;
+        } catch (e) {
+            util_error(e);
+        }
+    }
     const util_ui_popframe = function (iframeSrc) {
         if (!document.getElementById('balh-style-login')) {
             var style = document.createElement('style');
@@ -835,6 +887,11 @@ function scriptSource(invokeBy) {
                     one_api = bilibiliApis._playurl;
                     if (needRedirect()) {
                         param.url = one_api.transToProxyUrl(param.url);
+                        // ajax请求时指定的dataType和实际的dataType不相同时, 会报错...
+                        // 故当one_api和param中都指定了dataType且不相等时, 删除param中的dataType, 让ajax自动判断
+                        if (one_api.dataType && param.dataType && one_api.dataType != param.dataType) {
+                            delete param.dataType;
+                        }
                         param.success = function (data) {
                             oriSuccess(one_api.processProxySuccess(data));
                         };
@@ -1070,6 +1127,53 @@ function scriptSource(invokeBy) {
                     return returnVal;
                 }
             });
+            var playurl_by_bilibili = new BilibiliApi({
+                dataType: 'xml',
+                transToProxyUrl: function (originUrl) {
+                    const api_url = 'https://interface.bilibili.com/playurl?'
+                    const bangumi_api_url = 'https://bangumi.bilibili.com/player/web_api/playurl?'
+                    const SEC_NORMAL = '1c15888dc316e05a15fdd0a02ed6584f'
+                    const SEC_BANGUMI = '9b288147e5474dd2aa67085f716c560d'
+
+                    // 不设置module; 带module的接口都是有区域限制的...
+                    let module = undefined /*util_url_param(originUrl, 'module')*/
+                    // 不使用json; 让服务器直接返回json时, 获取的视频url不能直接播放...天知道为什么
+                    let useJson = false
+                    let paramDict = {
+                        cid: util_url_param(originUrl, 'cid'),
+                        quality: util_url_param(originUrl, 'quality'),
+                        qn: util_url_param(originUrl, 'qn'), // 增加这个参数, 返回的清晰度更多
+                        player: 1,
+                        ts: Math.floor(Date.now() / 1000),
+                    }
+                    if (module) paramDict.module = module
+                    if (useJson) paramDict.otype = 'json'
+                    let { sign, params } = util_generate_sign(paramDict, module ? SEC_BANGUMI : SEC_NORMAL)
+                    let url = module ? bangumi_api_url : api_url + params + '&sign=' + sign
+                    return url
+                },
+                processProxySuccess: function (result) {
+                    // 将xml解析成json
+                    let obj = util_xml2obj(result.documentElement)
+                    if (!obj || obj.code) {
+                        util_ui_alert(`从B站接口获取视频地址失败\nresult: ${JSON.stringify(obj)}\n\n点击确定, 进入设置页面关闭'使用B站接口获取视频地址'功能`, balh_ui_setting.show)
+                    } else {
+                        obj.accept_quality && (obj.accept_quality = obj.accept_quality.split(',').map(n => +n))
+                        if (!obj.durl.push) {
+                            obj.durl = [obj.durl]
+                        }
+                        obj.durl.forEach((item) => {
+                            if (item.backup_url === '') {
+                                item.backup_url = undefined
+                            } else if (item.backup_url && item.backup_url.url) {
+                                item.backup_url = item.backup_url.url
+                            }
+                        })
+                    }
+                    log('xml2obj', result, '=>', obj)
+                    return obj
+                },
+            })
             var playurl = new BilibiliApi({
                 transToProxyUrl: function (url) {
                     var params = url.split('?')[1];
@@ -1115,7 +1219,7 @@ function scriptSource(invokeBy) {
 
             return {
                 _get_source: util_page.movie() ? get_source_by_aid : get_source_by_season_id,
-                _playurl: playurl
+                _playurl: balh_config.playurl_by_bilibili ? playurl_by_bilibili : playurl,
             };
         })();
 
@@ -1133,6 +1237,40 @@ function scriptSource(invokeBy) {
         } else {
             injectAjax();
         }
+        util_init(() => {
+            if (balh_config.playurl_by_bilibili && (util_page.anime_ep() || util_page.anime_ss())) {
+                let container = document.getElementById('bofqi')
+                if (container) {
+                    new MutationObserver((mutations, observer) => {
+                        let playerNode;
+                        for (let mutation of mutations) {
+                            if (mutation.type === 'childList') {
+                                for (let node of mutation.addedNodes) {
+                                    // 匹配: <div class="player"/>
+                                    if (node.tagName === 'DIV' && node.id === '' && node.className.split(' ').includes('player')) {
+                                        playerNode = node
+                                        break
+                                    }
+                                }
+                            }
+                            if (playerNode) {
+                                break
+                            }
+                        }
+                        if (playerNode) {
+                            log('player added:', playerNode, window.aid, window.cid)
+                            playerNode.style['display'] = 'none' // 隐藏原本的播放器
+                            let balhPlayer = document.querySelector('.balh-player-iframe')
+                            if (!balhPlayer) { // 创建iframe播放器
+                                balhPlayer = _('iframe', { className: 'player balh-player-iframe', style: { position: 'relative' } })
+                                container.appendChild(balhPlayer)
+                            }
+                            balhPlayer.src = `//www.bilibili.com/blackboard/html5player.html?crossDomain=true&cid=${window.cid}&aid=${window.aid}&player_type=1`
+                        }
+                    }).observe(container, { childList: true, attributes: false })
+                }
+            }
+        })
     }())
     const balh_feature_remove_pre_ad = (function () {
         if (util_page.player()) {
@@ -1415,7 +1553,7 @@ function scriptSource(invokeBy) {
         })
         return true // 随便返回一个值...
     }())
-    const bash_feature_FillSeasonList = (function () {
+    const balh_feature_FillSeasonList = (function () {
         function tryFillSeasonList() {
             var error_container, season_id;
             if (!(error_container = document.querySelector('div.error-container'))) {
@@ -1649,7 +1787,8 @@ function scriptSource(invokeBy) {
                     _('text', '使用的服务器：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', '备选代理服务器（更稳定）')])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', '备选代理服务器（更稳定）')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_playurl_by_bilibili' }), _('text', '使用B站接口获取视频地址（清晰度低）')]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
                     _('text', '脚本工作模式：'), _('br'),
