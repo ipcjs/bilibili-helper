@@ -8,6 +8,8 @@
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://www.bilibili.com/bangumi/play/ss*
+// @include      *://m.bilibili.com/bangumi/play/ep*
+// @include      *://m.bilibili.com/bangumi/play/ss*
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*

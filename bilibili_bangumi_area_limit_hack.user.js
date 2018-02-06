@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.5.1
+// @version      6.5.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://www.bilibili.com/bangumi/play/ss*
+// @include      *://m.bilibili.com/bangumi/play/ep*
+// @include      *://m.bilibili.com/bangumi/play/ss*
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
@@ -705,6 +707,8 @@ function scriptSource(invokeBy) {
         anime: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/play.*')),
         anime_ep: () => location.href.includes('www.bilibili.com/bangumi/play/ep'),
         anime_ss: () => location.href.includes('www.bilibili.com/bangumi/play/ss'),
+        anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
+        anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
     }
 
     const balh_config = (function () {
