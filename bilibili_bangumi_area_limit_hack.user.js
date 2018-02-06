@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.5.2
+// @version      6.6.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -467,7 +467,29 @@ function scriptSource(invokeBy) {
             $.ajax(options);
         });
     }
-
+    /**
+    * @param promiseCeator  创建Promise的函数
+    * @param resultTranformer 用于变换result的函数, 返回新的result或Promise
+    * @param errorTranformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
+    */
+    const util_async_wrapper = function (promiseCeator, resultTranformer, errorTranformer) {
+        return function (...args) {
+            return new Promise((resolve, reject) => {
+                log(promiseCeator, ...args)
+                promiseCeator(...args)
+                    .then(r => resultTranformer ? resultTranformer(r) : r)
+                    .then(r => resolve(r))
+                    .catch(e => {
+                        e = errorTranformer ? errorTranformer(e) : e
+                        if (!(e instanceof Promise)) {
+                            // 若返回值不是Promise, 则表示是一个error
+                            e = Promise.reject(e)
+                        }
+                        e.then(r => resolve(r)).catch(e => reject(e))
+                    })
+            })
+        }
+    }
     /**
      * 创建元素的快捷方法
      * @param type string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
@@ -755,6 +777,11 @@ function scriptSource(invokeBy) {
     const balh_api_plus_season = function (season_id) {
         return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}`)
     }
+    const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
+        // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339|bangumi&qn=16&src=vupload&vid=vupload_30188339
+        // qn = 16, 能看
+        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '|bangumi' : ''}&qn=${qn}`)
+    }
 
     const balh_feature_area_limit = (function () {
         function injectXHR() {
@@ -969,6 +996,41 @@ function scriptSource(invokeBy) {
                 }
                 return xhr;
             };
+        }
+
+        function injectFetch() {
+            debugger
+            window.fetch = wrapper(window.fetch,
+                resp => new Proxy(resp, {
+                    get: function (target, prop, receiver) {
+                        if (prop === 'json') {
+                            return wrapper(target.json.bind(target),
+                                result => {
+                                    util_debug('injectFetch:', target.url)
+                                    if (target.url.includes('/player/web_api/v2/playurl/html5')) {
+                                        let cid = util_url_param(target.url, 'cid')
+                                        return balh_api_plus_playurl(cid)
+                                            .then(result => {
+                                                if (result.code) {
+                                                    return Promise.reject('error: ' + JSON.stringify(result))
+                                                } else {
+                                                    return {
+                                                        "code": 0,
+                                                        "cid": `http://comment.bilibili.com/${cid}.xml`,
+                                                        "timelength": result.timelength,
+                                                        "src": result.durl[0].url, // 只取第一个片段的url...
+                                                    }
+                                                }
+                                            })
+                                    }
+                                    return result
+                                },
+                                error => error)
+                        }
+                        return target[prop]
+                    }
+                }),
+                error => error)
         }
 
         function isAreaLimitSeason() {
@@ -1227,6 +1289,9 @@ function scriptSource(invokeBy) {
             };
         })();
 
+        if (util_page.anime_ep_m() || util_page.anime_ss_m()) {
+            injectFetch();
+        }
         injectXHR();
         if (!window.jQuery) { // 若还未加载jQuery, 则监听
             var jQuery;
