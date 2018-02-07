@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.6.0
+// @version      6.6.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -475,7 +475,7 @@ function scriptSource(invokeBy) {
     const util_async_wrapper = function (promiseCeator, resultTranformer, errorTranformer) {
         return function (...args) {
             return new Promise((resolve, reject) => {
-                log(promiseCeator, ...args)
+                // log(promiseCeator, ...args)
                 promiseCeator(...args)
                     .then(r => resultTranformer ? resultTranformer(r) : r)
                     .then(r => resolve(r))
@@ -780,7 +780,7 @@ function scriptSource(invokeBy) {
     const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
         // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339|bangumi&qn=16&src=vupload&vid=vupload_30188339
         // qn = 16, 能看
-        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '|bangumi' : ''}&qn=${qn}`)
+        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '|bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}`)
     }
 
     const balh_feature_area_limit = (function () {
@@ -999,15 +999,14 @@ function scriptSource(invokeBy) {
         }
 
         function injectFetch() {
-            debugger
-            window.fetch = wrapper(window.fetch,
+            window.fetch = util_async_wrapper(window.fetch,
                 resp => new Proxy(resp, {
                     get: function (target, prop, receiver) {
                         if (prop === 'json') {
-                            return wrapper(target.json.bind(target),
+                            return util_async_wrapper(target.json.bind(target),
                                 result => {
                                     util_debug('injectFetch:', target.url)
-                                    if (target.url.includes('/player/web_api/v2/playurl/html5')) {
+                                    if (false /*获取到的视频url播放不了, 暂时关闭功能*/ && target.url.includes('/player/web_api/v2/playurl/html5')) {
                                         let cid = util_url_param(target.url, 'cid')
                                         return balh_api_plus_playurl(cid)
                                             .then(result => {
