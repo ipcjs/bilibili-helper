@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.1
+// @version      6.7.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -100,20 +100,20 @@ function scriptSource(invokeBy) {
             FALSE: '',
         }
     }
-
-    const util_arr_stringify = function (arr) {
-        return arr.map(item => {
-            if (typeof item === 'object') {
-                try {
-                    return JSON.stringify(item)
-                } catch (e) {
-                    console.debug(e)
-                    return item.toString()
-                }
-            } else {
-                return item
+    const util_stringify = (item) => {
+        if (typeof item === 'object') {
+            try {
+                return JSON.stringify(item)
+            } catch (e) {
+                console.debug(e)
+                return item.toString()
             }
-        }).join(' ')
+        } else {
+            return item
+        }
+    }
+    const util_arr_stringify = function (arr) {
+        return arr.map(util_stringify).join(' ')
     }
 
     const util_str_multiply = function (str, multiplier) {
@@ -720,8 +720,8 @@ function scriptSource(invokeBy) {
             }
         }
     }())
-    const util_ui_player_msg = function (...args) {
-        const msg = util_arr_stringify(args)
+    const util_ui_player_msg = function (message) {
+        const msg = util_stringify(message)
         log('player msg:', msg)
         const $panel = document.querySelector('.bilibili-player-video-panel-text')
         if ($panel) {
@@ -1347,10 +1347,16 @@ function scriptSource(invokeBy) {
                         .catch(e => {
                             util_ui_player_msg(e)
                             util_ui_player_msg('尝试换用B站接口拉取视频地址(清晰度低)...')
-                            return playurl_by_bilibili._asyncAjax(originUrl) // 若失败, 则转而从B站获取
+                            // 失败时, 转而从B站获取
+                            return playurl_by_bilibili._asyncAjax(originUrl)
+                                .catch(e2 => {
+                                    util_ui_player_msg(e2) // 打印错误日志
+                                    // 直接忽略playurl_by_bilibili的错误, 改成返回playurl_by_proxy的错误...
+                                    return Promise.reject(e)
+                                })
                         })
                         .catch(e => {
-                            util_ui_player_msg(e) // 打印错误日志
+                            util_ui_alert(`拉取视频地址失败\n${util_stringify(e)}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 反馈问题\n\n点击确定按钮, 将进入设置页面`, balh_ui_setting.show)
                             return Promise.reject(e)
                         })
                 }
