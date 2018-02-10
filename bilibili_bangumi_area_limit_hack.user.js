@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.0
+// @version      6.7.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1033,7 +1033,7 @@ function scriptSource(invokeBy) {
                     get: function (target, prop, receiver) {
                         if (prop === 'json') {
                             return util_async_wrapper(target.json.bind(target),
-                                result => {
+                                oriResult => {
                                     util_debug('injectFetch:', target.url)
                                     if (target.url.includes('/player/web_api/v2/playurl/html5')) {
                                         let cid = util_url_param(target.url, 'cid')
@@ -1052,11 +1052,15 @@ function scriptSource(invokeBy) {
                                                                 "src": url || result.durl[0].url, // 只取第一个片段的url...
                                                             }
                                                         })
-
                                                 }
                                             })
+                                            .catch(e => {
+                                                // 若拉取视频地址失败, 则返回原始的结果
+                                                log('fetch mp4 url failed', e)
+                                                return oriResult
+                                            })
                                     }
-                                    return result
+                                    return oriResult
                                 },
                                 error => error)
                         }
