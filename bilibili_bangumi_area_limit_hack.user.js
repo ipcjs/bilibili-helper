@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.6.1
+// @version      6.6.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -777,11 +777,14 @@ function scriptSource(invokeBy) {
     const balh_api_plus_season = function (season_id) {
         return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}`)
     }
+    // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339|bangumi&qn=16&src=vupload&vid=vupload_30188339
+    // qn = 16, 能看
     const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
-        // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339|bangumi&qn=16&src=vupload&vid=vupload_30188339
-        // qn = 16, 能看
         return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '|bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}`)
     }
+    // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
+    const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
+        .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
     const balh_feature_area_limit = (function () {
         function injectXHR() {
@@ -1006,19 +1009,24 @@ function scriptSource(invokeBy) {
                             return util_async_wrapper(target.json.bind(target),
                                 result => {
                                     util_debug('injectFetch:', target.url)
-                                    if (false /*获取到的视频url播放不了, 暂时关闭功能*/ && target.url.includes('/player/web_api/v2/playurl/html5')) {
+                                    if (target.url.includes('/player/web_api/v2/playurl/html5')) {
                                         let cid = util_url_param(target.url, 'cid')
                                         return balh_api_plus_playurl(cid)
                                             .then(result => {
                                                 if (result.code) {
                                                     return Promise.reject('error: ' + JSON.stringify(result))
                                                 } else {
-                                                    return {
-                                                        "code": 0,
-                                                        "cid": `http://comment.bilibili.com/${cid}.xml`,
-                                                        "timelength": result.timelength,
-                                                        "src": result.durl[0].url, // 只取第一个片段的url...
-                                                    }
+                                                    return balh_api_plus_playurl_for_mp4(cid)
+                                                        .then(url => {
+                                                            util_debug(`mp4地址, 移动版: ${url}, pc版: ${result.durl[0].url}`)
+                                                            return {
+                                                                "code": 0,
+                                                                "cid": `http://comment.bilibili.com/${cid}.xml`,
+                                                                "timelength": result.timelength,
+                                                                "src": url || result.durl[0].url, // 只取第一个片段的url...
+                                                            }
+                                                        })
+
                                                 }
                                             })
                                     }
@@ -1289,7 +1297,29 @@ function scriptSource(invokeBy) {
         })();
 
         if (util_page.anime_ep_m() || util_page.anime_ss_m()) {
-            injectFetch();
+            // balh_api_plus_playurl_for_mp4返回的url能在移动设备上播放的前提是, 请求头不包含Referer...
+            // 故这里设置meta, 使页面不发送Referer
+            // 注意动态改变引用策略的方式并不是标准行为, 目前在Chrome上测试是有用的
+            document.head.appendChild(_('meta', { name: "referrer", content: "no-referrer" }))
+            injectFetch()
+            util_init(() => {
+                const $wrapper = document.querySelector('.player-wrapper')
+                new MutationObserver(function (mutations, observer) {
+                    for (let mutation of mutations) {
+                        if (mutation.type === 'childList') {
+                            for (let node of mutation.addedNodes) {
+                                if (node.tagName === 'DIV' && node.className.split(' ').includes('player-mask')) {
+                                    log('隐藏添加的mask')
+                                    node.style.display = 'none'
+                                }
+                            }
+                        }
+                    }
+                }).observe($wrapper, {
+                    childList: true,
+                    attributes: false,
+                });
+            })
         }
         injectXHR();
         if (!window.jQuery) { // 若还未加载jQuery, 则监听
@@ -1886,6 +1916,7 @@ function scriptSource(invokeBy) {
             getCookie: util_cookie.get,
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
+            getAllMsg: util_log_hub.getAllMsg,
             _clear_local_value: function () {
                 delete localStorage.oauthTime
                 delete localStorage.balh_h5_not_first
