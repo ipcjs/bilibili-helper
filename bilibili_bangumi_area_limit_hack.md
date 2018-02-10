@@ -21,6 +21,7 @@
         * [常用Crx离线安装包下载](https://yurl.sinaapp.com/crx2.php)
     * 国内的360极速浏览器、猎豹浏览器等其实上就是Chrome加个壳，装Tampermonkey就行了
     * 搜狗高速浏览器：[Tampermonkey Legacy](https://ie.sogou.com/app/app_4326.html)
+    * Yandex Browser 手机版：详见：[希望可以支持一下手机版的网页](https://github.com/ipcjs/bilibili-helper/issues/112)
     * <del>傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)</del>（实测即使是最新版，也不兼容该脚本）
 
 ### 脚本无效？
