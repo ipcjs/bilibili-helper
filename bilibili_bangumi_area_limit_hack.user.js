@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.5
+// @version      6.7.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @require      https://static.hdslb.com/js/md5.js
@@ -1307,7 +1307,7 @@ function scriptSource(invokeBy) {
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
                     if (data && data.code === -403) {
-                        util_ui_alert(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制Σ( ￣□￣||)\n请尝试“帐号授权”或者换个代理服务器`, balh_ui_setting.show)
+                        util_ui_alert(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n\n点击确定, 打开设置页面`, balh_ui_setting.show)
                     } else if (data === null || data.code) {
                         util_error(data);
                         if (alertWhenError) {
