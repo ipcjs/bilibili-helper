@@ -726,7 +726,7 @@ function scriptSource(invokeBy) {
         log('player msg:', msg)
         const $panel = document.querySelector('.bilibili-player-video-panel-text')
         if ($panel) {
-            let stage = $panel.children.length
+            let stage = $panel.children.length + 1000 // 加1000和B站自己发送消息的stage区别开来
             $panel.appendChild(_('div', { className: 'bilibili-player-video-panel-row', stage: stage }, [_('text', `[${GM_info.script.name}] ${msg}`)]))
         }
     }
