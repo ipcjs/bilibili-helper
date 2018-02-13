@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.8
+// @version      6.7.9
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1565,83 +1565,34 @@ function scriptSource(invokeBy) {
     const balh_feature_RedirectToBangumiOrInsertPlayer = (function () {
         // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
         function tryRedirectToBangumiOrInsertPlayer() {
-            var msgBox;
+            let msgBox;
             if (!(msgBox = document.querySelector('.b-page-body > .error-container > .error-panel'))) {
                 return;
             }
-            var msg = document.createElement('a');
+            let msg = document.createElement('a');
             msgBox.insertBefore(msg, msgBox.firstChild);
             msg.innerText = '获取番剧页Url中...';
-
-            var aid = location.pathname.replace(/.*av(\d+).*/, '$1'),
+            let aid = location.pathname.replace(/.*av(\d+).*/, '$1'),
                 page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1],
                 cid,
                 season_id,
                 episode_id;
+            let avData;
             balh_api_plus_view(aid)
                 .then(function (data) {
+                    avData = data;
                     if (data.code) {
                         return Promise.reject(JSON.stringify(data));
                     }
                     // 计算当前页面的cid
-                    for (var i = 0; i < data.list.length; i++) {
+                    for (let i = 0; i < data.list.length; i++) {
                         if (data.list[i].page == page) {
                             cid = data.list[i].cid;
                             break;
                         }
                     }
                     if (!data.bangumi) {
-                        var generateSrc = function (aid, cid) {
-                            return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
-                        }
-                        var generatePageList = function (pages) {
-                            var $curPage = null;
-                            function onPageBtnClick(e) {
-                                e.target.className = 'curPage'
-                                $curPage && ($curPage.className = '')
-
-                                var index = e.target.attributes['data-index'].value;
-                                iframe.src = generateSrc(aid, pages[index].cid);
-                            }
-
-                            return pages.map(function (item, index) {
-                                var isCurPage = item.page == page
-                                var $item = _('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)])
-                                if (isCurPage) $curPage = $item
-                                return $item
-                            });
-                        }
-                        // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
-                        var pageBodyEle = document.querySelector('.b-page-body');
-                        var iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
-
-                        // 添加播放器
-                        pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
-                            _('div', { className: 'main-inner' }, [
-                                _('div', { className: 'v-plist' }, [
-                                    _('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
-                                ])
-                            ]),
-                            _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
-                        ]), pageBodyEle.firstChild);
-                        // 添加评论区
-                        pageBodyEle.appendChild(_('div', { className: 'main-inner' }, [
-                            _('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
-                                _('div', { className: 'b-head' }, [
-                                    _('span', { className: 'b-head-t results' }),
-                                    _('span', { className: 'b-head-t' }, [_('text', '评论')]),
-                                    _('a', { className: 'del-log', href: `//www.bilibili.com/replydeletelog?aid=${aid}&title=${data.title}`, target: '_blank' }, [_('text', '查看删除日志')])
-                                ]),
-                                _('div', { className: 'comm', id: 'bbComment' }, [
-                                    _('div', { id: 'load_comment', className: 'comm_open_btn', onclick: "var fb = new bbFeedback('.comm', 'arc');fb.show(" + aid + ", 1);", style: { cursor: 'pointer' } })
-                                ])
-                            ])
-                        ]));
-                        // 添加包含bbFeedback的js
-                        document.head.appendChild(_('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }))
-
-                        document.title = data.title;
-                        msgBox.parentNode.remove(); // 移除 .error-container
+                        generatePlayer(data, aid, page, cid)
                         // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
                     } else {
                         // 当前av属于番剧页面, 继续处理
@@ -1651,14 +1602,19 @@ function scriptSource(invokeBy) {
                 })
                 .then(function (result) {
                     if (result === undefined) return // 上一个then不返回内容时, 不需要处理
+                    if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
+                        log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
+                        generatePlayer(avData, aid, page, cid)
+                        return
+                    }
                     if (result.code) {
                         return Promise.reject(JSON.stringify(result));
                     }
-                    var ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
+                    let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
                         episodes = result.result.episodes,
                         ep;
                     // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
-                    for (var i = 0; i < episodes.length; i++) {
+                    for (let i = 0; i < episodes.length; i++) {
                         ep = episodes[i];
                         if (ep.danmaku == cid) {
                             ep_id_by_cid = ep.episode_id;
@@ -1672,7 +1628,7 @@ function scriptSource(invokeBy) {
                     }
                     episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
                     if (episode_id) {
-                        var bangumi_url = `//bangumi.bilibili.com/anime/${season_id}/play#${episode_id}`;
+                        let bangumi_url = `//bangumi.bilibili.com/anime/${season_id}/play#${episode_id}`;
                         log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, '(ep_id:', ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid, ')');
                         msg.innerText = '即将跳转到：' + bangumi_url;
                         location.href = bangumi_url;
@@ -1684,6 +1640,60 @@ function scriptSource(invokeBy) {
                     log('error:', arguments);
                     msg.innerText = 'error:' + e;
                 });
+        }
+
+        function generatePlayer(data, aid, page, cid) {
+            let generateSrc = function (aid, cid) {
+                return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
+            }
+            let generatePageList = function (pages) {
+                let $curPage = null;
+                function onPageBtnClick(e) {
+                    e.target.className = 'curPage'
+                    $curPage && ($curPage.className = '')
+
+                    let index = e.target.attributes['data-index'].value;
+                    iframe.src = generateSrc(aid, pages[index].cid);
+                }
+
+                return pages.map(function (item, index) {
+                    let isCurPage = item.page == page
+                    let $item = _('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)])
+                    if (isCurPage) $curPage = $item
+                    return $item
+                });
+            }
+            // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
+            let pageBodyEle = document.querySelector('.b-page-body');
+            let iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
+
+            // 添加播放器
+            pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
+                _('div', { className: 'main-inner' }, [
+                    _('div', { className: 'v-plist' }, [
+                        _('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
+                    ])
+                ]),
+                _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
+            ]), pageBodyEle.firstChild);
+            // 添加评论区
+            pageBodyEle.appendChild(_('div', { className: 'main-inner' }, [
+                _('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
+                    _('div', { className: 'b-head' }, [
+                        _('span', { className: 'b-head-t results' }),
+                        _('span', { className: 'b-head-t' }, [_('text', '评论')]),
+                        _('a', { className: 'del-log', href: `//www.bilibili.com/replydeletelog?aid=${aid}&title=${data.title}`, target: '_blank' }, [_('text', '查看删除日志')])
+                    ]),
+                    _('div', { className: 'comm', id: 'bbComment' }, [
+                        _('div', { id: 'load_comment', className: 'comm_open_btn', onclick: "var fb = new bbFeedback('.comm', 'arc');fb.show(" + aid + ", 1);", style: { cursor: 'pointer' } })
+                    ])
+                ])
+            ]));
+            // 添加包含bbFeedback的js
+            document.head.appendChild(_('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }))
+
+            document.title = data.title;
+            msgBox.parentNode.remove(); // 移除 .error-container
         }
 
         util_init(() => {
