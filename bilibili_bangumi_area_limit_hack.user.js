@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.9
+// @version      6.7.10
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1592,7 +1592,7 @@ function scriptSource(invokeBy) {
                         }
                     }
                     if (!data.bangumi) {
-                        generatePlayer(data, aid, page, cid)
+                        generatePlayer(data, aid, page, cid, msgBox)
                         // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
                     } else {
                         // 当前av属于番剧页面, 继续处理
@@ -1604,7 +1604,7 @@ function scriptSource(invokeBy) {
                     if (result === undefined) return // 上一个then不返回内容时, 不需要处理
                     if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
                         log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
-                        generatePlayer(avData, aid, page, cid)
+                        generatePlayer(avData, aid, page, cid, msgBox)
                         return
                     }
                     if (result.code) {
@@ -1642,7 +1642,7 @@ function scriptSource(invokeBy) {
                 });
         }
 
-        function generatePlayer(data, aid, page, cid) {
+        function generatePlayer(data, aid, page, cid, msgBox) {
             let generateSrc = function (aid, cid) {
                 return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
             }
