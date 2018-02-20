@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name        Bangumi Domain Redirector
 // @namespace   https://github.com/ipcjs
+// @description RT; Refurbished from https://greasyfork.org/en/scripts/12803
 // @name:zh-CN  番组计划域名重定向
-// @description 重定向番组计划(Bangumi)域名; 改造自 https://greasyfork.org/zh-CN/scripts/12803
+// @description:zh-CN 重定向番组计划(Bangumi)域名; 改造自 https://greasyfork.org/zh-CN/scripts/12803
 // @include     *://bgm.tv/*
 // @include     *://*.bgm.tv/*
 // @include     *://chii.in/*
