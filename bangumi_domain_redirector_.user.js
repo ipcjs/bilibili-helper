@@ -1,21 +1,25 @@
 // ==UserScript==
-// @name        Bangumi Domain Redirector
-// @namespace   https://github.com/ipcjs
-// @description RT; Refurbished from https://greasyfork.org/en/scripts/12803
-// @name:zh-CN  番组计划域名重定向
+// @name         Bangumi Domain Redirector
+// @namespace    https://github.com/ipcjs
+// @description  RT; Refurbished from https://greasyfork.org/en/scripts/12803
+// @name:zh-CN   番组计划域名重定向
 // @description:zh-CN 重定向番组计划(Bangumi)域名; 改造自 https://greasyfork.org/zh-CN/scripts/12803
-// @include     *://bgm.tv/*
-// @include     *://*.bgm.tv/*
-// @include     *://chii.in/*
-// @include     *://*.chii.in/*
-// @include     *://bangumi.tv/*
-// @include     *://*.bangumi.tv/*
-// @version     0.1.0
-// @grant       GM_setValue
-// @grant       GM_getValue
-// @grant       GM_registerMenuCommand
-// @grant       GM_unregisterMenuCommand
-// @run-at      document-start
+// @author       ipcjs
+// @compatible   chrome
+// @compatible   firefox
+// @license      MIT
+// @version      0.1.0
+// @include      *://bgm.tv/*
+// @include      *://*.bgm.tv/*
+// @include      *://chii.in/*
+// @include      *://*.chii.in/*
+// @include      *://bangumi.tv/*
+// @include      *://*.bangumi.tv/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
+// @run-at       document-start
 // ==/UserScript==
 'use strict'
 const hosts = {
