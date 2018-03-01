@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.10
+// @version      6.7.11
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1565,12 +1565,12 @@ function scriptSource(invokeBy) {
     const balh_feature_RedirectToBangumiOrInsertPlayer = (function () {
         // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
         function tryRedirectToBangumiOrInsertPlayer() {
-            let msgBox;
-            if (!(msgBox = document.querySelector('.b-page-body > .error-container > .error-panel'))) {
+            let $errorPanel;
+            if (!($errorPanel = document.querySelector('.error-container > .error-panel'))) {
                 return;
             }
             let msg = document.createElement('a');
-            msgBox.insertBefore(msg, msgBox.firstChild);
+            $errorPanel.insertBefore(msg, $errorPanel.firstChild);
             msg.innerText = '获取番剧页Url中...';
             let aid = location.pathname.replace(/.*av(\d+).*/, '$1'),
                 page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1],
@@ -1592,7 +1592,7 @@ function scriptSource(invokeBy) {
                         }
                     }
                     if (!data.bangumi) {
-                        generatePlayer(data, aid, page, cid, msgBox)
+                        generatePlayer(data, aid, page, cid)
                         // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
                     } else {
                         // 当前av属于番剧页面, 继续处理
@@ -1604,7 +1604,7 @@ function scriptSource(invokeBy) {
                     if (result === undefined) return // 上一个then不返回内容时, 不需要处理
                     if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
                         log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
-                        generatePlayer(avData, aid, page, cid, msgBox)
+                        generatePlayer(avData, aid, page, cid)
                         return
                     }
                     if (result.code) {
@@ -1642,7 +1642,7 @@ function scriptSource(invokeBy) {
                 });
         }
 
-        function generatePlayer(data, aid, page, cid, msgBox) {
+        function generatePlayer(data, aid, page, cid) {
             let generateSrc = function (aid, cid) {
                 return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
             }
@@ -1664,20 +1664,26 @@ function scriptSource(invokeBy) {
                 });
             }
             // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
-            let pageBodyEle = document.querySelector('.b-page-body');
+            let $pageBody = document.querySelector('.b-page-body');
+            if (!$pageBody) { // 若不存在, 则创建
+                $pageBody = _('div', { className: '.b-page-body' });
+                document.querySelector('.error-body').parentNode.appendChild($pageBody)
+                // 添加相关样式
+                document.head.appendChild(_('link', { type: 'text/css', rel: 'stylesheet', href: '//static.hdslb.com/css/core-v5/page-core.css' }))
+            }
             let iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
 
             // 添加播放器
-            pageBodyEle.insertBefore(_('div', { className: 'player-wrapper' }, [
+            $pageBody.appendChild(_('div', { className: 'player-wrapper' }, [
                 _('div', { className: 'main-inner' }, [
                     _('div', { className: 'v-plist' }, [
                         _('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
                     ])
                 ]),
                 _('div', { id: 'bofqi', className: 'scontent' }, [iframe])
-            ]), pageBodyEle.firstChild);
+            ]));
             // 添加评论区
-            pageBodyEle.appendChild(_('div', { className: 'main-inner' }, [
+            $pageBody.appendChild(_('div', { className: 'main-inner' }, [
                 _('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
                     _('div', { className: 'b-head' }, [
                         _('span', { className: 'b-head-t results' }),
@@ -1693,7 +1699,7 @@ function scriptSource(invokeBy) {
             document.head.appendChild(_('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }))
 
             document.title = data.title;
-            msgBox.parentNode.remove(); // 移除 .error-container
+            (document.querySelector('.error-body') || document.querySelector('.error-container')).remove(); // 移除错误信息面板
         }
 
         util_init(() => {
