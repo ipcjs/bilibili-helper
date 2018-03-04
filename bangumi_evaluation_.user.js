@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -153,7 +153,7 @@ const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
     let scoreText = `${score >= 0 ? '+' : ''}${score} `
     text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
     comment && (text += ' ' + comment)
-    localStorage.beuj_need_suffix && (text += '\n[url=http://bangumi.tv/group/topic/345087]--来自Bangumi评分脚本・改[/url]')
+    localStorage.beuj_need_suffix && (text += '\n[url=http://bgm.tv/group/topic/345235]--来自Bangumi评分脚本・改[/url]')
 
     document.querySelector('textarea#content').value = text
     document.querySelector('#new_comment #ReplyForm [type=submit]').click()
