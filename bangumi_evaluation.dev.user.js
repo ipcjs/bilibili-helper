@@ -8,5 +8,5 @@
 // @include      *://bangumi.tv/ep/*
 // @include      *://chii.in/ep/*
 // @grant        none
-// @require      file:///C:/GitHub/bilibili-helper-ipcjs/bangumi_evaluation.user.js
+// @require      file:///C:/GitHub/bilibili-helper-ipcjs/bangumi_evaluation_.user.js
 // ==/UserScript==
