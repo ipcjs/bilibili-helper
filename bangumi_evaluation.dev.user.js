@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Bangumi Evaluation
-// @name:zh-CN   Bangumi评分脚本・改
+// @name         Bangumi Evaluation.dev
+// @name:zh-CN   Bangumi评分脚本・改.dev
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
