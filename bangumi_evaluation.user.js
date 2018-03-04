@@ -1,145 +1,208 @@
 // ==UserScript==
-// @name         episode evaluation
-// @namespace    http://tampermonkey.net/
-// @version      0.2.1
-// @description  give evaluation to episode
-// @author       xdy
-// @include       /http:\/\/(bgm\.tv|bangumi\.tv|chii\.in)/ep/\d+$
+// @name         Bangumi Evaluation
+// @namespace    https://github.com/ipcjs/
+// @version      1.0.0
+// @description  Bangumi Evaluation
+// @author       ipcjs
+// @include      *://bgm.tv/ep/*
+// @include      *://bangumi.tv/ep/*
+// @include      *://chii.in/ep/*
 // @grant        none
+// @run-at       document-end
 // ==/UserScript==
 
-function addCSS(cssText) {
+'use strict'
 
-    var style = document.createElement('style'), //创建一个style元素
-        head = document.head || document.getElementsByTagName('head')[0]; //获取head元素
-    style.type = 'text/css'; //这里必须显示设置style元素的type属性为text/css，否则在ie中不起作用
-
-    if (style.styleSheet) { //IE
-        var func = function () {
-            try { //防止IE中stylesheet数量超过限制而发生错误
-
-                style.styleSheet.cssText = cssText;
-
-            } catch (e) {
-
+// type, props, children
+// type, props, innerHTML
+// 'text', text
+const util_ui_element_creator = (type, props, children) => {
+    let elem = null;
+    if (type === "text") {
+        return document.createTextNode(props);
+    } else {
+        elem = document.createElement(type);
+    }
+    for (let n in props) {
+        if (n === "style") {
+            for (let x in props.style) {
+                elem.style[x] = props.style[x];
             }
-        };
-        //如果当前styleSheet还不能用，则放到异步中则行
-        if (style.styleSheet.disabled) {
-
-            setTimeout(func, 10);
+        } else if (n === "className") {
+            elem.className = props[n];
+        } else if (n === "event") {
+            for (let x in props.event) {
+                elem.addEventListener(x, props.event[x]);
+            }
         } else {
-            func();
+            elem.setAttribute(n, props[n]);
         }
-    } else { //w3c
-        //w3c浏览器中只要创建文本节点插入到style元素中就行了
-        var textNode = document.createTextNode(cssText);
+    }
+    if (children) {
+        if (typeof children === 'string') {
+            elem.innerHTML = children;
+        } else {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i] != null)
+                    elem.appendChild(children[i]);
+            }
+        }
+    }
+    return elem;
+}
+const _ = util_ui_element_creator
 
-        style.appendChild(textNode);
+const addStyle = (css) => {
+    document.head.appendChild(_('style', {}, [_('text', css)]))
+}
+const ajax = (...args) => new Promise((resolve, reject) => $(...args).done(resolve).fail(reject))
 
+// language=CSS
+addStyle(`
+    .inputButton {
+        background-color: #F09199;
+        color: #fff;
+        cursor: pointer;
+        font-family: lucida grande, tahoma, verdana, arial, sans-serif;
+        font-size: 11px;
+        padding: 1px 3px;
+        text-decoration: none;
     }
 
-    head.appendChild(style); //把创建的style元素插入到head中
+    .forum_category {
+        background-color: #F09199;
+        color: #fff;
+        font-weight: 700;
+        padding: 3px;
+    }
+
+    .vote_container {
+        background-color: #e1e7f5
+    }
+
+    .forum_boardrow1 {
+        background-color: #fff;
+        border-color: #ebebeb;
+        border-style: solid;
+        border-width: 0;
+        padding: 6px 4px;
+        vertical-align: top
+    }
+`)
+const is_login = !document.querySelector('div.guest')
+const getUserId = () => {
+    const $avatar = document.querySelector('div.idBadgerNeue a.avatar')
+    return $avatar && $avatar.href.split('/')[4] || ''
 }
 
-mycss = '.inputButton {background-color: #F09199;color: #fff; cursor: pointer;font-family: lucida grande,tahoma,verdana,arial,sans-serif;font-size: 11px;padding: 1px 3px;text-decoration: none;}' +
-    '.forum_category{background-color:#F09199;color:#fff;font-weight:700;padding:3px;}' +
-    '.vote_container{background-color:#e1e7f5}' +
-    '.forum_boardrow1{background-color:#fff;border-color:#ebebeb;border-style:solid;border-width:0;padding:6px 4px;vertical-align:top}';
 
-(function () {
-    var islogin = !$("div").is(".guest");
-    if (islogin) {
-        var url = location.pathname;
-        url = url.split('/');
-        var ep_id = url[2];
-        var info = $('div.idBadgerNeue a.avatar').attr('href');
-        info = info.split('/');
-        var user_id = info[4];
-        var name = $('div#headerSubject a').html();
-        var ep = $('div#columnEpA h2.title').html();
-        ep = ep.split(' ')[0];
-        //var myurl = "http://127.0.0.1:8000/bgm/";
-        var myurl = "http://39.106.26.175:8000/bgm/";
-        addCSS(mycss);
-        $.ajax({
-            url: myurl + "user_ep",
-            jsonp: "callback",
-            dataType: "jsonp",
-            data: {
-                ep_id: ep_id,
-                user_id: user_id,
-            },
-            success: function (ret) {
-
-                if (!ret.res) {
-                    var html = '<div id="poll_container" style="width:670px">' +
-                        '<div class="forum_category">' + name + ' ' + ep + '观感</div>' +
-                        '<div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">' +
-                        '<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="5"> 5/5 超棒！</label></div>' +
-                        '<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="4"> 4/5 不错</label></div>' +
-                        '<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="3"> 3/5 一般</label></div>' +
-                        '<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="2"> 2/5 不喜欢</label></div>' +
-                        '<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="1"> 1/5 厌恶</label></div>' +
-                        '<br><input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton"></div></div>';
-                    $("#columnEpA").find("[class='epDesc']").append(html);
-                    var button = document.getElementById('voteButton');
-                    button.onclick = function () {
-                        var val = $('input:radio:checked').val();
-                        if (val == undefined) {
-                            alert("请选择后再投票！");
-                            return;
-                        }
-                        $.ajax({
-                            url: myurl + "addVote",
-                            jsonp: "callback",
-                            dataType: "jsonp",
-                            data: {
-                                ep_id: ep_id,
-                                user_id: user_id,
-                                rate: val
-                            },
-                            success: function (ret) {
-                                if (ret.success) {
-                                    info = getInfo(ret);
-                                    $('div#poll_container').html(info);
-                                    // 发送一条推广评论
-                                    var score = +ret.choice - 3; // S1样式的评分
-                                    $('textarea#content').val((score >= 0 ? '+' : '') + score + '  [url=http://bangumi.tv/group/topic/345087]--来自Bangumi单集评分脚本[/url]');
-                                    $('#new_comment #ReplyForm').submit();
-                                }
-                                else {
-                                    alert(ret.message);
-                                }
+if (is_login) {
+    const ep_id = location.pathname.split('/')[2]
+    const user_id = getUserId()
+    const name = document.querySelector('div#headerSubject a').innerText
+    const ep = document.querySelector('div#columnEpA h2.title').innerText.split(' ')[0]
+    const myurl = "http://39.106.26.175:8000/bgm/";
+    $.ajax({
+        url: myurl + "user_ep",
+        jsonp: "callback",
+        dataType: "jsonp",
+        data: {
+            ep_id: ep_id,
+            user_id: user_id,
+        },
+        success: function (ret) {
+            const $poll_container = _('div', { id: 'poll_container', style: { width: '670px' } })
+            document.querySelector('#columnEpA .epDesc').appendChild($poll_container)
+            if (!ret.res) {
+                $poll_container.innerHTML = createInfo(name, ep)
+                $poll_container.querySelector('#voteButton').onclick = () => {
+                    const $checked = $poll_container.querySelector('.forum_boardrow1 input[type=radio]:checked')
+                    const val = $checked ? $checked.value : undefined
+                    if (val === undefined) {
+                        alert("请选择后再投票！");
+                        return;
+                    }
+                    $.ajax({
+                        url: myurl + "addVote",
+                        jsonp: "callback",
+                        dataType: "jsonp",
+                        data: {
+                            ep_id: ep_id,
+                            user_id: user_id,
+                            rate: val
+                        },
+                        success: function (ret) {
+                            if (ret.success) {
+                                let score = ret.choice - 3
+                                $poll_container.innerHTML = getInfo(ret.count, score)
+                                vote_to_bgm(score)
+                            } else {
+                                alert(ret.message);
                             }
-                        });
-                    };
+                        }
+                    });
                 }
-
-                else {
-                    var html = '<div id="poll_container" style="width:670px">' + getInfo(ret) + '</div>';
-                    $("#columnEpA").find("[class='epDesc']").append(html);
-                }
-                ;
+            } else {
+                $poll_container.innerHTML = getInfo(ret.count, ret.choice - 3)
             }
-        });
-
-    }
-})();
-
-function getInfo(ret) {
-    var judge_str = ['5/5 很棒！', '4/5 不错', '3/5 一般', '2/5 不喜欢', '1/5 厌恶'];
-    var html = '<div class="forum_category">投票结果</div><div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">' +
-        '<table border="0" width="100%" cellpadding="" cellspacing="5">';
-    for (var i = 0; i < 5; i++) {
-        html = html + '<tr><td align="left">' + judge_str[i];
-        if (ret.choice == 5 - i) {
-            html += '<small>(your vote)</small>';
         }
-        html = html + '</td><td width="35%"><div class="vote_container" style="width: ' + ret.width[i] + '%">&nbsp;</div></td><td width="25" align="center">';
-        html = html + ret.count[i] + '</td><td width="40" align="right">' + ret.width[i] + '%</td></tr>';
+    });
+
+}
+const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
+    // 发送一条推广评论
+    let needMask = localStorage.beuj_need_mask || false
+    let needSuffix = localStorage.beuj_need_suffix || true
+    comment = (comment || '').trim()
+
+    let text = ''
+    let scoreText = `${score >= 0 ? '+' : ''}${score} `
+    text += needMask ? `[mask]${scoreText}[/mask]` : scoreText
+    comment && (text += '\n' + comment)
+    needSuffix && (text += '\n[url=http://bangumi.tv/group/topic/345087]--来自Bangumi评分脚本・改[/url]')
+
+    document.querySelector('textarea#content').value = text
+    document.querySelector('#new_comment #ReplyForm [type=submit]').click()
+    resolve('ok')
+})
+
+
+function createInfo(name, ep) {
+    return `
+<div class="forum_category">${name} ${ep}观感</div>
+<div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
+    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+2"> +2 超棒！</label></div>
+    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+1"> +1 不错</label></div>
+    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+0"> +0 一般</label></div>
+    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="-1"> -1 不喜欢</label></div>
+    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="-2"> -2 厌恶</label></div>
+    <br>
+    <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
+</div>
+    `
+}
+
+function getInfo(counts, score) {
+    const judge_str = ['+2 很棒！', '+1 不错', '+0 一般', '-1 不喜欢', '-2 厌恶']
+    let voters = counts.reduce((a, b) => a + b, 0)
+    let html = '';
+    for (var i = 0; i < 5; i++) {
+        let width = (counts[i] / voters * 100).toFixed(1)
+        let your_vote = 5 - i - 3 === score
+        html += `
+            <tr>
+                <td align="left">${judge_str[i]}${your_vote ? '<small>(your vote)</small>' : ''}</td>
+                <td width="35%"><div class="vote_container" style="width: ${width}%">&nbsp;</div></td>
+                <td width="25" align="center">${counts[i]}</td>
+                <td width="40" align="right">${width}%</td>
+            </tr>`
     }
-    html = html + '</table><div style="text-align: center;">Voters: ' + ret.voters + '</div></div>';
-    return html;
+    return `
+<div class="forum_category">投票结果</div><div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
+    <table border="0" width="100%" cellpadding="" cellspacing="5">
+        ${html}
+    </table>
+    <div style="text-align: center;">Voters: ${voters}</div>
+</div>`
 }
 
