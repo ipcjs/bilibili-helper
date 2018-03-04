@@ -150,10 +150,10 @@ const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
     comment = (comment || '').trim()
 
     let text = ''
-    let scoreText = `${score >= 0 ? '+' : ''}${score} `
+    let scoreText = `${score >= 0 ? '+' : ''}${score}`
     text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
     comment && (text += ' ' + comment)
-    localStorage.beuj_need_suffix && (text += '\n[url=http://bgm.tv/group/topic/345235]--来自Bangumi评分脚本・改[/url]')
+    localStorage.beuj_need_suffix && (text += '\n[url=https://bgm.tv/group/topic/345237]--来自Bangumi评分脚本・改[/url]')
 
     document.querySelector('textarea#content').value = text
     document.querySelector('#new_comment #ReplyForm [type=submit]').click()
@@ -181,6 +181,7 @@ function main() {
                     voteData.myReplyId = array_last(document.querySelectorAll('#comment_list > .row_reply')).id // 评论列表的最后一条
                     showVoteResult(voteData)
                 })
+                .catch(e => console.error(e))
         })
     } else {
         showVoteResult(voteData)
