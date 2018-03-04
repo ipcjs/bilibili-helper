@@ -7,8 +7,17 @@
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
 // @include      *://bgm.tv/ep/*
+// @include      *://bgm.tv/character/*
+// @include      *://bgm.tv/blog/*
+// @include      *://bgm.tv/*/topic/*
 // @include      *://bangumi.tv/ep/*
+// @include      *://bangumi.tv/character/*
+// @include      *://bangumi.tv/blogep/*
+// @include      *://bangumi.tv/*/topic/*
 // @include      *://chii.in/ep/*
+// @include      *://chii.in/characterep/*
+// @include      *://chii.in/blog/*
+// @include      *://chii.in/*/topic/*
 // @compatible   chrome
 // @compatible   firefox
 // @grant        none
@@ -110,6 +119,7 @@ const getUserId = () => {
     return $avatar && $avatar.href.split('/')[4] || ''
 }
 const array_last = (arr) => arr[arr.length - 1]
+const safe_prop = (obj, prop, defaultValue) => obj ? obj[prop] : defaultValue
 const score_to_index = (score) => 5 - (score + 3)
 const index_to_score = (inex) => 5 - index - 3
 
@@ -121,7 +131,7 @@ function readVoteData() {
     let myScore, myReplyId
     let group
     for (let $reply of replys) {
-        if (group = $reply.querySelector('.message.clearit').innerText.match(scoreReg)) {
+        if (group = $reply.querySelector('.message').innerText.match(scoreReg)) {
             let score = Math.min(Math.max(-2, +group[1]), 2)
             let userId = array_last($reply.querySelector(':scope > a.avatar').href.split('/'))
             voters[userId] = score
@@ -161,13 +171,39 @@ const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
 })
 
 function main() {
-    const $poll_container = _('div', { id: 'poll_container', style: { width: '670px' } })
-    document.querySelector('#columnEpA .epDesc').appendChild($poll_container)
+    let $comment_list
+    if (!($comment_list = document.getElementById('comment_list'))) {
+        console.log('不存在#comment_list, 不支持投票...')
+        return
+    }
+    // 番剧讨论页: https://bgm.tv/ep/767931
+    let $container = document.querySelector('#columnEpA .epDesc')
+    // 小组讨论页: https://bgm.tv/group/topic/345237
+    // 条目讨论版: https://bgm.tv/subject/topic/3022
+    if (!$container) $container = document.querySelector('div.topic_content')
+    // 人物页: https://bgm.tv/character/77
+    if (!$container) $container = document.querySelector('#columnCrtB > div.detail')
+    // 日志页面: https://bgm.tv/blog/46986
+    if (!$container) $container = document.querySelector('#entry_content.blog_entry')
+    // 依然没有, 则创建
+    if (!$container) {
+        $container = _('div', { className: 'borderNeue', style: { marginTop: '10px' } })
+        $comment_list.parentElement.insertBefore($container, $comment_list)
+    }
+    const $poll_container = _('div', { id: 'poll_container', style: {/* width: '670px'*/ } })
+    $container.appendChild($poll_container)
     let voteData = readVoteData()
     if (is_login && voteData.myScore === undefined) {
-        const name = document.querySelector('div#headerSubject a').innerText
-        const ep = document.querySelector('div#columnEpA h2.title').innerText.split(' ')[0]
-        const $voteForm = showVote(name, ep, () => {
+        let title = document.title, $tmp
+        // 番剧讨论页: https://bgm.tv/ep/767931
+        // 人物页: https://bgm.tv/character/77
+        if ($tmp = document.querySelector('#headerSubject .nameSingle a')) {
+            title = $tmp.innerText
+            if ($tmp = document.querySelector('div#columnEpA h2.title')) { // 番剧讨论页的ep
+                title += ' ' + $tmp.innerText.split(' ')[0]
+            }
+        }
+        const $voteForm = showVote(title, () => {
             const val = $voteForm.elements.pollOption.value
             if (!val) {
                 alert("请选择后再投票！");
@@ -178,7 +214,7 @@ function main() {
                 .then((r) => {
                     voteData.counts[score_to_index(score)]++
                     voteData.myScore = score
-                    voteData.myReplyId = array_last(document.querySelectorAll('#comment_list > .row_reply')).id // 评论列表的最后一条
+                    voteData.myReplyId = safe_prop(array_last(document.querySelectorAll('#comment_list > .row_reply')), 'id', 'no_id') // 评论列表的最后一条
                     showVoteResult(voteData)
                 })
                 .catch(e => console.error(e))
@@ -191,8 +227,8 @@ function main() {
         $poll_container.innerHTML = createVoteResultHtml(voteData.counts, voteData.myScore, voteData.myReplyId)
     }
 
-    function showVote(name, ep, onSubmit) {
-        $poll_container.innerHTML = createVoteHtml(name, ep)
+    function showVote(title, onSubmit) {
+        $poll_container.innerHTML = createVoteHtml(title)
         let $voteForm = $poll_container.querySelector('#vote-form')
         $voteForm.onsubmit = function () {
             onSubmit()
@@ -212,9 +248,9 @@ function main() {
     }
 }
 
-function createVoteHtml(name, ep) {
+function createVoteHtml(title) {
     return `
-<div class="forum_category">${name} ${ep}观感</div>
+<div class="forum_category">${title} 投票</div>
 <div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
 <form id="vote-form">
     <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+2"> +2 超棒！</label></div>
