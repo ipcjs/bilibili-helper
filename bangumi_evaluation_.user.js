@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -110,8 +110,11 @@ addStyle(`
 `)
 const TRUE = 'Y'
 const FALSE = ''
+const HOME_URL_PATH = '/group/topic/345237'
+const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
+localStorage.beuj_only_one_suffix === undefined && (localStorage.beuj_only_one_suffix = TRUE)
 
 const is_login = !document.querySelector('div.guest')
 const getUserId = () => {
@@ -128,7 +131,7 @@ function readVoteData() {
     const replys = document.querySelectorAll('.row_reply')
     const scoreReg = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
     const myUserId = getUserId()
-    let myScore, myReplyId
+    let myScore, myReplyId, hasSuffix = false
     let group
     for (let $reply of replys) {
         if (group = $reply.querySelector('.message').innerText.match(scoreReg)) {
@@ -138,6 +141,9 @@ function readVoteData() {
             if (myUserId === userId) {
                 myScore = score
                 myReplyId = $reply.id
+            }
+            if (!hasSuffix && group[0].includes(HOME_URL_PATH)) {
+                hasSuffix = true
             }
         }
     }
@@ -150,12 +156,13 @@ function readVoteData() {
         counts,
         myScore,
         myReplyId,
+        hasSuffix,
     }
     console.log('投票数据:', voters, result)
     return result
 }
 
-const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
+const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject) => {
     // 发送一条推广评论
     comment = (comment || '').trim()
 
@@ -163,7 +170,9 @@ const vote_to_bgm = (score, comment) => new Promise((resolve, reject) => {
     let scoreText = `${score >= 0 ? '+' : ''}${score}`
     text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
     comment && (text += ' ' + comment)
-    localStorage.beuj_need_suffix && (text += '\n[url=https://bgm.tv/group/topic/345237]--来自Bangumi评分脚本・改[/url]')
+    if (localStorage.beuj_need_suffix && !(localStorage.beuj_only_one_suffix && hasSuffix)) {
+        (text += `\n[url=${HOME_URL}]--来自Bangumi评分脚本・改[/url]`)
+    }
 
     document.querySelector('textarea#content').value = text
     document.querySelector('#new_comment #ReplyForm [type=submit]').click()
@@ -210,7 +219,7 @@ function main() {
                 return;
             }
             let score = +val
-            vote_to_bgm(score, $poll_container.querySelector('#vote-comment').value)
+            vote_to_bgm(score, $poll_container.querySelector('#vote-comment').value, voteData.hasSuffix)
                 .then((r) => {
                     voteData.counts[score_to_index(score)]++
                     voteData.myScore = score
@@ -244,6 +253,7 @@ function main() {
         })
         $voteForm.elements.beuj_need_mask.checked = localStorage.beuj_need_mask
         $voteForm.elements.beuj_need_suffix.checked = localStorage.beuj_need_suffix
+        $voteForm.elements.beuj_only_one_suffix.checked = localStorage.beuj_only_one_suffix
         return $voteForm
     }
 }
@@ -261,8 +271,9 @@ function createVoteHtml(title) {
     <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价"></textarea>
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
-    <label class="form-option"><input type="checkbox" name="beuj_need_mask" > Mask评分 </input></label>
+    <label class="form-option"><input type="checkbox" name="beuj_only_one_suffix" > 单页最多一个尾巴 </input></label>
     <label class="form-option"><input type="checkbox" name="beuj_need_suffix" > 添加小尾巴 </input></label>
+    <label class="form-option"><input type="checkbox" name="beuj_need_mask" > Mask评分 </input></label>
 </form>
 </div>
     `
