@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -178,7 +178,7 @@ function main() {
                 .then((r) => {
                     voteData.counts[score_to_index(score)]++
                     voteData.myScore = score
-                    voteData.myReplyId = document.querySelector('#comment_list > :last-child').id // 评论列表的最后一条
+                    voteData.myReplyId = array_last(document.querySelectorAll('#comment_list > .row_reply')).id // 评论列表的最后一条
                     showVoteResult(voteData)
                 })
         })
