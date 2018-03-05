@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.4
+// @version      1.0.5
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -114,7 +114,9 @@ const HOME_URL_PATH = '/group/topic/345237'
 const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
-localStorage.beuj_only_one_suffix === undefined && (localStorage.beuj_only_one_suffix = TRUE)
+let beuj_only_one_suffix = TRUE // 一个页面最多放一个小尾巴
+const COMMENTS_DEFAULT = '力荐 不错 一般 不喜欢 垃圾'
+let commentTemplates = (localStorage.beuj_comment_templates || COMMENTS_DEFAULT).split(' ')
 
 const is_login = !document.querySelector('div.guest')
 const getUserId = () => {
@@ -124,7 +126,8 @@ const getUserId = () => {
 const array_last = (arr) => arr[arr.length - 1]
 const safe_prop = (obj, prop, defaultValue) => obj ? obj[prop] : defaultValue
 const score_to_index = (score) => 5 - (score + 3)
-const index_to_score = (inex) => 5 - index - 3
+const index_to_score = (index) => 5 - index - 3
+const score_to_str = (score) => `${score >= 0 ? '+' : ''}${score}`
 
 function readVoteData() {
     const voters = {}
@@ -167,10 +170,10 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
     comment = (comment || '').trim()
 
     let text = ''
-    let scoreText = `${score >= 0 ? '+' : ''}${score}`
+    let scoreText = score_to_str(score)
     text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
     comment && (text += ' ' + comment)
-    if (localStorage.beuj_need_suffix && !(localStorage.beuj_only_one_suffix && hasSuffix)) {
+    if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
         (text += `\n[url=${HOME_URL}]--来自Bangumi评分脚本・改[/url]`)
     }
 
@@ -240,39 +243,63 @@ function main() {
         $poll_container.innerHTML = createVoteHtml(title)
         let $voteForm = $poll_container.querySelector('#vote-form')
         $voteForm.onsubmit = function () {
-            onSubmit()
+            let comment_template
+            let toSubmit = true
+            if (comment_template = $voteForm.elements.comment_template.value) {
+                toSubmit = false
+                let templates = comment_template.split(' ')
+                if (templates.length === commentTemplates.length) {
+                    // 更新模板
+                    commentTemplates = templates
+                    localStorage.beuj_comment_templates = commentTemplates.join(' ')
+                    toSubmit = true
+                } else {
+                    alert(`短评模板(${comment_template})不符合格式!\n需要用空格分隔, 例如:\n"${commentTemplates.join(' ')}"`)
+                }
+            }
+            toSubmit && onSubmit()
             return false // no submit
         }
         $voteForm.addEventListener('change', (e) => {
-            var name = e.target.name;
-            var value = e.target.type === 'checkbox' ? (e.target.checked ? TRUE : FALSE) : e.target.value
+            let name = e.target.name;
+            let value = e.target.type === 'checkbox' ? (e.target.checked ? TRUE : FALSE) : e.target.value
             if (name.startsWith('beuj_')) {
                 localStorage[name] = value
                 console.log(name, ' => ', value);
+            } else if (name === 'pollOption') {
+                let score = +value
+                let comment = $voteForm.elements.comment.value
+                // 若简单评论为空, 或是评论模板中的值, 则修改简单评论为评论模板中的一个
+                if (comment === '' || commentTemplates.includes(comment)) {
+                    $voteForm.elements.comment.value = commentTemplates[score_to_index(score)]
+                }
+            } else if (name === 'modify_comment_template') {
+                $voteForm.elements.comment_template.type = value ? 'text' : 'hidden'
             }
         })
         $voteForm.elements.beuj_need_mask.checked = localStorage.beuj_need_mask
         $voteForm.elements.beuj_need_suffix.checked = localStorage.beuj_need_suffix
-        $voteForm.elements.beuj_only_one_suffix.checked = localStorage.beuj_only_one_suffix
         return $voteForm
     }
 }
 
 function createVoteHtml(title) {
+    let rows = ''
+    for (let i = 0; i < commentTemplates.length; i++) {
+        let scoreStr = score_to_str(index_to_score(i))
+        rows += `<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="${scoreStr}"> ${scoreStr} ${commentTemplates[i]}</label></div>`
+    }
     return `
 <div class="forum_category">${title} 投票</div>
 <div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
 <form id="vote-form">
-    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+2"> +2 超棒！</label></div>
-    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+1"> +1 不错</label></div>
-    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="+0"> +0 一般</label></div>
-    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="-1"> -1 不喜欢</label></div>
-    <div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="-2"> -2 厌恶</label></div>
+    ${rows}
     <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价"></textarea>
+    <input type="hidden" name="comment_template" class="inputtext" style="margin-bottom: 6px;" placeholder="短评模板; +2 +1 +0 -1 -2 分别对应的短评;使用空格分隔;">
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
-    <label class="form-option"><input type="checkbox" name="beuj_only_one_suffix" > 单页最多一个尾巴 </input></label>
-    <label class="form-option"><input type="checkbox" name="beuj_need_suffix" > 添加小尾巴 </input></label>
+    <label class="form-option"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
+    <label class="form-option"><input type="checkbox" name="beuj_need_suffix" title="在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." > 帮助推广脚本 </input></label>
     <label class="form-option"><input type="checkbox" name="beuj_need_mask" > Mask评分 </input></label>
 </form>
 </div>
@@ -280,16 +307,15 @@ function createVoteHtml(title) {
 }
 
 function createVoteResultHtml(counts, score, replyId) {
-    const judge_str = ['+2 很棒！', '+1 不错', '+0 一般', '-1 不喜欢', '-2 厌恶']
     let voters = counts.reduce((a, b) => a + b, 0)
     let html = '';
     const myIndex = score_to_index(score)
-    for (var i = 0; i < 5; i++) {
+    for (let i = 0; i < commentTemplates.length; i++) {
         let width = (counts[i] / voters * 100).toFixed(1)
         let your_vote = myIndex === i
         html += `
             <tr>
-                <td align="left">${judge_str[i]}${your_vote ? `<a href="#${replyId}" class="l">(your vote)</a>` : ''}</td>
+                <td align="left">${score_to_str(index_to_score(i))} ${commentTemplates[i]}${your_vote ? `<a href="#${replyId}" class="l">(your vote)</a>` : ''}</td>
                 <td width="35%"><div class="vote_container" style="width: ${width}%">&nbsp;</div></td>
                 <td width="25" align="center">${counts[i]}</td>
                 <td width="40" align="right">${width}%</td>
