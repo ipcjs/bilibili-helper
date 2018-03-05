@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.5
+// @version      1.0.6
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -137,7 +137,8 @@ function readVoteData() {
     let myScore, myReplyId, hasSuffix = false
     let group
     for (let $reply of replys) {
-        if (group = $reply.querySelector('.message').innerText.match(scoreReg)) {
+        let $message = $reply.querySelector('.message')
+        if (group = $message.innerText.match(scoreReg)) {
             let score = Math.min(Math.max(-2, +group[1]), 2)
             let userId = array_last($reply.querySelector(':scope > a.avatar').href.split('/'))
             voters[userId] = score
@@ -145,7 +146,7 @@ function readVoteData() {
                 myScore = score
                 myReplyId = $reply.id
             }
-            if (!hasSuffix && group[0].includes(HOME_URL_PATH)) {
+            if (!hasSuffix && $message.innerHTML.includes(HOME_URL_PATH)) {
                 hasSuffix = true
             }
         }
