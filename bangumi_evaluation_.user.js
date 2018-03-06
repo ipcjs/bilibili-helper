@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.6
+// @version      1.0.7
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -112,6 +112,7 @@ const TRUE = 'Y'
 const FALSE = ''
 const HOME_URL_PATH = '/group/topic/345237'
 const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
+const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
 localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
 let beuj_only_one_suffix = TRUE // 一个页面最多放一个小尾巴
@@ -130,40 +131,36 @@ const index_to_score = (index) => 5 - index - 3
 const score_to_str = (score) => `${score >= 0 ? '+' : ''}${score}`
 
 function readVoteData() {
-    const voters = {}
-    const replys = document.querySelectorAll('.row_reply')
-    const scoreReg = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
-    const myUserId = getUserId()
-    let myScore, myReplyId, hasSuffix = false
-    let group
-    for (let $reply of replys) {
-        let $message = $reply.querySelector('.message')
-        if (group = $message.innerText.match(scoreReg)) {
-            let score = Math.min(Math.max(-2, +group[1]), 2)
-            let userId = array_last($reply.querySelector(':scope > a.avatar').href.split('/'))
-            voters[userId] = score
-            if (myUserId === userId) {
-                myScore = score
-                myReplyId = $reply.id
+    const voteData = {
+        voters: {},
+        myScore: undefined,
+        myReplyId: undefined,
+        myUserId: getUserId(),
+        hasSuffix: false,
+        parseReply: function ($reply) {
+            let $message = $reply.querySelector('.message')
+            if (this._group = $message.innerText.match(SCORE_REGEX)) {
+                let score = Math.min(Math.max(-2, +this._group[1]), 2)
+                let userId = array_last($reply.querySelector(':scope > a.avatar').href.split('/'))
+                this.voters[userId] = score
+                if (this.myUserId === userId) {
+                    this.myScore = score
+                    this.myReplyId = $reply.id
+                }
+                if (!this.hasSuffix && $message.innerHTML.includes(HOME_URL_PATH)) {
+                    this.hasSuffix = true
+                }
+                return true // 找到了新的评分时, 返回true
             }
-            if (!hasSuffix && $message.innerHTML.includes(HOME_URL_PATH)) {
-                hasSuffix = true
-            }
+            return false
         }
     }
-    const counts = [0, 0, 0, 0, 0] // 投+2->-2分的人数的数组
-    for (let userId of Object.keys(voters)) {
-        let score = voters[userId]
-        counts[score_to_index(score)]++
+    const replys = document.querySelectorAll('.row_reply')
+    for (let $reply of replys) {
+        voteData.parseReply($reply)
     }
-    const result = {
-        counts,
-        myScore,
-        myReplyId,
-        hasSuffix,
-    }
-    console.log('投票数据:', voters, result)
-    return result
+    console.log('投票数据:', voteData)
+    return voteData
 }
 
 const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject) => {
@@ -206,38 +203,63 @@ function main() {
     const $poll_container = _('div', { id: 'poll_container', style: {/* width: '670px'*/ } })
     $container.appendChild($poll_container)
     let voteData = readVoteData()
-    if (is_login && voteData.myScore === undefined) {
-        let title = document.title, $tmp
-        // 番剧讨论页: https://bgm.tv/ep/767931
-        // 人物页: https://bgm.tv/character/77
-        if ($tmp = document.querySelector('#headerSubject .nameSingle a')) {
-            title = $tmp.innerText
-            if ($tmp = document.querySelector('div#columnEpA h2.title')) { // 番剧讨论页的ep
-                title += ' ' + $tmp.innerText.split(' ')[0]
+    new MutationObserver((mutations) => {
+        let toRefreshShow = false;
+        // console.log(mutations)
+        for (let mutation of mutations) {
+            if (mutation.type === 'childList') {
+                for (let node of mutation.addedNodes) {
+                    // 当前在评论区删除回复时, 只是display: none, 并不会触发DOM树改变
+                    // 故这里只处理增加了一条回复的情况
+                    if (node.className.split(' ').includes('row_reply')) {
+                        toRefreshShow |= voteData.parseReply(node)
+                    }
+                }
             }
         }
-        const $voteForm = showVote(title, () => {
-            const val = $voteForm.elements.pollOption.value
-            if (!val) {
-                alert("请选择后再投票！");
-                return;
+        if (toRefreshShow) {
+            show()
+        }
+    }).observe($comment_list, {
+        childList: true,
+        attributes: false,
+    })
+    show()
+    function show() {
+        if (is_login && voteData.myScore === undefined) {
+            let title = document.title, $tmp
+            // 番剧讨论页: https://bgm.tv/ep/767931
+            // 人物页: https://bgm.tv/character/77
+            if ($tmp = document.querySelector('#headerSubject .nameSingle a')) {
+                title = $tmp.innerText
+                if ($tmp = document.querySelector('div#columnEpA h2.title')) { // 番剧讨论页的ep
+                    title += ' ' + $tmp.innerText.split(' ')[0]
+                }
             }
-            let score = +val
-            vote_to_bgm(score, $poll_container.querySelector('#vote-comment').value, voteData.hasSuffix)
-                .then((r) => {
-                    voteData.counts[score_to_index(score)]++
-                    voteData.myScore = score
-                    voteData.myReplyId = safe_prop(array_last(document.querySelectorAll('#comment_list > .row_reply')), 'id', 'no_id') // 评论列表的最后一条
-                    showVoteResult(voteData)
-                })
-                .catch(e => console.error(e))
-        })
-    } else {
-        showVoteResult(voteData)
+            const $voteForm = showVote(title, () => {
+                const val = $voteForm.elements.pollOption.value
+                if (!val) {
+                    alert("请选择后再投票！");
+                    return;
+                }
+                let score = +val
+                vote_to_bgm(score, $poll_container.querySelector('#vote-comment').value, voteData.hasSuffix)
+                    .then((r) => {
+                        // 发出评论后, 会触发DOM树改变, 前面的代码监听了DOM树改变, 在必要的时刻会更新投票区域, 故这里不需要手动更新
+                        // voteData.voters[voteData.myUserId] = score
+                        // voteData.myScore = score
+                        // voteData.myReplyId = safe_prop(array_last(document.querySelectorAll('#comment_list > .row_reply')), 'id', 'no_id') // 评论列表的最后一条
+                        // showVoteResult(voteData)
+                    })
+                    .catch(e => console.error(e))
+            })
+        } else {
+            showVoteResult(voteData)
+        }
     }
 
     function showVoteResult(voteData) {
-        $poll_container.innerHTML = createVoteResultHtml(voteData.counts, voteData.myScore, voteData.myReplyId)
+        $poll_container.innerHTML = createVoteResultHtml(voteData.voters, voteData.myScore, voteData.myReplyId)
     }
 
     function showVote(title, onSubmit) {
@@ -273,6 +295,7 @@ function main() {
                 // 若简单评论为空, 或是评论模板中的值, 则修改简单评论为评论模板中的一个
                 if (comment === '' || commentTemplates.includes(comment)) {
                     $voteForm.elements.comment.value = commentTemplates[score_to_index(score)]
+                    $voteForm.elements.comment.select() // 全选简评区
                 }
             } else if (name === 'modify_comment_template') {
                 $voteForm.elements.comment_template.type = value ? 'text' : 'hidden'
@@ -300,23 +323,30 @@ function createVoteHtml(title) {
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
     <label class="form-option"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
-    <label class="form-option"><input type="checkbox" name="beuj_need_suffix" title="在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." > 帮助推广脚本 </input></label>
-    <label class="form-option"><input type="checkbox" name="beuj_need_mask" > Mask评分 </input></label>
+    <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
+    <label class="form-option"><input type="checkbox" name="beuj_need_mask" > 遮盖评分 </input></label>
 </form>
 </div>
     `
 }
 
-function createVoteResultHtml(counts, score, replyId) {
-    let voters = counts.reduce((a, b) => a + b, 0)
+function createVoteResultHtml(voters, myScore, myReplyId) {
+    const counts = new Array(commentTemplates.length).fill(0) // 投+2->-2分的人数的数组
+    const voterUserIds = Object.keys(voters)
+    for (let userId of voterUserIds) {
+        let score = voters[userId]
+        counts[score_to_index(score)]++
+    }
+
+    let voterCount = voterUserIds.length
     let html = '';
-    const myIndex = score_to_index(score)
+    const myIndex = score_to_index(myScore)
     for (let i = 0; i < commentTemplates.length; i++) {
-        let width = (counts[i] / voters * 100).toFixed(1)
-        let your_vote = myIndex === i
+        let width = (counts[i] / voterCount * 100).toFixed(1)
+        let isMyVote = myIndex === i
         html += `
             <tr>
-                <td align="left">${score_to_str(index_to_score(i))} ${commentTemplates[i]}${your_vote ? `<a href="#${replyId}" class="l">(your vote)</a>` : ''}</td>
+                <td align="left">${score_to_str(index_to_score(i))} ${commentTemplates[i]}${isMyVote ? `<a href="#${myReplyId}" class="l">(your vote)</a>` : ''}</td>
                 <td width="35%"><div class="vote_container" style="width: ${width}%">&nbsp;</div></td>
                 <td width="25" align="center">${counts[i]}</td>
                 <td width="40" align="right">${width}%</td>
@@ -327,7 +357,7 @@ function createVoteResultHtml(counts, score, replyId) {
     <table border="0" width="100%" cellpadding="" cellspacing="5">
         ${html}
     </table>
-    <div style="text-align: center;">Voters: ${voters}</div>
+    <div style="text-align: center;">Voters: ${voterCount}</div>
 </div>`
 }
 
