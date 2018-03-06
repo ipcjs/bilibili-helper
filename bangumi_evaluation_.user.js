@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.7
+// @version      1.0.8
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -243,7 +243,7 @@ function main() {
                     return;
                 }
                 let score = +val
-                vote_to_bgm(score, $poll_container.querySelector('#vote-comment').value, voteData.hasSuffix)
+                vote_to_bgm(score, $voteForm.elements.comment.value, voteData.hasSuffix)
                     .then((r) => {
                         // 发出评论后, 会触发DOM树改变, 前面的代码监听了DOM树改变, 在必要的时刻会更新投票区域, 故这里不需要手动更新
                         // voteData.voters[voteData.myUserId] = score
@@ -283,6 +283,11 @@ function main() {
             toSubmit && onSubmit()
             return false // no submit
         }
+        $voteForm.elements.comment.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.keyCode === 13 || e.keyCode === 10)) { // ctrl + enter
+                $voteForm.elements.voteButton.click() // 直接form.submit()貌似有问题, 只能模拟提交
+            }
+        })
         $voteForm.addEventListener('change', (e) => {
             let name = e.target.name;
             let value = e.target.type === 'checkbox' ? (e.target.checked ? TRUE : FALSE) : e.target.value
@@ -318,7 +323,7 @@ function createVoteHtml(title) {
 <div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
 <form id="vote-form">
     ${rows}
-    <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价"></textarea>
+    <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价(Ctrl+Enter 快速提交)"></textarea>
     <input type="hidden" name="comment_template" class="inputtext" style="margin-bottom: 6px;" placeholder="短评模板; +2 +1 +0 -1 -2 分别对应的短评;使用空格分隔;">
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
