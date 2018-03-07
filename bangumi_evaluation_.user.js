@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.9
+// @version      1.1.0
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -424,10 +424,10 @@ function createVoteHtml(title) {
     <input type="hidden" name="comment_template" class="inputtext" style="margin-bottom: 6px;" placeholder="短评模板; +2 +1 +0 -1 -2 分别对应的短评;使用空格分隔;">
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
-    <label class="form-option"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
-    ${util_page.ep() ? '<label class="form-option"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
+    <label class="form-option" title="没错, 短评模板时可以修改的"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
+    ${util_page.ep() ? '<label class="form-option" title="同时将当前ep标记为看过"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
     <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
-    <label class="form-option"><input type="checkbox" name="beuj_need_mask" > 遮盖评分 </input></label>
+    <label class="form-option" title="给评分的数字打码"><input type="checkbox" name="beuj_need_mask" > 遮盖评分 </input></label>
 </form>
 </div>
     `
