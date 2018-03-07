@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.8
+// @version      1.0.9
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -64,11 +64,34 @@ const util_ui_element_creator = (type, props, children) => {
     return elem;
 }
 const _ = util_ui_element_creator
-
+const util_stringify = (item) => {
+    if (typeof item === 'object') {
+        try {
+            return JSON.stringify(item)
+        } catch (e) {
+            console.debug(e)
+            return item.toString()
+        }
+    } else {
+        return item
+    }
+}
+const util_ui_alert = function (message, callback, delay) {
+    delay === undefined && (delay = 500)
+    setTimeout(() => {
+        if (callback) {
+            if (window.confirm(message)) {
+                callback()
+            }
+        } else {
+            alert(message)
+        }
+    }, delay)
+}
 const addStyle = (css) => {
     document.head.appendChild(_('style', {}, [_('text', css)]))
 }
-const ajax = (...args) => new Promise((resolve, reject) => $(...args).done(resolve).fail(reject))
+const ajax = (...args) => new Promise((resolve, reject) => $.ajax(...args).done(resolve).fail(reject))
 
 // language=CSS
 addStyle(`
@@ -115,6 +138,7 @@ const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
 localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
+localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
 let beuj_only_one_suffix = TRUE // 一个页面最多放一个小尾巴
 const COMMENTS_DEFAULT = '力荐 不错 一般 不喜欢 垃圾'
 let commentTemplates = (localStorage.beuj_comment_templates || COMMENTS_DEFAULT).split(' ')
@@ -124,6 +148,14 @@ const getUserId = () => {
     const $avatar = document.querySelector('div.idBadgerNeue a.avatar')
     return $avatar && $avatar.href.split('/')[4] || ''
 }
+const getGh = () => {
+    let $formhash = document.querySelector('#new_comment #ReplyForm > input[name=formhash]')
+    return $formhash.value
+}
+const util_page = {
+    ep: () => location.pathname.match(/^\/ep\/\d+$/)
+}
+
 const array_last = (arr) => arr[arr.length - 1]
 const safe_prop = (obj, prop, defaultValue) => obj ? obj[prop] : defaultValue
 const score_to_index = (score) => 5 - (score + 3)
@@ -137,11 +169,16 @@ function readVoteData() {
         myReplyId: undefined,
         myUserId: getUserId(),
         hasSuffix: false,
+        clearMyScore: function () {
+            this.myScore = undefined
+            this.myReplyId = undefined
+            delete this.voters[this.myUserId]
+        },
         parseReply: function ($reply) {
-            let $message = $reply.querySelector('.message')
-            if (this._group = $message.innerText.match(SCORE_REGEX)) {
-                let score = Math.min(Math.max(-2, +this._group[1]), 2)
-                let userId = array_last($reply.querySelector(':scope > a.avatar').href.split('/'))
+            let $message = this.getMessageInReply($reply)
+            let score
+            if ((score = this.getScoreInMessage($message)) !== undefined) {
+                let userId = this.getUserIdInReply($reply)
                 this.voters[userId] = score
                 if (this.myUserId === userId) {
                     this.myScore = score
@@ -153,7 +190,17 @@ function readVoteData() {
                 return true // 找到了新的评分时, 返回true
             }
             return false
-        }
+        },
+        getUserIdInReply: ($reply) => array_last($reply.querySelector(':scope > a.avatar').href.split('/')),
+        getMessageInReply: ($reply) => $reply.querySelector('.message'),
+        getScoreInMessage: function ($message) {
+            if (this._group = $message.innerText.match(SCORE_REGEX)) {
+                let score = Math.min(Math.max(-2, +this._group[1]), 2)
+                return score
+            }
+            return undefined
+        },
+        getScoreInReply: function ($reply) { return this.getScoreInMessage(this.getMessageInReply($reply)) }
     }
     const replys = document.querySelectorAll('.row_reply')
     for (let $reply of replys) {
@@ -213,6 +260,40 @@ function main() {
                     // 故这里只处理增加了一条回复的情况
                     if (node.className.split(' ').includes('row_reply')) {
                         toRefreshShow |= voteData.parseReply(node)
+                        // 给新增的评论添加 删除/编辑 按钮
+                        if (util_page.ep()) { // 当前只适配了ep页面
+                            const replyIdValue = array_last(node.id.split('_'))
+                            const onDelClick = (e) => {
+                                util_ui_alert('确定删除这条回复？', () => {
+                                    ajax({ method: 'GET', dataType: 'json', url: `//${location.hostname}/erase/reply/ep/${replyIdValue}?gh=${getGh()}&ajax=1` })
+                                        .then(r => r.status === 'ok' ? r : Promise.reject(r))
+                                        .then(r => {
+                                            node.parentElement.removeChild(node)
+                                            return r
+                                        })
+                                        .catch(e => {
+                                            alert('删除失败\n' + util_stringify(e))
+                                        })
+                                }, 0)
+                            }
+                            let $replyInfo = node.querySelector(':scope > .re_info > small')
+                            $replyInfo.appendChild(_('text', ' '))
+                            $replyInfo.appendChild(_('a', { href: 'javascript:;', event: { click: onDelClick } }, [_('text', 'del')]))
+                            $replyInfo.appendChild(_('text', ' / '))
+                            $replyInfo.appendChild(_('a', { href: `/subject/ep/edit_reply/${replyIdValue}` }, [_('text', 'edit')]))
+                        }
+                    }
+                }
+                for (let node of mutation.removedNodes) {
+                    // 处理移除reply的情况, 由脚本执行的删除, 会触发移除reply
+                    if (node.className.split(' ').includes('row_reply')) {
+                        // 移除reply时要做的处理其实比较复杂, 这里做简单化处理, 够用:
+                        // 当移除的是自己的包含评分的reply时, 清除自己的评分
+                        if (voteData.getScoreInReply(node) !== undefined
+                            && voteData.getUserIdInReply(node) === voteData.myUserId) {
+                            voteData.clearMyScore()
+                            toRefreshShow = true
+                        }
                     }
                 }
             }
@@ -250,8 +331,21 @@ function main() {
                         // voteData.myScore = score
                         // voteData.myReplyId = safe_prop(array_last(document.querySelectorAll('#comment_list > .row_reply')), 'id', 'no_id') // 评论列表的最后一条
                         // showVoteResult(voteData)
+                        // 在ep页面, 有一个"标记为看过功能"
+                        if (util_page.ep() && localStorage.beuj_flag_to_watched) {
+                            let epId = array_last(location.pathname.split('/'))
+                            return ajax({ method: 'POST', dataType: 'json', url: `//${location.hostname}/subject/ep/${epId}/status/watched?gh=${getGh()}&ajax=1`, })
+                                .then(r => r.status === 'ok' ? r : Promise.reject(r))
+                                .catch(e => {
+                                    alert(`标记为看过 失败:\n${util_stringify(e)}`)
+                                    return Promise.reject(e) // 继续抛出异常
+                                })
+                        } else {
+                            return 'ok'
+                        }
                     })
-                    .catch(e => console.error(e))
+                    .then(r => console.log('result:', r))
+                    .catch(e => console.error('error:', e))
             })
         } else {
             showVoteResult(voteData)
@@ -308,6 +402,9 @@ function main() {
         })
         $voteForm.elements.beuj_need_mask.checked = localStorage.beuj_need_mask
         $voteForm.elements.beuj_need_suffix.checked = localStorage.beuj_need_suffix
+        if ($voteForm.elements.beuj_flag_to_watched) {
+            $voteForm.elements.beuj_flag_to_watched.checked = localStorage.beuj_flag_to_watched
+        }
         return $voteForm
     }
 }
@@ -328,6 +425,7 @@ function createVoteHtml(title) {
     <br/>
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
     <label class="form-option"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
+    ${util_page.ep() ? '<label class="form-option"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
     <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
     <label class="form-option"><input type="checkbox" name="beuj_need_mask" > 遮盖评分 </input></label>
 </form>
