@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.0
+// @version      1.1.1
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -153,7 +153,8 @@ const getGh = () => {
     return $formhash.value
 }
 const util_page = {
-    ep: () => location.pathname.match(/^\/ep\/\d+$/)
+    ep: () => location.pathname.match(/^\/ep\/\d+$/),
+    group_topic: () => location.pathname.match(/^\/group\/topic\/\d+$/)
 }
 
 const array_last = (arr) => arr[arr.length - 1]
@@ -260,12 +261,21 @@ function main() {
                     // 故这里只处理增加了一条回复的情况
                     if (node.className.split(' ').includes('row_reply')) {
                         toRefreshShow |= voteData.parseReply(node)
+
                         // 给新增的评论添加 删除/编辑 按钮
-                        if (util_page.ep()) { // 当前只适配了ep页面
-                            const replyIdValue = array_last(node.id.split('_'))
+                        let delPath, editPath;
+                        const replyIdValue = array_last(node.id.split('_'))
+                        if (util_page.ep()) { // 适配ep页面
+                            delPath = `/erase/reply/ep/${replyIdValue}?gh=${getGh()}`
+                            editPath = `/subject/ep/edit_reply/${replyIdValue}`
+                        } else if (util_page.group_topic()) { // 适配小组讨论页面
+                            delPath = `/erase/group/reply/${replyIdValue}?gh=${getGh()}`
+                            editPath = `/group/reply/${replyIdValue}/edit`
+                        }
+                        if (delPath && editPath) {
                             const onDelClick = (e) => {
                                 util_ui_alert('确定删除这条回复？', () => {
-                                    ajax({ method: 'GET', dataType: 'json', url: `//${location.hostname}/erase/reply/ep/${replyIdValue}?gh=${getGh()}&ajax=1` })
+                                    ajax({ method: 'GET', dataType: 'json', url: `//${location.hostname}${delPath}&ajax=1` })
                                         .then(r => r.status === 'ok' ? r : Promise.reject(r))
                                         .then(r => {
                                             node.parentElement.removeChild(node)
@@ -280,7 +290,7 @@ function main() {
                             $replyInfo.appendChild(_('text', ' '))
                             $replyInfo.appendChild(_('a', { href: 'javascript:;', event: { click: onDelClick } }, [_('text', 'del')]))
                             $replyInfo.appendChild(_('text', ' / '))
-                            $replyInfo.appendChild(_('a', { href: `/subject/ep/edit_reply/${replyIdValue}` }, [_('text', 'edit')]))
+                            $replyInfo.appendChild(_('a', { href: editPath }, [_('text', 'edit')]))
                         }
                     }
                 }
