@@ -1146,6 +1146,14 @@ function scriptSource(invokeBy) {
         }
 
         var bilibiliApis = (function () {
+            function AjaxException(message, code = 0/*用0表示未知错误*/) {
+                this.name = 'AjaxException'
+                this.message = message
+                this.code = code
+            }
+            AjaxException.prototype.toString = function () {
+                return `${this.name}: ${this.message}(${this.code})`
+            }
             function BilibiliApi(props) {
                 Object.assign(this, props);
             }
@@ -1296,15 +1304,19 @@ function scriptSource(invokeBy) {
                 }
             })
             var playurl_by_proxy = new BilibiliApi({
-                _asyncAjax: function (originUrl) {
-                    return util_ajax(this.transToProxyUrl(originUrl))
+                _asyncAjax: function (originUrl, bangumi) {
+                    return util_ajax(this.transToProxyUrl(originUrl, bangumi))
                         .then(r => this.processProxySuccess(r, false))
                 },
-                transToProxyUrl: function (url) {
+                transToProxyUrl: function (url, bangumi) {
+                    if (bangumi === undefined) {
+                        bangumi = !util_page.player_in_av()// 只有在av页面中的iframe标签形式的player, 不是番剧视频
+                    }
                     var params = url.split('?')[1];
-                    // 只有在av页面中的iframe标签形式的player, 不需要插入'bangumi'参数, 其他页面都要插入这个参数
-                    if (!util_page.player_in_av()) {
-                        params = params.replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1])
+                    if (bangumi) {
+                        params = params.replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]) // 将module参数的值插入到cid后面
+                    } else {
+                        params = params.replace(/&?module=(\w+)/, '') // 移除module参数
                     }
                     return `${balh_config.server}/BPplayurl.php?${params}`;
                 },
@@ -1317,7 +1329,7 @@ function scriptSource(invokeBy) {
                         if (alertWhenError) {
                             util_ui_alert(`突破黑洞失败\n${JSON.stringify(data)}\n点击确定刷新界面`, window.location.reload.bind(window.location));
                         } else {
-                            return Promise.reject(`服务器错误: ${JSON.stringify(data)}`)
+                            return Promise.reject(new AjaxException(`服务器错误: ${JSON.stringify(data)}`, data ? data.code : 0))
                         }
                     } else if (isAreaLimitForPlayUrl(data)) {
                         util_error('>>area limit');
@@ -1349,6 +1361,16 @@ function scriptSource(invokeBy) {
                 asyncAjax: function (originUrl) {
                     util_ui_player_msg('从代理服务器拉取视频地址中...')
                     return playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
+                        .catch(e => {
+                            if (e instanceof AjaxException && e.code === 1) { // code: 1 表示非番剧视频, 不能使用番剧视频参数
+                                util_ui_player_msg(e)
+                                util_ui_player_msg('尝试使用非番剧视频接口拉取视频地址...')
+                                return playurl_by_proxy._asyncAjax(originUrl, false)
+                                    .catch(e2 => Promise.reject(e)) // 忽略e2, 返回原始错误e
+                            } else {
+                                return Promise.reject(e)
+                            }
+                        })
                         .catch(e => {
                             util_ui_player_msg(e)
                             util_ui_player_msg('尝试换用B站接口拉取视频地址(清晰度低)...')
