@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.12
+// @version      6.7.13
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -808,10 +808,10 @@ function scriptSource(invokeBy) {
     const balh_api_plus_season = function (season_id) {
         return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}`)
     }
-    // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339|bangumi&qn=16&src=vupload&vid=vupload_30188339
+    // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339&module=bangumi&qn=16&src=vupload&vid=vupload_30188339
     // qn = 16, 能看
     const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
-        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '|bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}`)
+        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '&module=bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}`)
     }
     // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
@@ -1311,12 +1311,14 @@ function scriptSource(invokeBy) {
                 transToProxyUrl: function (url, bangumi) {
                     if (bangumi === undefined) {
                         bangumi = !util_page.player_in_av()// 只有在av页面中的iframe标签形式的player, 不是番剧视频
+                        // season_type, 1 为动画, 5 为电视剧; 为5时, 不是番剧视频
+                        if (util_url_param(url, 'season_type') === '5') {
+                            bangumi = false
+                        }
                     }
                     var params = url.split('?')[1];
-                    if (bangumi) {
-                        params = params.replace(/(cid=\d+)/, '$1|' + (url.match(/module=(\w+)/) || ['', 'bangumi'])[1]) // 将module参数的值插入到cid后面
-                    } else {
-                        params = params.replace(/&?module=(\w+)/, '') // 移除module参数
+                    if (!bangumi) {
+                        params = params.replace(/&?module=(\w+)/, '') // 移除可能存在的module参数
                     }
                     return `${balh_config.server}/BPplayurl.php?${params}`;
                 },
