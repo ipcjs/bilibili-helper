@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bangumi Evaluation.dev
-// @name:zh-CN   Bangumi评分脚本・改.dev
+// @name:zh-CN   番组计划评论区投票助手
 // @namespace    https://github.com/ipcjs/
 // @version      1.0.3
 // @description  Bangumi Evaluation Script

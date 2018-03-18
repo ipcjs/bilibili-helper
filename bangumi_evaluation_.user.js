@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -25,6 +25,16 @@
 // ==/UserScript==
 
 'use strict'
+const script = {
+    name: '评论区投票助手',
+    handler: window.GM_info ? window.GM_info.scriptHandler : '组件'
+}
+if (!window.beuj_running) {
+    window.beuj_running = true
+} else {
+    console.log(`${script.name}(${script.handler})已经在运行了~~`)
+    return
+}
 
 // type, props, children
 // type, props, innerHTML
@@ -220,7 +230,7 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
     text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
     comment && (text += ' ' + comment)
     if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
-        (text += `\n[url=${HOME_URL}]--来自Bangumi评分脚本・改[/url]`)
+        (text += `\n[align=right][url=${HOME_URL}]--来自${script.name}[/url][/align]`)
     }
 
     document.querySelector('textarea#content').value = text
