@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      0.1.1
+// @version      0.1.2
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
 // @match        https://developer.android.com/*
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 'use strict';
-const mustEndWithLang = (item) => {
+const ensureHrefEndWithLang = (item) => {
     if (!item.href) return
     const url = new URL(item.href)
     if (!url.searchParams.get('hl')) {
@@ -18,9 +18,9 @@ const mustEndWithLang = (item) => {
         item.href = url.href
     }
 }
-mustEndWithLang(location)
+ensureHrefEndWithLang(location)
 window.addEventListener('DOMContentLoaded', (event) => {
     for (let $a of document.querySelectorAll('a')) {
-        mustEndWithLang($a)
+        ensureHrefEndWithLang($a)
     }
 })
