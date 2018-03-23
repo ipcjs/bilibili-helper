@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.13
+// @version      6.7.14
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -938,7 +938,10 @@ function scriptSource(invokeBy) {
                                 return json;
                             }
                         })
-                } else if (param.url.match('/player/web_api/playurl') || param.url.match('/player/web_api/v2/playurl')) {
+                } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
+                    || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
+                    // || param.url.match('//interface.bilibili.com/v2/playurl') // 普通的av页面playurl接口, 若要让所有页面的playurl都走代理服务器, 请启用这行, 同时, 勾选"被永封的大会员"选项;
+                ) {
                     one_api = bilibiliApis._playurl;
                     oriResultTransformer = p => p
                         .then(json => {
