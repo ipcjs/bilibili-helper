@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.14
+// @version      6.8.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -940,7 +940,7 @@ function scriptSource(invokeBy) {
                         })
                 } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
                     || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
-                    // || param.url.match('//interface.bilibili.com/v2/playurl') // 普通的av页面playurl接口, 若要让所有页面的playurl都走代理服务器, 请启用这行, 同时, 勾选"被永封的大会员"选项;
+                    || (balh_config.enable_in_av && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
                 ) {
                     one_api = bilibiliApis._playurl;
                     oriResultTransformer = p => p
@@ -1133,12 +1133,19 @@ function scriptSource(invokeBy) {
                     log(e);
                 }
             }
-
+            // 若没取到, 则去取av页面的av号
+            if (!seasonId) {
+                try {
+                    seasonId = (window.top.location.pathname.match(/\/video\/(av\d+)/) || ['', ''])[1]
+                } catch (e) {
+                    log(e);
+                }
+            }
             // 最后, 若没取到, 则试图取出当前页面url中的aid
             if (!seasonId) {
                 seasonId = util_url_param(window.location.href, 'aid');
                 if (seasonId) {
-                    seasonId = 'av' + seasonId;
+                    seasonId = 'aid' + seasonId;
                 }
             }
             return seasonId || '000';
@@ -1854,8 +1861,9 @@ function scriptSource(invokeBy) {
 
     const balh_ui_setting = (function () {
         function addSettingsButton() {
-            var indexNav = document.getElementById('index_nav') || document.querySelector('.bangumi-nav-right'),
-                bottom = '110px';
+            var indexNav = document.getElementById('index_nav') || document.querySelector('.bangumi-nav-right') || document.querySelector('#fixnav_report'),
+                bottom = '110px',
+                size = '46px';
             if (indexNav == null) {
                 document.head.appendChild(_('style', {}, [_('text', '.index-nav{opacity:1;display:block;bottom:50px;left:calc(50% + 500px);z-index:100} @media screen and (min-width:1160px){.index-nav{left:calc(50% + 590px)}}')]));
                 indexNav = document.body.appendChild(_('div', {
@@ -1867,8 +1875,34 @@ function scriptSource(invokeBy) {
                 window.dispatchEvent(new Event('resize'));
                 indexNav.style.display = 'block';
             }
-            indexNav.appendChild(_('div', { className: 'n-i gotop balh_settings', style: { bottom: bottom }, title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn_gotop', style: { background: '#f6f9fa' } })]));
-            indexNav.lastChild.firstChild.innerHTML = '<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg style="width:30px;height:50px;fill:rgb(153,162,170)" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>';
+            indexNav.appendChild(_('style', {}, [_('text', `
+            #balh-settings-btn {
+                bottom: 110px;
+                border: 1px solid #e5e9ef;
+                border-radius: 4px;
+                background: #f6f9fa;
+                margin-top: 4px;
+                width: ${size};
+                height: ${size};
+            }
+            #balh-settings-btn:hover {
+                background: #00a1d6;
+                border-color: #00a1d6;
+            }            
+            #balh-settings-btn .btn-gotop {
+                text-align: center;
+            }
+            #balh-settings-btn .icon-saturn {
+                width: 30px;
+                height: ${size};
+                fill: rgb(153,162,170);
+            }
+            #balh-settings-btn .icon-saturn:hover {
+                fill: white;
+            }            
+            `)]))
+            indexNav.appendChild(_('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn-gotop' })]));
+            indexNav.lastChild.firstChild.innerHTML = `<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg class="icon-saturn" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>`;
         }
 
         function _showSettings() {
@@ -1981,9 +2015,12 @@ function scriptSource(invokeBy) {
                     ]), _('br'),
                     _('text', '其他：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员？'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '（详细说明）')])]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws.acgvideo.com')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '(？)')])]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '移除前置广告')]),
+                        _('div', { style: { flex: 1, display: 'flex' } }, [
+                            _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_enable_in_av' }), _('text', '在AV页面启用')]),
+                            _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
+                        ])
                     ]), _('br'),
                     _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                     _('text', '　'),
@@ -1999,7 +2036,7 @@ function scriptSource(invokeBy) {
                         _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
                         _('text', '　'),
                         _('a', { id: 'balh-issue-link', href: r.url.issue, target: '_blank', style: { display: 'none' } }, [_('text', '问题反馈')]),
-                        _('text', '\n作者: ipcjs esterTion FlandreDaisuki　接口：BiliPlus')
+                        _('text', '作者: ipcjs esterTion FlandreDaisuki　接口：BiliPlus')
                     ]),
                     _('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
                 ])
@@ -2007,7 +2044,7 @@ function scriptSource(invokeBy) {
         ]);
 
         util_init(() => {
-            if (!(util_page.player() || util_page.av())) {
+            if (!(util_page.player() || (util_page.av() && !balh_config.enable_in_av))) {
                 addSettingsButton()
             }
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
