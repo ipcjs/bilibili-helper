@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.7.14.1
+// @version      6.7.14
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -93,7 +93,6 @@ function scriptSource(invokeBy) {
                 DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
                 REPLACE: 'replace', // 替换模式, 替换有区域限制的视频的接口的返回值;
                 REDIRECT: 'redirect',// 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
-                ALLREDIRECT: 'allredirect',// 完全重定向模式, 直接重定向所有视频的接口到代理服务器; 所有视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
             },
             server: {
                 S0: 'https://biliplus.ipcjs.win',
@@ -941,7 +940,7 @@ function scriptSource(invokeBy) {
                         })
                 } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
                     || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
-                    || (balh_config.mode === r.const.mode.ALLREDIRECT && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口, 若要让所有页面的playurl都走代理服务器, 请启用这行, 同时, 勾选"被永封的大会员"选项;
+                    // || param.url.match('//interface.bilibili.com/v2/playurl') // 普通的av页面playurl接口, 若要让所有页面的playurl都走代理服务器, 请启用这行, 同时, 勾选"被永封的大会员"选项;
                 ) {
                     one_api = bilibiliApis._playurl;
                     oriResultTransformer = p => p
@@ -1084,7 +1083,7 @@ function scriptSource(invokeBy) {
         }
 
         function needRedirect() {
-            return balh_config.mode === r.const.mode.REDIRECT || balh_config.mode === r.const.mode.ALLREDIRECT || (balh_config.mode === r.const.mode.DEFAULT && isAreaLimitSeason())
+            return balh_config.mode === r.const.mode.REDIRECT || (balh_config.mode === r.const.mode.DEFAULT && isAreaLimitSeason())
         }
 
         function areaLimit(limit) {
@@ -1978,8 +1977,7 @@ function scriptSource(invokeBy) {
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), _('text', '默认：自动判断')]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), _('text', '替换：在需要时处理番剧')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), _('text', '重定向：完全代理所有番剧')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.ALLREDIRECT }), _('text', '完全重定向：完全代理所有视频')])
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), _('text', '重定向：完全代理所有番剧')])
                     ]), _('br'),
                     _('text', '其他：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
