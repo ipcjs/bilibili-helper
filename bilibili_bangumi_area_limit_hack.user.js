@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.2.4
+// @version      6.8.2.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1663,9 +1663,8 @@ function scriptSource(invokeBy) {
                             }
                         }
                         episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
-                    } else if (avData.bangumi && avData.bangumi.newest_ep_id) {
-                        episode_id = avData.bangumi.newest_ep_id;
                     }
+                    if (!episode_id && avData.bangumi && avData.bangumi.newest_ep_id) episode_id = avData.bangumi.newest_ep_id;
                     if (episode_id) {
                         let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`;
                         log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, '(ep_id:', ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid, ')');
