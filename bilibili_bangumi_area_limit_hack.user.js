@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.2.2
+// @version      6.8.2.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1647,7 +1647,7 @@ function scriptSource(invokeBy) {
                     }
                     let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid;
                     if (!result.code) {
-                            let episodes = result.result.episodes,
+                        let episodes = result.result.episodes,
                             ep;
                         // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
                         for (let i = 0; i < episodes.length; i++) {
