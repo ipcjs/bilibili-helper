@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.2.1
+// @version      6.8.2.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1637,12 +1637,12 @@ function scriptSource(invokeBy) {
                 })
                 .then(function (result) {
                     if (result === undefined) return // 上一个then不返回内容时, 不需要处理
-                    if (result.code === 10 && !avData.bangumi.newest_ep_id) { // av属于番剧页面, 通过接口却未能找到番剧信息
+                    if (result.code === 10 && !(avData.bangumi && avData.bangumi.newest_ep_id)) { // av属于番剧页面, 通过接口却未能找到番剧信息
                         log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
                         generatePlayer(avData, aid, page, cid)
                         return
                     }
-                    if (result.code && !avData.bangumi.newest_ep_id) {
+                    if (result.code && !(avData.bangumi && avData.bangumi.newest_ep_id)) {
                         return Promise.reject(JSON.stringify(result));
                     }
                     let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid;
@@ -1663,7 +1663,7 @@ function scriptSource(invokeBy) {
                             }
                         }
                         episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
-                    } else {
+                    } else if (avData.bangumi && avData.bangumi.newest_ep_id) {
                         episode_id = avData.bangumi.newest_ep_id;
                     }
                     if (episode_id) {
