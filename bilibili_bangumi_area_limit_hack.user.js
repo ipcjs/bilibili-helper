@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.2
+// @version      6.8.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1321,9 +1321,11 @@ function scriptSource(invokeBy) {
                 },
                 transToProxyUrl: function (url, bangumi) {
                     if (bangumi === undefined) {
-                        bangumi = !util_page.player_in_av()// 只有在av页面中的iframe标签形式的player, 不是番剧视频
-                        // season_type, 1 为动画, 5 为电视剧; 为5时, 不是番剧视频
-                        if (util_url_param(url, 'season_type') === '5') {
+                        // av页面中的iframe标签形式的player, 不是番剧视频
+                        bangumi = !util_page.player_in_av()
+                        // season_type, 1 为动画, 5 为电视剧; 为5/3时, 不是番剧视频
+                        let season_type_param = util_url_param(url, 'season_type')
+                        if (season_type_param === '5' || season_type_param === '3') {
                             bangumi = false
                         }
                     }
