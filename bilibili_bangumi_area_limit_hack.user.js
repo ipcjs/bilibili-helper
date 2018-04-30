@@ -1639,41 +1639,43 @@ function scriptSource(invokeBy) {
                 })
                 .then(function (result) {
                     if (result === undefined) return // 上一个then不返回内容时, 不需要处理
-                    if (result.code === 10 && !(avData.bangumi && avData.bangumi.newest_ep_id)) { // av属于番剧页面, 通过接口却未能找到番剧信息
-                        log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
-                        generatePlayer(avData, aid, page, cid)
-                        return
-                    }
-                    if (result.code && !(avData.bangumi && avData.bangumi.newest_ep_id)) {
-                        return Promise.reject(JSON.stringify(result));
-                    }
-                    let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid;
-                    if (!result.code) {
-                        let episodes = result.result.episodes,
-                            ep;
+                    if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
+                        let ep_id_newest = avData && avData.bangumi && avData.bangumi.newest_ep_id
+                        if (ep_id_newest) {
+                            episode_id = ep_id_newest // 此时, 若avData中有最新的ep_id, 则直接使用它
+                        } else {
+                            log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`)
+                            generatePlayer(avData, aid, page, cid)
+                            return
+                        }
+                    } else if (result.code) {
+                        return Promise.reject(JSON.stringify(result))
+                    } else {
+                        let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
+                            episodes = result.result.episodes,
+                            ep
                         // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
                         for (let i = 0; i < episodes.length; i++) {
-                            ep = episodes[i];
+                            ep = episodes[i]
                             if (ep.danmaku == cid) {
-                                ep_id_by_cid = ep.episode_id;
+                                ep_id_by_cid = ep.episode_id
                             }
                             if (ep.av_id == aid && ep.page == page) {
-                                ep_id_by_aid_page = ep.episode_id;
+                                ep_id_by_aid_page = ep.episode_id
                             }
                             if (ep.av_id == aid) {
-                                ep_id_by_aid = ep.episode_id;
+                                ep_id_by_aid = ep.episode_id
                             }
                         }
-                        episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
+                        episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid
                     }
-                    if (!episode_id && avData.bangumi && avData.bangumi.newest_ep_id) episode_id = avData.bangumi.newest_ep_id;
                     if (episode_id) {
-                        let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`;
-                        log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, '(ep_id:', ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid, ')');
-                        msg.innerText = '即将跳转到：' + bangumi_url;
-                        location.href = bangumi_url;
+                        let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`
+                        log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, 'season_id:', season_id, 'ep_id:', episode_id)
+                        msg.innerText = '即将跳转到：' + bangumi_url
+                        location.href = bangumi_url
                     } else {
-                        return Promise.reject('查询episode_id失败');
+                        return Promise.reject('查询episode_id失败')
                     }
                 })
                 .catch(function (e) {
