@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.2
+// @version      1.1.3
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -140,6 +140,12 @@ addStyle(`
         color: #AAA;
         font-size: 12px;
     }
+    .beuj-hidden {
+        display: none;
+    }
+    .beuj-float-right {
+        float: right;
+    }
 `)
 const TRUE = 'Y'
 const FALSE = ''
@@ -149,6 +155,8 @@ const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
 localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
 localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
+localStorage.beuj_show_form_in_ep === undefined && (localStorage.beuj_show_form_in_ep = TRUE)
+localStorage.beuj_show_form_in_other === undefined && (localStorage.beuj_show_form_in_other = FALSE)
 let beuj_only_one_suffix = TRUE // 一个页面最多放一个小尾巴
 const COMMENTS_DEFAULT = '力荐 不错 一般 不喜欢 垃圾'
 let commentTemplates = (localStorage.beuj_comment_templates || COMMENTS_DEFAULT).split(' ')
@@ -166,7 +174,34 @@ const util_page = {
     ep: () => location.pathname.match(/^\/ep\/\d+$/),
     group_topic: () => location.pathname.match(/^\/group\/topic\/\d+$/)
 }
-
+const isShowForm = () => localStorage['beuj_show_form_in_' + (util_page.ep() ? 'ep' : 'other')]
+const setShowForm = (show) => localStorage['beuj_show_form_in_' + (util_page.ep() ? 'ep' : 'other')] = show ? TRUE : FALSE
+const getShowFormActionText = () => isShowForm() ? '隐藏' : '显示'
+class ClassHelper {
+    constructor(ele) {
+        this.ele = ele;
+    }
+    hasClass(name) {
+        return this.ele.className.includes(name);
+    }
+    removeClass(name) {
+        let list = this.ele.className.split(/ +/);
+        let index = list.indexOf(name);
+        if (index != -1) {
+            list.splice(index, 1);
+            this.ele.className = list.join(' ');
+        }
+        return this;
+    }
+    addClass(name) {
+        this.ele.className = `${this.ele.className} ${name}`;
+        return this;
+    }
+    toggleClass(name) {
+        this.hasClass(name) ? this.removeClass(name) : this.addClass(name);
+        return this;
+    }
+}
 const array_last = (arr) => arr[arr.length - 1]
 const safe_prop = (obj, prop, defaultValue) => obj ? obj[prop] : defaultValue
 const score_to_index = (score) => 5 - (score + 3)
@@ -227,8 +262,8 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
 
     let text = ''
     let scoreText = score_to_str(score)
-    text += localStorage.beuj_need_mask ? `[mask]${scoreText}[/mask]` : scoreText
-    comment && (text += ' ' + comment)
+    text += localStorage.beuj_need_mask ? `[size=0]${scoreText} [/size]` : `${scoreText} `
+    comment && (text += comment)
     if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
         (text += `\n[align=right][url=${HOME_URL}]--来自${script.name}[/url][/align]`)
     }
@@ -378,7 +413,14 @@ function main() {
 
     function showVote(title, onSubmit) {
         $poll_container.innerHTML = createVoteHtml(title)
+        let $formContainer = $poll_container.querySelector('#form-container')
+        let $actionShowForm = $poll_container.querySelector('#action-show-form')
         let $voteForm = $poll_container.querySelector('#vote-form')
+        $actionShowForm.addEventListener('click', (e) => {
+            setShowForm(!isShowForm())
+            $actionShowForm.innerText = getShowFormActionText()
+            new ClassHelper($formContainer).toggleClass('beuj-hidden')
+        })
         $voteForm.onsubmit = function () {
             let comment_template
             let toSubmit = true
@@ -436,8 +478,10 @@ function createVoteHtml(title) {
         rows += `<div style="margin: 3px 0;"><label><input type="radio" name="pollOption" value="${scoreStr}"> ${scoreStr} ${commentTemplates[i]}</label></div>`
     }
     return `
-<div class="forum_category">${title} 投票</div>
-<div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
+<div class="forum_category">${title} 投票
+    <a id="action-show-form" class="beuj-float-right">${getShowFormActionText()}</a>
+</div>
+<div id="form-container" class="forum_boardrow1 ${isShowForm() ? '' : 'beuj-hidden'}" style="border-width: 0 1px 1px 1px;">
 <form id="vote-form">
     ${rows}
     <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价(Ctrl+Enter 快速提交)"></textarea>
@@ -447,7 +491,7 @@ function createVoteHtml(title) {
     <label class="form-option" title="没错, 短评模板时可以修改的"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
     ${util_page.ep() ? '<label class="form-option" title="同时将当前ep标记为看过"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
     <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
-    <label class="form-option" title="给评分的数字打码"><input type="checkbox" name="beuj_need_mask" > 遮盖评分 </input></label>
+    <label class="form-option" title="隐藏评分的数字"><input type="checkbox" name="beuj_need_mask" > 隐藏评分 </input></label>
 </form>
 </div>
     `
