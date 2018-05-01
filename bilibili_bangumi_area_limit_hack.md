@@ -4,7 +4,7 @@
 **反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明**
 **反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明**
 
-**不要在Greasyfork中提交反馈，去[GitHub](https://github.com/ipcjs/bilibili-helper/issues)，Greasyfork问题追踪系统太弱了，不好用**
+**不要在Greasyfork中提交反馈，去GitHub，Greasyfork问题追踪系统太弱了，不好用**
 
 ![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/536/original/Image.png)
 
@@ -29,11 +29,8 @@
 0. 如果在[番剧页面](https://bangumi.bilibili.com/anime/5551)中连设置按钮都看不到，说明你的浏览器版本太老了，请更新成最新版；如果还是不行，请换用最新版的[Firefox](https://www.mozilla.org/en-US/firefox/new/)或者[Chrome](https://www.google.com/chrome/browser/desktop/index.html)。
 0. 确定你使用的播放器是**HTML5**版的。Flash版请在播放器界面的右上角切换成HTML5版。
 2. 确定可以打开[代理服务器上的链接](https://biliplus.ipcjs.win/api/bangumi?season=5551)。 如果打不开，可以点开设置窗口，换个代理服务器试试
-3. 对于一些已知错误，脚本会弹窗提示：（脚本第一次使用的时候，应该会向你申请弹窗权限）
-    1. 提示`突破黑洞失败，需要登录`：点击弹窗，登录代理服务器就行了
-    1. 提示`突破黑洞失败，我们未能穿透敌人的盔甲...当前代理服务器（...）依然有区域限制`：换个代理服务器，或者尝试登录当前代理服务器
-4. 其他弹窗提示，或者没有任何提示，大概是因为获取真实地址的请求失败了。。。默认代理服务器太渣的原因。。一般多刷新几下应该就可以了。。。  
-5. 如果依然无效，可能确实是这个脚本的问题了，请反馈给我：[解除B站区域限制 - 反馈](https://github.com/ipcjs/bilibili-helper/issues)， 记得带上[控制台](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md#控制台)截图。
+3. 对于一些已知错误，脚本会弹窗提示，请认真阅读提示信息，按提示进行操作。
+5. 如果依然无效，可能确实是这个脚本的问题了，请到GitHub反馈给我。
 
 ### 看不了1080P画质？
 
@@ -63,7 +60,7 @@
 ## 开源
 
 1. 源码仓库：[ipcjs/bilibili-helper at user.js](https://github.com/ipcjs/bilibili-helper/tree/user.js)
-2. 代码贡献者：[@esterTion](https://github.com/esterTion)、[@FlandreDaisuki](https://github.com/FlandreDaisuki)、[@ipcjs](https://github.com/ipcjs)
+2. 代码贡献者：[Contributions](https://github.com/ipcjs/bilibili-helper/graphs/contributors)
 3. 部分源码取自：
     - 通知相关：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
     - 自动跳转相关：[我就是要跳轉(B站番劇投稿頁跳轉去番劇頁)](https://greasyfork.org/zh-CN/scripts/29151)

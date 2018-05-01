@@ -1,21 +1,27 @@
 <!-- 
-提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！
-提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！
-提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！
-直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88
-直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88
-直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88
+* 提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！（直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88）
+* 服务器抽风的问题，别再重复提交issue了，我这里没法解决。
+* 请仔细填写问题相关的信息，信息不足的直接关闭。
 -->
 
 ## 描述
 <!-- 描述你的问题 -->
 
+- 问题网址：
+
 
 ## 日志
 
+<details>
+<summary>Verbose 日志</summary>
+
 ```
-<!-- 复制来的日志，粘贴在这里 -->
+点击“设置 > 复制日志”，将导出的日志，粘贴在这里
+（设置按钮在番剧页面的右下角，是一个“土星”图标）
+
 ```
+ 
+</details>
 
 <!-- 如果脚本崩溃, 连日志都不能导出Σ( ￣□￣||), 则把 控制台截图 放到下面 -->
 
