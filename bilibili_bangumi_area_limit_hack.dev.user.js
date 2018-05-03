@@ -12,6 +12,7 @@
 // @include      *://m.bilibili.com/bangumi/play/ss*
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
+// @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @run-at       document-start
 // @grant        none

@@ -16,6 +16,7 @@
 // @include      *://m.bilibili.com/bangumi/play/ss*
 // @include      *://bangumi.bilibili.com/anime/*
 // @include      *://bangumi.bilibili.com/movie/*
+// @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @run-at       document-start
 // @grant        none
@@ -755,6 +756,7 @@ function scriptSource(invokeBy) {
         player_in_av: util_func_catched(() => util_page.player() && window.top.location.href.includes('www.bilibili.com/video/av'), (e) => log(e), false),
         av: () => location.href.includes('www.bilibili.com/video/av'),
         bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),
+        bangumi_md: () => location.href.includes('www.bilibili.com/bangumi/media/md'),
         // movie页面使用window.aid, 保存当前页面av号
         movie: () => location.href.includes('bangumi.bilibili.com/movie/'),
         // anime页面使用window.season_id, 保存当前页面season号
@@ -1481,7 +1483,7 @@ function scriptSource(invokeBy) {
 
         util_init(() => {
             // 除了播放器和番剧列表页面, 其他页面都需要检测html5
-            if (!(util_page.bangumi() || util_page.player())) {
+            if (!(util_page.bangumi() || util_page.bangumi_md() || util_page.player())) {
                 checkHtml5()
             }
         })
