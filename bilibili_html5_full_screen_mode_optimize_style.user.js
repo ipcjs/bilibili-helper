@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili HTML5播放器网页全屏模式优化 脚本版
 // @namespace    http://tampermonkey.net/
-// @version      0.1.6
+// @version      0.1.6.1
 // @description  移植自：http://userstyles.org/styles/131642
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
@@ -28,9 +28,9 @@ const css = `
     height:100%!important;
     width:100%!important;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control{
-    display: block;
+    //display: block;
     opacity: 0!important;
     transition: 0.2s;
     position:absolute;
@@ -41,34 +41,35 @@ const css = `
     opacity: 1!important;
   }
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar{
-    display: block;
+    //display: block;
     opacity: 0!important;
     transition: 0.2s;
     position:absolute;
     top:0px;
+    width:100%!important;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar:hover{
 /*     opacity: 0.8!important; */
     opacity: 1!important;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar .bilibili-player-mode-selection-container{
     height:120px;
     border-radius: 5px;
     top:100%;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar .bilibili-player-color-picker-container{
     height:208px;
     border-radius: 5px;
     top:100%;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-info-container{
     top:40px;
   }
-  
+
   #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-float-lastplay{
     bottom:30px;
   }`
