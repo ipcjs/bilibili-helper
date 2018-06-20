@@ -2,9 +2,9 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.4
+// @version      1.2.0
 // @description  Bangumi Evaluation Script
-// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
+// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 觉得脚本影响版面, 请手动启用"单集评分脚本遮蔽"组件(https://bgm.tv/dev/app/132);
 // @author       ipcjs
 // @include      *://bgm.tv/ep/*
 // @include      *://bgm.tv/character/*
