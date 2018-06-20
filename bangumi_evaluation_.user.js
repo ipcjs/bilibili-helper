@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.5
+// @version      1.1.4
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087
 // @author       ipcjs
@@ -269,7 +269,7 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
     text += localStorage.beuj_need_mask ? `[color=white]${scoreText} [/color]` : `${scoreText} `
     comment && (text += comment)
     if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
-        (text += `\n[align=right][url=${INSTALL_URL}]--来自不怕屏蔽的${script.name}[/url][/align]`)
+        (text += `\n[align=right][url=${INSTALL_URL}]--来自${script.name}[/url][/align]`)
     }
 
     document.querySelector('textarea#content').value = text
