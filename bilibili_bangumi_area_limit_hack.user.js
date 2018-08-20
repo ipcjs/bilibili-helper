@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.5
+// @version      6.8.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1970,7 +1970,8 @@ function scriptSource(invokeBy) {
         if (window === window.top) {
             window.addEventListener('message', (event) => {
                 if (event.data === 'balh-show-setting') {
-                    _showSettings()
+                    _showSettings();
+                    $('#upos-server')[0].value = balh_config.upos_server || '';
                 }
             })
         }
@@ -2059,6 +2060,42 @@ function scriptSource(invokeBy) {
                             _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '去前置广告')]),
                             _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
                         ])
+                    ]), _('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
+                        _('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
+                        _('text', '替换upos视频服务器：'),
+                        _('select', {
+                            id: 'upos-server',
+                            event: {
+                                change: function () {
+                                    let server = this.value;
+                                    let message = $('#upos-server-message');
+                                    let clearMsg = function () { message.text('') }
+                                    $.ajax(balh_config.server + '/api/setUposServer?server=' + server, {
+                                        xhrFields: { withCredentials: true },
+                                        dataType: 'json',
+                                        success: function (json) {
+                                            if (json.code == 0) {
+                                                message.text('已保存');
+                                                setTimeout(clearMsg, 3e3);
+                                                balh_config.upos_server = server;
+                                            }
+                                        },
+                                        error: function () {
+                                            message.text('保存出错');
+                                            setTimeout(clearMsg, 3e3);
+                                        }
+                                    })
+                                }
+                            }
+                        }, [
+                                _('option', { value: "" }, [_('text', '不替换')]),
+                                _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
+                                _('option', { value: "oss" }, [_('text', 'oss（阿里）')]),
+                                _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
+                                _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
+                                _('option', { value: "bos" }, [_('text', 'bos（百度）')])
+                            ]),
+                        _('span', { 'id': 'upos-server-message' })
                     ]), _('br'),
                     _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                     _('text', '　'),
