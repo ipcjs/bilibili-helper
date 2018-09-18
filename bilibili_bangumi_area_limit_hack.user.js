@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.6
+// @version      6.8.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -787,9 +787,11 @@ function scriptSource(invokeBy) {
                         case 'mode':
                             value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT)
                             break
+                        case 'flv_prefer_ws':
+                            value = r.const.FALSE // 关闭该选项
+                            break
                         default:
                             // case 'blocked_vip':
-                            // case 'flv_prefer_ws':
                             // case 'remove_pre_ad':
                             break
                     }
@@ -2040,27 +2042,14 @@ function scriptSource(invokeBy) {
                 _('h1', {}, [_('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
                 _('br'),
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
-                    _('text', '使用的服务器：'), _('br'),
+                    _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', '备选代理服务器（更稳定）')]),
                     ]), _('br'),
-                    _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, [_('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '服务器测速')])]), _('br'),
-                    _('text', '脚本工作模式：'), _('br'),
-                    _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), _('text', '默认：自动判断')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), _('text', '替换：在需要时处理番剧')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), _('text', '重定向：完全代理所有番剧')])
-                    ]), _('br'),
-                    _('text', '其他：'), _('br'),
-                    _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '(？)')])]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_enable_in_av' }), _('text', '在AV页面启用'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [_('text', '(？)')])]),
-                        _('div', { style: { flex: 1, display: 'flex' } }, [
-                            _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '去前置广告')]),
-                            _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
-                        ])
-                    ]), _('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
+                    _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
+                    _('text', 'upos服务器：'), _('br'),
+                    _('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
                         _('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
                         _('text', '替换upos视频服务器：'),
                         _('select', {
@@ -2097,6 +2086,21 @@ function scriptSource(invokeBy) {
                             ]),
                         _('span', { 'id': 'upos-server-message' })
                     ]), _('br'),
+                    _('text', '脚本工作模式：'), _('br'),
+                    _('div', { style: { display: 'flex' } }, [
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), _('text', '默认：自动判断')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), _('text', '替换：在需要时处理番剧')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), _('text', '重定向：完全代理所有番剧')])
+                    ]), _('br'),
+                    _('text', '其他：'), _('br'),
+                    _('div', { style: { display: 'flex' } }, [
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '(？)')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_enable_in_av' }), _('text', '在AV页面启用'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [_('text', '(？)')])]),
+                        _('div', { style: { flex: 1, display: 'flex' } }, [
+                            _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '去前置广告')]),
+                            // _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
+                        ])
+                    ]), _('br'),
                     _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                     _('text', '　'),
                     _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
@@ -2120,7 +2124,9 @@ function scriptSource(invokeBy) {
 
         util_init(() => {
             if (!(util_page.player() || (util_page.av() && !balh_config.enable_in_av))) {
-                addSettingsButton()
+                if (!util_page.av()) { // av页面添加这个按钮不知道为啥页面会混乱...屏蔽掉(;¬_¬)
+                    addSettingsButton()
+                }
             }
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
         return {
