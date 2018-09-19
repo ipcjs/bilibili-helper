@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
 // @include      https://developer.android.com/*
@@ -17,7 +17,8 @@
 const OptionEnum = Object.freeze({
     DISABLE: {
         value: 0, name: 'disable: 禁用脚本',
-        processUrl: null
+        processUrl: null,
+        onMenuClicked: null,
     },
     DEFAULT: {
         value: 2, name: 'default: 若不指定则英文',
@@ -26,7 +27,8 @@ const OptionEnum = Object.freeze({
                 url.searchParams.set('hl', 'en')
                 item.href = url.href
             }
-        }
+        },
+        onMenuClicked: null,
     },
     NONE: {
         value: 1, name: 'none: 强制不指定语言',
@@ -35,7 +37,8 @@ const OptionEnum = Object.freeze({
                 url.searchParams.delete('hl')
                 item.href = url.href
             }
-        }
+        },
+        onMenuClicked: createGotoLang(''),
     },
     EN: {
         value: 3, name: 'en: 强制英文',
@@ -44,7 +47,8 @@ const OptionEnum = Object.freeze({
                 url.searchParams.set('hl', 'en')
                 item.href = url.href
             }
-        }
+        },
+        onMenuClicked: createGotoLang('en'),
     },
     ZH: {
         value: 4, name: 'zh: 强制中文',
@@ -53,7 +57,8 @@ const OptionEnum = Object.freeze({
                 url.searchParams.set('hl', 'zh-CN')
                 item.href = url.href
             }
-        }
+        },
+        onMenuClicked: createGotoLang('zh-CN'),
     },
     values: function () {
         return Object.values(this).filter(it => it.value !== undefined)
@@ -76,7 +81,11 @@ OptionEnum.values().forEach(it => {
     GM_registerMenuCommand((it === option ? '=>' : '　') + it.name, () => {
         // debugger
         GM_setValue('key_option', it.value)
-        location.reload()
+        if (!it.onMenuClicked) {
+            location.reload() // 默认直接刷新
+        } else {
+            it.onMenuClicked()
+        }
     })
 })
 
@@ -95,3 +104,15 @@ window.addEventListener('DOMContentLoaded', (event) => {
         ensureHrefEndWithLang($a)
     }
 })
+
+function createGotoLang(lang) {
+    return () => {
+        const url = new URL(location.href)
+        if (lang) {
+            url.searchParams.set('hl', lang)
+        } else {
+            url.searchParams.delete('hl')
+        }
+        location.href = url.href
+    }
+}
