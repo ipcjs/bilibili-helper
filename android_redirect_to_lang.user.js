@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      0.1.2
+// @version      0.1.3
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
-// @match        https://developer.android.com/*
+// @include      https://developer.android.com/*
+// @include      https://firebase.google.com/*
 // @grant        none
 // @run-at       document-start
 // ==/UserScript==
