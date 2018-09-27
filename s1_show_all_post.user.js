@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.1.2
+// @version     0.2.0
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -79,7 +79,8 @@ class Table {
 
         document.getElementById('ct').insertBefore(_('div', {}, [
             this.$title = _('h1', {}, this.title),
-            this.$table = _('table', { id: 'list-s1-table' }),
+            this.$table = _('table', { id: 'ssap-table' }),
+            this.$msg = _('div', { id: 'ssap-msg' })
         ]), $postList)
     }
 
@@ -114,8 +115,7 @@ class Table {
     }
 
     showMsg(msg) {
-        this._clearTable()
-        this.append([{ msg: msg }], ['msg'])
+        this.$msg.innerText = msg
     }
 
     _refreshTitle() {
@@ -145,26 +145,18 @@ switch (TID) {
     default: filter = f_all; break;
 }
 
-addButton();
+document.querySelector('#pt > div.z').appendChild(_('a', { id: 'load-all-post', href: 'javascript:;', event: { click: () => loadAllPost() } }, '[显示全部]'));
 GM_addStyle(`
-    #list-s1-table tr {
+    #ssap-table tr {
 	    border-top: 1px solid #888; 
+    }
+    #ssap-msg {
+        text-align: center;
     }
     #load-all-post {
         margin: 0px 10px;
     }
     `)
-
-function addButton() {
-    let button = document.createElement('a');
-    button.innerText = '[显示全部]';
-    button.id = 'load-all-post';
-    button.href = 'javascript:;';
-    button.addEventListener('click', () => {
-        loadAllPost();
-    });
-    document.querySelector('#pt > div.z').appendChild(button);
-}
 
 function loadAllPost() {
     if (loadAllPost.loading) {
@@ -174,15 +166,13 @@ function loadAllPost() {
     if (!table) {
         table = new Table()
     }
-    table.showMsg('加载中...')
-
     const load = async function () {
         let page = 1;
         while (true) {
+            table.showMsg(`加载第${page}页中...`)
             const resp = await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` });
             const json = JSON.parse(resp.responseText);
             if (page === 1) {
-                table._clearTable()
                 table.setTitle(json.Variables.thread.subject)
             }
             table.appendPostList(json.Variables.postlist.filter(filter))
@@ -195,6 +185,9 @@ function loadAllPost() {
         }
     }
     load()
+        .then(r => {
+            table.showMsg('')
+        })
         .catch((e) => {
             table.showMsg(e)
         })
