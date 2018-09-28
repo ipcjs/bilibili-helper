@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.0
+// @version      1.1.1
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
 // @include      https://developer.android.com/*
+// @include      https://developer.android.google.cn/*
 // @include      http://localhost:8880/*
 // @include      https://firebase.google.com/*
 // @grant        GM_setValue
@@ -123,12 +124,13 @@ function createGotoLang(lang) {
 function replaceUrlForCacheServer() {
     const CACHE_SERVER_HOST = 'localhost:8880'
     const ORIGIN_SERVER_HOST = 'developer.android.com'
+    const ORIGIN_SERVER_HOST_2 = 'developer.android.google.cn'
     const CACHE_SERVER_PROTOCOL = 'http:'
     const isCacheServer = location.host === CACHE_SERVER_HOST
     if (isCacheServer) {
         window.addEventListener('DOMContentLoaded', (event) => {
             for (let $a of document.querySelectorAll('a')) {
-                if ($a.host === ORIGIN_SERVER_HOST) {
+                if ($a.host === ORIGIN_SERVER_HOST || $a.host === ORIGIN_SERVER_HOST_2) {
                     $a.protocol = CACHE_SERVER_PROTOCOL
                     $a.host = CACHE_SERVER_HOST
                 }
