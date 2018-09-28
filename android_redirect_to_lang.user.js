@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      1.0.1
+// @version      1.1.0
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
 // @include      https://developer.android.com/*
+// @include      http://localhost:8880/*
 // @include      https://firebase.google.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -89,6 +90,8 @@ OptionEnum.values().forEach(it => {
     })
 })
 
+replaceUrlForCacheServer()
+
 if (!option.processUrl) {
     return
 }
@@ -114,5 +117,22 @@ function createGotoLang(lang) {
             url.searchParams.delete('hl')
         }
         location.href = url.href
+    }
+}
+
+function replaceUrlForCacheServer() {
+    const CACHE_SERVER_HOST = 'localhost:8880'
+    const ORIGIN_SERVER_HOST = 'developer.android.com'
+    const CACHE_SERVER_PROTOCOL = 'http:'
+    const isCacheServer = location.host === CACHE_SERVER_HOST
+    if (isCacheServer) {
+        window.addEventListener('DOMContentLoaded', (event) => {
+            for (let $a of document.querySelectorAll('a')) {
+                if ($a.host === ORIGIN_SERVER_HOST) {
+                    $a.protocol = CACHE_SERVER_PROTOCOL
+                    $a.host = CACHE_SERVER_HOST
+                }
+            }
+        })
     }
 }
