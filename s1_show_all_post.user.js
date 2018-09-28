@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.1.1
+// @version     0.2.0
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -12,115 +12,198 @@
 // @connect     bbs.saraba1st.com
 // ==/UserScript==
 
-(function () {
-    let group, filter;
-    if (!(group = /thread-(\d+)-(\d+)-(\d+)/.exec(location.pathname))
-        && !(group = /tid=(\d+)/.exec(location.search))) {
-        return; // 不匹配则返回
+
+// type, props, children
+// type, props, innerHTML
+// 'text', text
+const util_ui_element_creator = (type, props, children) => {
+    let elem = null;
+    if (type === "text") {
+        return document.createTextNode(props);
+    } else {
+        elem = document.createElement(type);
+    }
+    for (let n in props) {
+        if (n === "style") {
+            for (let x in props.style) {
+                elem.style[x] = props.style[x];
+            }
+        } else if (n === "className") {
+            elem.className = props[n];
+        } else if (n === "event") {
+            for (let x in props.event) {
+                elem.addEventListener(x, props.event[x]);
+            }
+        } else {
+            elem.setAttribute(n, props[n]);
+        }
+    }
+    if (children) {
+        if (typeof children === 'string') {
+            elem.innerHTML = children;
+        } else {
+            for (let i = 0; i < children.length; i++) {
+                if (children[i] != null)
+                    elem.appendChild(children[i]);
+            }
+        }
+    }
+    return elem;
+}
+const _ = util_ui_element_creator
+
+
+function log(...args) {
+    console.log(...args);
+}
+
+function ajaxPromise(options) {
+    return new Promise((resolve, reject) => {
+        options.method = options.method || 'GET';
+        options.onload = function (resp) {
+            resolve(resp);
+        }
+        options.onerror = function (resp) {
+            reject(resp);
+        };
+        GM_xmlhttpRequest(options);
+    });
+}
+
+class Table {
+    constructor() {
+        const $postList = document.getElementById('postlist')
+        $postList.innerHTML = ''
+        this.listSize = 0
+        this.title = ''
+
+        document.getElementById('ct').insertBefore(_('div', {}, [
+            this.$title = _('h1', {}, this.title),
+            this.$table = _('table', { id: 'ssap-table' }),
+            this.$msg = _('div', { id: 'ssap-msg' })
+        ]), $postList)
     }
 
-    const POST_PAGE_MAX_COUNT = 1000; // 一次最多拉取多少条
-    const TID = group[1];
-
-    switch (TID) {
-        case '1494926': filter = f_1494926; break;
-        default: filter = f_all; break;
+    appendPostList(list) {
+        this.append(list, [
+            item => `<a href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>`,
+            'username',
+            'dateline',
+            'message'
+        ])
+    }
+    // append([{ name: 'ipcjs', age: 17 }, { name: 'fuck', age: 1 }], ['name', 'age']);
+    append(list, colNames) {
+        this.setListSize(this.listSize + list.length)
+        list.forEach(item => {
+            let $tr = _('tr')
+            colNames.forEach(name => {
+                $tr.appendChild(_('td', {}, typeof name === 'function' ? name(item) : item[name]))
+            })
+            this.$table.appendChild($tr)
+        })
     }
 
-    addButton();
-    GM_addStyle(`
-    #list-s1-table tr {
+    setListSize(listSize) {
+        this.listSize = listSize
+        this._refreshTitle()
+    }
+
+    setTitle(title) {
+        this.title = title
+        this._refreshTitle()
+    }
+
+    showMsg(msg) {
+        this.$msg.innerText = msg
+    }
+
+    _refreshTitle() {
+        this.$title.innerHTML = `${this.title || 'Title'} ${this.listSize}`
+    }
+
+    _clearTable() {
+        this.listSize = 0
+        this.$table.innerHTML = ''
+    }
+}
+
+////////////////////// main ///////////////////////////////
+
+let group, filter;
+if (!(group = /thread-(\d+)-(\d+)-(\d+)/.exec(location.pathname))
+    && !(group = /tid=(\d+)/.exec(location.search))) {
+    return; // 不匹配则返回
+}
+
+const POST_PAGE_MAX_COUNT = 1000; // 一次最多拉取多少条
+const TID = group[1];
+let table;
+
+switch (TID) {
+    case '1494926': filter = f_1494926; break;
+    default: filter = f_all; break;
+}
+
+document.querySelector('#pt > div.z').appendChild(_('a', { id: 'load-all-post', href: 'javascript:;', event: { click: () => loadAllPost() } }, '[显示全部]'));
+GM_addStyle(`
+    #ssap-table tr {
 	    border-top: 1px solid #888; 
+    }
+    #ssap-msg {
+        text-align: center;
     }
     #load-all-post {
         margin: 0px 10px;
     }
     `)
 
-    function addButton() {
-        let button = document.createElement('a');
-        button.innerText = '[显示全部]';
-        button.id = 'load-all-post';
-        button.href = 'javascript:;';
-        button.addEventListener('click', () => {
-            loadAllPost();
-        });
-        document.querySelector('#pt > div.z').appendChild(button);
+function loadAllPost() {
+    if (loadAllPost.loading) {
+        return
     }
-
-    function loadAllPost() {
-        (async function () {
-            let json, page = 1, list = [];
-            while (true) {
-                let resp = await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` });
-                json = JSON.parse(resp.responseText);
-                Array.prototype.push.apply(list, json.Variables.postlist);
-                log('>>', page, list.length, json.Variables.thread);
-                if (list.length <= +json.Variables.thread.replies) { // 总post条数为replies + 1
-                    page++;
-                } else {
-                    break;
-                }
+    loadAllPost.loading = true
+    if (!table) {
+        table = new Table()
+    }
+    const load = async function () {
+        let page = 1;
+        while (true) {
+            table.showMsg(`加载第${page}页中...`)
+            const resp = await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` });
+            const json = JSON.parse(resp.responseText);
+            if (page === 1) {
+                table.setTitle(json.Variables.thread.subject)
             }
-            show(list.filter(filter), [
-                item => `<a href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>`,
-                'username',
-                'dateline',
-                'message'
-            ], json.Variables.thread.subject);
-        })().catch((e) => {
-            show([{ error: e }], ['error'], 'Result: error');
-        });
-    }
-
-    function f_1494926(item) {
-        if (item.username === 'ipcjs') {
-            return true;
-        } else if (['SUNSUN', '蒹葭公子', '木水风铃'].includes(item.username) && item.message.includes('ipcjs 发表于')) {
-            return true;
+            table.appendPostList(json.Variables.postlist.filter(filter))
+            log('>>', page, table.listSize, json.Variables.thread);
+            if (table.listSize <= +json.Variables.thread.replies) { // 总post条数为replies + 1
+                page++;
+            } else {
+                break;
+            }
         }
-        return false;
     }
-    function f_all() {
+    load()
+        .then(r => {
+            table.showMsg('')
+        })
+        .catch((e) => {
+            table.showMsg(e)
+        })
+        .finally(() => {
+            loadAllPost.loading = false
+        })
+}
+
+function f_1494926(item) {
+    if (item.username === 'ipcjs') {
+        return true;
+    } else if (['SUNSUN', '蒹葭公子', '木水风铃'].includes(item.username) && item.message.includes('ipcjs 发表于')) {
         return true;
     }
-    // show([{ name: 'ipcjs', age: 17 }, { name: 'fuck', age: 1 }], ['name', 'age']);
-    function show(list, colNames, title) {
-        let table = document.createElement('table');
-
-        list.forEach(item => {
-            let tr = document.createElement('tr');
-            colNames.forEach(name => {
-                let td = document.createElement('td');
-                td.innerHTML = typeof name === 'function' ? name(item) : item[name];
-                tr.appendChild(td);
-            });
-            table.appendChild(tr);
-        });
-        table.id = 'list-s1-table';
-        let div = document.createElement('div');
-        let h1 = document.createElement('h1');
-        h1.innerText = (title ? title : 'Title') + `(${list.length})`;
-        div.appendChild(h1);
-        div.appendChild(table);
-        // document.querySelector('body').appendChild(div);
-        document.getElementById('ct').insertBefore(div, document.getElementById('postlist'));
-    }
-
-    function log(...args) {
-        console.log(...args);
-    }
-
-    function ajaxPromise(options) {
-        return new Promise((resolve, reject) => {
-            options.method = options.method || 'GET';
-            options.onload = function (resp) {
-                resolve(resp);
-            }
-            options.onerror = function (resp) {
-                reject(resp);
-            };
-            GM_xmlhttpRequest(options);
-        });
-    }
-})();
+    return false;
+}
+function f_all() {
+    return true;
+}
