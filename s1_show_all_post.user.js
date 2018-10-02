@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.2.0
+// @version     0.2.1
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -86,7 +86,7 @@ class Table {
 
     appendPostList(list) {
         this.append(list, [
-            item => `<a href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>`,
+            { name: 'number', func: item => `<a href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>` },
             'username',
             'dateline',
             'message'
@@ -97,8 +97,10 @@ class Table {
         this.setListSize(this.listSize + list.length)
         list.forEach(item => {
             let $tr = _('tr')
-            colNames.forEach(name => {
-                $tr.appendChild(_('td', {}, typeof name === 'function' ? name(item) : item[name]))
+            colNames.forEach(it => {
+                let name = typeof it === 'string' ? it : it.name
+                let func = typeof it === 'string' ? item => item[name] : it.func
+                $tr.appendChild(_('td', { className: `ssap-${name}` }, func(item)))
             })
             this.$table.appendChild($tr)
         })
@@ -155,6 +157,27 @@ GM_addStyle(`
     }
     #load-all-post {
         margin: 0px 10px;
+    }
+    #ssap-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    #ssap-table .ssap-number {
+        width: 2%;
+    }
+    #ssap-table .ssap-username {
+        width: 5%;
+    }
+    
+    #ssap-table .ssap-dateline {
+        width: 5%;
+    }
+    
+    #ssap-table .ssap-message {
+        width: 88%;
+    }
+    #ssap-table img {
+        max-width: 88%;
     }
     `)
 
