@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.0
+// @version      6.9.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -111,6 +111,7 @@ function scriptSource(invokeBy) {
         baipiao: [
             { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/media/md140772', link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
             { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/play/ep251255', link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/play/ss25689', link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
         ]
     }
     const util_stringify = (item) => {
