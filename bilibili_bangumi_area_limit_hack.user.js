@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.8.8
+// @version      6.9.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -73,10 +73,13 @@ function scriptSource(invokeBy) {
         setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
         return
     }
+
+    const r_text = {
+        ok: { en: 'OK', zh_cn: '确定', },
+        welcome_to_acfun: '缺B乐 了解下？',
+    }
+
     const r = {
-        text: {
-            ok: { en: 'OK', zh_cn: '确定', },
-        },
         html: {},
         css: {
             settings: '#balh-settings {font-size: 12px;color: #6d757a;}  #balh-settings h1 {color: #161a1e}  #balh-settings a {color: #00a1d6;}  #balh-settings a:hover {color: #f25d8e}  #balh-settings input {margin-left: 3px;margin-right: 3px;}  @keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;} ',
@@ -104,7 +107,11 @@ function scriptSource(invokeBy) {
             },
             TRUE: 'Y',
             FALSE: '',
-        }
+        },
+        baipiao: [
+            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/media/md140772', link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/play/ep251255', link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+        ]
     }
     const util_stringify = (item) => {
         if (typeof item === 'object') {
@@ -635,11 +642,15 @@ function scriptSource(invokeBy) {
         document.body.appendChild(div);
     }
 
-    const util_ui_alert = function (message, callback) {
+    const util_ui_alert = function (message, resolve, reject) {
         setTimeout(() => {
-            if (callback) {
+            if (resolve) {
                 if (window.confirm(message)) {
-                    callback()
+                    resolve()
+                } else {
+                    if (reject) {
+                        reject()
+                    }
                 }
             } else {
                 alert(message)
@@ -2133,6 +2144,20 @@ function scriptSource(invokeBy) {
         return {
             dom: settingsDOM,
             show: showSettings,
+        }
+    }())
+
+    const balh_jump_to_baipiao = (function () {
+        for (let bp of r.baipiao) {
+            const cookie_key = `balh_baipao_${bp.key}`
+            if (location.href.startsWith(bp.match_url)
+                && !util_cookie[cookie_key]) {
+                util_ui_alert(`发现白嫖地址：${bp.link}\n\n${bp.message}\n\n点击确定，一键跳转`,
+                    () => { location.assign(bp.link) },
+                    () => { util_cookie.set(cookie_key, r.const.TRUE, '') }
+                )
+                break
+            }
         }
     }())
 
