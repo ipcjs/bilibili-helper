@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.1
+// @version      6.9.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -76,7 +76,13 @@ function scriptSource(invokeBy) {
 
     const r_text = {
         ok: { en: 'OK', zh_cn: '确定', },
-        welcome_to_acfun: '缺B乐 了解下？',
+        close: { en: 'Close', zh_cn: '关闭' },
+        welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><p>硬广: <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player: 比快更快 从未如此流畅</a></p>',
+    }
+    const _t = (key) => {
+        const text = r_text[key]
+        const lang = 'zh_cn'
+        return typeof text === 'string' ? text : text[lang]
     }
 
     const r = {
@@ -109,9 +115,8 @@ function scriptSource(invokeBy) {
             FALSE: '',
         },
         baipiao: [
-            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/media/md140772', link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
-            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/play/ep251255', link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
-            { key: 'zomble_land_saga', match_url: 'https://www.bilibili.com/bangumi/play/ss25689', link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.epId) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.mediaInfo && window.__INITIAL_STATE__.mediaInfo.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
         ]
     }
     const util_stringify = (item) => {
@@ -516,10 +521,13 @@ function scriptSource(invokeBy) {
         }
     }
     /**
-     * 创建元素的快捷方法
+     * 创建元素的快捷方法: 
+     * 1. type, props, children
+     * 2. type, props, innerHTML
+     * 3. 'text', text
      * @param type string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
      * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
-     * @param children array, 子元素;
+     * @param children array, 子元素; 也可以直接是html文本;
      */
     const util_ui_element_creator = (type, props, children) => {
         let elem = null;
@@ -544,9 +552,13 @@ function scriptSource(invokeBy) {
             }
         }
         if (children) {
-            for (let i = 0; i < children.length; i++) {
-                if (children[i] != null)
-                    elem.appendChild(children[i]);
+            if (typeof children === 'string') {
+                elem.innerHTML = children;
+            } else {
+                for (let i = 0; i < children.length; i++) {
+                    if (children[i] != null)
+                        elem.appendChild(children[i]);
+                }
             }
         }
         return elem;
@@ -658,6 +670,50 @@ function scriptSource(invokeBy) {
             }
         }, 500)
     }
+
+    /**
+     * - param.content: 内容元素数组
+     * - param.showConfirm: 是否显示确定按钮
+     * - param.confirmBtn: 确定按钮的文字
+     * - param.onConfirm: 确定回调
+     * - param.onClose: 关闭回调
+     */
+    const util_ui_pop = function (param) {
+        if (!(param.content instanceof Array)) {
+            util_log(`param.content(${param.content}) 必须是元素数组`)
+            return;
+        }
+
+        if (document.getElementById('AHP_Notice_style') == null) {
+            let noticeWidth = Math.min(500, innerWidth - 40);
+            document.head.appendChild(_('style', { id: 'AHP_Notice_style' }, [_('text', `#AHP_Notice{ line-height:normal;position:fixed;left:0;right:0;top:0;height:0;z-index:20000;transition:.5s;cursor:default } .AHP_down_banner{ margin:2px;padding:2px;color:#FFFFFF;font-size:13px;font-weight:bold;background-color:green } .AHP_down_btn{ margin:2px;padding:4px;color:#1E90FF;font-size:14px;font-weight:bold;border:#1E90FF 2px solid;display:inline-block;border-radius:5px } body.ABP-FullScreen{ overflow:hidden } @keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}} @keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}} #AHP_Notice>div{ position:absolute;bottom:0;left:0;right:0;font-size:15px } #AHP_Notice>div>div{ border:1px #AAA solid;width:${noticeWidth}px;margin:0 auto;padding:20px 10px 5px;background:#EFEFF4;color:#000;border-radius:5px;box-shadow:0 0 5px -2px } #AHP_Notice>div>div *{ margin:5px 0; } #AHP_Notice input[type=text]{ border: none;border-bottom: 1px solid #AAA;width: 60%;background: transparent } #AHP_Notice input[type=text]:active{ border-bottom-color:#4285f4 } #AHP_Notice input[type=button] { border-radius: 2px; border: #adadad 1px solid; padding: 3px; margin: 0 5px; min-width:50px } #AHP_Notice input[type=button]:hover { background: #FFF; } #AHP_Notice input[type=button]:active { background: #CCC; } .noflash-alert{display:none}`)]));
+        }
+
+        if (document.querySelector('#AHP_Notice') != null)
+            document.querySelector('#AHP_Notice').remove();
+
+        let div = _('div', { id: 'AHP_Notice' });
+        let childs = [];
+        if (param.showConfirm || param.confirmBtn || param.onConfirm) {
+            childs.push(_('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));
+        }
+        childs.push(_('input', {
+            value: _t('close'), type: 'button', className: 'close', event: {
+                click: function () {
+                    param.onClose && param.onClose();
+                    div.style.height = 0;
+                    setTimeout(function () { div.remove(); }, 500);
+                }
+            }
+        }));
+        div.appendChild(_('div', {}, [_('div', {},
+            param.content.concat([_('hr'), _('div', { style: { textAlign: 'right' } }, childs)])
+        )]));
+        document.body.appendChild(div);
+        div.style.height = div.firstChild.offsetHeight + 'px';
+    }
+
+
     /**
      * MessageBox -> from base.core.js
      * MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
@@ -2149,17 +2205,26 @@ function scriptSource(invokeBy) {
     }())
 
     const balh_jump_to_baipiao = (function () {
-        for (let bp of r.baipiao) {
-            const cookie_key = `balh_baipao_${bp.key}`
-            if (location.href.startsWith(bp.match_url)
-                && !util_cookie[cookie_key]) {
-                util_ui_alert(`发现白嫖地址：${bp.link}\n\n${bp.message}\n\n点击确定，一键跳转`,
-                    () => { location.assign(bp.link) },
-                    () => { util_cookie.set(cookie_key, r.const.TRUE, '') }
-                )
-                break
+        function main() {
+            for (let bp of r.baipiao) {
+                const cookie_key = `balh_baipao_${bp.key}`
+                if (bp.match() && !util_cookie[cookie_key]) {
+                    util_ui_pop({
+                        content: [
+                            _('text', `发现白嫖地址：${bp.link}`),
+                            _('div', {}, bp.message),
+                        ],
+                        confirmBtn: '一键跳转',
+                        onConfirm: () => { location.href = bp.link },
+                        onClose: () => { util_cookie.set(cookie_key, r.const.TRUE, '') }
+                    })
+                    break
+                }
             }
         }
+        util_init(() => {
+            main()
+        }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
     }())
 
     function main() {
