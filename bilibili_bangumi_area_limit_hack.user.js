@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.2
+// @version      6.9.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -115,7 +115,7 @@ function scriptSource(invokeBy) {
             FALSE: '',
         },
         baipiao: [
-            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.epId) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.epInfo && window.__INITIAL_STATE__.epInfo.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
             { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.mediaInfo && window.__INITIAL_STATE__.mediaInfo.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
         ]
     }
@@ -2211,7 +2211,7 @@ function scriptSource(invokeBy) {
                 if (bp.match() && !util_cookie[cookie_key]) {
                     util_ui_pop({
                         content: [
-                            _('text', `发现白嫖地址：${bp.link}`),
+                            _('text', '发现白嫖地址: '), _('a', { href: bp.link }, bp.link),
                             _('div', {}, bp.message),
                         ],
                         confirmBtn: '一键跳转',
