@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Toggle Sidebar For underscorejs.org & liaoxuefeng
 // @namespace    https://tampermonkey.net/
-// @version      0.9.1
+// @version      0.9.2
 // @description  RT.
 // @author       ipcjs
-// @include      http://underscorejs.org/
+// @include      https://underscorejs.org/
 // @include      http://learningcn.com/underscore/
 // @include      http://www.liaoxuefeng.com/wiki/*
 // @include      https://www.liaoxuefeng.com/wiki/*
