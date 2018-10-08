@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.5
+// @version      6.9.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -672,15 +672,19 @@ function scriptSource(invokeBy) {
     }
 
     /**
-     * - param.content: 内容元素数组
+     * - param.content: 内容元素数组/HTML
      * - param.showConfirm: 是否显示确定按钮
      * - param.confirmBtn: 确定按钮的文字
      * - param.onConfirm: 确定回调
      * - param.onClose: 关闭回调
      */
     const util_ui_pop = function (param) {
-        if (!(param.content instanceof Array)) {
-            util_log(`param.content(${param.content}) 必须是元素数组`)
+        if (typeof param.content === 'string') {
+            let template = _('template');
+            template.innerHTML = param.content.trim()
+            param.content = Array.from(template.content.childNodes)
+        } else if (!(param.content instanceof Array)) {
+            util_log(`param.content(${param.content}) 不是数组`)
             return;
         }
 
@@ -1037,6 +1041,12 @@ function scriptSource(invokeBy) {
                                 r.result = 'suee'
                                 r.accept_description = ['未知 3P']
                                 // r.timelength = r.durl.map(it => it.length).reduce((a, b) => a + b, 0)
+                                if (r.durl && r.durl[0] && r.durl[0].url.includes('biliplus-vid.win')) {
+                                    const aid = window.__INITIAL_STATE__ && window.__INITIAL_STATE__.aid || 'fuck'
+                                    util_ui_pop({
+                                        content: `原视频已被删除, 当前播放的是<a href="https://bg.biliplus-vid.win/">转存服务器</a>中的视频, 速度较慢<br>被删的原因可能是:<br>1. 视频违规<br>2. 视频被归类到番剧页面 => 试下<a href="https://search.bilibili.com/bangumi?keyword=${aid}">搜索av${aid}</a>`
+                                    })
+                                }
                             }
                             return r
                         })
