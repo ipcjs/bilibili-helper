@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.4
+// @version      6.9.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -987,17 +987,8 @@ function scriptSource(invokeBy) {
                 let oriError = param.error;
                 let mySuccess, myError;
                 // 投递结果的transformer, 结果通过oriSuccess/Error投递
-                const dispatchResultTransformer = p => p
-                    .then(r => {
-                        if (!r.from && !r.result && !r.accept_description) {
-                            util_log('playurl的result缺少必要的字段:', r)
-                            r.from = 'local'
-                            r.result = 'suee'
-                            r.accept_description = ['未知 3P']
-                            // r.timelength = r.durl.map(it => it.length).reduce((a, b) => a + b, 0)
-                        }
-                        oriSuccess(r)
-                    })
+                let dispatchResultTransformer = p => p
+                    .then(r => oriSuccess(r))
                     .catch(e => oriError(e))
                 // 转换原始请求的结果的transformer
                 let oriResultTransformer
@@ -1037,6 +1028,19 @@ function scriptSource(invokeBy) {
                                 return json
                             }
                         })
+                    const oriDispatchResultTransformer = dispatchResultTransformer
+                    dispatchResultTransformer = p => p
+                        .then(r => {
+                            if (!r.from && !r.result && !r.accept_description) {
+                                util_log('playurl的result缺少必要的字段:', r)
+                                r.from = 'local'
+                                r.result = 'suee'
+                                r.accept_description = ['未知 3P']
+                                // r.timelength = r.durl.map(it => it.length).reduce((a, b) => a + b, 0)
+                            }
+                            return r
+                        })
+                        .compose(oriDispatchResultTransformer)
                 } else if (param.url.match('//interface.bilibili.com/player?')) {
                     if (balh_config.blocked_vip) {
                         mySuccess = function (data) {
