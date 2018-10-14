@@ -55,6 +55,9 @@
             _: util_ui_element_creator,
             html: util_html,
             log: log,
+            installInto: function (target) {
+                Object.assign(target, this)
+            }
         }
     }
 })()
