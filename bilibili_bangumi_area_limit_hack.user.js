@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.0
+// @version      7.0.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -924,7 +924,7 @@ function scriptSource(invokeBy) {
             let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a')
             if ($switchToOldBtn) {
                 util_ui_pop({
-                    content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 推荐切换回旧版`,
+                    content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
                     confirmBtn: '切换回旧版',
                     onConfirm: () => $switchToOldBtn.click(),
                     onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
@@ -940,6 +940,7 @@ function scriptSource(invokeBy) {
             util_log("window.__playinfo__", window.__playinfo__)
             window.__playinfo__origin = window.__playinfo__
             let playinfo = undefined
+            // 将__playinfo__置空, 让播放器去重新加载它...
             Object.defineProperty(window, '__playinfo__', {
                 configurable: true,
                 enumerable: true,
@@ -1013,6 +1014,9 @@ function scriptSource(invokeBy) {
                                             }
                                         } else if (target.responseURL.includes('api.bilibili.com/x/player/playurl')) {
                                             util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                            // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
+                                            // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
+                                            
                                         }
                                         if (container.__block_response) {
                                             // 屏蔽并保存response
@@ -1046,7 +1050,7 @@ function scriptSource(invokeBy) {
                                                 .then(r => {
                                                     container.readyState = 4
                                                     container.response = r
-                                                    container.__onreadystatechange(evnet)
+                                                    container.__onreadystatechange(evnet) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
                                                 })
                                                 .catch(e => {
                                                     // 失败时, 让原始的response可以交付
@@ -1054,7 +1058,7 @@ function scriptSource(invokeBy) {
                                                     if (container.__response != null) {
                                                         container.readyState = 4
                                                         container.response = container.__response
-                                                        container.__onreadystatechange(event)
+                                                        container.__onreadystatechange(event) // 同上
                                                     }
                                                 })
                                         }
