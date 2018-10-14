@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      6.9.6
+// @version      7.0.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效; 只支持番剧视频;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -481,8 +481,30 @@ function scriptSource(invokeBy) {
             return transformer ? transformer(this) : this
         }
     }())
+    const util_promise_timeout = function (timeout) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, timeout);
+        })
+    }
+    // 直到满足condition()为止, 才执行promiseCreator(), 创建Promise
+    // https://stackoverflow.com/questions/40328932/javascript-es6-promise-for-loop
+    const util_promise_condition = function (condition, promiseCreator, retryCount = Number.MAX_VALUE, interval = 1) {
+        const loop = (time) => {
+            if (!condition()) {
+                if (time < retryCount) {
+                    return util_promise_timeout(interval).then(loop.bind(null, time + 1))
+                } else {
+                    return Promise.reject(`util_promise_condition timeout, condition: ${condition.toString()}`)
+                }
+            } else {
+                return promiseCreator()
+            }
+        }
+        return loop(0)
+    }
+
     const util_ajax = function (options) {
-        return new Promise(function (resolve, reject) {
+        const creator = () => new Promise(function (resolve, reject) {
             typeof options !== 'object' && (options = { url: options });
 
             options.async === undefined && (options.async = true);
@@ -495,7 +517,8 @@ function scriptSource(invokeBy) {
             };
             util_debug('ajax:', options.url)
             $.ajax(options);
-        });
+        })
+        return util_promise_condition(() => window.$, creator, 100, 100) // 重试 100 * 100 = 10s
     }
     /**
     * @param promiseCeator  创建Promise的函数
@@ -893,7 +916,44 @@ function scriptSource(invokeBy) {
     // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
-
+    const balh_feature_switch_to_old_player = (function () {
+        if (!util_page.av() || localStorage.balh_disable_switch_to_old_player) {
+            return
+        }
+        util_init(() => {
+            let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a')
+            if ($switchToOldBtn) {
+                util_ui_pop({
+                    content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 推荐切换回旧版`,
+                    confirmBtn: '切换回旧版',
+                    onConfirm: () => $switchToOldBtn.click(),
+                    onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
+                })
+            }
+        })
+    })()
+    const balh_feature_area_limit_new = (function () {
+        if (!(util_page.av() && balh_config.enable_in_av)) {
+            return
+        }
+        if (window.__playinfo__) {
+            util_log("window.__playinfo__", window.__playinfo__)
+            window.__playinfo__origin = window.__playinfo__
+            let playinfo = undefined
+            Object.defineProperty(window, '__playinfo__', {
+                configurable: true,
+                enumerable: true,
+                get: () => {
+                    log('__playinfo__', 'get')
+                    return playinfo
+                },
+                set: (value) => {
+                    log('__playinfo__', 'set')
+                    playinfo = value
+                },
+            })
+        }
+    })()
     const balh_feature_area_limit = (function () {
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
@@ -909,8 +969,9 @@ function scriptSource(invokeBy) {
                     return new Proxy(new target(...args), {
                         set: function (target, prop, value, receiver) {
                             if (prop === 'onreadystatechange') {
+                                container.__onreadystatechange = value
                                 let cb = value
-                                value = function () {
+                                value = function (event) {
                                     if (target.readyState === 4) {
                                         if (target.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')) {
                                             log('/season/user/status:', target.responseText)
@@ -950,6 +1011,13 @@ function scriptSource(invokeBy) {
                                                 json.data.vipStatus = 1; // 状态, 启用
                                                 container.responseText = JSON.stringify(json)
                                             }
+                                        } else if (target.responseURL.includes('api.bilibili.com/x/player/playurl')) {
+                                            util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                        }
+                                        if (container.__block_response) {
+                                            // 屏蔽并保存response
+                                            container.__response = target.response
+                                            return
                                         }
                                     }
                                     // 这里的this是原始的xhr, 在container.responseText设置了值时需要替换成代理对象
@@ -966,6 +1034,49 @@ function scriptSource(invokeBy) {
                                 let func = value
                                 // open等方法, 必须在原始的xhr对象上才能调用...
                                 value = function () {
+                                    if (prop === 'open') {
+                                        container.__method = arguments[0]
+                                        container.__url = arguments[1]
+                                    } else if (prop === 'send') {
+                                        let dispatchResultTransformerCreator = () => {
+                                            container.__block_response = true
+                                            let event = {} // 伪装的event
+                                            debugger
+                                            return p => p
+                                                .then(r => {
+                                                    container.readyState = 4
+                                                    container.response = r
+                                                    container.__onreadystatechange(evnet)
+                                                })
+                                                .catch(e => {
+                                                    // 失败时, 让原始的response可以交付
+                                                    container.__block_response = false
+                                                    if (container.__response != null) {
+                                                        container.readyState = 4
+                                                        container.response = container.__response
+                                                        container.__onreadystatechange(event)
+                                                    }
+                                                })
+                                        }
+                                        if (container.__url.includes('api.bilibili.com/x/player/playurl') && balh_config.enable_in_av) {
+                                            log('/x/player/playurl')
+                                            // debugger
+                                            bilibiliApis._playurl.asyncAjax(container.__url)
+                                                .then(data => {
+                                                    if (!data.code) {
+                                                        data = {
+                                                            code: 0,
+                                                            data: data,
+                                                            message: "0",
+                                                            ttl: 1
+                                                        }
+                                                    }
+                                                    util_log('/x/player/playurl', 'proxy', data)
+                                                    return data
+                                                })
+                                                .compose(dispatchResultTransformerCreator())
+                                        }
+                                    }
                                     return func.apply(target, arguments)
                                 }
                             }
@@ -979,7 +1090,6 @@ function scriptSource(invokeBy) {
         function injectAjax() {
             let originalAjax = $.ajax;
             $.ajax = function (arg0, arg1) {
-                // log(arguments);
                 let param;
                 if (arg1 === undefined) {
                     param = arg0;
@@ -997,6 +1107,7 @@ function scriptSource(invokeBy) {
                 // 转换原始请求的结果的transformer
                 let oriResultTransformer
                 let one_api;
+                // log(param)
                 if (param.url.match('/web_api/get_source')) {
                     one_api = bilibiliApis._get_source;
                     oriResultTransformer = p => p
