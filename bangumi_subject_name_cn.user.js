@@ -6,9 +6,10 @@
 // @author       ipcjs
 // @include      https://bgm.tv/
 // @include      https://bangumi.tv/
-// @require      https://raw.githubusercontent.com/ipcjs/bilibili-helper/8c490bbbb402f89ab63caaa13a84dc5bbb9d06f0/ipcjs.lib.js
 // @grant        none
 // ==/UserScript==
+
+// @require      https://raw.githubusercontent.com/ipcjs/bilibili-helper/8c490bbbb402f89ab63caaa13a84dc5bbb9d06f0/ipcjs.lib.js
 
 const css = `
 .epGird > .tinyHeader {
