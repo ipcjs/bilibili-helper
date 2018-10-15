@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         番组计划主页观看进度中文标题
 // @namespace    https://github.com/ipcjs
-// @version      0.1.0
-// @description  番组计划主页观看进度中文标题
+// @version      0.1.1
+// @description  Bangumi番组计划 主页观看进度 中文标题
 // @author       ipcjs
 // @include      https://bgm.tv/
 // @include      https://bangumi.tv/
+// @require      https://greasyfork.org/scripts/373283-ipcjs-lib-js/code/ipcjslibjs.js?version=637066
 // @grant        none
 // ==/UserScript==
 
