@@ -9,7 +9,7 @@
 
 ## Bangumi
 
-//todo
+1. [番组计划主页观看进度中文标题](https://greasyfork.org/zh-CN/scripts/373284-%E7%95%AA%E7%BB%84%E8%AE%A1%E5%88%92%E4%B8%BB%E9%A1%B5%E8%A7%82%E7%9C%8B%E8%BF%9B%E5%BA%A6%E4%B8%AD%E6%96%87%E6%A0%87%E9%A2%98)
 
 ## S1
 
@@ -18,5 +18,5 @@
 
 ## Others
 
-1. [Original Google For Personal Blocklist](https://greasyfork.org/zh-CN/scripts/25857-original-google-for-personal-blocklist)
+1. [Original Google For Personal Blocklist](https://greasyfork.org/zh-CN/scripts/25857-original-google-for-personal-blocklist): 推荐使用[这个修改版的扩展]((https://github.com/bstaint/Personal-Blocklist)), 修复了原版的bug, 同时集成的该脚本的样式
 2. [Fuck Baidu Cursor](https://greasyfork.org/zh-CN/scripts/28206-baidu-cursor)
