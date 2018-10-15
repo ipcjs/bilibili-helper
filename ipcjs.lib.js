@@ -56,7 +56,11 @@
             html: util_html,
             log: log,
             installInto: function (target) {
-                Object.assign(target, this)
+                if (typeof target === 'function') {
+                    target.call(null, this)
+                } else {
+                    Object.assign(target, this)
+                }
             }
         }
     }
