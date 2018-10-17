@@ -18,5 +18,5 @@
 
 ## Others
 
-1. [Original Google For Personal Blocklist](https://greasyfork.org/zh-CN/scripts/25857-original-google-for-personal-blocklist): 推荐使用[这个修改版的扩展]((https://github.com/bstaint/Personal-Blocklist)), 修复了原版的bug, 同时集成的该脚本的样式
+1. [Original Google For Personal Blocklist](https://greasyfork.org/zh-CN/scripts/25857-original-google-for-personal-blocklist): 推荐使用[这个修改版的扩展](https://github.com/bstaint/Personal-Blocklist), 修复了原版的bug, 同时集成的该脚本的样式
 2. [Fuck Baidu Cursor](https://greasyfork.org/zh-CN/scripts/28206-baidu-cursor)
