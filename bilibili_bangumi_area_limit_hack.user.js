@@ -1050,7 +1050,7 @@ function scriptSource(invokeBy) {
                                                 .then(r => {
                                                     container.readyState = 4
                                                     container.response = r
-                                                    container.__onreadystatechange(evnet) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
+                                                    container.__onreadystatechange(event) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
                                                 })
                                                 .catch(e => {
                                                     // 失败时, 让原始的response可以交付
