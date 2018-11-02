@@ -1651,11 +1651,10 @@ function scriptSource(invokeBy) {
                 configurable: true, enumerable: true, set: function (v) {
                     // debugger
                     log('set jQuery', jQuery, '->', v)
-                    // 在新的av页面, 临时规避这个问题：https://github.com/ipcjs/bilibili-helper/issues/297
-                    // 说明:
-                    // 新的av页面中, 启用脚本后, 会往该方法先后设置两个jQuery...原因未知
+                    // 临时规避这个问题：https://github.com/ipcjs/bilibili-helper/issues/297
+                    // 新的av页面中, 运行脚本的 injectXHR() 后, 页面会往该方法先后设置两个jQuery...原因未知
                     // 一个从jquery.min.js中设置, 一个从player.js中设置
-                    // 并且点击等事件都会从两个jQuery中向下分发...
+                    // 并且点击/载入等事件会从两个jQuery中向下分发...导致很多功能失常
                     // 这里我们屏蔽掉jquery.min.js分发的一些事件, 避免一些问题
                     if (util_page.av_new() && balh_config.enable_in_av) {
                         try { // 获取调用栈的方法不是标准方法, 需要try-catch
