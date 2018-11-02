@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.4
+// @version      7.0.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -850,6 +850,7 @@ function scriptSource(invokeBy) {
         // 在av页面中的iframe标签形式的player
         player_in_av: util_func_catched(() => util_page.player() && window.top.location.href.includes('www.bilibili.com/video/av'), (e) => log(e), false),
         av: () => location.href.includes('www.bilibili.com/video/av'),
+        av_new: function () { return this.av() && (window.__playinfo__ || window.__playinfo__origin) },
         bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),
         bangumi_md: () => location.href.includes('www.bilibili.com/bangumi/media/md'),
         // movie页面使用window.aid, 保存当前页面av号
@@ -1016,7 +1017,6 @@ function scriptSource(invokeBy) {
                                             util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
-                                            
                                         }
                                         if (container.__block_response) {
                                             // 屏蔽并保存response
@@ -1045,7 +1045,7 @@ function scriptSource(invokeBy) {
                                         let dispatchResultTransformerCreator = () => {
                                             container.__block_response = true
                                             let event = {} // 伪装的event
-                                            debugger
+                                            // debugger
                                             return p => p
                                                 .then(r => {
                                                     container.readyState = 4
@@ -1649,6 +1649,40 @@ function scriptSource(invokeBy) {
             var jQuery;
             Object.defineProperty(window, 'jQuery', {
                 configurable: true, enumerable: true, set: function (v) {
+                    // debugger
+                    log('set jQuery', jQuery, '->', v)
+                    // 在新的av页面, 临时规避这个问题：https://github.com/ipcjs/bilibili-helper/issues/297
+                    // 说明:
+                    // 新的av页面中, 启用脚本后, 会往该方法先后设置两个jQuery...原因未知
+                    // 一个从jquery.min.js中设置, 一个从player.js中设置
+                    // 并且点击等事件都会从两个jQuery中向下分发...
+                    // 这里我们屏蔽掉jquery.min.js分发的一些事件, 避免一些问题
+                    if (util_page.av_new() && balh_config.enable_in_av) {
+                        try { // 获取调用栈的方法不是标准方法, 需要try-catch
+                            const stack = (new Error()).stack.split('\n')
+                            if (stack[stack.length - 1].includes('jquery')) { // 若从jquery.min.js中调用
+                                log('set jQueury by jquery.min.js', v)
+                                v.fn.balh_on = v.fn.on
+                                v.fn.on = function (arg0, arg1) {
+                                    if (arg0 === 'click.reply' && arg1 === '.reply') {
+                                        // 屏蔽掉"回复"按钮的点击事件
+                                        log('block click.reply', arguments)
+                                        return
+                                    }
+                                    return v.fn.balh_on.apply(this, arguments)
+                                }
+                            }
+                            // jQuery.fn.paging方法用于创建评论区的页标, 需要迁移到新的jQuery上
+                            if (jQuery != null && jQuery.fn.paging != null
+                                && v != null && v.fn.paging == null) {
+                                log('迁移jQuery.fn.paging')
+                                v.fn.paging = jQuery.fn.paging
+                            }
+                        } catch (e) {
+                            util_error(e)
+                        }
+                    }
+
                     jQuery = v;
                     injectAjax();// 设置jQuery后, 立即注入
                 }, get: function () {
