@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.5
+// @version      7.0.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -105,7 +105,7 @@ function scriptSource(invokeBy) {
                 REDIRECT: 'redirect',// 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
             },
             server: {
-                S0: 'https://biliplus.ipcjs.win',
+                S0: 'https://biliplus.ipcjs.top',
                 S1: 'https://www.biliplus.com',
                 defaultServer: function () {
                     return this.S1
@@ -874,8 +874,8 @@ function scriptSource(invokeBy) {
                     switch (prop) {
                         case 'server':
                             value = value || r.const.server.defaultServer()
-                            // 从tk域名迁移到新的默认域名
-                            if (value.includes('biliplus.ipcjsdev.tk')) {
+                            // 从win域名迁移到新的默认域名
+                            if (value.includes('biliplus.ipcjs.win')) {
                                 value = r.const.server.defaultServer()
                                 balh_config.server = value
                             }
