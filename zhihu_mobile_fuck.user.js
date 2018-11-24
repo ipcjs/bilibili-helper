@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile
 // @namespace    https://github.com/ipcjs
-// @version      1.0.0
-// @description  让逼乎更美好
+// @version      1.0.1
+// @description  日他娘的逼乎手机网页版
 // @author       ipcjs
 // @match        https://www.zhihu.com/*
 // @grant        GM_addStyle
