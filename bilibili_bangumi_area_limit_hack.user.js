@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.7
+// @version      7.0.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1150,7 +1150,7 @@ function scriptSource(invokeBy) {
                     const oriDispatchResultTransformer = dispatchResultTransformer
                     dispatchResultTransformer = p => p
                         .then(r => {
-                            if (!r.from && !r.result && !r.accept_description) {
+                            if (!r.code && !r.from && !r.result && !r.accept_description) {
                                 util_log('playurl的result缺少必要的字段:', r)
                                 r.from = 'local'
                                 r.result = 'suee'
