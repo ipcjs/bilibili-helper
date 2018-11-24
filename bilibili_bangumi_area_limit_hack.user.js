@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.6
+// @version      7.0.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1806,6 +1806,17 @@ function scriptSource(invokeBy) {
             util_ui_popframe(iframeSrc)
         }
 
+        function showLoginByPassword() {
+            const loginUrl = balh_config.server + '/login'
+            util_ui_pop({
+                content: `B站当前关闭了第三方登录的接口<br>目前只能使用帐号密码的方式<a href="${loginUrl}">登录代理服务器</a><br><br>登录完成后, 请手动刷新当前页面`,
+                confirmBtn: '前往登录页面',
+                onConfirm: () => {
+                    window.open(loginUrl)
+                }
+            })
+        }
+
         function showLogout() {
             util_ui_popframe(balh_config.server + '/login?act=logout')
         }
@@ -1836,7 +1847,7 @@ function scriptSource(invokeBy) {
             }
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
         return {
-            showLogin,
+            showLogin : showLoginByPassword,
             showLogout,
             isLogin,
             isLoginBiliBili,
