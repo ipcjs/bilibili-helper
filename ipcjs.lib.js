@@ -48,6 +48,55 @@
         template.innerHTML = html.trim()
         return Array.from(template.content.childNodes)
     }
+
+    class ElePlus {
+        constructor(ele) {
+            this.ele = ele;
+        }
+        hasClass(name) {
+            return this.ele.className.includes(name);
+        }
+        removeClass(name) {
+            let list = this.ele.className.split(/ +/);
+            let index = list.indexOf(name);
+            if (index != -1) {
+                list.splice(index, 1);
+                this.ele.className = list.join(' ');
+            }
+            return this;
+        }
+        addClass(name) {
+            this.ele.className = `${this.ele.className} ${name}`;
+            return this;
+        }
+        toggleClass(name) {
+            this.hasClass(name) ? this.removeClass(name) : this.addClass(name);
+            return this;
+        }
+        on(eventName, listener) {
+            this.ele.addEventListener(eventName, (...args) => {
+                listener.apply(this.ele, args);
+            });
+            return this;
+        }
+        text(value) {
+            if (value === undefined) {
+                return this.ele.innerText;
+            } else {
+                this.ele.innerText = value;
+                return this;
+            }
+        }
+        html(value) {
+            if (value === undefined) {
+                return this.ele.innerHTML;
+            } else {
+                this.ele.innerHTML = value;
+                return this;
+            }
+        }
+    }
+
     if (window.ipcjs) {
         log('已经存在window.ipcjs', window.ipcjs)
     } else {
@@ -55,6 +104,7 @@
             _: util_ui_element_creator,
             html: util_html,
             log: log,
+            $: (ele) => new ElePlus(ele),
             installInto: function (target) {
                 if (typeof target === 'function') {
                     target.call(null, this)
