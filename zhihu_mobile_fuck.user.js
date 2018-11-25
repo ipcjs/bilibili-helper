@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile
 // @namespace    https://github.com/ipcjs
-// @version      1.0.2
+// @version      1.0.3
 // @description  日他娘的逼乎手机网页版
 // @author       ipcjs
-// @match        https://www.zhihu.com/*
+// @include      https://www.zhihu.com/*
+// @include      https://zhuanlan.zhihu.com/*
 // @grant        GM_addStyle
 // @require      https://greasyfork.org/scripts/373283-ipcjs-lib-js/code/ipcjslibjs.js?version=647820
 // ==/UserScript==
@@ -31,9 +32,19 @@ ipcjs.installInto(({ log, html, $ }) => {
     installToContent(document)
 
     new MutationObserver((mutations, observer) => {
+        // log(mutations)
         for (let m of mutations) {
+            const $target = $(m.target)
             for (let node of m.addedNodes) {
-                installToContent(node)
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if ($(node).hasClass('RichContent-inner')
+                        && $target.hasClass('RichContent') && $target.hasClass('is-collapsed')) {
+                        log('contentInner added, need reinstall', node)
+                        installToContent($target.ele.parentElement)
+                    } else {
+                        installToContent(node)
+                    }
+                }
             }
         }
     }).observe(document.body, {
@@ -88,12 +99,17 @@ ipcjs.installInto(({ log, html, $ }) => {
                     onEach: () => { }
                 }
             } else if (expandButtonInner) {
+                const contentCover = content.querySelector('.RichContent-cover')
                 diff = {
                     expandButton: expandButtonInner,
-                    expandButtonText: '详细',
+                    expandButtonText: contentCover ? '展开' : '跳转',
                     onClick: function gotoDetail() {
-                        const urlMeta = content.parentElement.querySelector(':scope > meta[itemprop=url]')
-                        location.href = urlMeta.content
+                        if (contentCover) {
+                            contentCover.click()
+                        } else {
+                            const urlMeta = content.parentElement.querySelector(':scope > meta[itemprop=url]')
+                            location.href = urlMeta.content
+                        }
                     },
                     onEach: function () {
                         $content.removeClass('is-collapsed')
@@ -112,8 +128,8 @@ ipcjs.installInto(({ log, html, $ }) => {
                     e.stopPropagation()
                     diff.onClick()
                 }, true)
-                log('replace', content)
             } else {
+                log('skip', content)
                 return
             }
             contentInner.addEventListener('click', e => {
