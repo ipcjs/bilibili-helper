@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      2.0.0
+// @version      2.0.1
 // @description  日他娘的逼乎手机网页版 样式ver
 // @author       ipcjs
 // @include      https://www.zhihu.com/*
@@ -33,6 +33,9 @@ GM_addStyle(`
 .AppHeader-nav {
     margin-left: 16px;
     margin-right: 16px;
+}
+.TopstoryPageHeader-main {
+    margin-left: 16px;
 }
 
 /* 通用列表 */
