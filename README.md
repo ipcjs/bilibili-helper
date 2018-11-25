@@ -16,6 +16,10 @@
 1. [列出S1一条帖子的所有内容](https://greasyfork.org/zh-CN/scripts/28810-%E5%88%97%E5%87%BAs1%E4%B8%80%E6%9D%A1%E5%B8%96%E5%AD%90%E7%9A%84%E6%89%80%E6%9C%89%E5%86%85%E5%AE%B9)
 2. [屏蔽赵小姐](https://greasyfork.org/zh-CN/scripts/34383-%E5%B1%8F%E8%94%BD%E8%B5%B5%E5%B0%8F%E5%A7%90)
 
+## 知乎
+
+1. [Fuck ZhiHu Mobile Style](https://greasyfork.org/zh-CN/scripts/374771-zhihu-mobile-style): 日他娘的逼乎手机网页版 样式ver, 适配知乎电脑版到手机上, 要配合[Yandex浏览器](https://browser.yandex.com/mobile)和[User-Agent Switcher](https://chrome.google.com/webstore/detail/user-agent-switcher-for-c/djflhoibgkdhkhhcedjiklpkjnoahfmg)使用
+
 ## Others
 
 1. [Original Google For Personal Blocklist](https://greasyfork.org/zh-CN/scripts/25857-original-google-for-personal-blocklist): 推荐使用[这个修改版的扩展](https://github.com/bstaint/Personal-Blocklist), 修复了原版的bug, 同时集成的该脚本的样式
