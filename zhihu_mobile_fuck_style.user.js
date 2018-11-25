@@ -93,6 +93,14 @@ GM_addStyle(`
 .ContentItem-action {
     margin-left: 8px;
 }
+
+/* 专栏页面 */
+.Post-NormalMain .Post-Header, .Post-NormalMain>div {
+    width: 100%;
+}
+.ColumnPageHeader-content {
+    width: 100%;
+}
 `)
 
 ipcjs.installInto(({ log, html, $ }) => {
