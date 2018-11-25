@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile
 // @namespace    https://github.com/ipcjs
-// @version      1.0.1
+// @version      1.0.2
 // @description  日他娘的逼乎手机网页版
 // @author       ipcjs
 // @match        https://www.zhihu.com/*
@@ -60,27 +60,34 @@ ipcjs.installInto(({ log, html, $ }) => {
             const $content = $(content)
 
             let diff = {
-                expandButton: expandButtonOuter,
-                expandButtonText: '展开阅读全文',
-                onClick: function toggleContent() {
-                    let collapseButton = actions.querySelector('button.Button.ContentItem-rightButton')
-                    if ($content.hasClass('is-collapsed')) {
-                        $content.removeClass('is-collapsed')
-                        contentInner.style.maxHeight = ''
-                        diff.expandButton.style.display = 'none'
-                        collapseButton = html(collapseButtonHtml)[0]
-                        collapseButton.addEventListener('click', toggleContent)
-                        actions.appendChild(collapseButton)
-                    } else {
-                        $content.addClass('is-collapsed')
-                        contentInner.style.maxHeight = '400px'
-                        diff.expandButton.style.display = 'inline'
-                        actions.removeChild(collapseButton)
-                    }
-                },
-                onEach: () => { }
+                expandButton: undefined,
+                expandButtonText: undefined,
+                onClick: undefined,
+                onEach: undefined,
             }
-            if (!expandButtonOuter && expandButtonInner) {
+            if (expandButtonOuter) {
+                diff = {
+                    expandButton: expandButtonOuter,
+                    expandButtonText: '展开阅读全文',
+                    onClick: function toggleContent() {
+                        let collapseButton = actions.querySelector('button.Button.ContentItem-rightButton')
+                        if ($content.hasClass('is-collapsed')) {
+                            $content.removeClass('is-collapsed')
+                            contentInner.style.maxHeight = ''
+                            diff.expandButton.style.display = 'none'
+                            collapseButton = html(collapseButtonHtml)[0]
+                            collapseButton.addEventListener('click', toggleContent)
+                            actions.appendChild(collapseButton)
+                        } else {
+                            $content.addClass('is-collapsed')
+                            contentInner.style.maxHeight = '400px'
+                            diff.expandButton.style.display = 'inline'
+                            actions.removeChild(collapseButton)
+                        }
+                    },
+                    onEach: () => { }
+                }
+            } else if (expandButtonInner) {
                 diff = {
                     expandButton: expandButtonInner,
                     expandButtonText: '详细',
@@ -92,7 +99,11 @@ ipcjs.installInto(({ log, html, $ }) => {
                         $content.removeClass('is-collapsed')
                     }
                 }
+            } else {
+                log('expandButton no found')
+                return
             }
+
 
             diff.onEach()
             if (diff.expandButton.innerText.startsWith('App 内查看')) {
