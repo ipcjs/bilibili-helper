@@ -1,6 +1,6 @@
 ---
-name: "[balh] Script bug report"
-about: 解除B站区域限制 脚本问题
+name: "解除B站区域限制 脚本问题"
+about: 脚本问题
 
 ---
 

@@ -1,6 +1,6 @@
 ---
-name: "[balh] Server bug report"
-about: 解除B站区域限制 服务器问题
+name: "解除B站区域限制 服务器问题"
+about: 服务器问题
 
 ---
 
