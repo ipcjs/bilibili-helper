@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile
 // @namespace    https://github.com/ipcjs
-// @version      1.0.3
-// @description  日他娘的逼乎手机网页版
+// @version      2.0.2
+// @description  日他娘的逼乎手机网页版; 针对手机版进行修改，把所有的“App 内查看”按钮屏蔽了;
 // @author       ipcjs
 // @include      https://www.zhihu.com/*
 // @include      https://zhuanlan.zhihu.com/*
