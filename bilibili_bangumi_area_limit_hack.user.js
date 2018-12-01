@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.10
+// @version      7.1.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -25,6 +25,7 @@
 
 'use strict';
 const log = console.log.bind(console, 'injector:')
+
 if (location.href.match('link.acg.tv/forum.php') != null && location.href.match('access_key') != null && window.opener != null) {
     window.stop();
     document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
@@ -1799,10 +1800,11 @@ function scriptSource(invokeBy) {
                                 content: [
                                     _('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
                                 ],
-                                //confirmBtn: '',
-                                onConfirm: () => { balh_feature_sign.showLogin(); document.querySelector('#AHP_Notice').remove() }
+                                onConfirm: () => {
+                                    balh_feature_sign.showLogin();
+                                    document.querySelector('#AHP_Notice').remove()
+                                }
                             })
-                            //util_ui_alert(`${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, balh_feature_sign.showLogin)
                         }
                     })
                 } else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
@@ -1815,19 +1817,17 @@ function scriptSource(invokeBy) {
         }
 
         function showLogin() {
-            const newWin = window.open('about:blank');
-            newWin.document.title = 'BALH - 授权';
-            newWin.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
-            unsafeWindow.newWin = newWin;
+            const balh_auth_window = window.open('about:blank');
+            balh_auth_window.document.title = 'BALH - 授权';
+            balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
+            window.balh_auth_window = balh_auth_window;
             $.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=http%3A%2F%2Flink.acg.tv%2Fforum.php&sign=67ec798004373253d60114caaad89a8c', {
-                xhrFields: {
-                    withCredentials: true
-                },
+                xhrFields: { withCredentials: true },
                 type: 'GET',
                 dataType: 'json',
                 success: (data) => {
-                    newWin.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-                    newWin.location.href = data.data.confirm_uri;
+                    balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
+                    balh_auth_window.location.href = data.data.confirm_uri;
                 },
                 error: (e) => {
                     alert('error');
@@ -1869,7 +1869,7 @@ function scriptSource(invokeBy) {
                     break;
                 }
                 case 'balh-login-credentials': {
-                    newWin.close();
+                    balh_auth_window.close();
                     let url = e.data.split(': ')[1];
                     util_ui_popframe(url.replace('http://link.acg.tv/forum.php', balh_config.server + '/login'));
                     break;
