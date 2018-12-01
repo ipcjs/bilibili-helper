@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.0.9
+// @version      7.0.10
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -18,12 +18,19 @@
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
+// @include      *://link.acg.tv/forum.php*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
 
 'use strict';
 const log = console.log.bind(console, 'injector:')
+if (location.href.match('link.acg.tv/forum.php') != null && location.href.match('access_key') != null && window.opener != null) {
+    window.stop();
+    document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
+    window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
+    return;
+}
 
 function injector() {
     if (document.getElementById('balh-injector-source')) {
@@ -713,7 +720,7 @@ function scriptSource(invokeBy) {
 
         if (document.getElementById('AHP_Notice_style') == null) {
             let noticeWidth = Math.min(500, innerWidth - 40);
-            document.head.appendChild(_('style', { id: 'AHP_Notice_style' }, [_('text', `#AHP_Notice{ line-height:normal;position:fixed;left:0;right:0;top:0;height:0;z-index:20000;transition:.5s;cursor:default } .AHP_down_banner{ margin:2px;padding:2px;color:#FFFFFF;font-size:13px;font-weight:bold;background-color:green } .AHP_down_btn{ margin:2px;padding:4px;color:#1E90FF;font-size:14px;font-weight:bold;border:#1E90FF 2px solid;display:inline-block;border-radius:5px } body.ABP-FullScreen{ overflow:hidden } @keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}} @keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}} #AHP_Notice>div{ position:absolute;bottom:0;left:0;right:0;font-size:15px } #AHP_Notice>div>div{ border:1px #AAA solid;width:${noticeWidth}px;margin:0 auto;padding:20px 10px 5px;background:#EFEFF4;color:#000;border-radius:5px;box-shadow:0 0 5px -2px } #AHP_Notice>div>div *{ margin:5px 0; } #AHP_Notice input[type=text]{ border: none;border-bottom: 1px solid #AAA;width: 60%;background: transparent } #AHP_Notice input[type=text]:active{ border-bottom-color:#4285f4 } #AHP_Notice input[type=button] { border-radius: 2px; border: #adadad 1px solid; padding: 3px; margin: 0 5px; min-width:50px } #AHP_Notice input[type=button]:hover { background: #FFF; } #AHP_Notice input[type=button]:active { background: #CCC; } .noflash-alert{display:none}`)]));
+            document.head.appendChild(_('style', { id: 'AHP_Notice_style' }, [_('text', `#AHP_Notice{ line-height:normal;position:fixed;left:0;right:0;top:0;height:0;z-index:20000;transition:.5s;cursor:default;pointer-events:none } .AHP_down_banner{ margin:2px;padding:2px;color:#FFFFFF;font-size:13px;font-weight:bold;background-color:green } .AHP_down_btn{ margin:2px;padding:4px;color:#1E90FF;font-size:14px;font-weight:bold;border:#1E90FF 2px solid;display:inline-block;border-radius:5px } body.ABP-FullScreen{ overflow:hidden } @keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}} @keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}} #AHP_Notice>div{ position:absolute;bottom:0;left:0;right:0;font-size:15px } #AHP_Notice>div>div{ border:1px #AAA solid;width:${noticeWidth}px;margin:0 auto;padding:20px 10px 5px;background:#EFEFF4;color:#000;border-radius:5px;box-shadow:0 0 5px -2px;pointer-events:auto;white-space:pre-wrap } #AHP_Notice>div>div *{ margin:5px 0; } #AHP_Notice input[type=text]{ border: none;border-bottom: 1px solid #AAA;width: 60%;background: transparent } #AHP_Notice input[type=text]:active{ border-bottom-color:#4285f4 } #AHP_Notice input[type=button] { border-radius: 2px; border: #adadad 1px solid; padding: 3px; margin: 0 5px; min-width:50px } #AHP_Notice input[type=button]:hover { background: #FFF; } #AHP_Notice input[type=button]:active { background: #CCC; } .noflash-alert{display:none}`)]));
         }
 
         if (document.querySelector('#AHP_Notice') != null)
@@ -1787,8 +1794,15 @@ function scriptSource(invokeBy) {
                     clearLoginFlag()
                     updateLoginFlag(() => {
                         if (!isLogin()) {
-                            localStorage.balh_must_remind_login_v1 = r.const.FALSE
-                            util_ui_alert(`${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, balh_feature_sign.showLogin)
+                            localStorage.balh_must_remind_login_v1 = r.const.FALSE;
+                            util_ui_pop({
+                                content: [
+                                    _('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
+                                ],
+                                //confirmBtn: '',
+                                onConfirm: () => { balh_feature_sign.showLogin(); document.querySelector('#AHP_Notice').remove() }
+                            })
+                            //util_ui_alert(`${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`, balh_feature_sign.showLogin)
                         }
                     })
                 } else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
@@ -1801,8 +1815,24 @@ function scriptSource(invokeBy) {
         }
 
         function showLogin() {
-            const loginUrl = balh_config.server + '/login'
-            util_ui_popframe(loginUrl)
+            const newWin = window.open('about:blank');
+            newWin.document.title = 'BALH - 授权';
+            newWin.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
+            unsafeWindow.newWin = newWin;
+            $.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=http%3A%2F%2Flink.acg.tv%2Fforum.php&sign=67ec798004373253d60114caaad89a8c', {
+                xhrFields: {
+                    withCredentials: true
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: (data) => {
+                    newWin.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
+                    newWin.location.href = data.data.confirm_uri;
+                },
+                error: (e) => {
+                    alert('error');
+                }
+            })
         }
 
         function showLoginByPassword() {
@@ -1822,20 +1852,28 @@ function scriptSource(invokeBy) {
 
         // 监听登录message
         window.addEventListener('message', function (e) {
-            switch (e.data) {
-                case 'BiliPlus-Login-Success':
+            switch (e.data.split(':')[0]) {
+                case 'BiliPlus-Login-Success': {
                     //登入
                     localStorage.balh_must_updateLoginFlag = r.const.TRUE
                     Promise.resolve('start')
                         .then(() => util_jsonp(balh_config.server + '/login?act=getlevel'))
                         .then(() => location.reload())
                         .catch(() => location.reload())
-                    break
-                case 'BiliPlus-Logout-Success':
+                    break;
+                }
+                case 'BiliPlus-Logout-Success': {
                     //登出
                     clearLoginFlag()
                     location.reload()
-                    break
+                    break;
+                }
+                case 'balh-login-credentials': {
+                    newWin.close();
+                    let url = e.data.split(': ')[1];
+                    util_ui_popframe(url.replace('http://link.acg.tv/forum.php', balh_config.server + '/login'));
+                    break;
+                }
             }
         })
 
