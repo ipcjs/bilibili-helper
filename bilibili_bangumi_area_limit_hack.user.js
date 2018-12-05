@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.1.0
+// @version      7.1.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1852,6 +1852,7 @@ function scriptSource(invokeBy) {
 
         // 监听登录message
         window.addEventListener('message', function (e) {
+            if (typeof e.data !== 'string') return // 只处理e.data为string的情况
             switch (e.data.split(':')[0]) {
                 case 'BiliPlus-Login-Success': {
                     //登入
