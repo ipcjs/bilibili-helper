@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.1.1
+// @version      7.1.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -925,6 +925,26 @@ function scriptSource(invokeBy) {
     // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
+
+    const balh_is_close = (function () {
+        const isClose = true
+        if (isClose) {
+            util_init(() => {
+                if (!balh_config.is_close_do_not_remind) {
+                    util_ui_pop({
+                        content: `<h3>${GM_info.script.name}</h3>服务器提供商跑路 导致服务下线，具体恢复时间待定<br>欲了解最新动态，请关注这个: <a href="https://github.com/ipcjs/bilibili-helper/issues/311">ISSUE</a>`,
+                        confirmBtn: '知道了, 不再提醒',
+                        onConfirm: function() {
+                            balh_config.is_close_do_not_remind = r.const.TRUE
+                            location.reload()
+                        },
+                    })
+                }
+            })
+        }
+        return isClose
+    })()
+
     const balh_feature_switch_to_old_player = (function () {
         if (!util_page.av() || localStorage.balh_disable_switch_to_old_player) {
             return
@@ -942,6 +962,8 @@ function scriptSource(invokeBy) {
         })
     })()
     const balh_feature_area_limit_new = (function () {
+        if(balh_is_close) return
+
         if (!(util_page.av() && balh_config.enable_in_av)) {
             return
         }
@@ -965,6 +987,8 @@ function scriptSource(invokeBy) {
         }
     })()
     const balh_feature_area_limit = (function () {
+        if(balh_is_close) return
+
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
             let firstCreateXHR = true
