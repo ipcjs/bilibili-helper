@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.1.2
+// @version      7.1.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -932,7 +932,7 @@ function scriptSource(invokeBy) {
             util_init(() => {
                 if (!balh_config.is_close_do_not_remind) {
                     util_ui_pop({
-                        content: `<h3>${GM_info.script.name}</h3>服务器提供商跑路 导致服务下线，具体恢复时间待定<br>欲了解最新动态，请关注这个: <a href="https://github.com/ipcjs/bilibili-helper/issues/311">ISSUE</a>`,
+                        content: `<h3>${GM_info.script.name}</h3>VPS托管商跑路了 导致服务临时下线，预计下周恢复<br>想了解最新动态，请关注<a href="https://github.com/ipcjs/bilibili-helper/issues/311">这个页面</a>`,
                         confirmBtn: '知道了, 不再提醒',
                         onConfirm: function() {
                             balh_config.is_close_do_not_remind = r.const.TRUE
