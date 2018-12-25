@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.1.4
+// @version      7.1.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -934,7 +934,7 @@ function scriptSource(invokeBy) {
                     util_ui_pop({
                         content: `<h3>${GM_info.script.name}</h3>VPS托管商跑路了 导致服务临时下线，预计下周恢复<br>想了解最新动态，请关注<a href="https://github.com/ipcjs/bilibili-helper/issues/311">这个页面</a>`,
                         confirmBtn: '知道了, 不再提醒',
-                        onConfirm: function() {
+                        onConfirm: function () {
                             balh_config.is_close_do_not_remind = r.const.TRUE
                             location.reload()
                         },
@@ -962,7 +962,7 @@ function scriptSource(invokeBy) {
         })
     })()
     const balh_feature_area_limit_new = (function () {
-        if(balh_is_close) return
+        if (balh_is_close) return
 
         if (!(util_page.av() && balh_config.enable_in_av)) {
             return
@@ -987,7 +987,7 @@ function scriptSource(invokeBy) {
         }
     })()
     const balh_feature_area_limit = (function () {
-        if(balh_is_close) return
+        if (balh_is_close) return
 
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
@@ -2357,7 +2357,7 @@ function scriptSource(invokeBy) {
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', '备选代理服务器（更稳定）')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（更稳定）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
