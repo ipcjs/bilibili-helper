@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.2.1
+// @version     0.2.2
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -193,8 +193,10 @@ function loadAllPost() {
         let page = 1;
         while (true) {
             table.showMsg(`加载第${page}页中...`)
-            const resp = await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` });
-            const json = JSON.parse(resp.responseText);
+            const resp = await retry(async () => {
+                return await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` })
+            }, 3)
+            const json = JSON.parse(resp.responseText)
             if (page === 1) {
                 table.setTitle(json.Variables.thread.subject)
             }
@@ -217,6 +219,28 @@ function loadAllPost() {
         .finally(() => {
             loadAllPost.loading = false
         })
+}
+
+async function retry(block, count = 3, timeMs = 1000) {
+    let error
+    for (let i = 0; i < count; i++) {
+        try {
+            return await block()
+        } catch (e) {
+            error = e
+            await delay(timeMs)
+            log(`retry: i=${i}, e=${e}`)
+        }
+    }
+    throw error
+}
+
+function delay(timeMs) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve("continue")
+        }, timeMs);
+    })
 }
 
 function f_1494926(item) {
