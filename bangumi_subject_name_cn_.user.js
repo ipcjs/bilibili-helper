@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         番组计划主页观看进度中文标题
 // @namespace    https://github.com/ipcjs
-// @version      0.1.2
+// @version      0.1.3
 // @description  Bangumi番组计划 主页观看进度 中文标题
 // @author       ipcjs
 // @include      *://bgm.tv/
@@ -24,6 +24,9 @@ const css = `
 }
 .epGird > .tinyHeader > * {
     margin-right: 2px;
+}
+small.grey a {
+    font-size: 12px!important;
 }
 `
 ipcjs.installInto(({ log, _, html }) => {
