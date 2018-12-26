@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     0.2.2
+// @version     0.2.3
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -59,6 +59,15 @@ function log(...args) {
     console.log(...args);
 }
 
+class AjaxException extends Error {
+    constructor(resp, message = "") {
+        super(message)
+        this.resp = resp
+    }
+    toString() {
+        return `AjaxException: message=${this.message}, status=${this.resp.status}, statusText=${this.resp.statusText}`
+    }
+}
 function ajaxPromise(options) {
     return new Promise((resolve, reject) => {
         options.method = options.method || 'GET';
@@ -66,8 +75,11 @@ function ajaxPromise(options) {
             resolve(resp);
         }
         options.onerror = function (resp) {
-            reject(resp);
+            reject(new AjaxException(resp));
         };
+        options.ontimeout = function (resp) {
+            reject(new AjaxException(resp, 'timeout'));
+        }
         GM.xmlHttpRequest(options);
     });
 }
@@ -195,8 +207,11 @@ function loadAllPost() {
         let page = 1;
         while (true) {
             table.showMsg(`加载第${page}页中...`)
-            const resp = await retry(async () => {
-                return await ajaxPromise({ url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1` })
+            const resp = await retry(async (i) => {
+                return await ajaxPromise({
+                    url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1`,
+                    timeout: 1000 * 15 * (i + 1),
+                })
             }, 3)
             const json = JSON.parse(resp.responseText)
             if (page === 1) {
@@ -216,7 +231,8 @@ function loadAllPost() {
             table.showMsg('')
         })
         .catch((e) => {
-            table.showMsg(e)
+            table.showMsg(e.toString())
+            console.error(e)
         })
         .finally(() => {
             loadAllPost.loading = false
@@ -227,11 +243,11 @@ async function retry(block, count = 3, timeMs = 1000) {
     let error
     for (let i = 0; i < count; i++) {
         try {
-            return await block()
+            return await block(i)
         } catch (e) {
             error = e
             await delay(timeMs)
-            log(`retry: i=${i}, e=${e}`)
+            log(`retry: i=${i}, e=${e.toString()}`)
         }
     }
     throw error
