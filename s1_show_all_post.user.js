@@ -7,11 +7,13 @@
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
 // @include     *://bbs.saraba1st.com/2b/forum.php*
 // @grant       GM_xmlhttpRequest
+// @grant       GM.xmlHttpRequest
 // @grant       GM_addStyle
+// @grant       GM.addStyle
 // @grant       unsafeWindow
 // @connect     bbs.saraba1st.com
+// @require  https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // ==/UserScript==
-
 
 // type, props, children
 // type, props, innerHTML
@@ -66,7 +68,7 @@ function ajaxPromise(options) {
         options.onerror = function (resp) {
             reject(resp);
         };
-        GM_xmlhttpRequest(options);
+        GM.xmlHttpRequest(options);
     });
 }
 
@@ -148,7 +150,7 @@ switch (TID) {
 }
 
 document.querySelector('#pt > div.z').appendChild(_('a', { id: 'load-all-post', href: 'javascript:;', event: { click: () => loadAllPost() } }, '[显示全部]'));
-GM_addStyle(`
+GM.addStyle(`
     #ssap-table tr {
 	    border-top: 1px solid #888; 
     }
