@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      2.0.3
+// @version      2.1.0
 // @description  日他娘的逼乎手机网页版 样式ver; 针对电脑版进行修改，适配手机屏幕;
 // @author       ipcjs
 // @compatible   chrome
@@ -128,15 +128,23 @@ ipcjs.installInto(({ log, html, $ }) => {
         node.querySelectorAll('button.ContentItem-action')
             .forEach(btn => {
                 let $text = btn.childNodes[1]
+                let group
                 if ($text && $text.nodeType === Node.TEXT_NODE) {
                     let text = $text.textContent
-                    if (text === '感谢' || text == '举报' || text == '收藏') {
+                    count++
+                    if (text === '感谢' || text === '取消感谢') {
+                        btn.style.display = 'none'
+                    } else if (text === '举报' || text === '收藏') {
                         $text.textContent = ''
+                    } else if ((group = text.match(/(\d+) 条评论/))) {
+                        $text.textContent = `${group[1]}`
+                    } else {
+                        count--
                     }
                 }
             })
         if (count > 0) {
-            log(`remove: ${count}`)
+            log(`modify: ${count}`)
         }
     }
 })
