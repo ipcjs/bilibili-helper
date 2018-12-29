@@ -6,11 +6,13 @@
 // @author       ipcjs
 // @match        *://m.anitama.cn/*
 // @grant        GM_addStyle
+// @grant        GM.addStyle
 // @run-at       document-start
+// @require  https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // ==/UserScript==
 
 'use strict'
-GM_addStyle(`
+GM.addStyle(`
 #list-index a.item:visited > *, 
 #lightbox-index a.area-title:visited > *, 
 .list-mini a.item:visited > *,
