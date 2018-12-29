@@ -127,9 +127,12 @@ ipcjs.installInto(({ log, html, $ }) => {
         let count = 0
         node.querySelectorAll('button.ContentItem-action')
             .forEach(btn => {
-                if (btn.innerText.includes('感谢')) {
-                    btn.style.display = 'none'
-                    count++
+                let $text = btn.childNodes[1]
+                if ($text && $text.nodeType === Node.TEXT_NODE) {
+                    let text = $text.textContent
+                    if (text === '感谢' || text == '举报' || text == '收藏') {
+                        $text.textContent = ''
+                    }
                 }
             })
         if (count > 0) {
