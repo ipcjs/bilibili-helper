@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili HTML5播放器网页全屏模式优化 脚本版
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  移植自：http://userstyles.org/styles/131642
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
@@ -15,7 +15,7 @@
 // ==/UserScript==
 
 'use strict'
-const css = `
+const OLD_CSS = `
 @namespace url(http://www.w3.org/1999/xhtml);
 #bilibiliPlayer.mode-fullscreen .bilibili-player-video-sendbar {
     transition: 0.2s;
@@ -38,16 +38,6 @@ const css = `
 }
 #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control:hover{
     /*opacity: 0.7!important; */
-    opacity: 1!important;
-}
-
-/* 新版播放器的控制条 */
-#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-wrap .bilibili-player-video-control{
-    opacity: 0!important;
-    transition: 0.2s;
-    position: relative;
-}
-#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-wrap .bilibili-player-video-control:hover{
     opacity: 1!important;
 }
 
@@ -84,6 +74,30 @@ const css = `
 #bilibiliPlayer.mode-webfullscreen .bilibili-player-video-float-lastplay{
     bottom:30px;
 }`
-let style = document.createElement('style')
-style.innerHTML = css
-document.querySelector('head').appendChild(style)
+
+const NEW_CSS = `
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control{
+    opacity: 0!important;
+    transition: 0.2s;
+}
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control:hover{
+    opacity: 1!important;
+}
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control{
+    opacity: 0!important;
+    transition: 0.2s;
+}
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control:hover{
+    opacity: 1!important;
+}
+`
+function addStyle(css) {
+    let style = document.createElement('style')
+    style.innerHTML = css
+    document.querySelector('head').appendChild(style)
+}
+
+let isNewPlayer = !!document.querySelector('#entryOld > .old-btn > a')
+console.log(`isNewPlayer: ${isNewPlayer}`)
+addStyle(isNewPlayer ? NEW_CSS : OLD_CSS)
+
