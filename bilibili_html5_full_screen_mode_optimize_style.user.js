@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili HTML5播放器网页全屏模式优化 脚本版
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  移植自：http://userstyles.org/styles/131642
 // @author       ipcjs
 // @include      *://www.bilibili.com/video/av*
@@ -76,20 +76,28 @@ const OLD_CSS = `
 }`
 
 const NEW_CSS = `
-#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control{
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-wrap,
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-top,
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control-wrap,
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-top
+{
     opacity: 0!important;
     transition: 0.2s;
 }
-#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control:hover{
+
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-wrap:hover,
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-top:hover,
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control-wrap:hover,
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-top:hover
+{
     opacity: 1!important;
 }
-#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control{
-    opacity: 0!important;
-    transition: 0.2s;
+#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-top,
+#bilibiliPlayer.mode-fullscreen .bilibili-player-video-top
+{
+    pointer-events: inherit!important;
 }
-#bilibiliPlayer.mode-fullscreen .bilibili-player-video-control:hover{
-    opacity: 1!important;
-}
+
 `
 function addStyle(css) {
     let style = document.createElement('style')
