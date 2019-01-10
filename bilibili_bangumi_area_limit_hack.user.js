@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.1.9
+// @version      7.2.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1165,12 +1165,24 @@ function scriptSource(invokeBy) {
                         })
                 } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
                     || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
+                    || param.url.match(/^(https?:)?\/\/api\.bilibili\.com\/pgc\/player\/web\/playurl.*$/) // 新的番剧页面playurl接口
                     || (balh_config.enable_in_av && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
                 ) {
+                    // 新playrul:
+                    // 1. 参数放在param.data中
+                    // 2. 成功时, 返回的结果放到了result中: {"code":0,"message":"success","result":{}}
+                    // 3. 失败时, 返回的结果没变
+                    let isNewPlayurl
+                    if (isNewPlayurl = param.url.includes('//api.bilibili.com/pgc/player/web/playurl')) {
+                        param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
+                    }
                     one_api = bilibiliApis._playurl;
                     oriResultTransformer = p => p
                         .then(json => {
                             log(json)
+                            if (isNewPlayurl && !json.code) {
+                                json = json.result
+                            }
                             if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json)) {
                                 areaLimit(true)
                                 return one_api.asyncAjax(param.url)
@@ -1189,11 +1201,18 @@ function scriptSource(invokeBy) {
                                 r.result = 'suee'
                                 r.accept_description = ['未知 3P']
                                 // r.timelength = r.durl.map(it => it.length).reduce((a, b) => a + b, 0)
-                                if (r.durl && r.durl[0] && r.durl[0].url.includes('biliplus-vid.win')) {
-                                    const aid = window.__INITIAL_STATE__ && window.__INITIAL_STATE__.aid || 'fuck'
+                                if (r.durl && r.durl[0] && r.durl[0].url.includes('video-sg.biliplus.com')) {
+                                    const aid = window.__INITIAL_STATE__ && window.__INITIAL_STATE__.aid || window.__INITIAL_STATE__.epInfo && window.__INITIAL_STATE__.epInfo.aid || 'fuck'
                                     util_ui_pop({
-                                        content: `原视频已被删除, 当前播放的是<a href="https://bg.biliplus-vid.win/">转存服务器</a>中的视频, 速度较慢<br>被删的原因可能是:<br>1. 视频违规<br>2. 视频被归类到番剧页面 => 试下<a href="https://search.bilibili.com/bangumi?keyword=${aid}">搜索av${aid}</a>`
+                                        content: `原视频已被删除, 当前播放的是<a href="https://video-sg.biliplus.com/">转存服务器</a>中的视频, 速度较慢<br>被删的原因可能是:<br>1. 视频违规<br>2. 视频被归类到番剧页面 => 试下<a href="https://search.bilibili.com/bangumi?keyword=${aid}">搜索av${aid}</a>`
                                     })
+                                }
+                            }
+                            if (isNewPlayurl && !r.code) {
+                                r = {
+                                    code: 0,
+                                    message: 'success',
+                                    result: r
                                 }
                             }
                             return r
