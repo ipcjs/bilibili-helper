@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.1
+// @version      7.2.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -86,6 +86,7 @@ function scriptSource(invokeBy) {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
         welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
+        version_remind: `1. 修复新版番剧页面不能播放的问题<br>`
     }
     const _t = (key) => {
         const text = r_text[key]
@@ -927,23 +928,20 @@ function scriptSource(invokeBy) {
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
-    const balh_is_close = (function () {
-        const isClose = false
-        if (isClose) {
-            util_init(() => {
-                if (!balh_config.is_close_do_not_remind) {
-                    util_ui_pop({
-                        content: `<h3>${GM_info.script.name}</h3>VPS托管商跑路了 导致服务临时下线，预计下周恢复<br>想了解最新动态，请关注<a href="https://github.com/ipcjs/bilibili-helper/issues/311">这个页面</a>`,
-                        confirmBtn: '知道了, 不再提醒',
-                        onConfirm: function () {
-                            balh_config.is_close_do_not_remind = r.const.TRUE
-                            location.reload()
-                        },
-                    })
+    const balh_is_close = false
+
+    const balh_version_remind = (function () {
+        if (!util_page.new_bangumi()) return
+
+        util_init(() => {
+            if ((localStorage.balh_version || '0') < GM_info.script.version) {
+                localStorage.balh_version = GM_info.script.version
+                let version_remind = _t('version_remind')
+                if (version_remind) {
+                    util_ui_pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新提醒</h3>${version_remind}` })
                 }
-            })
-        }
-        return isClose
+            }
+        })
     })()
 
     const balh_feature_switch_to_old_player = (function () {
