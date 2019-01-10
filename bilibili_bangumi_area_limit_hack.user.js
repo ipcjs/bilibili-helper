@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.0
+// @version      7.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -869,6 +869,7 @@ function scriptSource(invokeBy) {
         anime_ss: () => location.href.includes('www.bilibili.com/bangumi/play/ss'),
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
+        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi')
     }
 
     const balh_config = (function () {
@@ -1169,12 +1170,18 @@ function scriptSource(invokeBy) {
                     || (balh_config.enable_in_av && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
                 ) {
                     // 新playrul:
-                    // 1. 参数放在param.data中
+                    // 1. 部分页面参数放在param.data中
                     // 2. 成功时, 返回的结果放到了result中: {"code":0,"message":"success","result":{}}
                     // 3. 失败时, 返回的结果没变
                     let isNewPlayurl
                     if (isNewPlayurl = param.url.includes('//api.bilibili.com/pgc/player/web/playurl')) {
-                        param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
+                        if (param.data) {
+                            param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
+                            param.data = undefined
+                        }
+                        if (util_page.new_bangumi()) {
+                            param.url += `&module=bangumi`
+                        }
                     }
                     one_api = bilibiliApis._playurl;
                     oriResultTransformer = p => p
