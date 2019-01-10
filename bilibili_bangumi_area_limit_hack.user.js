@@ -938,7 +938,7 @@ function scriptSource(invokeBy) {
                 localStorage.balh_version = GM_info.script.version
                 let version_remind = _t('version_remind')
                 if (version_remind) {
-                    util_ui_pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新提醒</h3>${version_remind}` })
+                    util_ui_pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新日志</h3>${version_remind}` })
                 }
             }
         })
