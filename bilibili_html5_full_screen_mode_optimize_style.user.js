@@ -105,7 +105,8 @@ function addStyle(css) {
     document.querySelector('head').appendChild(style)
 }
 
-let isNewPlayer = !!document.querySelector('#entryOld > .old-btn > a')
+let isNewPlayer = document.querySelector('#entryOld > .old-btn > a, .entry-old > .btn-old') // 回到老版按钮
+    || !document.querySelector('.new-entry > .btn') // 试用新版按钮
 console.log(`isNewPlayer: ${isNewPlayer}`)
 addStyle(isNewPlayer ? NEW_CSS : OLD_CSS)
 
