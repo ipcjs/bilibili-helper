@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck ZhiHu Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      2.1.1
+// @version      2.1.2
 // @description  日他娘的逼乎手机网页版 样式ver; 针对电脑版进行修改，适配手机屏幕;
 // @author       ipcjs
 // @compatible   chrome
@@ -108,8 +108,10 @@ GM.addStyle(`
 /* 弹窗 */
 .Modal-closeButton {
     position: static;
+    margin-left: auto;
+    margin-right: auto;
 }
-.Modal--fullPage {
+.Modal {
     width: 100%;
 }
 `)
