@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.3
+// @version      7.2.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -976,10 +976,12 @@ function scriptSource(invokeBy) {
     const balh_feature_area_limit_new = (function () {
         if (balh_is_close) return
 
-        if (!(util_page.av() && balh_config.enable_in_av)) {
+        if (!(
+            (util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi()
+        )) {
             return
         }
-        if (window.__playinfo__) {
+        function replacePlayInfo() {
             util_log("window.__playinfo__", window.__playinfo__)
             window.__playinfo__origin = window.__playinfo__
             let playinfo = undefined
@@ -996,6 +998,17 @@ function scriptSource(invokeBy) {
                     playinfo = value
                 },
             })
+        }
+        // 新的av页面, __playinfo__直接放在head中, 这里可以直接读取到
+        if (window.__playinfo__) {
+            replacePlayInfo()
+        } else {
+            // 新的bangumi页面, __playinfo__放在body中, 这里不能直接读取, 需要等dom加载完成才能读取到
+            util_init(() => {
+                if (window.__playinfo__) {
+                    replacePlayInfo()
+                }
+            }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED)
         }
     })()
     const balh_feature_area_limit = (function () {
@@ -1191,7 +1204,7 @@ function scriptSource(invokeBy) {
                             param.data = undefined
                         }
                         if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type'))) {
-                            util_debug(`playurl add 'module=bangumi' param`)
+                            log(`playurl add 'module=bangumi' param`)
                             param.url += `&module=bangumi`
                         }
                     }
