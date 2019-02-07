@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.8
+// @version      7.2.9
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -238,6 +238,22 @@ function scriptSource(invokeBy) {
         `)
     }
 
+    const util_ui_alert = function (message, resolve, reject) {
+        setTimeout(() => {
+            if (resolve) {
+                if (window.confirm(message)) {
+                    resolve()
+                } else {
+                    if (reject) {
+                        reject()
+                    }
+                }
+            } else {
+                alert(message)
+            }
+        }, 500)
+    }
+
     const util_init = (function () {
         const RUN_AT = {
             DOM_LOADED: 0,
@@ -272,7 +288,10 @@ function scriptSource(invokeBy) {
         }
 
         if (window.document.readyState !== 'loading') {
-            throw new Error('unit_init must run at loading, current is ' + document.readyState)
+            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n点击'确定', 刷新页面/重载脚本`, () => {
+                location.reload()
+            })
+            // throw new Error('unit_init must run at loading, current is ' + document.readyState)
         }
 
         window.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
@@ -698,22 +717,6 @@ function scriptSource(invokeBy) {
             }
         });
         document.body.appendChild(div);
-    }
-
-    const util_ui_alert = function (message, resolve, reject) {
-        setTimeout(() => {
-            if (resolve) {
-                if (window.confirm(message)) {
-                    resolve()
-                } else {
-                    if (reject) {
-                        reject()
-                    }
-                }
-            } else {
-                alert(message)
-            }
-        }, 500)
     }
 
     /**
