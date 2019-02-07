@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.2
+// @version      7.2.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -223,6 +223,19 @@ function scriptSource(invokeBy) {
         }
         Object.defineProperty(ret, 'name', funcNameDescriptor)
         return ret
+    }
+
+    const util_safe_get = (code) => {
+        return eval(`
+        (()=>{
+            try{
+                return ${code}
+            }catch(e){
+                console.warn(e.toString())
+                return null
+            }
+        })()
+        `)
     }
 
     const util_init = (function () {
@@ -1177,7 +1190,8 @@ function scriptSource(invokeBy) {
                             param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
                             param.data = undefined
                         }
-                        if (util_page.new_bangumi()) {
+                        if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type'))) {
+                            util_debug(`playurl add 'module=bangumi' param`)
                             param.url += `&module=bangumi`
                         }
                     }
@@ -1362,6 +1376,15 @@ function scriptSource(invokeBy) {
             var season_id = getSeasonId();
             util_cookie.set('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
             log('setAreaLimitSeason', season_id, limit);
+        }
+
+        function isBangumi(season_type) {
+            // 1是动画
+            return !(
+                season_type === 5 // 电视剧
+                || season_type === 3 // 是啥?
+                || season_type == 2 // 电影
+            )
         }
 
         function getSeasonId() {
@@ -1592,7 +1615,7 @@ function scriptSource(invokeBy) {
                         bangumi = !util_page.player_in_av()
                         // season_type, 1 为动画, 5 为电视剧; 为5/3时, 不是番剧视频
                         let season_type_param = util_url_param(url, 'season_type')
-                        if (season_type_param === '5' || season_type_param === '3') {
+                        if (!isBangumi(+season_type_param)) {
                             bangumi = false
                         }
                     }
