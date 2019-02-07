@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.5
+// @version      7.2.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -86,7 +86,7 @@ function scriptSource(invokeBy) {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
         welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
-        version_remind: `1. 修复新版番剧页面不能播放的问题<br>`
+        version_remind: '',
     }
     const _t = (key) => {
         const text = r_text[key]
@@ -958,20 +958,33 @@ function scriptSource(invokeBy) {
     })()
 
     const balh_feature_switch_to_old_player = (function () {
-        if (!util_page.av() || localStorage.balh_disable_switch_to_old_player) {
-            return
+        if (util_page.av() && !localStorage.balh_disable_switch_to_old_player) {
+            util_init(() => {
+                let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a')
+                if ($switchToOldBtn) {
+                    util_ui_pop({
+                        content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
+                        confirmBtn: '切换回旧版',
+                        onConfirm: () => $switchToOldBtn.click(),
+                        onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
+                    })
+                }
+            })
         }
-        util_init(() => {
-            let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a')
-            if ($switchToOldBtn) {
-                util_ui_pop({
-                    content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
-                    confirmBtn: '切换回旧版',
-                    onConfirm: () => $switchToOldBtn.click(),
-                    onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
-                })
-            }
-        })
+        if (util_page.new_bangumi() && util_cookie.stardustpgcv === '0606') {
+            util_init(() => {
+                if (document.querySelector('.error-container > .server-error')) {
+                    util_ui_pop({
+                        content: `<h3>${GM_info.script.name}</h3>暂时不支持新版番剧页面 请切换回旧版`,
+                        confirmBtn: '切换回旧版',
+                        onConfirm: () => {
+                            util_cookie.stardustpgcv = '0'
+                            location.reload()
+                        }
+                    })
+                }
+            })
+        }
     })()
     const balh_feature_area_limit_new = (function () {
         if (balh_is_close) return
