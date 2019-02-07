@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.9
+// @version      7.3.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -288,7 +288,7 @@ function scriptSource(invokeBy) {
         }
 
         if (window.document.readyState !== 'loading') {
-            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n点击'确定', 刷新页面/重载脚本`, () => {
+            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若多次刷新依然出现该提示, 请尝试关闭再重新打开该页面\n3. 若依然反复出现该提示, 请尝试换个浏览器\n`, () => {
                 location.reload()
             })
             // throw new Error('unit_init must run at loading, current is ' + document.readyState)
@@ -979,7 +979,7 @@ function scriptSource(invokeBy) {
                 util_init(() => {
                     let $panel = document.querySelector('.error-container > .server-error')
                     if ($panel) {
-                        $panel.insertBefore(_('text', '临时切换到旧版播放器中...'), $panel.firstChild)
+                        $panel.insertBefore(_('text', '临时切换到旧版番剧页面中...'), $panel.firstChild)
                         util_cookie.stardustpgcv = '0'
                         localStorage.balh_temp_switch_to_old_page = r.const.TRUE
                         location.reload()
