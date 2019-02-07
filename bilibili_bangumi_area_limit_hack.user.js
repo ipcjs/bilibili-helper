@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.2.7
+// @version      7.2.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -974,16 +974,12 @@ function scriptSource(invokeBy) {
         if (util_page.new_bangumi()) {
             if (util_cookie.stardustpgcv === '0606') {
                 util_init(() => {
-                    if (document.querySelector('.error-container > .server-error')) {
-                        util_ui_pop({
-                            content: `<h3>${GM_info.script.name}</h3>暂时不支持新版番剧页面<br>可以通过临时切换回旧版的方式 支持播放_(:3」∠)_`,
-                            confirmBtn: '临时切换回旧版',
-                            onConfirm: () => {
-                                util_cookie.stardustpgcv = '0'
-                                localStorage.balh_temp_switch_to_old_page = r.const.TRUE
-                                location.reload()
-                            }
-                        })
+                    let $panel = document.querySelector('.error-container > .server-error')
+                    if ($panel) {
+                        $panel.insertBefore(_('text', '临时切换到旧版播放器中...'), $panel.firstChild)
+                        util_cookie.stardustpgcv = '0'
+                        localStorage.balh_temp_switch_to_old_page = r.const.TRUE
+                        location.reload()
                     }
                 })
             }
