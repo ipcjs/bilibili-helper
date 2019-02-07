@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.3.0
+// @version      7.3.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -288,8 +288,8 @@ function scriptSource(invokeBy) {
         }
 
         if (window.document.readyState !== 'loading') {
-            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若多次刷新依然出现该提示, 请尝试关闭再重新打开该页面\n3. 若依然反复出现该提示, 请尝试换个浏览器\n`, () => {
-                location.reload()
+            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若依然出现该提示, 请尝试'硬性重新加载'(快捷键一般为ctrl+f5)\n3. 若还是出现该提示, 请尝试关闭再重新打开该页面\n4. 若反复出现该提示, 请尝试换个浏览器\n`, () => {
+                location.reload(true)
             })
             // throw new Error('unit_init must run at loading, current is ' + document.readyState)
         }
