@@ -645,8 +645,8 @@ function scriptSource(invokeBy) {
     }
     const util_generate_sign = function (params, key) {
         var s_keys = [];
-        for (var i in params) {
-            s_keys.push(i);
+        for (var j in params) {
+            s_keys.push(j);
         }
         s_keys.sort();
         var data = "";
