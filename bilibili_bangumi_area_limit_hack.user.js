@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.3.3
+// @version      7.3.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1169,6 +1169,7 @@ function scriptSource(invokeBy) {
         }
 
         function injectAjax() {
+            log('injectAjax at:', window.jQuery)
             let originalAjax = $.ajax;
             $.ajax = function (arg0, arg1) {
                 let param;
@@ -1770,8 +1771,12 @@ function scriptSource(invokeBy) {
             })
         }
         injectXHR();
-        if (!window.jQuery) { // 若还未加载jQuery, 则监听
-            var jQuery;
+        if (true) {
+            let jQuery = window.jQuery;
+            if (jQuery) { // 若已加载jQuery, 则注入
+                injectAjax()
+            }
+            // 需要监听jQuery变化, 因为有时会被设置多次...
             Object.defineProperty(window, 'jQuery', {
                 configurable: true, enumerable: true, set: function (v) {
                     // debugger
@@ -1813,8 +1818,6 @@ function scriptSource(invokeBy) {
                     return jQuery;
                 }
             });
-        } else {
-            injectAjax();
         }
     }())
     const balh_feature_remove_pre_ad = (function () {
