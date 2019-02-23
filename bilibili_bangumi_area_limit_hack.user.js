@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.3.2
+// @version      7.3.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1409,7 +1409,7 @@ function scriptSource(invokeBy) {
             util_cookie.set('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
             log('setAreaLimitSeason', season_id, limit);
         }
-
+        /** 使用该方法判断是否需要添加module=bangumi参数, 并不准确... */
         function isBangumi(season_type) {
             log(`season_type: ${season_type}`)
             // 1是动画
@@ -1643,7 +1643,8 @@ function scriptSource(invokeBy) {
                         .then(r => this.processProxySuccess(r, false))
                 },
                 transToProxyUrl: function (url, bangumi) {
-                    if (bangumi === undefined) {
+                    let params = url.split('?')[1];
+                    if (bangumi === undefined) { // 自动判断
                         // av页面中的iframe标签形式的player, 不是番剧视频
                         bangumi = !util_page.player_in_av()
                         // season_type, 1 为动画, 5 为电视剧; 为5/3时, 不是番剧视频
@@ -1651,10 +1652,14 @@ function scriptSource(invokeBy) {
                         if (!isBangumi(+season_type_param)) {
                             bangumi = false
                         }
-                    }
-                    var params = url.split('?')[1];
-                    if (!bangumi) {
-                        params = params.replace(/&?module=(\w+)/, '') // 移除可能存在的module参数
+                        if (!bangumi) {
+                            params = params.replace(/&?module=(\w+)/, '') // 移除可能存在的module参数
+                        }
+                    } else if (bangumi === true) { // 保证添加module=bangumi参数
+                        params = params.replace(/&?module=(\w+)/, '')
+                        params += '&module=bangumi'
+                    } else if (bangumi === false) { // 移除可能存在的module参数
+                        params = params.replace(/&?module=(\w+)/, '')
                     }
                     return `${balh_config.server}/BPplayurl.php?${params}`;
                 },
@@ -1700,14 +1705,19 @@ function scriptSource(invokeBy) {
                     util_ui_player_msg('从代理服务器拉取视频地址中...')
                     return playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
                         .catch(e => {
-                            if (e instanceof AjaxException && e.code === 1) { // code: 1 表示非番剧视频, 不能使用番剧视频参数
+                            if (e instanceof AjaxException) {
                                 util_ui_player_msg(e)
-                                util_ui_player_msg('尝试使用非番剧视频接口拉取视频地址...')
-                                return playurl_by_proxy._asyncAjax(originUrl, false)
-                                    .catch(e2 => Promise.reject(e)) // 忽略e2, 返回原始错误e
-                            } else {
-                                return Promise.reject(e)
+                                if (e.code === 1) { // code: 1 表示非番剧视频, 不能使用番剧视频参数
+                                    util_ui_player_msg('尝试使用非番剧视频接口拉取视频地址...')
+                                    return playurl_by_proxy._asyncAjax(originUrl, false)
+                                        .catch(e2 => Promise.reject(e)) // 忽略e2, 返回原始错误e
+                                } else if (e.code === 10004) { // code: 10004, 表示视频被隐藏, 一般添加module=bangumi参数可以拉取到视频
+                                    util_ui_player_msg('尝试使用番剧视频接口拉取视频地址...')
+                                    return playurl_by_proxy._asyncAjax(originUrl, true)
+                                        .catch(e2 => Promise.reject(e))
+                                }
                             }
+                            return Promise.reject(e)
                         })
                         .catch(e => {
                             util_ui_player_msg(e)
