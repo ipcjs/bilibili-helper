@@ -13,14 +13,15 @@
 
 // todo: 添加配置页面
 // https://www.bilibili.com/bangumi/media/md1239
-if (safeGet('unsafeWindow.__INITIAL_STATE__.epInfo.aid') == 31216455) {
+let aid = safeGet('unsafeWindow.__INITIAL_STATE__.epInfo.aid')
+if (aid == 31216455 || aid == 30795340) {
     addVideoStyle()
 }
 
 function addVideoStyle() {
     console.log(`${GM_info.script.name} addStyle`)
     GM_addStyle(`
-    .bilibili-player-video video {
+    .mode-fullscreen .bilibili-player-video video {
         width: 885px!important;
         margin-left: auto;
         margin-right: auto;
