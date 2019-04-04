@@ -117,7 +117,7 @@ function scriptSource(invokeBy) {
                 S0: 'https://biliplus.ipcjs.top',
                 S1: 'https://www.biliplus.com',
                 defaultServer: function () {
-                    return this.S1
+                    return this.S0
                 },
             },
             TRUE: 'Y',
@@ -900,8 +900,8 @@ function scriptSource(invokeBy) {
                     switch (prop) {
                         case 'server':
                             value = value || r.const.server.defaultServer()
-                            // 从win域名迁移到新的默认域名
-                            if (value.includes('biliplus.ipcjs.win')) {
+                            // 从biliplus迁移到新的默认域名
+                            if (value.includes('www.biliplus.com')) {
                                 value = r.const.server.defaultServer()
                                 balh_config.server = value
                             }
@@ -2458,7 +2458,7 @@ function scriptSource(invokeBy) {
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（更稳定）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（已停业）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
