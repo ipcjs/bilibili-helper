@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.4.1
+// @version      7.4.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -26,10 +26,12 @@
 'use strict';
 const log = console.log.bind(console, 'injector:')
 
-if (location.href.match('link.acg.tv/forum.php') != null && location.href.match('access_key') != null && window.opener != null) {
-    window.stop();
-    document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-    window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
+if (location.href.match('link.acg.tv/forum.php') != null) {
+    if (location.href.match('access_key') != null && window.opener != null) {
+        window.stop();
+        document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
+        window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
+    }
     return;
 }
 
