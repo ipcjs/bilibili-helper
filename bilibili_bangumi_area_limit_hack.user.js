@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.4.0
+// @version      7.3.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -86,7 +86,7 @@ function scriptSource(invokeBy) {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
         welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
-        version_remind: `<h1>停业。</h1>原因详见：<a href="https://www.biliplus.com/">BiliPlus</a><br>`
+        version_remind: '',
     }
     const _t = (key) => {
         const text = r_text[key]
@@ -944,7 +944,7 @@ function scriptSource(invokeBy) {
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
-    const balh_is_close = true
+    const balh_is_close = false
 
     const balh_version_remind = (function () {
         if (!util_page.new_bangumi()) return
