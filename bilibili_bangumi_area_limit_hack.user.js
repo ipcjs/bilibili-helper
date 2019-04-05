@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.1
+// @version      7.5.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -117,7 +117,7 @@ function scriptSource(invokeBy) {
             },
             server: {
                 S0: 'https://biliplus.ipcjs.top',
-                S1: 'https://www.biliplus.com',
+                CUSTOM: '__custom__',
                 defaultServer: function () {
                     return this.S0
                 },
@@ -895,21 +895,29 @@ function scriptSource(invokeBy) {
         const cookies = util_cookie.all() // 缓存的cookies
         return new Proxy({ /*保存config的对象*/ }, {
             get: function (target, prop) {
+                if (prop === 'server') {
+                    const server_inner = balh_config.server_inner
+                    const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
+                    return server
+                }
                 if (prop in target) {
                     return target[prop]
                 } else { // 若target中不存在指定的属性, 则从缓存的cookies中读取, 并保存到target中
                     let value = cookies['balh_' + prop]
                     switch (prop) {
-                        case 'server':
+                        case 'server_inner':
                             value = value || r.const.server.defaultServer()
                             // 从biliplus迁移到新的默认域名, 只会执行一次
-                            if(util_page.new_bangumi() && !localStorage.balh_migrate_to_ipcjs){
+                            if (util_page.new_bangumi() && !localStorage.balh_migrate_to_ipcjs) {
                                 localStorage.balh_migrate_to_ipcjs = r.const.TRUE
                                 if (value.includes('www.biliplus.com')) {
                                     value = r.const.server.defaultServer()
                                     balh_config.server = value
                                 }
                             }
+                            break
+                        case 'server_custom':
+                            value = value || ''
                             break
                         case 'mode':
                             value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT)
@@ -1857,8 +1865,11 @@ function scriptSource(invokeBy) {
     const balh_feature_runPing = function () {
         var pingOutput = document.getElementById('balh_server_ping');
 
-        var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0, r.const.server.S1],
+        var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0],
             testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
+        if (balh_config.server_custom) {
+            testUrl.push(balh_config.server_custom)
+        }
         pingOutput.textContent = '正在进行服务器测速…';
         pingOutput.style.height = '100px';
         xhr.open('GET', '', true);
@@ -2404,7 +2415,7 @@ function scriptSource(invokeBy) {
 
         function onSettingsFormChange(e) {
             var name = e.target.name;
-            var value = e.target.type === 'checkbox' ? (e.target.checked ? r.const.TRUE : r.const.FALSE) : e.target.value
+            var value = e.target.type === 'checkbox' ? (e.target.checked ? r.const.TRUE : r.const.FALSE) : e.target.value.trim()
             balh_config[name.replace('balh_', '')] = value
             log(name, ' => ', value);
         }
@@ -2447,6 +2458,7 @@ function scriptSource(invokeBy) {
             }
         }
 
+        let customServerCheckText
         var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
             _('style', {}, [_('text', r.css.settings)]),
             _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
@@ -2455,8 +2467,19 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（已停业?）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
+                        _('label', { style: { flex: 1 } }, [
+                            _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
+                            _('input', {
+                                type: 'text', name: 'balh_server_custom', placeholder: '形如：https://xx.yy.com', event: {
+                                    input: (event) => {
+                                        customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test(event.target.value.trim()) ? '✔️' : '❌'
+                                        onSettingsFormChange(event)
+                                    }
+                                }
+                            }),
+                            customServerCheckText = _('span'),
+                        ]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
