@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.2
+// @version      7.5.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1315,19 +1315,20 @@ function scriptSource(invokeBy) {
                 }
 
                 if (one_api && oriResultTransformer) {
+                    // 请求结果通过mySuccess/Error获取, 将其包装成Promise, 方便处理
+                    let oriResultPromise = new Promise((resolve, reject) => {
+                        mySuccess = resolve
+                        myError = reject
+                    })
                     if (needRedirect()) {
-                        // 清除原始请求的回调
-                        mySuccess = util_func_noop
-                        myError = util_func_noop
                         // 通过proxy, 执行请求
                         one_api.asyncAjax(param.url)
+                            // proxy报错时, 返回原始请求的结果
+                            .catch(e => oriResultPromise)
                             .compose(dispatchResultTransformer)
                     } else {
-                        // 请求结果通过mySuccess/Error获取, 将其包装成Promise, 方便处理
-                        new Promise((resolve, reject) => {
-                            mySuccess = resolve
-                            myError = reject
-                        }).compose(oriResultTransformer)
+                        oriResultPromise
+                            .compose(oriResultTransformer)
                             .compose(dispatchResultTransformer)
                     }
                 }
@@ -2471,7 +2472,7 @@ function scriptSource(invokeBy) {
                         _('label', { style: { flex: 1 } }, [
                             _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
                             _('input', {
-                                type: 'text', name: 'balh_server_custom', placeholder: '形如：https://xx.yy.com', event: {
+                                type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
                                     input: (event) => {
                                         customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test(event.target.value.trim()) ? '✔️' : '❌'
                                         onSettingsFormChange(event)
