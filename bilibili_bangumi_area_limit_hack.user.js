@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.0
-// @description  [已失效] 通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
+// @version      7.5.1
+// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
 // @compatible   chrome
@@ -88,7 +88,7 @@ function scriptSource(invokeBy) {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
         welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
-        version_remind: `<h1>同步停业。</h1>原因详见：<a href="https://www.biliplus.com/">BiliPlus</a><br>`,
+        version_remind: ``,
     }
     const _t = (key) => {
         const text = r_text[key]
@@ -902,10 +902,13 @@ function scriptSource(invokeBy) {
                     switch (prop) {
                         case 'server':
                             value = value || r.const.server.defaultServer()
-                            // 从biliplus迁移到新的默认域名
-                            if (value.includes('www.biliplus.com')) {
-                                value = r.const.server.defaultServer()
-                                balh_config.server = value
+                            // 从biliplus迁移到新的默认域名, 只会执行一次
+                            if(util_page.new_bangumi() && !localStorage.balh_migrate_to_ipcjs){
+                                localStorage.balh_migrate_to_ipcjs = r.const.TRUE
+                                if (value.includes('www.biliplus.com')) {
+                                    value = r.const.server.defaultServer()
+                                    balh_config.server = value
+                                }
                             }
                             break
                         case 'mode':
@@ -946,7 +949,7 @@ function scriptSource(invokeBy) {
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
-    const balh_is_close = true
+    const balh_is_close = false
 
     const balh_version_remind = (function () {
         if (!util_page.new_bangumi()) return
@@ -1720,21 +1723,14 @@ function scriptSource(invokeBy) {
                             }
                             return Promise.reject(e)
                         })
-                        .catch(e => {
-                            util_ui_player_msg(e)
-                            util_ui_player_msg('尝试换用B站接口拉取视频地址(清晰度低)...')
-                            // 失败时, 转而从B站获取
-                            return playurl_by_bilibili._asyncAjax(originUrl)
-                                .catch(e2 => {
-                                    util_ui_player_msg(e2) // 打印错误日志
-                                    // 直接忽略playurl_by_bilibili的错误, 改成返回playurl_by_proxy的错误...
-                                    return Promise.reject(e)
-                                })
-                        })
                         // 报错时, 延时1秒再发送错误信息
                         .catch(e => util_promise_timeout(1000).then(r => Promise.reject(e)))
                         .catch(e => {
-                            util_ui_alert(`拉取视频地址失败\n${util_stringify(e)}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题\n\n点击确定按钮, 刷新页面`, window.location.reload.bind(window.location))
+                            if (typeof e === 'object' && e.statusText == 'error') {
+                                util_ui_player_msg('代理服务器错误')
+                            } else {
+                                util_ui_alert(`拉取视频地址失败\n${util_stringify(e)}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题\n\n点击确定按钮, 刷新页面`, window.location.reload.bind(window.location))
+                            }
                             return Promise.reject(e)
                         })
                 }
@@ -2460,7 +2456,7 @@ function scriptSource(invokeBy) {
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（已停业）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（已停业?）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
