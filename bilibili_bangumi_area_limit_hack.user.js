@@ -117,9 +117,9 @@ function scriptSource(invokeBy) {
             },
             server: {
                 S0: 'https://biliplus.ipcjs.top',
-                S1: 'https://hd.biliplus.com',
+                //S1: 'https://hd.biliplus.com',
                 defaultServer: function () {
-                    return this.S1
+                    return this.S0
                 },
             },
             TRUE: 'Y',
@@ -2459,8 +2459,8 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '土豆服1')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `土豆服2`)]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '土豆服')]),
+                        //_('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `土豆服2`)]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
