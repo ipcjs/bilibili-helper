@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.3
+// @version      7.5.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1201,6 +1201,7 @@ function scriptSource(invokeBy) {
                     .catch(e => oriError(e))
                 // 转换原始请求的结果的transformer
                 let oriResultTransformer
+                let oriResultTransformerWhenProxyError
                 let one_api;
                 // log(param)
                 if (param.url.match('/web_api/get_source')) {
@@ -1242,6 +1243,10 @@ function scriptSource(invokeBy) {
                         }
                     }
                     one_api = bilibiliApis._playurl;
+                    if (isNewPlayurl) {
+                        oriResultTransformerWhenProxyError = p => p
+                            .then(json => !json.code ? json.result : json)
+                    }
                     oriResultTransformer = p => p
                         .then(json => {
                             log(json)
@@ -1324,7 +1329,7 @@ function scriptSource(invokeBy) {
                         // 通过proxy, 执行请求
                         one_api.asyncAjax(param.url)
                             // proxy报错时, 返回原始请求的结果
-                            .catch(e => oriResultPromise)
+                            .catch(e => oriResultPromise.compose(oriResultTransformerWhenProxyError))
                             .compose(dispatchResultTransformer)
                     } else {
                         oriResultPromise
