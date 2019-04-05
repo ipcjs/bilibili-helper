@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.0
-// @description  [已失效] 通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
+// @version      7.5.1
+// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
 // @compatible   chrome
@@ -88,7 +88,7 @@ function scriptSource(invokeBy) {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
         welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
-        version_remind: `<h1>同步停业。</h1>原因详见：<a href="https://www.biliplus.com/">BiliPlus</a><br>`,
+        //version_remind: `<h1>同步停业。</h1>原因详见：<a href="https://www.biliplus.com/">BiliPlus</a><br>`,
     }
     const _t = (key) => {
         const text = r_text[key]
@@ -117,9 +117,9 @@ function scriptSource(invokeBy) {
             },
             server: {
                 S0: 'https://biliplus.ipcjs.top',
-                S1: 'https://www.biliplus.com',
+                S1: 'https://hd.biliplus.com',
                 defaultServer: function () {
-                    return this.S0
+                    return this.S1
                 },
             },
             TRUE: 'Y',
@@ -946,7 +946,7 @@ function scriptSource(invokeBy) {
     const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
-    const balh_is_close = true
+    const balh_is_close = false
 
     const balh_version_remind = (function () {
         if (!util_page.new_bangumi()) return
@@ -2459,8 +2459,8 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `${r.const.server.S1}（已停业）`), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S0 }), _('text', '土豆服1')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server', value: r.const.server.S1 }), _('text', `土豆服2`)]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     _('text', 'upos服务器：'), _('br'),
