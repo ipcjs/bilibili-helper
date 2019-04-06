@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.5
+// @version      7.5.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1694,7 +1694,10 @@ function scriptSource(invokeBy) {
                         }
                     } else if (isAreaLimitForPlayUrl(data)) {
                         util_error('>>area limit');
-                        util_ui_alert(`突破黑洞失败\n需要登录\n点此确定进行登录`, balh_feature_sign.showLogin);
+                        util_ui_pop({
+                            content: `突破黑洞失败\n需要登录\n点此确定进行登录`,
+                            onConfirm: balh_feature_sign.showLogin
+                        })
                     } else {
                         if (balh_config.flv_prefer_ws) {
                             data.durl.forEach(function (seg) {
@@ -1740,11 +1743,16 @@ function scriptSource(invokeBy) {
                         // 报错时, 延时1秒再发送错误信息
                         .catch(e => util_promise_timeout(1000).then(r => Promise.reject(e)))
                         .catch(e => {
+                            let msg
                             if (typeof e === 'object' && e.statusText == 'error') {
-                                util_ui_player_msg('代理服务器错误')
+                                msg = '代理服务器临时不可用'
                             } else {
-                                util_ui_alert(`拉取视频地址失败\n${util_stringify(e)}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题\n\n点击确定按钮, 刷新页面`, window.location.reload.bind(window.location))
+                                msg = util_stringify(e)
                             }
+                            util_ui_pop({
+                                content: `## 拉取视频地址失败\n${msg}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题\n\n点击确定按钮, 刷新页面`,
+                                onConfirm: window.location.reload.bind(window.location)
+                            })
                             return Promise.reject(e)
                         })
                 }
