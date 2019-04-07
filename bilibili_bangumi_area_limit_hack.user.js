@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.6
+// @version      7.5.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -117,9 +117,10 @@ function scriptSource(invokeBy) {
             },
             server: {
                 S0: 'https://biliplus.ipcjs.top',
+                S1: 'https://www.biliplus.com',
                 CUSTOM: '__custom__',
                 defaultServer: function () {
-                    return this.S0
+                    return this.S1
                 },
             },
             TRUE: 'Y',
@@ -907,10 +908,10 @@ function scriptSource(invokeBy) {
                     switch (prop) {
                         case 'server_inner':
                             value = value || r.const.server.defaultServer()
-                            // 从biliplus迁移到新的默认域名, 只会执行一次
-                            if (util_page.new_bangumi() && !localStorage.balh_migrate_to_ipcjs) {
-                                localStorage.balh_migrate_to_ipcjs = r.const.TRUE
-                                if (value.includes('www.biliplus.com')) {
+                            // 迁移回biliplus, 只会执行一次
+                            if (util_page.new_bangumi() && !localStorage.balh_migrate_to_1) {
+                                localStorage.balh_migrate_to_1 = r.const.TRUE
+                                if (value.includes('biliplus.ipcjs.top')) {
                                     value = r.const.server.defaultServer()
                                     balh_config.server = value
                                 }
@@ -1746,12 +1747,14 @@ function scriptSource(invokeBy) {
                             let msg
                             if (typeof e === 'object' && e.statusText == 'error') {
                                 msg = '代理服务器临时不可用'
+                                util_ui_player_msg(msg)
                             } else {
                                 msg = util_stringify(e)
                             }
                             util_ui_pop({
-                                content: `## 拉取视频地址失败\n${msg}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题\n\n点击确定按钮, 刷新页面`,
-                                onConfirm: window.location.reload.bind(window.location)
+                                content: `## 拉取视频地址失败\n原因: ${msg}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题`,
+                                onConfirm: window.location.reload.bind(window.location),
+                                confirmBtn: '刷新页面'
                             })
                             return Promise.reject(e)
                         })
@@ -1879,7 +1882,7 @@ function scriptSource(invokeBy) {
     const balh_feature_runPing = function () {
         var pingOutput = document.getElementById('balh_server_ping');
 
-        var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0],
+        var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0, r.const.server.S1],
             testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
         if (balh_config.server_custom) {
             testUrl.push(balh_config.server_custom)
@@ -2481,8 +2484,9 @@ function scriptSource(invokeBy) {
                 _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '默认代理服务器（土豆服）')]),
-                        _('label', { style: { flex: 1 } }, [
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus')]),
+                        _('label', { style: { flex: 2 } }, [
                             _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
                             _('input', {
                                 type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
