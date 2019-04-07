@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.7
+// @version      7.5.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1752,7 +1752,7 @@ function scriptSource(invokeBy) {
                                 msg = util_stringify(e)
                             }
                             util_ui_pop({
-                                content: `## 拉取视频地址失败\n原因: ${msg}\n\n可以考虑进行如下尝试:\n1. 多刷新几下页面\n2. 进入设置页面更换代理服务器\n3. 耐心等待代理服务器端修复问题`,
+                                content: `## 拉取视频地址失败\n原因: ${msg}\n\n可以考虑进行如下尝试:\n1. 多<a href="">刷新</a>几下页面\n2. 进入<a href="javascript:bangumi_area_limit_hack.showSettings();">设置页面</a>更换代理服务器\n3. 耐心等待代理服务器端修复问题`,
                                 onConfirm: window.location.reload.bind(window.location),
                                 confirmBtn: '刷新页面'
                             })
