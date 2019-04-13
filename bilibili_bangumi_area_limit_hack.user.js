@@ -1495,7 +1495,7 @@ function scriptSource(invokeBy) {
         }
 
         function isAreaLimitForPlayUrl(json) {
-            return json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627;
+            return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627);
         }
 
         var bilibiliApis = (function () {
