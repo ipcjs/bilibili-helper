@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.9
+// @version      7.5.10
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -2611,6 +2611,22 @@ function scriptSource(invokeBy) {
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
     }())
 
+    const balh_mark_serve_check_area_limit_state = (function () {
+        if (!util_page.bangumi_md()) {
+            return
+        }
+        // 服务器需要通过这个接口判断是否有区域限制
+        // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
+        util_init(() => {
+            const season_id = util_safe_get(`window.__INITIAL_STATE__.mediaInfo.param.season_id`)
+            if (season_id) {
+                balh_api_plus_season(season_id)
+                    .then(r => log(`season${season_id}`, r))
+                    .catch(e => log(`season${season_id}`, e))
+            }
+        })
+    }())
+
     function main() {
         util_log(
             'mode:', balh_config.mode,
@@ -2631,7 +2647,7 @@ function scriptSource(invokeBy) {
             logout: balh_feature_sign.showLogout,
             getLog: util_log_hub.getAllMsg,
             showSettings: balh_ui_setting.show,
-            set1080P: function(){
+            set1080P: function () {
                 const settings = JSON.parse(localStorage.bilibili_player_settings)
                 const oldQuality = settings.setting_config.defquality
                 util_debug(`defauality: ${oldQuality}`)
