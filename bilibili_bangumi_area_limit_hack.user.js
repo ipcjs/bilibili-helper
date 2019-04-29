@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.5.12
+// @version      7.5.13
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1685,7 +1685,10 @@ function scriptSource(invokeBy) {
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
                     if (data && data.code === -403) {
-                        util_ui_alert(`突破黑洞失败\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n\n点击确定, 打开设置页面`, balh_ui_setting.show)
+                        util_ui_pop({
+                            content: `<b>code-403</b>: <i style="font-size:4px;white-space:nowrap;">${JSON.stringify(data)}</i>\n\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n4. 上报问题: <a href="https://github.com/ipcjs/bilibili-helper/issues/399">code-403问题汇总</a>\n\n点击确定, 打开设置页面`,
+                            onConfirm: balh_ui_setting.show,
+                        })
                     } else if (data === null || data.code) {
                         util_error(data);
                         if (alertWhenError) {
