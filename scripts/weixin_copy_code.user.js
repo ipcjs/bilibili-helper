@@ -23,22 +23,25 @@ const util_ui_copy = function (text, textarea) {
 function main({ _, log }) {
     log('mp weixin')
     document.head.appendChild(_('style', {}, [_('text', `
-        pre::before {
-            content: "copy";
-            pointer-events: auto;
+        pre {
+            position: relative;
+        }
+        div.pre-copy {
             position: absolute;
             right: 4px;
+            top: 4px;
         }
-        pre {
-            pointer-events: none;
+        pre > div::before {
+            content: "copy";
         }
     `)]))
     const $textarea = document.body.appendChild(_('textarea', { style: { display: 'none' } }))
     const $pre = Array.from(document.querySelectorAll('pre'))
-    $pre.forEach((el) => {
-        el.addEventListener('click', (event) => {
+    $pre.forEach(($preItem) => {
+        const $preCopy = $preItem.appendChild(_('div', { className: 'pre-copy', style: { position: 'absolute', right: '4px', top: '4px' } }))
+        $preCopy.addEventListener('click', (event) => {
             $textarea.style.display = ''
-            const text = Array.from(el.querySelectorAll('li')).map(el => el.innerText.replace(/\n/g, '')).join('\n')
+            const text = Array.from($preItem.querySelectorAll('li')).map(el => el.innerText.replace(/\n/g, '')).join('\n')
             util_ui_copy(text, $textarea)
             $textarea.style.display = 'none'
         })
