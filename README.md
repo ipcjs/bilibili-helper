@@ -9,6 +9,10 @@
     - [高级设置/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md)
 2. [Bilibili HTML5播放器网页全屏模式优化 脚本版](https://greasyfork.org/zh-CN/scripts/25858-bilibili-html5%E6%92%AD%E6%94%BE%E5%99%A8%E7%BD%91%E9%A1%B5%E5%85%A8%E5%B1%8F%E6%A8%A1%E5%BC%8F%E4%BC%98%E5%8C%96-%E8%84%9A%E6%9C%AC%E7%89%88)
 
+### 东立电子书
+
+1. [解除东立电子书区域限制](https://github.com/ipcjs/tongli-ebook-tw-unblock)
+
 ### Bangumi
 
 1. [番组计划主页观看进度中文标题](https://greasyfork.org/zh-CN/scripts/373284-%E7%95%AA%E7%BB%84%E8%AE%A1%E5%88%92%E4%B8%BB%E9%A1%B5%E8%A7%82%E7%9C%8B%E8%BF%9B%E5%BA%A6%E4%B8%AD%E6%96%87%E6%A0%87%E9%A2%98)
