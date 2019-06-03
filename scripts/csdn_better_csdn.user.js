@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better CSDN
 // @namespace    https://github.com/ipcjs
-// @version      0.1.0
+// @version      0.1.1
 // @description  The Better CSDN
 // @author       ipcjs
 // @match        https://blog.csdn.net/*
@@ -12,6 +12,17 @@
 GM_addStyle(`
 .tool-box > .meau-list {
     display: none;
+}
+@media (max-width: 958px){
+    aside {
+        display: none!important;
+    }
+    .container, main {
+        width: 100%!important;
+    }
+    body {
+        min-width: 0px!important;
+    }
 }
 `)
 
