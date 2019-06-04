@@ -1725,11 +1725,13 @@ function scriptSource(invokeBy) {
                     return data;
                 }
             })
+            // https://github.com/kghost/bilibili-area-limit/issues/3
             const playurl_by_kghost = new BilibiliApi({
                 _asyncAjax: function (originUrl) {
                     const proxyHostMap = [
-                        [/僅.*港.*地區/, '//bilibili-api.kghost.info/'],
+                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
                         [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/'],
+                        [/.*/, '//bilibili-cn-api.kghost.info/'],
                     ];
                     let proxyHost
                     for (const [regex, host] of proxyHostMap) {
