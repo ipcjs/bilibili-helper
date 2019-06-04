@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.6.0
+// @version      7.7.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1725,6 +1725,35 @@ function scriptSource(invokeBy) {
                     return data;
                 }
             })
+            // https://github.com/kghost/bilibili-area-limit/issues/3
+            const playurl_by_kghost = new BilibiliApi({
+                _asyncAjax: function (originUrl) {
+                    const proxyHostMap = [
+                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
+                        [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/'],
+                        [/.*/, '//bilibili-cn-api.kghost.info/'],
+                    ];
+                    let proxyHost
+                    for (const [regex, host] of proxyHostMap) {
+                        if (document.title.match(regex)) {
+                            proxyHost = host
+                            break;
+                        }
+                    }
+                    if (proxyHost) {
+                        return util_ajax(this.transToProxyUrl(originUrl, proxyHost))
+                            .then(r => this.processProxySuccess(r))
+                    } else {
+                        return Promise.reject("没有支持的服务器")
+                    }
+                },
+                transToProxyUrl: function (originUrl, proxyHost) {
+                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}`)
+                },
+                processProxySuccess: function (result) {
+                    return result.result
+                },
+            })
             const playurl = new BilibiliApi({
                 asyncAjax: function (originUrl) {
                     util_ui_player_msg('从代理服务器拉取视频地址中...')
@@ -1741,6 +1770,14 @@ function scriptSource(invokeBy) {
                                     return playurl_by_proxy._asyncAjax(originUrl, true)
                                         .catch(e2 => Promise.reject(e))
                                 }
+                            }
+                            return Promise.reject(e)
+                        })
+                        .catch(e => {
+                            if (typeof e === 'object' && e.statusText == 'error') {
+                                util_ui_player_msg('尝试使用kghost的服务器拉取视频地址...')
+                                return playurl_by_kghost._asyncAjax(originUrl)
+                                    .catch(e2 => Promise.reject(e))
                             }
                             return Promise.reject(e)
                         })
@@ -2576,7 +2613,10 @@ function scriptSource(invokeBy) {
                         _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
                         _('text', '　'),
                         _('a', { id: 'balh-issue-link', href: r.url.issue, target: '_blank', style: { display: 'none' } }, [_('text', '问题反馈')]),
-                        _('text', '作者: ipcjs esterTion FlandreDaisuki　接口：BiliPlus')
+                        _('text', '作者: ipcjs esterTion FlandreDaisuki'),
+                        _('text', ' 接口：'),
+                        _('a', { href: 'https://www.biliplus.com/' }, [_('text', ' BiliPlus ')]),
+                        _('a', { href: 'https://github.com/kghost/bilibili-area-limit' }, [_('text', ' kghost ')]),
                     ]),
                     _('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
                 ])
