@@ -1204,8 +1204,10 @@ function scriptSource(invokeBy) {
                 let oriResultTransformer
                 let oriResultTransformerWhenProxyError
                 let one_api;
+                let uri = '';
+                if (param.url) uri = param.url.split('?')[0];
                 // log(param)
-                if (param.url.match('/web_api/get_source')) {
+                if (uri.match('/web_api/get_source')) {
                     one_api = bilibiliApis._get_source;
                     oriResultTransformer = p => p
                         .then(json => {
@@ -1223,17 +1225,17 @@ function scriptSource(invokeBy) {
                                 return json;
                             }
                         })
-                } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
-                    || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
-                    || param.url.match(/^(https?:)?\/\/api\.bilibili\.com\/pgc\/player\/web\/playurl.*$/) // 新的番剧页面playurl接口
-                    || (balh_config.enable_in_av && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
+                } else if (uri.match('/player/web_api/playurl') // 老的番剧页面playurl接口
+                    || uri.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
+                    || uri.match(/^(https?:)?\/\/api\.bilibili\.com\/pgc\/player\/web\/playurl.*$/) // 新的番剧页面playurl接口
+                    || (balh_config.enable_in_av && uri.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
                 ) {
                     // 新playrul:
                     // 1. 部分页面参数放在param.data中
                     // 2. 成功时, 返回的结果放到了result中: {"code":0,"message":"success","result":{}}
                     // 3. 失败时, 返回的结果没变
                     let isNewPlayurl
-                    if (isNewPlayurl = param.url.includes('//api.bilibili.com/pgc/player/web/playurl')) {
+                    if (isNewPlayurl = uri.includes('//api.bilibili.com/pgc/player/web/playurl')) {
                         if (param.data) {
                             param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
                             param.data = undefined
@@ -1289,7 +1291,7 @@ function scriptSource(invokeBy) {
                             return r
                         })
                         .compose(oriDispatchResultTransformer)
-                } else if (param.url.match('//interface.bilibili.com/player?')) {
+                } else if (uri.match('//interface.bilibili.com/player?')) {
                     if (balh_config.blocked_vip) {
                         mySuccess = function (data) {
                             try {
@@ -1308,7 +1310,7 @@ function scriptSource(invokeBy) {
                             oriSuccess(data);
                         };
                     }
-                } else if (param.url.match('//api.bilibili.com/x/ad/video?')) {
+                } else if (uri.match('//api.bilibili.com/x/ad/video?')) {
                     if (balh_config.remove_pre_ad) {
                         mySuccess = function (data) {
                             log('/ad/video', data)
