@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.0
+// @version      7.7.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -26,7 +26,7 @@
 'use strict';
 const log = console.log.bind(console, 'injector:')
 
-if (location.href.match('link.acg.tv/forum.php') != null) {
+if (location.href.match(/^https?:\/\/link\.acg\.tv\/forum\.php/) != null) {
     if (location.href.match('access_key') != null && window.opener != null) {
         window.stop();
         document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
@@ -154,6 +154,9 @@ function scriptSource(invokeBy) {
         }
         return result
     }
+    const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')
+    const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
+    const util_regex_url_path = (path) => new RegExp(`^(https?:)?//[\\w\\-\\.]+${_raw(path)}`)
 
     const util_log_hub = (function () {
         const tag = GM_info.script.name + '.msg'
@@ -1065,8 +1068,8 @@ function scriptSource(invokeBy) {
                                 let cb = value
                                 value = function (event) {
                                     if (target.readyState === 4) {
-                                        if (target.responseURL.includes('bangumi.bilibili.com/view/web_api/season/user/status')
-                                            || target.responseURL.includes('api.bilibili.com/pgc/view/web/season/user/status')) {
+                                        if (target.responseURL.match(util_regex_url('bangumi.bilibili.com/view/web_api/season/user/status'))
+                                            || target.responseURL.match(util_regex_url('api.bilibili.com/pgc/view/web/season/user/status'))) {
                                             log('/season/user/status:', target.responseText)
                                             let json = JSON.parse(target.responseText)
                                             let rewriteResult = false
@@ -1084,7 +1087,7 @@ function scriptSource(invokeBy) {
                                                     container.responseText = JSON.stringify(json)
                                                 }
                                             }
-                                        } else if (target.responseURL.includes('bangumi.bilibili.com/web_api/season_area')) {
+                                        } else if (target.responseURL.match(util_regex_url('bangumi.bilibili.com/web_api/season_area'))) {
                                             log('/season_area', target.responseText)
                                             let json = JSON.parse(target.responseText)
                                             if (json.code === 0 && json.result) {
@@ -1094,7 +1097,7 @@ function scriptSource(invokeBy) {
                                                     container.responseText = JSON.stringify(json)
                                                 }
                                             }
-                                        } else if (target.responseURL.includes('api.bilibili.com/x/web-interface/nav')) {
+                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/web-interface/nav'))) {
                                             let json = JSON.parse(target.responseText)
                                             log('/x/web-interface/nav', (json.data && json.data.isLogin)
                                                 ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus }
@@ -1104,7 +1107,7 @@ function scriptSource(invokeBy) {
                                                 json.data.vipStatus = 1; // 状态, 启用
                                                 container.responseText = JSON.stringify(json)
                                             }
-                                        } else if (target.responseURL.includes('api.bilibili.com/x/player/playurl')) {
+                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player/playurl'))) {
                                             util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
@@ -1153,7 +1156,7 @@ function scriptSource(invokeBy) {
                                                     }
                                                 })
                                         }
-                                        if (container.__url.match(/^(https?:)?\/\/api\.bilibili\.com\/x\/player\/playurl.*$/) && balh_config.enable_in_av) {
+                                        if (container.__url.match(util_regex_url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
                                             log('/x/player/playurl')
                                             // debugger
                                             bilibiliApis._playurl.asyncAjax(container.__url)
@@ -1205,7 +1208,7 @@ function scriptSource(invokeBy) {
                 let oriResultTransformerWhenProxyError
                 let one_api;
                 // log(param)
-                if (param.url.match('/web_api/get_source')) {
+                if (param.url.match(util_regex_url_path('/web_api/get_source'))) {
                     one_api = bilibiliApis._get_source;
                     oriResultTransformer = p => p
                         .then(json => {
@@ -1223,17 +1226,17 @@ function scriptSource(invokeBy) {
                                 return json;
                             }
                         })
-                } else if (param.url.match('/player/web_api/playurl') // 老的番剧页面playurl接口
-                    || param.url.match('/player/web_api/v2/playurl') // 新的番剧页面playurl接口
-                    || param.url.match(/^(https?:)?\/\/api\.bilibili\.com\/pgc\/player\/web\/playurl.*$/) // 新的番剧页面playurl接口
-                    || (balh_config.enable_in_av && param.url.match('//interface.bilibili.com/v2/playurl')) // 普通的av页面playurl接口
+                } else if (param.url.match(util_regex_url_path('/player/web_api/playurl')) // 老的番剧页面playurl接口
+                    || param.url.match(util_regex_url_path('/player/web_api/v2/playurl')) // 新的番剧页面playurl接口
+                    || param.url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) // 新的番剧页面playurl接口
+                    || (balh_config.enable_in_av && param.url.match(util_regex_url('interface.bilibili.com/v2/playurl'))) // 普通的av页面playurl接口
                 ) {
                     // 新playrul:
                     // 1. 部分页面参数放在param.data中
                     // 2. 成功时, 返回的结果放到了result中: {"code":0,"message":"success","result":{}}
                     // 3. 失败时, 返回的结果没变
                     let isNewPlayurl
-                    if (isNewPlayurl = param.url.includes('//api.bilibili.com/pgc/player/web/playurl')) {
+                    if (isNewPlayurl = param.url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))) {
                         if (param.data) {
                             param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
                             param.data = undefined
@@ -1289,7 +1292,7 @@ function scriptSource(invokeBy) {
                             return r
                         })
                         .compose(oriDispatchResultTransformer)
-                } else if (param.url.match('//interface.bilibili.com/player?')) {
+                } else if (param.url.match(util_regex_url('interface.bilibili.com/player?'))) {
                     if (balh_config.blocked_vip) {
                         mySuccess = function (data) {
                             try {
@@ -1308,7 +1311,7 @@ function scriptSource(invokeBy) {
                             oriSuccess(data);
                         };
                     }
-                } else if (param.url.match('//api.bilibili.com/x/ad/video?')) {
+                } else if (param.url.match(util_regex_url('api.bilibili.com/x/ad/video?'))) {
                     if (balh_config.remove_pre_ad) {
                         mySuccess = function (data) {
                             log('/ad/video', data)
@@ -1378,7 +1381,7 @@ function scriptSource(invokeBy) {
                             return util_async_wrapper(target.json.bind(target),
                                 oriResult => {
                                     util_debug('injectFetch:', target.url)
-                                    if (target.url.includes('/player/web_api/v2/playurl/html5')) {
+                                    if (target.url.match(util_regex_url_path('/player/web_api/v2/playurl/html5'))) {
                                         let cid = util_url_param(target.url, 'cid')
                                         return balh_api_plus_playurl(cid)
                                             .then(result => {
