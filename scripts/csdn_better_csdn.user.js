@@ -13,7 +13,7 @@ GM_addStyle(`
 .tool-box > .meau-list {
     display: none;
 }
-@media (max-width: 958px){
+@media (max-width: 960px){
     aside {
         display: none!important;
     }
