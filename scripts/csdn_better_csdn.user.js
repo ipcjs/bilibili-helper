@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better CSDN
 // @namespace    https://github.com/ipcjs
-// @version      0.1.1
+// @version      0.1.2
 // @description  The Better CSDN
 // @author       ipcjs
 // @match        https://blog.csdn.net/*
@@ -25,6 +25,5 @@ GM_addStyle(`
     }
 }
 `)
-
 $("div.article_content").removeAttr("style")
-$("#btn-readmore").parent().remove()
+$(".btn-readmore").parent().remove()
