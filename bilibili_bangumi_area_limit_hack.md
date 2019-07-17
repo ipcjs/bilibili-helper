@@ -1,6 +1,4 @@
 
-## 推广：[解除 东立电子书城 区域限制](https://github.com/ipcjs/tongli-ebook-tw-unblock/releases/latest)（可以看[进击的巨人漫画](https://ebook.tongli.com.tw/book?id=6e34132c-6a96-e811-a947-00155d020a17&isGroup=true&isSerials=true)
-
 # 解除B站区域限制
 
 该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
@@ -40,9 +38,14 @@
 4. 对于一些已知错误，脚本会弹窗提示，请认真阅读提示信息，按提示进行操作。
 5. 如果依然无效，可能确实是这个脚本的问题了，请到GitHub反馈给我。
 
-### 播放卡顿，限速200kb？
+### 播放卡顿？
 
-脚本设置中有个“替换upos视频服务器”选项，可以切换几下试试。
+港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，跟够缓解卡顿的问题。
+
+详见:
+
+- [播放番剧，5秒一卡，速度非常慢 · Issue #401 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/issues/401)
+- [用油猴脚本裸睡的进来 - 动漫论坛 - Stage1st - stage1/s1 游戏动漫论坛](https://bbs.saraba1st.com/2b/thread-1846364-1-1.html)([备用链接](https://webcache.googleusercontent.com/search?q=cache:uuItMgMJUjYJ:https://bbs.saraba1st.com/2b/thread-1846364-1-1.html+&cd=1&hl=en&ct=clnk&gl=us))
 
 ### 看不了1080P画质？
 
