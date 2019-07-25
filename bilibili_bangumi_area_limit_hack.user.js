@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.3
+// @version      7.7.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -2548,7 +2548,7 @@ function scriptSource(invokeBy) {
                         ]),
                     ]), _('br'),
                     _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
-                    _('div', { style: { display: 'none' } }, [ // 这个功能貌似没作用了...隐藏掉
+                    _('div', { style: { display: '' } }, [ // 这个功能貌似没作用了...隐藏掉 => 貌似还有用...重新显示
                         _('text', 'upos服务器：'), _('br'),
                         _('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
                             _('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),

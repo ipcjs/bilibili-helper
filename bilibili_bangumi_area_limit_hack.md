@@ -40,12 +40,19 @@
 
 ### 播放卡顿？
 
-港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，跟够缓解卡顿的问题。
+#### “替换upos视频服务器”选项
 
-详见:
+在设置中有个“替换upos视频服务器”选项，可以试下。
 
-- [播放番剧，5秒一卡，速度非常慢 · Issue #401 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/issues/401)
-- [用油猴脚本裸睡的进来 - 动漫论坛 - Stage1st - stage1/s1 游戏动漫论坛](https://bbs.saraba1st.com/2b/thread-1846364-1-1.html)([备用链接](https://webcache.googleusercontent.com/search?q=cache:uuItMgMJUjYJ:https://bbs.saraba1st.com/2b/thread-1846364-1-1.html+&cd=1&hl=en&ct=clnk&gl=us))
+#### 改hosts
+
+港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，能够缓解卡顿的问题。
+
+所有可用的ip：  
+<http://ping.chinaz.com/upos-hz-mirrorakam.akamaized.net>
+
+参考链接:  
+[播放番剧，5秒一卡，速度非常慢 · Issue #401 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/issues/401)
 
 ### 看不了1080P画质？
 
