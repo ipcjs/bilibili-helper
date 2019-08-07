@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.4
+// @version      7.7.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -153,6 +153,25 @@ function scriptSource(invokeBy) {
             result += str
         }
         return result
+    }
+    const util_str_to_c_like = (str) => {
+        return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
+    }
+    const util_obj_key_to_c_like = (obj) => {
+        if (Array.isArray(obj)) {
+            for (const item of obj) {
+                util_obj_key_to_c_like(item)
+            }
+        } else {
+            for (const key of Object.keys(obj)) {
+                const value = obj[key]
+                if (typeof value === 'object') {
+                    util_obj_key_to_c_like(value)
+                }
+                obj[util_str_to_c_like(key)] = value
+            }
+        }
+        return obj
     }
     const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')
     const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
@@ -1030,6 +1049,7 @@ function scriptSource(invokeBy) {
                     return playinfo
                 },
                 set: (value) => {
+                    // debugger
                     log('__playinfo__', 'set')
                     playinfo = value
                 },
@@ -1111,6 +1131,9 @@ function scriptSource(invokeBy) {
                                             util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
+                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))) {
+                                            util_log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                            // 同上
                                         }
                                         if (container.__block_response) {
                                             // 屏蔽并保存response
@@ -1173,6 +1196,27 @@ function scriptSource(invokeBy) {
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
+                                        } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))) {
+                                            log('/pgc/player/web/playurl')
+                                            // debugger
+                                            let url = container.__url
+                                            if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
+                                                log(`/pgc/player/web/playurl add 'module=bangumi' param`)
+                                                url += `&module=bangumi`
+                                            }
+                                            bilibiliApis._playurl.asyncAjax(url)
+                                                .then(data => {
+                                                    if (!data.code) {
+                                                        data = {
+                                                            code: 0,
+                                                            result: data,
+                                                            message: "0",
+                                                        }
+                                                    }
+                                                    log('/pgc/player/web/playurl', 'proxy', data)
+                                                    return data
+                                                })
+                                                .compose(dispatchResultTransformerCreator())
                                         }
                                     }
                                     return func.apply(target, arguments)
@@ -1201,7 +1245,10 @@ function scriptSource(invokeBy) {
                 let mySuccess, myError;
                 // 投递结果的transformer, 结果通过oriSuccess/Error投递
                 let dispatchResultTransformer = p => p
-                    .then(r => oriSuccess(r))
+                    .then(r => {
+                        // debugger
+                        oriSuccess(r)
+                    })
                     .catch(e => oriError(e))
                 // 转换原始请求的结果的transformer
                 let oriResultTransformer
@@ -1800,6 +1847,13 @@ function scriptSource(invokeBy) {
                                 confirmBtn: '刷新页面'
                             })
                             return Promise.reject(e)
+                        })
+                        .then(data => {
+                            if (data.dash) {
+                                // dash中的字段全部变成了类似C语言的下划线风格...
+                                util_obj_key_to_c_like(data.dash)
+                            }
+                            return data
                         })
                 }
             })
