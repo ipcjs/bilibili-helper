@@ -325,7 +325,7 @@ function scriptSource(invokeBy) {
 
         const util_init = function (func, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
             func = util_func_catched(func)
-            if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去 
+            if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去
                 callbacks[runAt].push({
                     priority,
                     index: callbacks[runAt].length, // 使用callback数组的长度, 作为添加元素的index属性
@@ -540,7 +540,7 @@ function scriptSource(invokeBy) {
     const Promise = window.Promise // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
     const util_promise_plus = (function () {
         /**
-        * 模仿RxJava中的compose操作符  
+        * 模仿RxJava中的compose操作符
         * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
         */
         Promise.prototype.compose = function (transformer) {
@@ -576,7 +576,7 @@ function scriptSource(invokeBy) {
             options.async === undefined && (options.async = true);
             options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
             options.success = function (data) {
-                resolve(data);
+                resolve(replace_upos(data));
             };
             options.error = function (err) {
                 reject(err);
@@ -610,7 +610,7 @@ function scriptSource(invokeBy) {
         }
     }
     /**
-     * 创建元素的快捷方法: 
+     * 创建元素的快捷方法:
      * 1. type, props, children
      * 2. type, props, innerHTML
      * 3. 'text', text
@@ -1199,6 +1199,7 @@ function scriptSource(invokeBy) {
                                         } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) && !util_url_param(container.__url, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl')
                                             // debugger
+                                            if(__GetCookie('balh_season_' + getSeasonId())){
                                             let url = container.__url
                                             if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
                                                 log(`/pgc/player/web/playurl add 'module=bangumi' param`)
@@ -1209,7 +1210,7 @@ function scriptSource(invokeBy) {
                                                     if (!data.code) {
                                                         data = {
                                                             code: 0,
-                                                            result: data,
+                                                            result: replace_upos(data),
                                                             message: "0",
                                                         }
                                                     }
@@ -1217,6 +1218,7 @@ function scriptSource(invokeBy) {
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
+                                        }
                                         }
                                     }
                                     return func.apply(target, arguments)
@@ -2436,7 +2438,7 @@ function scriptSource(invokeBy) {
                     #balh-settings-btn:hover {
                         background: #00a1d6;
                         border-color: #00a1d6;
-                    }            
+                    }
                     #balh-settings-btn .icon-saturn {
                         width: 30px;
                         height: ${size};
@@ -2444,7 +2446,7 @@ function scriptSource(invokeBy) {
                     }
                     #balh-settings-btn:hover .icon-saturn {
                         fill: white;
-                    }            
+                    }
             `)])
             }
             if (indexNav == null) {
@@ -2637,8 +2639,8 @@ function scriptSource(invokeBy) {
                             }, [
                                     _('option', { value: "" }, [_('text', '不替换')]),
                                     _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
-                                    _('option', { value: "oss" }, [_('text', 'oss（阿里）')]),
                                     _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
+                                    _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
                                     _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
                                     _('option', { value: "bos" }, [_('text', 'bos（百度）')])
                                 ]),
@@ -2694,6 +2696,47 @@ function scriptSource(invokeBy) {
             show: showSettings,
         }
     }())
+
+    function replace_upos(data){
+    let replace_url;
+        let uposArr=[
+            ["ks3","https://upos-hz-mirrorks3u.acgvideo.com"],
+            ["kodo","https://upos-hz-mirrorkodou.acgvideo.com"],
+            ["cos","https://upos-hz-mirrorcosu.acgvideo.com"],
+            ["wcs","https://upos-hz-mirrorwcsu.acgvideo.com"],
+            ["bos","https://upos-hz-mirrorbosu.acgvideo.com"]
+        ];
+        //https://upos-hz-mirrorakam.akamaized.net AKAMAI_CDN(海外)
+        //https://upos-hz-mirrorks3u.acgvideo.com 金山CDN
+        //https://upos-hz-mirrorwcsu.acgvideo.com 网宿CDN
+        //https://upos-hz-mirrorcosu.acgvideo.com 腾讯CDN
+        //https://upos-hz-mirrorbosu.acgvideo.com 百度CDN
+        //https://upos-hz-mirrorkodou.acgvideo.com 七牛CDN
+        let upos_server=__GetCookie("balh_upos_server");
+        if(upos_server!=undefined&&upos_server!=""){
+            for(let i in uposArr){
+                if(uposArr[i][0]==upos_server){
+                    replace_url=uposArr[i][1];
+                    break;
+                }
+            }
+            if(data.dash){
+                for(let i in data.dash.audio){
+                    data.dash.audio[i].baseUrl=data.dash.audio[i].baseUrl.replace(/http.*?upgcxcode/,replace_url+"/upgcxcode");
+                    data.dash.audio[i].base_url=data.dash.audio[i].base_url.replace(/http.*?upgcxcode/,replace_url+"/upgcxcode");
+                }
+                for(let i in data.dash.video){
+                    data.dash.video[i].baseUrl=data.dash.video[i].baseUrl.replace(/http.*?upgcxcode/,replace_url+"/upgcxcode");
+                    data.dash.video[i].base_url=data.dash.video[i].base_url.replace(/http.*?upgcxcode/,replace_url+"/upgcxcode");
+                }
+            }else if(data.durl){
+                for(let i in data.durl){
+                    data.durl[i].url= data.durl[i].url.replace(/http.*?upgcxcode/,replace_url+"/upgcxcode");
+                }
+            }
+        }
+        return data;
+    }
 
     const balh_jump_to_baipiao = (function () {
         function main() {
