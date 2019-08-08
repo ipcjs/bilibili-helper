@@ -1199,7 +1199,7 @@ function scriptSource(invokeBy) {
                                         } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) && !util_url_param(container.__url, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl')
                                             // debugger
-                                            if(__GetCookie('balh_season_' + getSeasonId())){
+                                            if(needRedirect()){
                                             let url = container.__url
                                             if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
                                                 log(`/pgc/player/web/playurl add 'module=bangumi' param`)
