@@ -1199,6 +1199,7 @@ function scriptSource(invokeBy) {
                                         } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) && !util_url_param(container.__url, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl')
                                             // debugger
+
                                             if(needRedirect()){
                                             let url = container.__url
                                             if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
@@ -2712,8 +2713,8 @@ function scriptSource(invokeBy) {
         //https://upos-hz-mirrorcosu.acgvideo.com 腾讯CDN
         //https://upos-hz-mirrorbosu.acgvideo.com 百度CDN
         //https://upos-hz-mirrorkodou.acgvideo.com 七牛CDN
-        let upos_server=__GetCookie("balh_upos_server");
-        if(upos_server!=undefined&&upos_server!=""){
+        let upos_server=balh_config.upos_server;
+        if(upos_server&&upos_server!=""){
             for(let i in uposArr){
                 if(uposArr[i][0]==upos_server){
                     replace_url=uposArr[i][1];
