@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.6
+// @version      7.7.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1081,6 +1081,24 @@ function scriptSource(invokeBy) {
                         // debugger
                     }
                     let container = {} // 用来替换responseText等变量
+                    const dispatchResultTransformer = p => {
+                        let event = {} // 伪装的event
+                        return p
+                            .then(r => {
+                                container.readyState = 4
+                                container.response = r
+                                container.__onreadystatechange(event) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
+                            })
+                            .catch(e => {
+                                // 失败时, 让原始的response可以交付
+                                container.__block_response = false
+                                if (container.__response != null) {
+                                    container.readyState = 4
+                                    container.response = container.__response
+                                    container.__onreadystatechange(event) // 同上
+                                }
+                            })
+                    }
                     return new Proxy(new target(...args), {
                         set: function (target, prop, value, receiver) {
                             if (prop === 'onreadystatechange') {
@@ -1131,8 +1149,33 @@ function scriptSource(invokeBy) {
                                             util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
-                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))) {
+                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
+                                            && !util_url_param(target.responseURL, 'balh_ajax')) {
                                             util_log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                            if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
+                                                let json = target.response
+                                                if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
+                                                    areaLimit(true)
+                                                    container.__block_response = true
+                                                    let url = container.__url
+                                                    if (isBangumiPage()) {
+                                                        url += `&module=bangumi`
+                                                    }
+                                                    bilibiliApis._playurl.asyncAjax(url)
+                                                        .then(data => {
+                                                            if (!data.code) {
+                                                                data = { code: 0, result: data, message: "0" }
+                                                            }
+                                                            log('/pgc/player/web/playurl', 'proxy', data)
+                                                            return data
+                                                        })
+                                                        // 报错时, dispatchResultTransformer需要使用container.__response, 故这里需要延时下, 让后面设置container.__response的代码先执行
+                                                        .catch(e => util_promise_timeout(0).then(r => Promise.reject(e)))
+                                                        .compose(dispatchResultTransformer)
+                                                } else {
+                                                    areaLimit(false)
+                                                }
+                                            }
                                             // 同上
                                         }
                                         if (container.__block_response) {
@@ -1161,23 +1204,7 @@ function scriptSource(invokeBy) {
                                     } else if (prop === 'send') {
                                         let dispatchResultTransformerCreator = () => {
                                             container.__block_response = true
-                                            let event = {} // 伪装的event
-                                            // debugger
-                                            return p => p
-                                                .then(r => {
-                                                    container.readyState = 4
-                                                    container.response = r
-                                                    container.__onreadystatechange(event) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
-                                                })
-                                                .catch(e => {
-                                                    // 失败时, 让原始的response可以交付
-                                                    container.__block_response = false
-                                                    if (container.__response != null) {
-                                                        container.readyState = 4
-                                                        container.response = container.__response
-                                                        container.__onreadystatechange(event) // 同上
-                                                    }
-                                                })
+                                            return dispatchResultTransformer
                                         }
                                         if (container.__url.match(util_regex_url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
                                             log('/x/player/playurl')
@@ -1196,12 +1223,14 @@ function scriptSource(invokeBy) {
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
-                                        } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) && !util_url_param(container.__url, 'balh_ajax')) {
+                                        } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
+                                            && !util_url_param(container.__url, 'balh_ajax')
+                                            && needRedirect()) {
                                             log('/pgc/player/web/playurl')
                                             // debugger
+                                            container.__redirect = true // 标记该请求被重定向
                                             let url = container.__url
-                                            if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
-                                                log(`/pgc/player/web/playurl add 'module=bangumi' param`)
+                                            if (isBangumiPage()) {
                                                 url += `&module=bangumi`
                                             }
                                             bilibiliApis._playurl.asyncAjax(url)
@@ -1213,7 +1242,7 @@ function scriptSource(invokeBy) {
                                                             message: "0",
                                                         }
                                                     }
-                                                    log('/pgc/player/web/playurl', 'proxy', data)
+                                                    log('/pgc/player/web/playurl', 'proxy(redirect)', data)
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
@@ -1288,7 +1317,7 @@ function scriptSource(invokeBy) {
                             param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
                             param.data = undefined
                         }
-                        if (isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))) {
+                        if (isBangumiPage()) {
                             log(`playurl add 'module=bangumi' param`)
                             param.url += `&module=bangumi`
                         }
@@ -1489,6 +1518,10 @@ function scriptSource(invokeBy) {
             // 5是电视剧
             // 2是电影
             return season_type != null // 有season_type, 就是bangumi?
+        }
+
+        function isBangumiPage() {
+            return isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))
         }
 
         function getSeasonId() {
