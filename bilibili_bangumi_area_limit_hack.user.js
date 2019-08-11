@@ -1169,8 +1169,6 @@ function scriptSource(invokeBy) {
                                                             log('/pgc/player/web/playurl', 'proxy', data)
                                                             return data
                                                         })
-                                                        // 报错时, dispatchResultTransformer需要使用container.__response, 故这里需要延时下, 让后面设置container.__response的代码先执行
-                                                        .catch(e => util_promise_timeout(0).then(r => Promise.reject(e)))
                                                         .compose(dispatchResultTransformer)
                                                 } else {
                                                     areaLimit(false)
