@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.7
+// @version      7.7.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -158,20 +158,19 @@ function scriptSource(invokeBy) {
         return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
     }
     const util_obj_key_to_c_like = (obj) => {
+        // log(typeof obj, Array.isArray(obj), obj)
         if (Array.isArray(obj)) {
             for (const item of obj) {
                 util_obj_key_to_c_like(item)
             }
-        } else {
+        } else if (typeof obj === 'object') {
             for (const key of Object.keys(obj)) {
                 const value = obj[key]
-                if (typeof value === 'object') {
-                    util_obj_key_to_c_like(value)
-                }
+                util_obj_key_to_c_like(value)
                 obj[util_str_to_c_like(key)] = value
             }
         }
-        return obj
+        return obj // 该方法会修改传入的obj的内容, 返回obj只是为了调用方便...
     }
     const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')
     const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
