@@ -159,7 +159,7 @@ const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 const INSTALL_URL = 'https://greasyfork.org/zh-CN/scripts/39144'
 const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
 const SCORE_REGEX_ZERO = /^([\u200c\u200d]{3}).*$/
-localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = FALSE)
+localStorage.beuj_add_suffix === undefined && (localStorage.beuj_add_suffix = FALSE)
 localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
 localStorage.beuj_show_form_in_ep === undefined && (localStorage.beuj_show_form_in_ep = TRUE)
 localStorage.beuj_show_form_in_other === undefined && (localStorage.beuj_show_form_in_other = FALSE)
@@ -290,7 +290,7 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
     let scoreText = score_to_commit_str(score)
     text += scoreText
     comment && (text += comment)
-    if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
+    if (localStorage.beuj_add_suffix && !(beuj_only_one_suffix && hasSuffix)) {
         (text += `\n[align=right][url=${INSTALL_URL}]--来自${script.name}[/url][/align]`)
     }
 
@@ -488,7 +488,7 @@ function main() {
                 $voteForm.elements.comment_template.type = value ? 'text' : 'hidden'
             }
         })
-        $voteForm.elements.beuj_need_suffix.checked = localStorage.beuj_need_suffix
+        $voteForm.elements.beuj_add_suffix.checked = localStorage.beuj_add_suffix
         if ($voteForm.elements.beuj_flag_to_watched) {
             $voteForm.elements.beuj_flag_to_watched.checked = localStorage.beuj_flag_to_watched
         }
@@ -515,7 +515,7 @@ function createVoteHtml(title) {
     <input type="submit" name="voteButton" value="投票" class="inputButton" id="voteButton">
     <label class="form-option" title="没错, 短评模板时可以修改的"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
     ${util_page.ep() ? '<label class="form-option" title="同时将当前ep标记为看过"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
-    <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
+    <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_add_suffix" > 推荐脚本 </input></label>
 </form>
 </div>
     `
