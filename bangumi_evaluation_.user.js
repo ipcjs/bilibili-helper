@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      2.0.0
+// @version      2.0.1
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 不需要服务器, 评分数据使用三个零宽字符表示, 存在你发出的评论中~~;
 // @author       ipcjs
@@ -158,7 +158,7 @@ const HOME_URL_PATH = '/group/topic/345237'
 const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 const INSTALL_URL = 'https://greasyfork.org/zh-CN/scripts/39144'
 const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
-const SCORE_REGEX_ZERO = /^([\u200c\u200d]{3}).*$/
+const SCORE_REGEX_ZERO = /^([\u200c\u200d]{3})[^\u200c\u200d].*$/
 localStorage.beuj_add_suffix === undefined && (localStorage.beuj_add_suffix = FALSE)
 localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
 localStorage.beuj_show_form_in_ep === undefined && (localStorage.beuj_show_form_in_ep = TRUE)
