@@ -2,9 +2,9 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.3.0
+// @version      2.0.0
 // @description  Bangumi Evaluation Script
-// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 觉得脚本影响版面, 请手动启用"单集评分脚本遮蔽"组件(https://bgm.tv/dev/app/132);
+// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 不需要服务器, 评分数据使用零宽字符表示, 存在你发出的评论中~~;
 // @author       ipcjs
 // @include      *://bgm.tv/ep/*
 // @include      *://bgm.tv/character/*
@@ -158,8 +158,7 @@ const HOME_URL_PATH = '/group/topic/345237'
 const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 const INSTALL_URL = 'https://greasyfork.org/zh-CN/scripts/39144'
 const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
-localStorage.beuj_need_mask === undefined && (localStorage.beuj_need_mask = FALSE)
-localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = TRUE)
+localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = FALSE)
 localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
 localStorage.beuj_show_form_in_ep === undefined && (localStorage.beuj_show_form_in_ep = TRUE)
 localStorage.beuj_show_form_in_other === undefined && (localStorage.beuj_show_form_in_other = FALSE)
@@ -213,6 +212,14 @@ const safe_prop = (obj, prop, defaultValue) => obj ? obj[prop] : defaultValue
 const score_to_index = (score) => 5 - (score + 3)
 const index_to_score = (index) => 5 - index - 3
 const score_to_str = (score) => `${score >= 0 ? '+' : ''}${score}`
+const score_to_commit_str = (score) => {
+    // 用零宽字符的个数表示评分
+    let str = ''
+    for (let i = 0; i < score + 3; i++) {
+        str += '\u200b'
+    }
+    return str
+}
 
 function readVoteData() {
     const voteData = {
@@ -249,8 +256,20 @@ function readVoteData() {
         getUserIdInReply: ($reply) => array_last($reply.querySelector(':scope > a.avatar').href.split('/')),
         getMessageInReply: ($reply) => $reply.querySelector('.message'),
         getScoreInMessage: function ($message) {
-            if (this._group = $message.innerText.match(SCORE_REGEX)) {
+            const text = $message.innerText
+            // console.log(text)
+            if (this._group = text.match(SCORE_REGEX)) {
                 let score = Math.min(Math.max(-2, +this._group[1]), 2)
+                return score
+            } else if (text.startsWith('\u200b')) {
+                let score = -3
+                for (let c of text) {
+                    if (c === '\u200b') {
+                        score++
+                    } else {
+                        break
+                    }
+                }
                 return score
             }
             return undefined
@@ -270,8 +289,8 @@ const vote_to_bgm = (score, comment, hasSuffix) => new Promise((resolve, reject)
     comment = (comment || '').trim()
 
     let text = ''
-    let scoreText = score_to_str(score)
-    text += localStorage.beuj_need_mask ? `[color=white]${scoreText} [/color]` : `${scoreText} `
+    let scoreText = score_to_commit_str(score)
+    text += scoreText
     comment && (text += comment)
     if (localStorage.beuj_need_suffix && !(beuj_only_one_suffix && hasSuffix)) {
         (text += `\n[align=right][url=${INSTALL_URL}]--来自${script.name}[/url][/align]`)
@@ -471,7 +490,6 @@ function main() {
                 $voteForm.elements.comment_template.type = value ? 'text' : 'hidden'
             }
         })
-        $voteForm.elements.beuj_need_mask.checked = localStorage.beuj_need_mask
         $voteForm.elements.beuj_need_suffix.checked = localStorage.beuj_need_suffix
         if ($voteForm.elements.beuj_flag_to_watched) {
             $voteForm.elements.beuj_flag_to_watched.checked = localStorage.beuj_flag_to_watched
@@ -500,7 +518,6 @@ function createVoteHtml(title) {
     <label class="form-option" title="没错, 短评模板时可以修改的"><input type="checkbox" name="modify_comment_template" > 修改短评模板 </input></label>
     ${util_page.ep() ? '<label class="form-option" title="同时将当前ep标记为看过"><input type="checkbox" name="beuj_flag_to_watched" > 标记为看过 </input></label>' : ''}
     <label class="form-option" title="会在评分的结尾追加'来自xxx脚本'的小尾巴, 为了防止刷屏, 只有当前页没有出现过小尾巴时才会追加." ><input type="checkbox" name="beuj_need_suffix" > 推荐脚本 </input></label>
-    <label class="form-option" title="评分的数字显示成白色"><input type="checkbox" name="beuj_need_mask" > 隐藏评分 </input></label>
 </form>
 </div>
     `
