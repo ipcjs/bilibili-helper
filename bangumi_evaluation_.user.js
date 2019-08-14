@@ -2,7 +2,7 @@
 // @name         Bangumi Evaluation
 // @name:zh-CN   Bangumi评分脚本・改
 // @namespace    https://github.com/ipcjs/
-// @version      1.2.0
+// @version      1.3.0
 // @description  Bangumi Evaluation Script
 // @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 觉得脚本影响版面, 请手动启用"单集评分脚本遮蔽"组件(https://bgm.tv/dev/app/132);
 // @author       ipcjs
@@ -121,20 +121,25 @@ addStyle(`
         font-weight: 700;
         padding: 3px;
     }
+    
 
     .vote_container {
         background-color: #e1e7f5
     }
 
     .forum_boardrow1 {
-        background-color: #fff;
+        border-width: 0 1px 1px 1px;
         border-color: #ebebeb;
         border-style: solid;
-        border-width: 0;
         padding: 6px 4px;
         vertical-align: top
     }
-
+    html[data-theme='dark'] .forum_boardrow1 {
+        border-color: rgba(255,255,255,0.1);
+    }
+    html[data-theme='dark'] .forum_category {
+        background-color: #37393b;
+    }
     .form-option {
         float: right;
         color: #AAA;
@@ -485,7 +490,7 @@ function createVoteHtml(title) {
 <div class="forum_category">${title} 投票
     <a id="action-show-form" class="beuj-float-right">${getShowFormActionText()}</a>
 </div>
-<div id="form-container" class="forum_boardrow1 ${isShowForm() ? '' : 'beuj-hidden'}" style="border-width: 0 1px 1px 1px;">
+<div id="form-container" class="forum_boardrow1 ${isShowForm() ? '' : 'beuj-hidden'}">
 <form id="vote-form">
     ${rows}
     <textarea name="comment" id="vote-comment" class="reply" rows="1" placeholder="简短评价(Ctrl+Enter 快速提交)"></textarea>
@@ -524,7 +529,7 @@ function createVoteResultHtml(voters, myScore, myReplyId) {
             </tr>`
     }
     return `
-<div class="forum_category">投票结果</div><div class="forum_boardrow1" style="border-width: 0 1px 1px 1px;">
+<div class="forum_category">投票结果</div><div class="forum_boardrow1">
     <table border="0" width="100%" cellpadding="" cellspacing="5">
         ${html}
     </table>
