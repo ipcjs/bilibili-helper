@@ -4,7 +4,7 @@
 // @namespace    https://github.com/ipcjs/
 // @version      2.0.0
 // @description  Bangumi Evaluation Script
-// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 不需要服务器, 评分数据使用零宽字符表示, 存在你发出的评论中~~;
+// @description:zh-CN 改造自 http://bangumi.tv/group/topic/345087; 不需要服务器, 评分数据使用三个零宽字符表示, 存在你发出的评论中~~;
 // @author       ipcjs
 // @include      *://bgm.tv/ep/*
 // @include      *://bgm.tv/character/*
@@ -158,6 +158,7 @@ const HOME_URL_PATH = '/group/topic/345237'
 const HOME_URL = 'https://bgm.tv' + HOME_URL_PATH
 const INSTALL_URL = 'https://greasyfork.org/zh-CN/scripts/39144'
 const SCORE_REGEX = /^\s*([+-]\d+)(\W[^]*)?$/ // 以数字开头的评论
+const SCORE_REGEX_ZERO = /^([\u200c\u200d]{3}).*$/
 localStorage.beuj_need_suffix === undefined && (localStorage.beuj_need_suffix = FALSE)
 localStorage.beuj_flag_to_watched === undefined && (localStorage.beuj_flag_to_watched = TRUE)
 localStorage.beuj_show_form_in_ep === undefined && (localStorage.beuj_show_form_in_ep = TRUE)
@@ -213,10 +214,11 @@ const score_to_index = (score) => 5 - (score + 3)
 const index_to_score = (index) => 5 - index - 3
 const score_to_str = (score) => `${score >= 0 ? '+' : ''}${score}`
 const score_to_commit_str = (score) => {
-    // 用零宽字符的个数表示评分
+    // 用零宽字符转换成二进制, 表示评分
+    const binaryStr = `000${(score + 3).toString(2)}`.substr(-3)
     let str = ''
-    for (let i = 0; i < score + 3; i++) {
-        str += '\u200b'
+    for (let c of binaryStr) {
+        str += c === '0' ? '\u200c' : '\u200d'
     }
     return str
 }
@@ -261,16 +263,12 @@ function readVoteData() {
             if (this._group = text.match(SCORE_REGEX)) {
                 let score = Math.min(Math.max(-2, +this._group[1]), 2)
                 return score
-            } else if (text.startsWith('\u200b')) {
-                let score = -3
-                for (let c of text) {
-                    if (c === '\u200b') {
-                        score++
-                    } else {
-                        break
-                    }
+            } else if (this._group = text.match(SCORE_REGEX_ZERO)) {
+                let binaryStr = ''
+                for (let c of this._group[1]) {
+                    binaryStr += c === '\u200c' ? '0' : '1'
                 }
-                return score
+                return Number.parseInt(binaryStr, 2) - 3
             }
             return undefined
         },
