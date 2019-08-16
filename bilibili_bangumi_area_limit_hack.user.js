@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.7.9
+// @version      7.8.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -221,9 +221,11 @@ function scriptSource(invokeBy) {
         }
     }
     const util_log = util_log_impl('log')
+    const util_info = util_log_impl('info')
     const util_debug = util_log_impl('debug')
+    const util_warn = util_log_impl('warn')
     const util_error = util_log_impl('error')
-    log = util_log
+    log = util_debug
     log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
     const util_func_noop = function () { }
@@ -873,7 +875,7 @@ function scriptSource(invokeBy) {
     }())
     const util_ui_player_msg = function (message) {
         const msg = util_stringify(message)
-        log('player msg:', msg)
+        util_info('player msg:', msg)
         const $panel = document.querySelector('.bilibili-player-video-panel-text')
         if ($panel) {
             let stage = $panel.children.length + 1000 // 加1000和B站自己发送消息的stage区别开来
@@ -1036,7 +1038,7 @@ function scriptSource(invokeBy) {
             return
         }
         function replacePlayInfo() {
-            util_log("window.__playinfo__", window.__playinfo__)
+            log("window.__playinfo__", window.__playinfo__)
             window.__playinfo__origin = window.__playinfo__
             let playinfo = undefined
             // 将__playinfo__置空, 让播放器去重新加载它...
@@ -1054,6 +1056,36 @@ function scriptSource(invokeBy) {
                 },
             })
         }
+        function replaceUserState() {
+            window.__PGC_USERSTATE__ORIGIN = window.__PGC_USERSTATE__
+            let userState = undefined
+            Object.defineProperty(window, '__PGC_USERSTATE__', {
+                configurable: true,
+                enumerable: true,
+                get: () => {
+                    return userState
+                },
+                set: (value) => {
+                    util_debug('window.__PGC_USERSTATE__', value)
+                    if (value) {
+                        // 区域限制
+                        // todo      : 调用areaLimit(limit), 保存区域限制状态
+                        // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+                        value.area_limit = 0
+                        // 会员状态
+                        if (balh_config.blocked_vip && value.vip_info) {
+                            value.vip_info.status = 1
+                            value.vip_info.type = 2
+                        }
+                    }
+                    userState = value
+                }
+            })
+            if (window.__PGC_USERSTATE__ORIGIN) {
+                window.__PGC_USERSTATE__ = window.__PGC_USERSTATE__ORIGIN
+            }
+        }
+        replaceUserState()
         // 新的av页面, __playinfo__直接放在head中, 这里可以直接读取到
         if (window.__playinfo__) {
             replacePlayInfo()
@@ -1135,22 +1167,40 @@ function scriptSource(invokeBy) {
                                                 }
                                             }
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/web-interface/nav'))) {
+                                            const isFromReport = util_url_param(target.responseURL, 'from') === 'report'
                                             let json = JSON.parse(target.responseText)
                                             log('/x/web-interface/nav', (json.data && json.data.isLogin)
-                                                ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus }
+                                                ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus, isFromReport: isFromReport }
                                                 : target.responseText)
-                                            if (json.code === 0 && json.data && balh_config.blocked_vip) {
+                                            if (json.code === 0 && json.data && balh_config.blocked_vip
+                                                && !isFromReport // report时, 还是不伪装了...
+                                            ) {
                                                 json.data.vipType = 2; // 类型, 年度大会员
                                                 json.data.vipStatus = 1; // 状态, 启用
                                                 container.responseText = JSON.stringify(json)
                                             }
+                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player.so'))) {
+                                            // 这个接口的返回数据貌似并不会影响界面...
+                                            if (balh_config.blocked_vip) {
+                                                log('/x/player.so')
+                                                const xml = new DOMParser().parseFromString(`<root>${target.responseText.replace(/\&/g, "&amp;")}</root>`, 'text/xml')
+                                                const vipXml = xml.querySelector('vip')
+                                                if (vipXml) {
+                                                    const vip = JSON.parse(vipXml.innerHTML)
+                                                    vip.vipType = 2 // 同上
+                                                    vip.vipStatus = 1
+                                                    vipXml.innerHTML = JSON.stringify(vip)
+                                                    container.responseText = xml.documentElement.innerHTML
+                                                    container.response = container.responseText
+                                                }
+                                            }
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player/playurl'))) {
-                                            util_log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                            log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
                                             && !util_url_param(target.responseURL, 'balh_ajax')) {
-                                            util_log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
+                                            log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
                                                 let json = target.response
                                                 if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
@@ -1216,7 +1266,7 @@ function scriptSource(invokeBy) {
                                                             ttl: 1
                                                         }
                                                     }
-                                                    util_log('/x/player/playurl', 'proxy', data)
+                                                    log('/x/player/playurl', 'proxy', data)
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
@@ -1345,7 +1395,7 @@ function scriptSource(invokeBy) {
                     dispatchResultTransformer = p => p
                         .then(r => {
                             if (!r.code && !r.from && !r.result && !r.accept_description) {
-                                util_log('playurl的result缺少必要的字段:', r)
+                                util_warn('playurl的result缺少必要的字段:', r)
                                 r.from = 'local'
                                 r.result = 'suee'
                                 r.accept_description = ['未知 3P']
@@ -2766,7 +2816,7 @@ function scriptSource(invokeBy) {
     }())
 
     function main() {
-        util_log(
+        util_info(
             'mode:', balh_config.mode,
             'blocked_vip:', balh_config.blocked_vip,
             'server:', balh_config.server,
