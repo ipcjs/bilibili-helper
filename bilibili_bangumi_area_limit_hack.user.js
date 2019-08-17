@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.0
+// @version      8.0.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -19,6 +19,8 @@
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @include      *://link.acg.tv/forum.php*
+// @include      *://manga.bilibili.com/detail/mc*
+// @include      *://manga.bilibili.com/mc*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
@@ -226,7 +228,7 @@ function scriptSource(invokeBy) {
     const util_warn = util_log_impl('warn')
     const util_error = util_log_impl('error')
     log = util_debug
-    log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
+    util_info(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
     const util_func_noop = function () { }
     const util_func_catched = function (func, onError) {
@@ -912,7 +914,8 @@ function scriptSource(invokeBy) {
         anime_ss: () => location.href.includes('www.bilibili.com/bangumi/play/ss'),
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
-        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi')
+        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+        manga: () => location.href.includes('manga.bilibili.com'),
     }
 
     const balh_config = (function () {
@@ -1193,6 +1196,13 @@ function scriptSource(invokeBy) {
                                                     container.responseText = xml.documentElement.innerHTML
                                                     container.response = container.responseText
                                                 }
+                                            }
+                                        } else if (target.responseURL.match(util_regex_url('manga.bilibili.com/twirp/comic.v2.Comic/ComicDetail'))) {
+                                            const json = JSON.parse(target.responseText)
+                                            log('/ComicDetail', json)
+                                            if (json.data) {
+                                                json.data.is_limit = 0
+                                                container.responseText = JSON.stringify(json)
                                             }
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player/playurl'))) {
                                             log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
