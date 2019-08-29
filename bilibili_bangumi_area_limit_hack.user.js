@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.0
+// @version      7.8.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1052,6 +1052,12 @@ function scriptSource(invokeBy) {
                 set: (value) => {
                     // debugger
                     log('__playinfo__', 'set')
+                    if (!window.__playinfo__origin) {
+                        // 原始的playinfo为空, 说明这是对playinfo的初次赋值, 这个值可能是有区域限制的, 不能要
+                        log('__playinfo__', 'origin', value)
+                        window.__playinfo__origin = value
+                        return
+                    }
                     playinfo = value
                 },
             })
@@ -1086,17 +1092,7 @@ function scriptSource(invokeBy) {
             }
         }
         replaceUserState()
-        // 新的av页面, __playinfo__直接放在head中, 这里可以直接读取到
-        if (window.__playinfo__) {
-            replacePlayInfo()
-        } else {
-            // 新的bangumi页面, __playinfo__放在body中, 这里不能直接读取, 需要等dom加载完成才能读取到
-            util_init(() => {
-                if (window.__playinfo__) {
-                    replacePlayInfo()
-                }
-            }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED)
-        }
+        replacePlayInfo()
     })()
     const balh_feature_area_limit = (function () {
         if (balh_is_close) return
