@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.2
+// @version      7.8.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1062,35 +1062,55 @@ function scriptSource(invokeBy) {
                 },
             })
         }
-        function replaceUserState() {
-            window.__PGC_USERSTATE__ORIGIN = window.__PGC_USERSTATE__
-            let userState = undefined
-            Object.defineProperty(window, '__PGC_USERSTATE__', {
+        function modifyGlobalValue(name, modifyFn) {
+            const name_origin = `${name}_origin`
+            window[name_origin] = window[name]
+            let value = undefined
+            Object.defineProperty(window, name, {
                 configurable: true,
                 enumerable: true,
                 get: () => {
-                    return userState
+                    return value
                 },
-                set: (value) => {
-                    util_debug('window.__PGC_USERSTATE__', value)
-                    if (value) {
-                        // 区域限制
-                        // todo      : 调用areaLimit(limit), 保存区域限制状态
-                        // 2019-08-17: 之前的接口还有用, 这里先不保存~~
-                        value.area_limit = 0
-                        // 会员状态
-                        if (balh_config.blocked_vip && value.vip_info) {
-                            value.vip_info.status = 1
-                            value.vip_info.type = 2
-                        }
-                    }
-                    userState = value
+                set: (val) => {
+                    value = modifyFn(val)
                 }
             })
-            if (window.__PGC_USERSTATE__ORIGIN) {
-                window.__PGC_USERSTATE__ = window.__PGC_USERSTATE__ORIGIN
+            if (window[name_origin]) {
+                window[name] = window[name_origin]
             }
         }
+        function replaceUserState() {
+            modifyGlobalValue('__PGC_USERSTATE__', (value) => {
+                if (value) {
+                    // 区域限制
+                    // todo      : 调用areaLimit(limit), 保存区域限制状态
+                    // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+                    value.area_limit = 0
+                    // 会员状态
+                    if (balh_config.blocked_vip && value.vip_info) {
+                        value.vip_info.status = 1
+                        value.vip_info.type = 2
+                    }
+                }
+                return value
+            })
+        }
+        function replaceInitialState() {
+            modifyGlobalValue('__INITIAL_STATE__', (value) => {
+                if (value && balh_config.blocked_vip) {
+                    for (let ep of [value.epInfo, ...value.epList]) {
+                        // 13貌似表示会员视频, 2为普通视频
+                        if (ep.epStatus === 13) {
+                            log('epStatus 13 => 2', ep)
+                            ep.epStatus = 2
+                        }
+                    }
+                }
+                return value
+            })
+        }
+        replaceInitialState()
         replaceUserState()
         replacePlayInfo()
     })()
