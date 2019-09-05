@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         S3 Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      0.0.3
-// @description  S3 Mobile Style
+// @version      1.0.0
+// @description  S3简单适配手机版网页
 // @author       ipcjs
 // @match        *://ac.stage3rd.com/*
 // @grant        GM_addStyle
