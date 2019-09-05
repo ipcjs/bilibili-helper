@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         S3 Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      0.0.1
+// @version      0.0.2
 // @description  S3 Mobile Style
 // @author       ipcjs
 // @match        *://ac.stage3rd.com/*
@@ -28,11 +28,12 @@ function setupStyle() {
 
     const c_detail_item_head = (num) => `.TopicBg${num}>tbody>tr>td:first-child`
     const c_detail_item_time = (num) => `.TopicBg${num}>tbody>tr>td:nth-child(2) tr:first-child>td:first-child`
-    const c_list_item_title = (num) => `.rowbg${num}>td:nth-child(2)`
-    const c_list_item_title_width = '250px'
+    const c_detail_item_content = (num) => `.TopicBg${num}>tbody>tr>td:nth-child(2) tr:nth-child(2)>td`
+    const c_list_item = (col, num) => `.rowbg${num}>td:nth-child(${col})`
+    const c_list_item_title_width = '300px'
 
     GM.addStyle(`
-        ///// 全局 /////
+        /* 全局 */
         #main {
             width: 100%!important;
         }
@@ -41,23 +42,34 @@ function setupStyle() {
             white-space: nowrap;
         }
 
-        ///// 列表页面 /////
-        ${c_list_item_title(1)},
-        ${c_list_item_title(2)}
+        /* 列表页面 */
+        ${c_list_item(1,1)},
+        ${c_list_item(1,2)},
+        ${c_list_item(4,1)},
+        ${c_list_item(4,2)},
+        ._forumTopicList_asp .PageSubject,
+        ${c_list_item(2, 1)} .button_page,
+        ${c_list_item(2, 2)} .button_page,
+        ${c_list_item(2, 1)} img,
+        ${c_list_item(2, 2)} img
         {
-            // background:green;
-            // width:${c_list_item_title_width};
+            display:none;
         }
-        ${c_list_item_title(1)} a:first-child,
-        ${c_list_item_title(2)} a:first-child
+        ${c_list_item(2,1)},
+        ${c_list_item(2,2)}
+        {
+            font-size: 0px;
+        }
+        ${c_list_item(2,1)} a,
+        ${c_list_item(2,2)} a
         {
             width:${c_list_item_title_width};
-            text-overflow: ellipsis;
-            overflow:hidden;
             display: inline-block;
+            font-size: 16px;
+            white-space: normal;
         }
 
-        ///// 详细页面 /////
+        /* 详细页面 */
         ${c_detail_item_head(1)},
         ${c_detail_item_head(2)},
         ${c_detail_item_head(1)}>div,
@@ -76,6 +88,16 @@ function setupStyle() {
         .TopicBg2 div[align=right]
         {
             display: none;
+        }
+        ._forumTopicRead_asp .PageSubject td,
+        ._forumTopicRead_asp .PageSubject+tr td,
+        ._forumTopicRead_asp .PageSubject+tr+tr td,
+        ._forumTopicRead_asp .PageSubject+tr+tr+tr td,
+        ._forumTopicRead_asp .PageSubject+tr+tr+tr+tr td,
+        ${c_detail_item_content(1)},
+        ${c_detail_item_content(2)}
+        {
+            white-space: normal;
         }
     `)
 }
