@@ -42,17 +42,17 @@
 
 #### “替换upos视频服务器”选项
 
-在设置中有个“替换upos视频服务器”选项，可以试下。
+在设置中有个“替换upos视频服务器”选项，针对大陆的视频有效果，可以试下。
 
 #### 改hosts
 
 港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，能够缓解卡顿的问题。
 
-所有可用的ip：  
-<http://ping.chinaz.com/upos-hz-mirrorakam.akamaized.net>
-
 参考链接:  
-[播放番剧，5秒一卡，速度非常慢 · Issue #401 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/issues/401)
+
+1. [如何提高B站海外CDN连接速度](https://www.bilibili.com/read/cv3118508)
+2. [miyouzi/akamTester: 批量测试B站海外CDN](https://github.com/miyouzi/akamTester)
+3. [播放番剧，5秒一卡，速度非常慢 · Issue #401](https://github.com/ipcjs/bilibili-helper/issues/401)
 
 ### 看不了1080P画质？
 
