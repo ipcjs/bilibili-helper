@@ -1,75 +1,138 @@
-/* 全局 */
-#main {
-    width: 100%!important;
-}
-
-td {
-    // white-space: nowrap;
-}
-
 %hide {
     display: none;
 }
+%nowrap {
+    white-space: nowrap;
+}
+%singleline {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
 
 %item-head {
-    width: 50px!important;
+    width: 50px !important;
     font-size: 0px;
 }
 %item-head--img {
     width: 40px;
 }
 
-@mixin list-item($col) {
-    .PageSubject>td:nth-child(#{$col}),
-    .rowbg1>td:nth-child(#{$col}),
-    .rowbg2>td:nth-child(#{$col}) {
+@mixin list-item($col, $include-head: true) {
+    #{if($include-head, ".PageSubject,", "")} .rowbg1,
+    .rowbg2 {
+        > td:nth-child(#{$col}) {
+            @content;
+        }
+    }
+}
+
+@mixin item-head() {
+    .TopicBg1 > tbody > tr > td:first-child,
+    .TopicBg2 > tbody > tr > td:first-child {
         @content;
     }
 }
-@mixin item-head() {
-    .TopicBg1>tbody>tr>td:first-child,
-    .TopicBg2>tbody>tr>td:first-child {
-        @content;
+
+/* 全局 */
+#main {
+    width: 100% !important;
+}
+
+td {
+    // @extend %singleline;
+}
+table {
+    table-layout: fixed;
+}
+
+/* 首尾页签 */
+#top_PageLink,
+#top_PageLink + td,
+.showpage td {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    > .button_nopage {
+        flex: auto;
+    }
+
+    select {
+        @extend %hide;
     }
 }
 
 /* 列表页面 */
 ._forumTopicList_asp {
-    @include list-item(1){
+    @include list-item(1) {
         @extend %hide;
     }
-    @include list-item(4){
+    @include list-item(4) {
         @extend %hide;
     }
-    @include list-item(2) {
-        .button_page, img {
+    @include list-item(2, $include-head: false) {
+        font-size: 0px;
+        a {
+            font-size: 16px;
+        }
+        .button_page,
+        img {
             @extend %hide;
         }
+    }
+    @include list-item(3) {
+        width: 50px;
+        @extend %singleline;
+    }
+    @include list-item(5) {
+        width: 70px;
+        @extend %singleline;
     }
 }
 
 /* 详细页面 */
 ._forumTopicRead_asp {
-    form[name=w] {
-        @each $i in (1,2,4,5) {
-            tr:nth-child(#{$i})>td:nth-child(1) {
+    form[name="w"] {
+        @each $i in (1, 2, 4, 5) {
+            tr:nth-child(#{$i}) > td:nth-child(1) {
                 @extend %hide;
             }
         }
     }
-    .TopicBg1 div[align=right],
-    .TopicBg2 div[align=right] {
+    .TopicBg1 div[align="right"],
+    .TopicBg2 div[align="right"] {
         @extend %hide;
     }
-    form[name=topicReplys], #main> {
-        @include item-head(){
+    form[name="topicReplys"],
+    #main > {
+        @include item-head() {
             @extend %item-head;
-            >div{
+            > div {
                 @extend %item-head;
             }
             img {
-                @extend %item-head--img
+                @extend %item-head--img;
             }
+        }
+    }
+    #main > .TopicBg1 + table.TopicBg1 {
+        visibility: hidden;
+    }
+    .TopicBg1,
+    .TopicBg2 {
+        > tbody > tr > td:nth-child(2) tr:nth-child(1) {
+            > td:nth-child(1) {
+                @extend %nowrap;
+            }
+            > td:nth-child(2) > a {
+                @extend %hide;
+            }
+        }
+    }
+    .topic_msg {
+        img[loaded] {
+            width: 100%;
         }
     }
 }
