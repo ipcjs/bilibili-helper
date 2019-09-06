@@ -4,3 +4,4 @@
 *.min.js
 node_modules/
 build/
+temp/

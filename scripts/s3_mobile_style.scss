@@ -1,0 +1,75 @@
+/* 全局 */
+#main {
+    width: 100%!important;
+}
+
+td {
+    // white-space: nowrap;
+}
+
+%hide {
+    display: none;
+}
+
+%item-head {
+    width: 50px!important;
+    font-size: 0px;
+}
+%item-head--img {
+    width: 40px;
+}
+
+@mixin list-item($col) {
+    .PageSubject>td:nth-child(#{$col}),
+    .rowbg1>td:nth-child(#{$col}),
+    .rowbg2>td:nth-child(#{$col}) {
+        @content;
+    }
+}
+@mixin item-head() {
+    .TopicBg1>tbody>tr>td:first-child,
+    .TopicBg2>tbody>tr>td:first-child {
+        @content;
+    }
+}
+
+/* 列表页面 */
+._forumTopicList_asp {
+    @include list-item(1){
+        @extend %hide;
+    }
+    @include list-item(4){
+        @extend %hide;
+    }
+    @include list-item(2) {
+        .button_page, img {
+            @extend %hide;
+        }
+    }
+}
+
+/* 详细页面 */
+._forumTopicRead_asp {
+    form[name=w] {
+        @each $i in (1,2,4,5) {
+            tr:nth-child(#{$i})>td:nth-child(1) {
+                @extend %hide;
+            }
+        }
+    }
+    .TopicBg1 div[align=right],
+    .TopicBg2 div[align=right] {
+        @extend %hide;
+    }
+    form[name=topicReplys], #main> {
+        @include item-head(){
+            @extend %item-head;
+            >div{
+                @extend %item-head;
+            }
+            img {
+                @extend %item-head--img
+            }
+        }
+    }
+}
