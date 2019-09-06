@@ -2,8 +2,8 @@
  * 开发命令:
  * npx rollup --config rollup.config.js -w
  */
-const path = require('path')
-const scssToString = require('rollup-plugin-scss-string')
+import path from 'path'
+import scssToString from 'rollup-plugin-scss-string'
 
 const userscriptHead = `
 // ==UserScript==
@@ -20,8 +20,8 @@ const userscriptHead = `
 // ==/UserScript==
 `.trim()
 
-module.exports = {
-    input: './index.js',
+export default {
+    input: path.resolve(__dirname, 'index.js'),
     output: {
         banner: userscriptHead,
         file: path.resolve(__dirname, '../s3__mobile_style.user.js'),
