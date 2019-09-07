@@ -10,12 +10,8 @@
     overflow: hidden;
 }
 
-%item-head {
-    width: 50px !important;
-    font-size: 0px;
-}
-%item-head--img {
-    width: 40px;
+@mixin pass {
+    // 空内容
 }
 
 @mixin list-item($col, $include-head: true) {
@@ -37,7 +33,7 @@
 /* 全局 */
 #main {
     width: 100% !important;
-    
+
     > table:nth-child(2) tr:nth-child(2) td:nth-child(1) {
         @extend %singleline;
     }
@@ -81,7 +77,7 @@
             @extend %hide;
         }
         img {
-            display: none!important;
+            display: none !important;
         }
     }
     @include list-item(3) {
@@ -96,6 +92,7 @@
 
 /* 详细页面 */
 ._forumTopicRead_asp {
+    // 底端回复的第一列, 隐藏
     form[name="w"] {
         @each $i in (1, 2, 4, 5) {
             tr:nth-child(#{$i}) > td:nth-child(1) {
@@ -103,36 +100,60 @@
             }
         }
     }
-    .TopicBg1 div[align="right"],
-    .TopicBg2 div[align="right"] {
-        @extend %hide;
-    }
+    // Item
     form[name="topicReplys"],
     #main > {
-        @include item-head() {
-            @extend %item-head;
-            > div {
-                @extend %item-head;
+        .TopicBg1,
+        .TopicBg2 {
+            > tbody > tr {
+                // 用户名和头像
+                > td:nth-child(1) {
+                    font-size: 0px;
+                    width: 50px !important;
+                    > div {
+                        width: 50px !important;
+                        // 虽然字体为0px, 但br依然会占用高度
+                        br {
+                            @extend %hide;
+                        }
+                    }
+                    img {
+                        width: 40px;
+                    }
+                }
+                > td:nth-child(2) {
+                    // 内容前后使用一个br来创造间隔...
+                    br {
+                        // @extend %hide;
+                        @include pass;
+                    }
+                    // 签名和内容写死了高度, 去掉它
+                    > div,
+                    > table {
+                        height: auto !important;
+                    }
+                    // 时间和楼层
+                    tr:nth-child(1) {
+                        > td:nth-child(1) {
+                            @extend %nowrap;
+                        }
+                        > td:nth-child(2) > a {
+                            @extend %hide;
+                        }
+                    }
+                }
             }
-            img {
-                @extend %item-head--img;
-            }
-        }
-    }
-    #main > .TopicBg1 + table.TopicBg1 {
-        visibility: hidden;
-    }
-    .TopicBg1,
-    .TopicBg2 {
-        > tbody > tr > td:nth-child(2) tr:nth-child(1) {
-            > td:nth-child(1) {
-                @extend %nowrap;
-            }
-            > td:nth-child(2) > a {
+            // 右下角的"来源", 隐藏
+            div[align="right"] {
                 @extend %hide;
             }
         }
     }
+    // 一楼下面的分享
+    #main > .TopicBg1 + table.TopicBg1 {
+        visibility: hidden;
+    }
+    // 内容的图片
     .topic_msg {
         img[loaded] {
             width: 100%;
