@@ -9,8 +9,8 @@ const userscriptHead = `
 // ==UserScript==
 // @name         S3 Mobile Style
 // @namespace    https://github.com/ipcjs
-// @version      1.0.1
-// @description  S3简单适配手机版网页
+// @version      1.1.0
+// @description  S3适配手机版网页
 // @author       ipcjs
 // @match        *://ac.stage3rd.com/*
 // @grant        GM_addStyle
