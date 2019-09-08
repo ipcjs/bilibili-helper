@@ -82,14 +82,13 @@
                 @extend %hide;
             }
             .button_page:last-child {
-                float: right;
-                display: block;
+                display: inline;
                 font-weight: normal;
                 font-size: 14px;
+                background: transparent;
+                color: gray;
                 box-shadow: none;
-                &::after {
-                    content: ">";
-                }
+                padding: 0px 8px;
             }
             img {
                 display: none !important;
