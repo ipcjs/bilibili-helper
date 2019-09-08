@@ -10,6 +10,11 @@
         text-overflow: ellipsis;
         overflow: hidden;
     }
+    %absolute-vertical-center {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
 
     @mixin pass {
         // 空内容
@@ -75,6 +80,16 @@
             }
             .button_page {
                 @extend %hide;
+            }
+            .button_page:last-child {
+                float: right;
+                display: block;
+                font-weight: normal;
+                font-size: 14px;
+                box-shadow: none;
+                &::after {
+                    content: ">";
+                }
             }
             img {
                 display: none !important;
