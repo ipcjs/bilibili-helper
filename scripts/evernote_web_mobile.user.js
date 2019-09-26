@@ -8,6 +8,23 @@
 // @grant       GM_addStyle
 // @grant       unsafeWindow
 // ==/UserScript==
+function nextVersion() {
+    function main2() {
+        async function recreateEditor(editor, modifySettings) {
+            const settings = Object.assign({}, editor.settings, modifySettings)
+            tinymce.EditorManager.execCommand('mceRemoveEditor', true, editor.id)
+            const editors = tinymce.init(settings)
+            tinymce.EditorManager.execCommand('mceAddEditor', settings.id)
+        }
+        $iframe = document.querySelector('#entinymce_493_ifr')
+        $body = $iframe.contentDocument.body
+        $body.spellcheck = false
+        // $body.contentEditable = false
+        
+        console.log(tinymce, tinymce.activeEditor, $body)
+    }
+    setTimeout(main2, 5000)
+}
 
 // type, props, children
 // type, props, innerHTML
