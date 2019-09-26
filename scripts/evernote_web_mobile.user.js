@@ -5,26 +5,40 @@
 // @description Evernote Web Mobile
 // @author      ipcjs
 // @include     https://www.evernote.com/Home.action*
+// @include     https://www.evernote.com/OutboundRedirect.action?dest=*
 // @grant       GM_addStyle
 // @grant       unsafeWindow
+// @run-at       document-start
 // ==/UserScript==
 function nextVersion() {
-    function main2() {
-        async function recreateEditor(editor, modifySettings) {
-            const settings = Object.assign({}, editor.settings, modifySettings)
-            tinymce.EditorManager.execCommand('mceRemoveEditor', true, editor.id)
-            const editors = tinymce.init(settings)
-            tinymce.EditorManager.execCommand('mceAddEditor', settings.id)
+    function redirectUrl() {
+        if (location.pathname === '/OutboundRedirect.action') {
+            location = new URLSearchParams(location.search).get('dest')
         }
+    }
+    
+    async function recreateEditor(editor, modifySettings) {
+        const settings = Object.assign({}, editor.settings, modifySettings)
+        tinymce.EditorManager.execCommand('mceRemoveEditor', true, editor.id)
+        const editors = tinymce.init(settings)
+        tinymce.EditorManager.execCommand('mceAddEditor', settings.id)
+    }
+
+    function modifyEditor() {
         $iframe = document.querySelector('#entinymce_493_ifr')
-        $body = $iframe.contentDocument.body
-        $body.spellcheck = false
-        // $body.contentEditable = false
-        
+        if ($iframe) {
+            $body = $iframe.contentDocument.body
+            $body.spellcheck = false
+            // $body.contentEditable = false
+        }
         console.log(tinymce, tinymce.activeEditor, $body)
     }
-    setTimeout(main2, 5000)
+
+    redirectUrl()
+    setTimeout(modifyEditor, 5000)
 }
+// nextVersion()
+// return
 
 // type, props, children
 // type, props, innerHTML
