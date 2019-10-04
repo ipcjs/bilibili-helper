@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.4
+// @version      7.8.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -1909,7 +1909,8 @@ function scriptSource(invokeBy) {
                         .catch(e => {
                             if (e instanceof AjaxException) {
                                 util_ui_player_msg(e)
-                                if (e.code === 1) { // code: 1 表示非番剧视频, 不能使用番剧视频参数
+                                if (e.code === 1 // code: 1 表示非番剧视频, 不能使用番剧视频参数
+                                    || (util_url_param(originUrl, 'module') === 'bangumi' && e.code === -404)) { // 某些番剧视频又不需要加module=bangumi, 详见: https://github.com/ipcjs/bilibili-helper/issues/494
                                     util_ui_player_msg('尝试使用非番剧视频接口拉取视频地址...')
                                     return playurl_by_proxy._asyncAjax(originUrl, false)
                                         .catch(e2 => Promise.reject(e)) // 忽略e2, 返回原始错误e
@@ -2731,14 +2732,14 @@ function scriptSource(invokeBy) {
                                     }
                                 }
                             }, [
-                                    _('option', { value: "" }, [_('text', '不替换')]),
-                                    _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
-                                    _('option', { value: "oss" }, [_('text', 'oss（已失效）')]),
-                                    _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
-                                    _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
-                                    _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
-                                    _('option', { value: "bos" }, [_('text', 'bos（百度）')])
-                                ]),
+                                _('option', { value: "" }, [_('text', '不替换')]),
+                                _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
+                                _('option', { value: "oss" }, [_('text', 'oss（已失效）')]),
+                                _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
+                                _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
+                                _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
+                                _('option', { value: "bos" }, [_('text', 'bos（百度）')])
+                            ]),
                             _('span', { 'id': 'upos-server-message' })
                         ]), _('br'),
                     ]),
