@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.6
+// @version      7.8.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/issues
@@ -2842,6 +2842,7 @@ function scriptSource(invokeBy) {
             'upos_server:', balh_config.upos_server,
             'flv_prefer_ws:', balh_config.flv_prefer_ws,
             'remove_pre_ad:', balh_config.remove_pre_ad,
+            'enable_in_av:', balh_config.enable_in_av,
             'readyState:', document.readyState,
             'isLogin:', balh_feature_sign.isLogin(),
             'isLoginBiliBili:', balh_feature_sign.isLoginBiliBili()
