@@ -1,16 +1,19 @@
 // ==UserScript==
-// @name        S1屏蔽头像
+// @name        S1屏蔽GIF头像
 // @namespace   https://github.com/ipcjs
-// @version     0.0.1
-// @description 有些头像实在是太晃眼了（
+// @version     0.1.0
+// @description 有些GIF头像实在是太晃眼了（
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/*
 // @grant       GM_addStyle
 // @grant       unsafeWindow
-// @require  https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // ==/UserScript==
 
-/** uid列表, 点到用户信息里面可以看到 */
+/**
+ * 要让GIF图静止, 貌似挺麻烦, 当前使用简单的白名单方案😅
+ * 该名单收录头像为GIF图的用户uid, 欢迎PR👌
+ * */
 const uids = [
     '511411',
 ]

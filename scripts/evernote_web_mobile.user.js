@@ -37,8 +37,8 @@ function nextVersion() {
     redirectUrl()
     setTimeout(modifyEditor, 5000)
 }
-// nextVersion()
-// return
+nextVersion()
+return
 
 // type, props, children
 // type, props, innerHTML
