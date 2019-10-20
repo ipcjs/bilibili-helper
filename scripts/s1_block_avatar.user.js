@@ -4,8 +4,7 @@
 // @version     0.0.1
 // @description 有些头像实在是太晃眼了（
 // @author       ipcjs
-// @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
-// @include     *://bbs.saraba1st.com/2b/forum.php*
+// @include     *://bbs.saraba1st.com/2b/*
 // @grant       GM_addStyle
 // @grant       unsafeWindow
 // @require  https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
@@ -17,7 +16,7 @@ const uids = [
 ]
 uids.forEach(uid=>{
     /** @type {HTMLElement[]} */
-    const $avatarList = document.querySelectorAll(`.avatar > a[href="space-uid-${uid}.html"] > img`)
+    const $avatarList = document.querySelectorAll(`a[href="space-uid-${uid}.html"] > img`)
     Array.from($avatarList).forEach($avatar=>{
         $avatar.src = 'https://avatar.saraba1st.com/images/noavatar_middle.gif'
     })
