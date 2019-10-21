@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.7
+// @version      7.8.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
-// @supportURL   https://github.com/ipcjs/bilibili-helper/issues
+// @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
 // @compatible   chrome
 // @compatible   firefox
 // @license      MIT
@@ -87,7 +87,7 @@ function scriptSource(invokeBy) {
     const r_text = {
         ok: { en: 'OK', zh_cn: '确定', },
         close: { en: 'Close', zh_cn: '关闭' },
-        welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p><br><p>PS: A站白屏/播放卡顿/被区域限制等问题，可以通过安装 <a href="https://github.com/esterTion/AcFun-HTML5-Player">AcFun HTML5 Player</a> 解决</p>',
+        welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p>',
         version_remind: ``,
     }
     const _t = (key) => {
@@ -105,6 +105,7 @@ function scriptSource(invokeBy) {
         url: {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues',
             issue_new: 'https://github.com/ipcjs/bilibili-helper/issues/new',
+            readme: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6',
         },
         script: {
             is_dev: GM_info.script.name.includes('.dev'),
@@ -1836,7 +1837,7 @@ function scriptSource(invokeBy) {
                     // data有可能为null
                     if (data && data.code === -403) {
                         util_ui_pop({
-                            content: `<b>code-403</b>: <i style="font-size:4px;white-space:nowrap;">${JSON.stringify(data)}</i>\n\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n4. 上报问题: <a href="https://github.com/ipcjs/bilibili-helper/issues/399">code-403问题汇总</a>\n\n点击确定, 打开设置页面`,
+                            content: `<b>code-403</b>: <i style="font-size:4px;white-space:nowrap;">${JSON.stringify(data)}</i>\n\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n\n点击确定, 打开设置页面`,
                             onConfirm: balh_ui_setting.show,
                         })
                     } else if (data === null || data.code) {
@@ -2662,10 +2663,15 @@ function scriptSource(invokeBy) {
                     continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',
                     continueToIssue ? 0 : 3e3,
                     continueToIssue ? 'button' : undefined,
-                    continueToIssue ? () => window.open(r.url.issue) : undefined)
+                    continueToIssue ? openIssuePage : undefined)
             } else {
                 util_ui_msg.show($(this), '复制失败, 请从下面的文本框手动复制', 5e3)
             }
+        }
+
+        function openIssuePage() {
+            // window.open(r.url.issue)
+            window.open(r.url.readme)
         }
 
         let printSystemInfoOk = false
@@ -2773,7 +2779,7 @@ function scriptSource(invokeBy) {
                         _('text', '　'),
                         _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
                         _('text', '　'),
-                        _('a', { id: 'balh-issue-link', href: r.url.issue, target: '_blank', style: { display: 'none' } }, [_('text', '问题反馈')]),
+                        _('a', { id: 'balh-issue-link', href: 'javascript:;', event: { click: openIssuePage }, style: { display: 'none' } }, [_('text', '问题反馈')]),
                         _('text', '作者: ipcjs esterTion FlandreDaisuki'),
                         _('text', ' 接口：'),
                         _('a', { href: 'https://www.biliplus.com/' }, [_('text', ' BiliPlus ')]),

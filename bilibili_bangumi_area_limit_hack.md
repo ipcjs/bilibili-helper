@@ -76,7 +76,7 @@
 
 1. 注册并登录一个小号
 2. 在脚本设置界面勾选“被永封的大会员？”选项
-3. 在[代理服务器](https://biliplus.ipcjs.win/login)中使用账号密码登录被永封的大会员账号
+3. 在[代理服务器](https://www.biliplus.com/login)中使用账号密码登录被永封的大会员账号
 4. 就可以用小号看1080P了<img src="https://bbs.saraba1st.com/2b/static/image/smiley/nq/001.gif" alt="(扭曲"/>
 
 ## 开源
