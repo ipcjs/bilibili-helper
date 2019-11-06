@@ -315,10 +315,14 @@ function scriptSource(invokeBy) {
         }
 
         if (window.document.readyState !== 'loading') {
-            util_ui_alert(`${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若依然出现该提示, 请尝试'硬性重新加载'(快捷键一般为ctrl+f5)\n3. 若还是出现该提示, 请尝试关闭再重新打开该页面\n4. 若反复出现该提示, 请尝试换个浏览器\n`, () => {
+            const msg = `${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若依然出现该提示, 请尝试'硬性重新加载'(快捷键一般为ctrl+f5)\n3. 若还是出现该提示, 请尝试关闭再重新打开该页面\n4. 若反复出现该提示, 请尝试换个浏览器\n`
+            /*
+            util_ui_alert(msg, () => {
                 location.reload(true)
             })
+            */
             // throw new Error('unit_init must run at loading, current is ' + document.readyState)
+            util_warn(msg)
         }
 
         window.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
