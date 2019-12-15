@@ -2745,12 +2745,13 @@ function scriptSource(invokeBy) {
                                 }
                             }, [
                                 _('option', { value: "" }, [_('text', '不替换')]),
-                                _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
-                                _('option', { value: "oss" }, [_('text', 'oss（已失效）')]),
-                                _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
-                                _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
-                                _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
-                                _('option', { value: "bos" }, [_('text', 'bos（百度）')])
+                                _('option', { value: "ks3u" }, [_('text', 'ks3（金山）')]),
+                                _('option', { value: "kodou" }, [_('text', 'kodo（七牛）')]),
+                                _('option', { value: "cosu" }, [_('text', 'cos（腾讯）')]),
+                                _('option', { value: "bosu" }, [_('text', 'bos（百度）')]),
+                                _('option', { value: "wcsu" }, [_('text', 'wcs（网宿）')]),
+                                _('option', { value: "xycdn" }, [_('text', 'xycdn（迅雷）')]),
+                                _('option', { value: "hw" }, [_('text', 'hw（251）')]),
                             ]),
                             _('span', { 'id': 'upos-server-message' })
                         ]), _('br'),
