@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.8.10
+// @version      7.9.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -1587,7 +1587,7 @@ function scriptSource(invokeBy) {
             // 3: 纪录片
             // 4: 国创
             // 5: 电视剧
-            return !(season_type === 2 || season_type === 3 || season_type === 5)
+            return season_type != null // 存在season_type就是bangumi?
         }
 
         function isBangumiPage() {
@@ -1835,6 +1835,8 @@ function scriptSource(invokeBy) {
                     } else if (bangumi === false) { // 移除可能存在的module参数
                         params = params.replace(/&?module=(\w+)/, '')
                     }
+                    // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
+                    params = params.replace(/(&?module)=bangumi/, '$1=pgc')
                     return `${balh_config.server}/BPplayurl.php?${params}`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
