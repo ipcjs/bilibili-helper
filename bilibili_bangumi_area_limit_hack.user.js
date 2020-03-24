@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.9.0
+// @version      7.9.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -10,6 +10,7 @@
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
 // @include      *://www.bilibili.com/video/av*
+// @include      *://www.bilibili.com/video/BV*
 // @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://www.bilibili.com/bangumi/play/ss*
 // @include      *://m.bilibili.com/bangumi/play/ep*
@@ -905,7 +906,7 @@ function scriptSource(invokeBy) {
         player: () => location.href.includes('www.bilibili.com/blackboard/html5player'),
         // 在av页面中的iframe标签形式的player
         player_in_av: util_func_catched(() => util_page.player() && window.top.location.href.includes('www.bilibili.com/video/av'), (e) => log(e), false),
-        av: () => location.href.includes('www.bilibili.com/video/av'),
+        av: () => location.href.includes('www.bilibili.com/video/av') || location.href.includes('www.bilibili.com/video/BV'),
         av_new: function () { return this.av() && (window.__playinfo__ || window.__playinfo__origin) },
         bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),
         bangumi_md: () => location.href.includes('www.bilibili.com/bangumi/media/md'),
@@ -1634,7 +1635,7 @@ function scriptSource(invokeBy) {
             // 若没取到, 则去取av页面的av号
             if (!seasonId) {
                 try {
-                    seasonId = (window.top.location.pathname.match(/\/video\/(av\d+)/) || ['', ''])[1]
+                    seasonId = (window.top.location.pathname.match(/\/video\/((av|BV)\w+)/) || ['', ''])[1]
                 } catch (e) {
                     log(e);
                 }
