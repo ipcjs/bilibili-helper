@@ -159,6 +159,24 @@ function scriptSource(invokeBy) {
     const util_str_to_c_like = (str) => {
         return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
     }
+    // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
+    const util_str_bv2aid = function (bv) {
+        var table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
+        var tr = {};
+        for (var i = 0; i < 58; ++i) {
+            tr[table[i]] = i;
+        }
+
+        var s = [11, 10, 3, 8, 4, 6];
+        var xor = 177451812;
+        var add = 8728348608;
+
+        var r = 0;
+        for (var i = 0; i < 6; ++i) {
+            r += tr[bv[s[i]]] * (58 ** i);
+        }
+        return String((r - add) ^ xor);
+    }
     const util_obj_key_to_c_like = (obj) => {
         // log(typeof obj, Array.isArray(obj), obj)
         if (Array.isArray(obj)) {
@@ -2258,12 +2276,18 @@ function scriptSource(invokeBy) {
             let msg = document.createElement('a');
             $errorPanel.insertBefore(msg, $errorPanel.firstChild);
             msg.innerText = '获取番剧页Url中...';
-            let aid = location.pathname.replace(/.*av(\d+).*/, '$1'),
+            let aid = (location.pathname.match('/\/video\/av(\d+)') || ['', ''])[1],
                 page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1],
                 cid,
                 season_id,
                 episode_id;
             let avData;
+            if (!aid) {
+                let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1]
+                if (bv) {
+                    aid = util_str_bv2aid(bv)
+                }
+            }
             balh_api_plus_view(aid)
                 .then(function (data) {
                     avData = data;
