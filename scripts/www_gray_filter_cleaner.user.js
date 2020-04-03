@@ -2,7 +2,7 @@
 // @name         Gray Filter Cleaner
 // @namespace    https://github.com/ipcjs/
 // @version      0.0.1
-// @description  Gray Filter Cleaner
+// @description  Clear gray filter on all web pages
 // @author       ipcjs
 // @include      *://*/*
 // @exclude      https://*.google.com/*
