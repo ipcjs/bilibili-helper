@@ -1865,6 +1865,8 @@ function scriptSource(invokeBy) {
                             content: `<b>code-403</b>: <i style="font-size:4px;white-space:nowrap;">${JSON.stringify(data)}</i>\n\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n\n点击确定, 打开设置页面`,
                             onConfirm: balh_ui_setting.show,
                         })
+                    } else if(data && data.code == -502){
+-                        throw {statusText: 'error'};
                     } else if (data === null || data.code) {
                         util_error(data);
                         if (alertWhenError) {
