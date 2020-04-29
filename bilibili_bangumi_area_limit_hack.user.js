@@ -1907,8 +1907,9 @@ function scriptSource(invokeBy) {
             const playurl_by_kghost = new BilibiliApi({
                 _asyncAjax: function (originUrl) {
                     const proxyHostMap = [
-                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
                         [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/'],
+                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
+                        [/仅限东南亚/, '//bilibili-sg-api.kghost.info/'],
                         [/.*/, '//bilibili-cn-api.kghost.info/'],
                     ];
                     let proxyHost
