@@ -2166,16 +2166,16 @@ function scriptSource(invokeBy) {
         // 2. 主站+服务器都退出登录后, 再重新登录主站
         function checkLoginState() {
             // 给一些状态，设置初始值
-            localStorage.balh_must_remind_login_v1 === undefined && (localStorage.balh_must_remind_login_v1 = r.const.TRUE)
+            localStorage.balh_must_remind_login_v3 === undefined && (localStorage.balh_must_remind_login_v3 = r.const.TRUE)
 
             if (isLoginBiliBili()) {
                 if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
                     || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
-                    || localStorage.balh_must_remind_login_v1) { // 设置了"必须提醒"flag
+                    || localStorage.balh_must_remind_login_v3) { // 设置了"必须提醒"flag
                     clearLoginFlag()
                     updateLoginFlag(() => {
-                        if (!isLogin()) {
-                            localStorage.balh_must_remind_login_v1 = r.const.FALSE;
+                        if (!isLogin() || !localStorage.access_key) {
+                            localStorage.balh_must_remind_login_v3 = r.const.FALSE;
                             util_ui_pop({
                                 content: [
                                     _('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
@@ -2919,7 +2919,7 @@ function scriptSource(invokeBy) {
                 delete localStorage.oauthTime
                 delete localStorage.balh_h5_not_first
                 delete localStorage.balh_old_isLoginBiliBili
-                delete localStorage.balh_must_remind_login_v1
+                delete localStorage.balh_must_remind_login_v3
                 delete localStorage.balh_must_updateLoginFlag
             }
         }
