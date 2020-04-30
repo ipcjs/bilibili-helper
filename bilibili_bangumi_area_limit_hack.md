@@ -38,6 +38,10 @@
 4. 对于一些已知错误，脚本会弹窗提示，请认真阅读提示信息，按提示进行操作。
 5. 如果依然无效，可能确实是这个脚本的问题了，请到GitHub反馈给我。
 
+### 授权无效？
+
+Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibili-helper/issues/588#issuecomment-603830842
+
 ### 播放卡顿？
 
 #### “替换upos视频服务器”选项
@@ -87,5 +91,11 @@
     - 通知相关：[Yet Another Weibo Filter - 看真正想看的微博](https://tiansh.github.io/yawf/zh-cn.html)
     - 自动跳转相关：[我就是要跳轉(B站番劇投稿頁跳轉去番劇頁)](https://greasyfork.org/zh-CN/scripts/29151)
     - B站视频接口：[soimort/you-get](https://github.com/soimort/you-get)、[哔哩哔哩UWP](https://www.microsoft.com/zh-cn/store/p/%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9uwp/9n7c87236453)
+
+## 友链
+
+0. [BiliPlus - ( ゜- ゜)つロ 乾杯~](https://www.biliplus.com/)
+1. [yujincheng08/BiliRoaming: 哔哩漫游，解除B站客户端番剧区域限制的Xposed模块，并且提供其他小功能](https://github.com/yujincheng08/BiliRoaming)
+2. [kghost/bilibili-area-limit: Bilibili 港澳台, 解除区域限制](https://github.com/kghost/bilibili-area-limit)
 
 ## [高级设置/更新日志/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md)

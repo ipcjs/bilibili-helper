@@ -2826,10 +2826,11 @@ function scriptSource(invokeBy) {
                         _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
                         _('text', '　'),
                         _('a', { id: 'balh-issue-link', href: 'javascript:;', event: { click: openIssuePage }, style: { display: 'none' } }, [_('text', '问题反馈')]),
-                        _('text', '作者: ipcjs esterTion FlandreDaisuki'),
+                        _('a', { href: 'https://github.com/ipcjs/bilibili-helper/graphs/contributors' }, [_('text', '贡献者')]),
                         _('text', ' 接口：'),
-                        _('a', { href: 'https://www.biliplus.com/' }, [_('text', ' BiliPlus ')]),
-                        _('a', { href: 'https://github.com/kghost/bilibili-area-limit' }, [_('text', ' kghost ')]),
+                        _('a', { href: 'https://www.biliplus.com/' }, [_('text', 'BiliPlus ')]),
+                        _('a', { href: 'https://github.com/kghost/bilibili-area-limit' }, [_('text', 'kghost ')]),
+                        _('a', { href: 'https://github.com/yujincheng08/BiliRoaming' }, [_('text', 'BiliRoaming ')]),
                     ]),
                     _('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
                 ])
