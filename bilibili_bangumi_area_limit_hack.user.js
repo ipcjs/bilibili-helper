@@ -990,19 +990,23 @@ function scriptSource(invokeBy) {
         })
     }())
 
+    const access_key_param_if_exist = function () {
+        return localStorage.access_key ? `&access_key=${localStorage.access_key}` : ''
+    }
+
     const balh_api_plus_view = function (aid, update = true) {
-        return util_ajax(`${balh_config.server}/api/view?id=${aid}&update=${update}&access_key=${localStorage.getItem('access_key')}`);
+        return util_ajax(`${balh_config.server}/api/view?id=${aid}&update=${update}${access_key_param_if_exist()}`);
     }
     const balh_api_plus_season = function (season_id) {
-        return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}&access_key=${localStorage.getItem('access_key')}`);
+        return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}${access_key_param_if_exist()}`);
     }
     // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339&module=bangumi&qn=16&src=vupload&vid=vupload_30188339
     // qn = 16, 能看
     const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
-        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '&module=bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}&access_key=${localStorage.getItem('access_key')}`);
+        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '&module=bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}${access_key_param_if_exist()}`);
     }
     // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
-    const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}&access_key=${localStorage.getItem('access_key')}`)
+    const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}${access_key_param_if_exist()}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
     const balh_is_close = false
@@ -1709,7 +1713,7 @@ function scriptSource(invokeBy) {
             }
             var get_source_by_aid = new BilibiliApi({
                 transToProxyUrl: function (url) {
-                    return balh_config.server + '/api/view?id=' + window.aid + `&update=true&access_key=${localStorage.getItem('access_key')}`;
+                    return balh_config.server + '/api/view?id=' + window.aid + `&update=true${access_key_param_if_exist()}`;
                 },
                 processProxySuccess: function (data) {
                     if (data && data.list && data.list[0] && data.movie) {
@@ -1741,7 +1745,7 @@ function scriptSource(invokeBy) {
             });
             var get_source_by_season_id = new BilibiliApi({
                 transToProxyUrl: function (url) {
-                    return balh_config.server + '/api/bangumi?season=' + window.season_id + `&access_key=${localStorage.getItem('access_key')}`;
+                    return balh_config.server + '/api/bangumi?season=' + window.season_id + access_key_param_if_exist();
                 },
                 processProxySuccess: function (data) {
                     var found = null;
@@ -1793,7 +1797,9 @@ function scriptSource(invokeBy) {
                         qn: util_url_param(originUrl, 'qn'), // 增加这个参数, 返回的清晰度更多
                         player: 1,
                         ts: Math.floor(Date.now() / 1000),
-                        access_key: localStorage.getItem('access_key')
+                    }
+                    if (localStorage.access_key) {
+                        paramDict.access_key = localStorage.access_key
                     }
                     if (module) paramDict.module = module
                     if (useJson) paramDict.otype = 'json'
@@ -1857,7 +1863,7 @@ function scriptSource(invokeBy) {
                     }
                     // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                     params = params.replace(/(&?module)=bangumi/, '$1=pgc')
-                    return `${balh_config.server}/BPplayurl.php?${params}&access_key=${localStorage.getItem('access_key')}`;
+                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
@@ -1928,7 +1934,7 @@ function scriptSource(invokeBy) {
                     }
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
-                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}`) + `&access_key=${localStorage.getItem('access_key')}`;
+                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}`) + access_key_param_if_exist();
                 },
                 processProxySuccess: function (result) {
                     return result.result
@@ -2252,7 +2258,7 @@ function scriptSource(invokeBy) {
                     balh_auth_window.close();
                     let url = e.data.split(': ')[1];
                     const access_key = new URL(url).searchParams.get('access_key');
-                    localStorage.setItem('access_key', access_key);
+                    localStorage.access_key = access_key
                     util_ui_popframe(url.replace('http://link.acg.tv/forum.php', balh_config.server + '/login'));
                     break;
                 }
