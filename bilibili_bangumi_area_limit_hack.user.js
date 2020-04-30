@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.9.3
+// @version      7.9.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -990,8 +990,10 @@ function scriptSource(invokeBy) {
         })
     }())
 
-    const access_key_param_if_exist = function () {
-        return localStorage.access_key ? `&access_key=${localStorage.access_key}` : ''
+    const access_key_param_if_exist = function (isKghost) {
+        // access_key是由B站验证的, B站帐号和BP帐号不同时, access_key无效
+        // kghost的服务器使用的B站帐号, access_key有效
+        return (localStorage.access_key && (!balh_config.blocked_vip || isKghost)) ? `&access_key=${localStorage.access_key}` : ''
     }
 
     const balh_api_plus_view = function (aid, update = true) {
@@ -1934,7 +1936,7 @@ function scriptSource(invokeBy) {
                     }
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
-                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}`) + access_key_param_if_exist();
+                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}`) + access_key_param_if_exist(true);
                 },
                 processProxySuccess: function (result) {
                     return result.result
