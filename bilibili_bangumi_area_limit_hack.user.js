@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.9.4
+// @version      7.9.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -19,7 +19,7 @@
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
-// @include      *://link.acg.tv/forum.php*
+// @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
@@ -27,7 +27,7 @@
 'use strict';
 const log = console.log.bind(console, 'injector:')
 
-if (location.href.match(/^https?:\/\/link\.acg\.tv\/forum\.php/) != null) {
+if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/special_photo_bg\.png/) != null) {
     if (location.href.match('access_key') != null && window.opener != null) {
         window.stop();
         document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
@@ -2204,7 +2204,7 @@ function scriptSource(invokeBy) {
             balh_auth_window.document.title = 'BALH - 授权';
             balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
             window.balh_auth_window = balh_auth_window;
-            $.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=http%3A%2F%2Flink.acg.tv%2Fforum.php&sign=67ec798004373253d60114caaad89a8c', {
+            $.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
                 xhrFields: { withCredentials: true },
                 type: 'GET',
                 dataType: 'json',
@@ -2264,7 +2264,7 @@ function scriptSource(invokeBy) {
                     let url = e.data.split(': ')[1];
                     const access_key = new URL(url).searchParams.get('access_key');
                     localStorage.access_key = access_key
-                    util_ui_popframe(url.replace('http://link.acg.tv/forum.php', balh_config.server + '/login'));
+                    util_ui_popframe(url.replace('https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png', balh_config.server + '/login'));
                     break;
                 }
             }
