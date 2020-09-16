@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.9.5
+// @version      7.9.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -1982,6 +1982,7 @@ function scriptSource(invokeBy) {
                         .catch(e => {
                             if ((typeof e === 'object' && e.statusText == 'error')
                                 || (e instanceof AjaxException && e.code === -502)
+                                || (typeof e === 'object' && e.code === -10403)
                             ) {
                                 util_ui_player_msg('尝试使用kghost的服务器拉取视频地址...')
                                 return playurl_by_kghost._asyncAjax(originUrl)
