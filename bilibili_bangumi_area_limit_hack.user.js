@@ -944,9 +944,10 @@ function scriptSource(invokeBy) {
         return new Proxy({ /*保存config的对象*/ }, {
             get: function (target, prop) {
                 if (prop === 'server') {
-                    const server_inner = balh_config.server_inner
-                    const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
-                    return server
+                    // const server_inner = balh_config.server_inner
+                    // const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
+                    // return server
+                    return balh_config.server_inner
                 }
                 if (prop in target) {
                     return target[prop]
@@ -1943,10 +1944,25 @@ function scriptSource(invokeBy) {
                     return result.result
                 },
             })
+            const playurl_by_custom = new BilibiliApi({
+                _asyncAjax: function (originUrl) {
+                    return util_ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
+                        .then(r => this.processProxySuccess(r))
+                },
+                transToProxyUrl: function (originUrl, proxyHost) {
+                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                },
+                processProxySuccess: function (result) {
+                    if (result.code) {
+                        return Promise.reject(result)
+                    }
+                    return result.result
+                },
+            })
             const playurl = new BilibiliApi({
                 asyncAjax: function (originUrl) {
-                    util_ui_player_msg('从代理服务器拉取视频地址中...')
-                    return playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
+                    util_ui_player_msg(`从${r.const.server.CUSTOM?'自定义':'代理'}服务器拉取视频地址中...`)
+                    return (r.const.server.CUSTOM ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
                         .catch(e => {
                             if (e instanceof AjaxException) {
                                 util_ui_player_msg(e)
@@ -1962,7 +1978,7 @@ function scriptSource(invokeBy) {
                                 }
                             }
                             return Promise.reject(e)
-                        })
+                        })))
                         .catch(e => {
                             if ((typeof e === 'object' && e.statusText == 'error')
                                 || (e instanceof AjaxException && e.code === -502)
