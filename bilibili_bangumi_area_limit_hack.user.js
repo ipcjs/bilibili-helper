@@ -1982,6 +1982,7 @@ function scriptSource(invokeBy) {
                         .catch(e => {
                             if ((typeof e === 'object' && e.statusText == 'error')
                                 || (e instanceof AjaxException && e.code === -502)
+                                || (typeof e === 'object' && e.code === -10403)
                             ) {
                                 util_ui_player_msg('尝试使用kghost的服务器拉取视频地址...')
                                 return playurl_by_kghost._asyncAjax(originUrl)
