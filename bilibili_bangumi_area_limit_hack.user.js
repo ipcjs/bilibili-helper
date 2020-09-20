@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      7.9.6
+// @version      7.9.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
@@ -1961,8 +1961,8 @@ function scriptSource(invokeBy) {
             })
             const playurl = new BilibiliApi({
                 asyncAjax: function (originUrl) {
-                    util_ui_player_msg(`从${r.const.server.CUSTOM?'自定义':'代理'}服务器拉取视频地址中...`)
-                    return (r.const.server.CUSTOM ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
+                    util_ui_player_msg(`从${r.const.server.CUSTOM === balh_config.server_inner ?'自定义':'代理'}服务器拉取视频地址中...`)
+                    return (r.const.server.CUSTOM === balh_config.server_inner ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
                         .catch(e => {
                             if (e instanceof AjaxException) {
                                 util_ui_player_msg(e)
