@@ -1961,8 +1961,8 @@ function scriptSource(invokeBy) {
             })
             const playurl = new BilibiliApi({
                 asyncAjax: function (originUrl) {
-                    util_ui_player_msg(`从${r.const.server.CUSTOM?'自定义':'代理'}服务器拉取视频地址中...`)
-                    return (r.const.server.CUSTOM ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
+                    util_ui_player_msg(`从${r.const.server.CUSTOM === balh_config.server_inner ?'自定义':'代理'}服务器拉取视频地址中...`)
+                    return (r.const.server.CUSTOM === balh_config.server_inner ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
                         .catch(e => {
                             if (e instanceof AjaxException) {
                                 util_ui_player_msg(e)
