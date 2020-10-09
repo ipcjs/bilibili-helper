@@ -1138,6 +1138,9 @@ function scriptSource(invokeBy) {
                         }
                     }
                 }
+                if (value && value.mediaInfo && value.mediaInfo.rights) {
+                    value.mediaInfo.rights.appOnly=false
+                }
                 return value
             })
         }
@@ -1866,7 +1869,7 @@ function scriptSource(invokeBy) {
                     }
                     // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                     params = params.replace(/(&?module)=bangumi/, '$1=pgc')
-                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}`;
+                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}&platform=android&fnval=0`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
