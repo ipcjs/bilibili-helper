@@ -350,7 +350,7 @@ function scriptSource(invokeBy) {
 
         const util_init = function (func, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
             func = util_func_catched(func)
-            if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去 
+            if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去
                 callbacks[runAt].push({
                     priority,
                     index: callbacks[runAt].length, // 使用callback数组的长度, 作为添加元素的index属性
@@ -565,7 +565,7 @@ function scriptSource(invokeBy) {
     const Promise = window.Promise // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
     const util_promise_plus = (function () {
         /**
-        * 模仿RxJava中的compose操作符  
+        * 模仿RxJava中的compose操作符
         * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
         */
         Promise.prototype.compose = function (transformer) {
@@ -635,7 +635,7 @@ function scriptSource(invokeBy) {
         }
     }
     /**
-     * 创建元素的快捷方法: 
+     * 创建元素的快捷方法:
      * 1. type, props, children
      * 2. type, props, innerHTML
      * 3. 'text', text
@@ -1138,8 +1138,9 @@ function scriptSource(invokeBy) {
                         }
                     }
                 }
-                if (value && value.mediaInfo && value.mediaInfo.rights) {
-                    value.mediaInfo.rights.appOnly=false
+                if (value && value.mediaInfo && value.mediaInfo.rights && value.mediaInfo.rights.appOnly === true) {
+                    value.mediaInfo.rights.appOnly = false
+                    window.__app_only__ = true
                 }
                 return value
             })
@@ -1869,7 +1870,7 @@ function scriptSource(invokeBy) {
                     }
                     // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                     params = params.replace(/(&?module)=bangumi/, '$1=pgc')
-                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}&platform=android&fnval=0`;
+                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__app_only__?'&platform=android&fnval=0':''}`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
@@ -2604,7 +2605,7 @@ function scriptSource(invokeBy) {
                     #balh-settings-btn:hover {
                         background: #00a1d6;
                         border-color: #00a1d6;
-                    }            
+                    }
                     #balh-settings-btn .icon-saturn {
                         width: 30px;
                         height: ${size};
@@ -2612,7 +2613,7 @@ function scriptSource(invokeBy) {
                     }
                     #balh-settings-btn:hover .icon-saturn {
                         fill: white;
-                    }            
+                    }
             `)])
             }
             if (indexNav == null) {
