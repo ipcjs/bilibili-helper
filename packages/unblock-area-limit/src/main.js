@@ -1,51 +1,9 @@
+import { testTs } from './util/utils'
 
-const log = console.log.bind(console, 'injector:')
-
-if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/special_photo_bg\.png/) != null) {
-    if (location.href.match('access_key') != null && window.opener != null) {
-        window.stop();
-        document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-        window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
-    }
-    throw 'exit 0'
-}
-
-function injector() {
-    if (document.getElementById('balh-injector-source')) {
-        log(`脚本已经注入过, 不需要执行`)
-        return
-    }
-    // @require      https://static.hdslb.com/js/md5.js
-    GM_info.scriptMetaStr.replace(new RegExp('// @require\\s+https?:(//.*)'), (match, /*p1:*/url) => {
-        log('@require:', url)
-        let $script = document.createElement('script')
-        $script.className = 'balh-injector-require'
-        $script.setAttribute('type', 'text/javascript')
-        $script.setAttribute('src', url)
-        document.head.appendChild($script)
-        return match
-    })
-    let $script = document.createElement('script')
-    $script.id = 'balh-injector-source'
-    $script.appendChild(document.createTextNode(`
-        ;(function(GM_info){
-            ${scriptSource.toString()}
-            ${scriptSource.name}('${GM_info.scriptHandler}.${injector.name}')
-        })(${JSON.stringify(GM_info)})
-    `))
-    document.head.appendChild($script)
-    log('注入完成')
-}
-
-if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
-    log('XHR对象不可修改, 需要把脚本注入到页面中', GM_info.script.name, location.href, document.readyState)
-    injector()
-    throw 'exit 0'
-}
-
-/** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
-function scriptSource(invokeBy) {
+function scriptContent() {
     'use strict';
+    testTs()
+
     let log = console.log.bind(console, 'injector:')
     if (document.getElementById('balh-injector-source') && invokeBy === GM_info.scriptHandler) {
         // 当前, 在Firefox+GM4中, 当返回缓存的页面时, 脚本会重新执行, 并且此时XMLHttpRequest是可修改的(为什么会这样?) + 页面中存在注入的代码
@@ -2927,4 +2885,4 @@ function scriptSource(invokeBy) {
     main();
 }
 
-scriptSource(GM_info.scriptHandler);
+scriptContent();
