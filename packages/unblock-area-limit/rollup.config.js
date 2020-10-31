@@ -15,7 +15,7 @@ export default {
         }),
         typescript(),
         template({
-            filePath: path.resolve(__dirname, 'src/balh.user.js'),
+            filePath: path.resolve(__dirname, 'src/main.user.js'),
         }),
     ]
 }

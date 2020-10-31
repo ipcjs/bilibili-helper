@@ -32,7 +32,7 @@ if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/spe
         document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
         window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
     }
-    throw 'exit 0'
+    return
 }
 
 function injector() {
@@ -65,7 +65,7 @@ function injector() {
 if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
     log('XHR对象不可修改, 需要把脚本注入到页面中', GM_info.script.name, location.href, document.readyState)
     injector()
-    throw 'exit 0'
+    return
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
