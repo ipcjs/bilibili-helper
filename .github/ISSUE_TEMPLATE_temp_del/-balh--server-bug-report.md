@@ -5,7 +5,7 @@ about: 服务器问题
 ---
 
 <!-- 
-* 提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！（直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88）
+* 提交bug前，先看“帮助>脚本无效？”，绝大多数问题都是能直接解决的！！（直达链接：https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#%E8%84%9A%E6%9C%AC%E6%97%A0%E6%95%88）
 * 再看，已有的Issue（https://github.com/ipcjs/bilibili-helper/issues）。不要提交重复的问题
 * 请仔细填写问题相关的信息，信息不足的直接关闭。
 -->

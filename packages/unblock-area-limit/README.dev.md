@@ -1,4 +1,4 @@
-## [帮助/问题解答 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md)
+## [帮助/问题解答 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md)
 
 ## 高级设置
 
@@ -6,7 +6,7 @@
 
 从5.6.0版开始，脚本（终于）内置了设置界面，点击[番剧页面](https://bangumi.bilibili.com/anime/5551)的右下角的图标打开。
 
-或者直接手动设置：打开[这个番剧页面](https://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
+或者直接手动设置：打开[这个番剧页面](https://bangumi.bilibili.com/anime/5551)，进入[`控制台/Console`](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.dev.md#控制台)中，执行命令：`bangumi_area_limit_hack.setCookie(key, value);`，其中`key`和`value`分别使用下面的值：
 
 ### 代理模式
 
@@ -45,7 +45,7 @@ key为`'balh_server'`，可选的`value`为：
 1. 5.0.5：[what are those idiot programmers of bilibili doing??? by esterTion · Pull Request #4 · ipcjs/bilibili-helper](https://github.com/ipcjs/bilibili-helper/pull/4)
 1. 5.0.3：紧急更新，修正一个逸单位的换算错误！
 1. 5.0.2：检测到区域限制番剧时显示通知提示；
-1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md#代理模式)；
+1. **5.0.0**：可切换三种代理模式，任何一种模式都不会卡界面了，详见[代理模式](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.dev.md#代理模式)；
 2. 3.0.0：实现方式改为直接重定向请求；在第一次使用时会弹登录提示框；
 
 ## 名词解析

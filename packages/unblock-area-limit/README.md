@@ -98,4 +98,4 @@ Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibi
 1. [yujincheng08/BiliRoaming: 哔哩漫游，解除B站客户端番剧区域限制的Xposed模块，并且提供其他小功能](https://github.com/yujincheng08/BiliRoaming)
 2. [kghost/bilibili-area-limit: Bilibili 港澳台, 解除区域限制](https://github.com/kghost/bilibili-area-limit)
 
-## [高级设置/更新日志/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md)
+## [高级设置/更新日志/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.dev.md)

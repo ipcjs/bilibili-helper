@@ -1,30 +1,4 @@
-// ==UserScript==
-// @name         解除B站区域限制
-// @namespace    http://tampermonkey.net/
-// @version      7.9.8
-// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
-// @author       ipcjs
-// @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md
-// @compatible   chrome
-// @compatible   firefox
-// @license      MIT
-// @require      https://static.hdslb.com/js/md5.js
-// @include      *://www.bilibili.com/video/av*
-// @include      *://www.bilibili.com/video/BV*
-// @include      *://www.bilibili.com/bangumi/play/ep*
-// @include      *://www.bilibili.com/bangumi/play/ss*
-// @include      *://m.bilibili.com/bangumi/play/ep*
-// @include      *://m.bilibili.com/bangumi/play/ss*
-// @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/movie/*
-// @include      *://www.bilibili.com/bangumi/media/md*
-// @include      *://www.bilibili.com/blackboard/html5player.html*
-// @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
-// @run-at       document-start
-// @grant        none
-// ==/UserScript==
 
-'use strict';
 const log = console.log.bind(console, 'injector:')
 
 if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/special_photo_bg\.png/) != null) {
@@ -33,7 +7,7 @@ if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/spe
         document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
         window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
     }
-    return;
+    throw 'exit 0'
 }
 
 function injector() {
@@ -66,7 +40,7 @@ function injector() {
 if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
     log('XHR对象不可修改, 需要把脚本注入到页面中', GM_info.script.name, location.href, document.readyState)
     injector()
-    return
+    throw 'exit 0'
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
@@ -106,7 +80,7 @@ function scriptSource(invokeBy) {
         url: {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues',
             issue_new: 'https://github.com/ipcjs/bilibili-helper/issues/new',
-            readme: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6',
+            readme: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6',
         },
         script: {
             is_dev: GM_info.script.name.includes('.dev'),
@@ -1870,7 +1844,7 @@ function scriptSource(invokeBy) {
                     }
                     // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                     params = params.replace(/(&?module)=bangumi/, '$1=pgc')
-                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__app_only__?'&platform=android&fnval=0':''}`;
+                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__app_only__ ? '&platform=android&fnval=0' : ''}`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
@@ -1965,7 +1939,7 @@ function scriptSource(invokeBy) {
             })
             const playurl = new BilibiliApi({
                 asyncAjax: function (originUrl) {
-                    util_ui_player_msg(`从${r.const.server.CUSTOM === balh_config.server_inner ?'自定义':'代理'}服务器拉取视频地址中...`)
+                    util_ui_player_msg(`从${r.const.server.CUSTOM === balh_config.server_inner ? '自定义' : '代理'}服务器拉取视频地址中...`)
                     return (r.const.server.CUSTOM === balh_config.server_inner ? playurl_by_custom._asyncAjax(originUrl) : (playurl_by_proxy._asyncAjax(originUrl) // 优先从代理服务器获取
                         .catch(e => {
                             if (e instanceof AjaxException) {
@@ -2829,7 +2803,7 @@ function scriptSource(invokeBy) {
                     ]), _('br'),
                     _('text', '其他：'), _('br'),
                     _('div', { style: { display: 'flex' } }, [
-                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '(？)')])]),
+                        _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_blocked_vip' }), _('text', '被永封的大会员'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#大会员账号被b站永封了', target: '_blank' }, [_('text', '(？)')])]),
                         _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_enable_in_av' }), _('text', '在AV页面启用'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [_('text', '(？)')])]),
                         _('div', { style: { flex: 1, display: 'flex' } }, [
                             _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), _('text', '去前置广告')]),
@@ -2845,7 +2819,7 @@ function scriptSource(invokeBy) {
                     _('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
                         _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),
                         _('text', '　'),
-                        _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.md', target: '_blank' }, [_('text', '帮助说明')]),
+                        _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md', target: '_blank' }, [_('text', '帮助说明')]),
                         _('text', '　'),
                         _('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [_('text', '复制日志&问题反馈')]),
                         _('text', '　'),
