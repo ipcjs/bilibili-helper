@@ -1,3 +1,4 @@
+import { Strings } from './util/strings';
 import { testTs } from './util/utils'
 
 function scriptContent() {
@@ -81,13 +82,6 @@ function scriptContent() {
         return arr.map(util_stringify).join(' ')
     }
 
-    const util_str_multiply = function (str, multiplier) {
-        let result = ''
-        for (let i = 0; i < multiplier; i++) {
-            result += str
-        }
-        return result
-    }
     const util_str_to_c_like = (str) => {
         return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
     }
@@ -146,7 +140,7 @@ function scriptContent() {
             window.addEventListener('message', (event) => {
                 if (event.data instanceof Array && event.data[0] === tag) {
                     let [/*tag*/, fromFloor, msg] = event.data
-                    msgList.push(util_str_multiply('    ', fromFloor) + msg)
+                    msgList.push(Strings.multiply('    ', fromFloor) + msg)
                 }
             })
         }
