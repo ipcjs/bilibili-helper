@@ -6,3 +6,4 @@ node_modules/
 build/
 temp/
 /.vscode/settings.json
+/*.user.js
