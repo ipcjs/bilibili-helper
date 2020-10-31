@@ -25,7 +25,7 @@ module.exports = {
     mode: 'none',
     entry: './index.js',
     output: {
-        filename: '../s3__mobile_style.user.js',
+        filename: '../../scripts/s3__mobile_style.user.js',
         // path: path.resolve(__dirname, 'temp'),
         path: __dirname,
     },

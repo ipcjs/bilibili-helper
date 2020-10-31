@@ -24,7 +24,7 @@ export default {
     input: path.resolve(__dirname, 'index.js'),
     output: {
         banner: userscriptHead,
-        file: path.resolve(__dirname, '../s3__mobile_style.user.js'),
+        file: path.resolve(__dirname, '../../scripts/s3__mobile_style.user.js'),
         format: 'esm',
     },
     plugins: [
