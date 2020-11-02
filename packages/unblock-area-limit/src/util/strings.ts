@@ -6,4 +6,8 @@ export namespace Strings {
         }
         return result
     }
+
+    export function toSnakeCase(str: string) {
+        return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
+    }
 }

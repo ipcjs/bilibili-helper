@@ -1,5 +1,8 @@
-import { Strings } from './util/strings';
+import { Strings } from './util/strings'
+import { Objects } from './util/objects'
 import { testTs } from './util/utils'
+import { Bilibili } from './util/bilibili';
+import { _ } from './util/react'
 
 function scriptContent() {
     'use strict';
@@ -66,58 +69,7 @@ function scriptContent() {
             { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.mediaInfo && window.__INITIAL_STATE__.mediaInfo.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
         ]
     }
-    const util_stringify = (item) => {
-        if (typeof item === 'object') {
-            try {
-                return JSON.stringify(item)
-            } catch (e) {
-                console.debug(e)
-                return item.toString()
-            }
-        } else {
-            return item
-        }
-    }
-    const util_arr_stringify = function (arr) {
-        return arr.map(util_stringify).join(' ')
-    }
 
-    const util_str_to_c_like = (str) => {
-        return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
-    }
-    // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
-    const util_str_bv2aid = function (bv) {
-        var table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
-        var tr = {};
-        for (var i = 0; i < 58; ++i) {
-            tr[table[i]] = i;
-        }
-
-        var s = [11, 10, 3, 8, 4, 6];
-        var xor = 177451812;
-        var add = 8728348608;
-
-        var r = 0;
-        for (var i = 0; i < 6; ++i) {
-            r += tr[bv[s[i]]] * (Math.pow(58, i));
-        }
-        return String((r - add) ^ xor);
-    }
-    const util_obj_key_to_c_like = (obj) => {
-        // log(typeof obj, Array.isArray(obj), obj)
-        if (Array.isArray(obj)) {
-            for (const item of obj) {
-                util_obj_key_to_c_like(item)
-            }
-        } else if (typeof obj === 'object') {
-            for (const key of Object.keys(obj)) {
-                const value = obj[key]
-                util_obj_key_to_c_like(value)
-                obj[util_str_to_c_like(key)] = value
-            }
-        }
-        return obj // 该方法会修改传入的obj的内容, 返回obj只是为了调用方便...
-    }
     const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')
     const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
     const util_regex_url_path = (path) => new RegExp(`^(https?:)?//[\\w\\-\\.]+${_raw(path)}`)
@@ -162,7 +114,7 @@ function scriptContent() {
             return function (...args) {
                 args.unshift(type + ':')
                 window.console[type].apply(window.console, args)
-                util_log_hub.msg(util_arr_stringify(args))
+                util_log_hub.msg(Objects.stringifyArray(args))
             }
         }
     }
@@ -560,50 +512,7 @@ function scriptContent() {
             })
         }
     }
-    /**
-     * 创建元素的快捷方法:
-     * 1. type, props, children
-     * 2. type, props, innerHTML
-     * 3. 'text', text
-     * @param type string, 标签名; 特殊的, 若为text, 则表示创建文字, 对应的t为文字的内容
-     * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
-     * @param children array, 子元素; 也可以直接是html文本;
-     */
-    const util_ui_element_creator = (type, props, children) => {
-        let elem = null;
-        if (type === "text") {
-            return document.createTextNode(props);
-        } else {
-            elem = document.createElement(type);
-        }
-        for (let n in props) {
-            if (n === "style") {
-                for (let x in props.style) {
-                    elem.style[x] = props.style[x];
-                }
-            } else if (n === "className") {
-                elem.className = props[n];
-            } else if (n === "event") {
-                for (let x in props.event) {
-                    elem.addEventListener(x, props.event[x]);
-                }
-            } else {
-                elem.setAttribute(n, props[n]);
-            }
-        }
-        if (children) {
-            if (typeof children === 'string') {
-                elem.innerHTML = children;
-            } else {
-                for (let i = 0; i < children.length; i++) {
-                    if (children[i] != null)
-                        elem.appendChild(children[i]);
-                }
-            }
-        }
-        return elem;
-    }
-    const _ = util_ui_element_creator
+
     const util_jsonp = function (url, callback) {
         return new Promise((resolve, reject) => {
             document.head.appendChild(_('script', {
@@ -635,42 +544,7 @@ function scriptContent() {
             "params": data
         };
     }
-    const util_xml2obj = (xml) => {
-        try {
-            var obj = {}, text;
-            var children = xml.children;
-            if (children.length > 0) {
-                for (var i = 0; i < children.length; i++) {
-                    var item = children.item(i);
-                    var nodeName = item.nodeName;
 
-                    if (typeof (obj[nodeName]) == "undefined") { // 若是新的属性, 则往obj中添加
-                        obj[nodeName] = util_xml2obj(item);
-                    } else {
-                        if (typeof (obj[nodeName].push) == "undefined") { // 若老的属性没有push方法, 则把属性改成Array
-                            var old = obj[nodeName];
-
-                            obj[nodeName] = [];
-                            obj[nodeName].push(old);
-                        }
-                        obj[nodeName].push(util_xml2obj(item));
-                    }
-                }
-            } else {
-                text = xml.textContent;
-                if (/^\d+(\.\d+)?$/.test(text)) {
-                    obj = Number(text);
-                } else if (text === 'true' || text === 'false') {
-                    obj = Boolean(text);
-                } else {
-                    obj = text;
-                }
-            }
-            return obj;
-        } catch (e) {
-            util_error(e);
-        }
-    }
     const util_ui_popframe = function (iframeSrc) {
         if (!document.getElementById('balh-style-login')) {
             var style = document.createElement('style');
@@ -824,7 +698,7 @@ function scriptContent() {
         }
     }())
     const util_ui_player_msg = function (message) {
-        const msg = util_stringify(message)
+        const msg = Objects.stringify(message)
         util_info('player msg:', msg)
         const $panel = document.querySelector('.bilibili-player-video-panel-text')
         if ($panel) {
@@ -1742,7 +1616,7 @@ function scriptContent() {
                 },
                 processProxySuccess: function (result, alertWhenError = true) {
                     // 将xml解析成json
-                    let obj = util_xml2obj(result.documentElement)
+                    let obj = Bilibili.xml2obj(result.documentElement)
                     if (!obj || obj.code) {
                         if (alertWhenError) {
                             util_ui_alert(`从B站接口获取视频地址失败\nresult: ${JSON.stringify(obj)}\n\n点击确定, 进入设置页面关闭'使用B站接口获取视频地址'功能`, balh_ui_setting.show)
@@ -1928,7 +1802,7 @@ function scriptContent() {
                                 msg = '代理服务器临时不可用'
                                 util_ui_player_msg(msg)
                             } else {
-                                msg = util_stringify(e)
+                                msg = Objects.stringify(e)
                             }
                             util_ui_pop({
                                 content: `## 拉取视频地址失败\n原因: ${msg}\n\n可以考虑进行如下尝试:\n1. 多<a href="">刷新</a>几下页面\n2. 进入<a href="javascript:bangumi_area_limit_hack.showSettings();">设置页面</a>更换代理服务器\n3. 耐心等待代理服务器端修复问题`,
@@ -1940,7 +1814,7 @@ function scriptContent() {
                         .then(data => {
                             if (data.dash) {
                                 // dash中的字段全部变成了类似C语言的下划线风格...
-                                util_obj_key_to_c_like(data.dash)
+                                Objects.convertKeyToSnakeCase(data.dash)
                             }
                             return data
                         })
@@ -2249,7 +2123,7 @@ function scriptContent() {
             if (!aid) {
                 let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1]
                 if (bv) {
-                    aid = util_str_bv2aid(bv)
+                    aid = Bilibili.bv2aid(bv)
                 }
             }
             balh_api_plus_view(aid)
