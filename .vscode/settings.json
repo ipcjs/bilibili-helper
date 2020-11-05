@@ -1,0 +1,12 @@
+{
+    "editor.formatOnSave": true,
+    "cSpell.enabled": true,
+    "cSpell.userWords": [
+        "balh",
+        "ipcjs",
+        "bangumi",
+        "bilibili",
+        "biliplus",
+        "acfun",
+    ]
+}

@@ -14,7 +14,7 @@ function scriptContent() {
         log(`页面中存在注入的代码, 但invokeBy却等于${GM_info.scriptHandler}, 这种情况不合理, 终止脚本执行`)
         return
     }
-    if (document.readyState === 'uninitialized') { // Firefox上, 对于ifame中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
+    if (document.readyState === 'uninitialized') { // Firefox上, 对于iframe中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
         log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态')
         setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
         return
@@ -247,7 +247,7 @@ function scriptContent() {
     }())
     /** 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/ */
     const util_notify = (function () {
-        var avaliable = {};
+        var available = {};
         var shown = [];
         var use = {
             'hasPermission': function () { return null; },
@@ -263,7 +263,7 @@ function scriptContent() {
 
         // webkitNotifications
         // Tab Notifier 扩展实现此接口，但显示的桌面提示最多只能显示前两行
-        if (typeof webkitNotifications !== 'undefined') avaliable.webkit = {
+        if (typeof webkitNotifications !== 'undefined') available.webkit = {
             'hasPermission': function () {
                 return [true, null, false][webkitNotifications.checkPermission()];
             },
@@ -292,7 +292,7 @@ function scriptContent() {
         // Notification
         // Firefox 22+
         // 显示4秒会自动关闭 https://bugzil.la/875114
-        if (typeof Notification !== 'undefined') avaliable.standard = {
+        if (typeof Notification !== 'undefined') available.standard = {
             'hasPermission': function () {
                 return {
                     'granted': true,
@@ -324,12 +324,12 @@ function scriptContent() {
         };
 
         // 有哪些接口可用
-        var avaliableNotification = function () {
-            return Object.keys(avaliable);
+        var availableNotification = function () {
+            return Object.keys(available);
         };
         // 选择用哪个接口
         var choseNotification = function (prefer) {
-            return (use = prefer && avaliable[prefer] || avaliable.standard);
+            return (use = prefer && available[prefer] || available.standard);
         };
         choseNotification();
         // 检查权限
@@ -379,7 +379,7 @@ function scriptContent() {
         }
 
         return {
-            'avaliableNotification': avaliableNotification,
+            'availableNotification': availableNotification,
             'choseNotification': choseNotification,
             'hasPermission': hasPermission,
             'requestPermission': requestPermission,
@@ -522,11 +522,11 @@ function scriptContent() {
             document.querySelector('#AHP_Notice').remove();
 
         let div = _('div', { id: 'AHP_Notice' });
-        let childs = [];
+        let children = [];
         if (param.showConfirm || param.confirmBtn || param.onConfirm) {
-            childs.push(_('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));
+            children.push(_('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));
         }
-        childs.push(_('input', {
+        children.push(_('input', {
             value: _t('close'), type: 'button', className: 'close', event: {
                 click: function () {
                     param.onClose && param.onClose();
@@ -536,7 +536,7 @@ function scriptContent() {
             }
         }));
         div.appendChild(_('div', {}, [_('div', {},
-            param.content.concat([_('hr'), _('div', { style: { textAlign: 'right' } }, childs)])
+            param.content.concat([_('hr'), _('div', { style: { textAlign: 'right' } }, children)])
         )]));
         document.body.appendChild(div);
         div.style.height = div.firstChild.offsetHeight + 'px';
@@ -2227,9 +2227,9 @@ function scriptContent() {
                     }
 
                     function generateEpisodeList(episodes) {
-                        var childs = [];
+                        var children = [];
                         episodes.reverse().forEach(function (i) {
-                            childs.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
+                            children.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
                                 _('div', { className: 'img-wrp' }, [_('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
                                 _('div', { className: 'text-wrp' }, [
                                     _('div', { className: 'text-wrp-num' }, [_('div', { className: 'text-wrp-num-content' }, [_('text', `第${i.index}话`)])]),
@@ -2237,7 +2237,7 @@ function scriptContent() {
                                 ])
                             ])]));
                         });
-                        return childs;
+                        return children;
                     }
 
                     function generateSeasonList(seasons) {

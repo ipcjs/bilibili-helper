@@ -45,19 +45,19 @@ namespace Async {
 
 
     /**
-    * @param promiseCeator  创建Promise的函数
-    * @param resultTranformer 用于变换result的函数, 返回新的result或Promise
-    * @param errorTranformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
+    * @param promiseCreator  创建Promise的函数
+    * @param resultTransformer 用于变换result的函数, 返回新的result或Promise
+    * @param errorTransformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
     */
-    export function wrapper(promiseCeator, resultTranformer, errorTranformer) {
+    export function wrapper(promiseCreator: Function, resultTransformer: Function, errorTransformer: Function) {
         return function (...args) {
             return new Promise((resolve, reject) => {
-                // log(promiseCeator, ...args)
-                promiseCeator(...args)
-                    .then(r => resultTranformer ? resultTranformer(r) : r)
+                // log(promiseCreator, ...args)
+                promiseCreator(...args)
+                    .then(r => resultTransformer ? resultTransformer(r) : r)
                     .then(r => resolve(r))
                     .catch(e => {
-                        e = errorTranformer ? errorTranformer(e) : e
+                        e = errorTransformer ? errorTransformer(e) : e
                         if (!(e instanceof Promise)) {
                             // 若返回值不是Promise, 则表示是一个error
                             e = Promise.reject(e)
