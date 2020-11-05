@@ -23,7 +23,7 @@ export namespace Objects {
                 return JSON.stringify(item)
             } catch (e) {
                 console.debug(e)
-                return item.toString()
+                return `${item}`
             }
         } else {
             return item

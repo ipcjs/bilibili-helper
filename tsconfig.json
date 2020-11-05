@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        // "target": "ESNext",
+        "lib": [
+            "ES6",
+            "DOM",
+        ]
+    },
+    "typeAcquisition": {
+        "include": [
+            "greasemonkey"
+        ]
+    }
+}

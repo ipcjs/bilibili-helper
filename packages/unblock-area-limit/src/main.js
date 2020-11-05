@@ -3,11 +3,10 @@ import { Objects } from './util/objects'
 import { testTs } from './util/utils'
 import { Bilibili } from './util/bilibili';
 import { _ } from './util/react'
+import { Async, Promise } from './util/async';
 
 function scriptContent() {
     'use strict';
-    testTs()
-
     let log = console.log.bind(console, 'injector:')
     if (document.getElementById('balh-injector-source') && invokeBy === GM_info.scriptHandler) {
         // 当前, 在Firefox+GM4中, 当返回缓存的页面时, 脚本会重新执行, 并且此时XMLHttpRequest是可修改的(为什么会这样?) + 页面中存在注入的代码
@@ -440,78 +439,6 @@ function scriptContent() {
             }
         })
     }())
-    const Promise = window.Promise // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
-    const util_promise_plus = (function () {
-        /**
-        * 模仿RxJava中的compose操作符
-        * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
-        */
-        Promise.prototype.compose = function (transformer) {
-            return transformer ? transformer(this) : this
-        }
-    }())
-    const util_promise_timeout = function (timeout) {
-        return new Promise((resolve, reject) => {
-            setTimeout(resolve, timeout);
-        })
-    }
-    // 直到满足condition()为止, 才执行promiseCreator(), 创建Promise
-    // https://stackoverflow.com/questions/40328932/javascript-es6-promise-for-loop
-    const util_promise_condition = function (condition, promiseCreator, retryCount = Number.MAX_VALUE, interval = 1) {
-        const loop = (time) => {
-            if (!condition()) {
-                if (time < retryCount) {
-                    return util_promise_timeout(interval).then(loop.bind(null, time + 1))
-                } else {
-                    return Promise.reject(`util_promise_condition timeout, condition: ${condition.toString()}`)
-                }
-            } else {
-                return promiseCreator()
-            }
-        }
-        return loop(0)
-    }
-
-    const util_ajax = function (options) {
-        const creator = () => new Promise(function (resolve, reject) {
-            typeof options !== 'object' && (options = { url: options });
-
-            options.async === undefined && (options.async = true);
-            options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
-            options.success = function (data) {
-                resolve(data);
-            };
-            options.error = function (err) {
-                reject(err);
-            };
-            util_debug('ajax:', options.url)
-            $.ajax(options);
-        })
-        return util_promise_condition(() => window.$, creator, 100, 100) // 重试 100 * 100 = 10s
-    }
-    /**
-    * @param promiseCeator  创建Promise的函数
-    * @param resultTranformer 用于变换result的函数, 返回新的result或Promise
-    * @param errorTranformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
-    */
-    const util_async_wrapper = function (promiseCeator, resultTranformer, errorTranformer) {
-        return function (...args) {
-            return new Promise((resolve, reject) => {
-                // log(promiseCeator, ...args)
-                promiseCeator(...args)
-                    .then(r => resultTranformer ? resultTranformer(r) : r)
-                    .then(r => resolve(r))
-                    .catch(e => {
-                        e = errorTranformer ? errorTranformer(e) : e
-                        if (!(e instanceof Promise)) {
-                            // 若返回值不是Promise, 则表示是一个error
-                            e = Promise.reject(e)
-                        }
-                        e.then(r => resolve(r)).catch(e => reject(e))
-                    })
-            })
-        }
-    }
 
     const util_jsonp = function (url, callback) {
         return new Promise((resolve, reject) => {
@@ -798,18 +725,18 @@ function scriptContent() {
     }
 
     const balh_api_plus_view = function (aid, update = true) {
-        return util_ajax(`${balh_config.server}/api/view?id=${aid}&update=${update}${access_key_param_if_exist()}`);
+        return Async.ajax(`${balh_config.server}/api/view?id=${aid}&update=${update}${access_key_param_if_exist()}`);
     }
     const balh_api_plus_season = function (season_id) {
-        return util_ajax(`${balh_config.server}/api/bangumi?season=${season_id}${access_key_param_if_exist()}`);
+        return Async.ajax(`${balh_config.server}/api/bangumi?season=${season_id}${access_key_param_if_exist()}`);
     }
     // https://www.biliplus.com/BPplayurl.php?otype=json&cid=30188339&module=bangumi&qn=16&src=vupload&vid=vupload_30188339
     // qn = 16, 能看
     const balh_api_plus_playurl = function (cid, qn = 16, bangumi = true) {
-        return util_ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '&module=bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}${access_key_param_if_exist()}`);
+        return Async.ajax(`${balh_config.server}/BPplayurl.php?otype=json&cid=${cid}${bangumi ? '&module=bangumi' : ''}&qn=${qn}&src=vupload&vid=vupload_${cid}${access_key_param_if_exist()}`);
     }
     // https://www.biliplus.com/api/h5play.php?tid=33&cid=31166258&type=vupload&vid=vupload_31166258&bangumi=1
-    const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => util_ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}${access_key_param_if_exist()}`)
+    const balh_api_plus_playurl_for_mp4 = (cid, bangumi = true) => Async.ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}${access_key_param_if_exist()}`)
         .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
 
     const balh_is_close = false
@@ -1350,11 +1277,11 @@ function scriptContent() {
         }
 
         function injectFetch() {
-            window.fetch = util_async_wrapper(window.fetch,
+            window.fetch = Async.wrapper(window.fetch,
                 resp => new Proxy(resp, {
                     get: function (target, prop, receiver) {
                         if (prop === 'json') {
-                            return util_async_wrapper(target.json.bind(target),
+                            return Async.wrapper(target.json.bind(target),
                                 oriResult => {
                                     util_debug('injectFetch:', target.url)
                                     if (target.url.match(util_regex_url_path('/player/web_api/v2/playurl/html5'))) {
@@ -1514,7 +1441,7 @@ function scriptContent() {
                 });
             };
             BilibiliApi.prototype.asyncAjax = function (originUrl) {
-                return util_ajax(this.transToProxyUrl(originUrl))
+                return Async.ajax(this.transToProxyUrl(originUrl))
                     .then(r => this.processProxySuccess(r))
                     .compose(util_ui_msg.showOnNetErrorInPromise()) // 出错时, 提示服务器连不上
             }
@@ -1640,13 +1567,13 @@ function scriptContent() {
                     return obj
                 },
                 _asyncAjax: function (originUrl) {
-                    return util_ajax(this.transToProxyUrl(originUrl))
+                    return Async.ajax(this.transToProxyUrl(originUrl))
                         .then(r => this.processProxySuccess(r, false))
                 }
             })
             var playurl_by_proxy = new BilibiliApi({
                 _asyncAjax: function (originUrl, bangumi) {
-                    return util_ajax(this.transToProxyUrl(originUrl, bangumi))
+                    return Async.ajax(this.transToProxyUrl(originUrl, bangumi))
                         .then(r => this.processProxySuccess(r, false))
                 },
                 transToProxyUrl: function (url, bangumi) {
@@ -1732,7 +1659,7 @@ function scriptContent() {
                         }
                     }
                     if (proxyHost) {
-                        return util_ajax(this.transToProxyUrl(originUrl, proxyHost))
+                        return Async.ajax(this.transToProxyUrl(originUrl, proxyHost))
                             .then(r => this.processProxySuccess(r))
                     } else {
                         return Promise.reject("没有支持的服务器")
@@ -1750,7 +1677,7 @@ function scriptContent() {
             })
             const playurl_by_custom = new BilibiliApi({
                 _asyncAjax: function (originUrl) {
-                    return util_ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
+                    return Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
                         .then(r => this.processProxySuccess(r))
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
