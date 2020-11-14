@@ -4,6 +4,7 @@ import { testTs } from './util/utils'
 import { Bilibili } from './util/bilibili';
 import { _ } from './util/react'
 import { Async, Promise } from './util/async';
+import { r, _t } from './feature/r'
 
 function scriptContent() {
     'use strict';
@@ -18,55 +19,6 @@ function scriptContent() {
         log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态')
         setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
         return
-    }
-
-    const r_text = {
-        ok: { en: 'OK', zh_cn: '确定', },
-        close: { en: 'Close', zh_cn: '关闭' },
-        welcome_to_acfun: '<p><b>缺B乐 了解下？</b></p>',
-        version_remind: ``,
-    }
-    const _t = (key) => {
-        const text = r_text[key]
-        const lang = 'zh_cn'
-        return typeof text === 'string' ? text : text[lang]
-    }
-
-    const r = {
-        html: {},
-        css: {
-            settings: '#balh-settings {font-size: 12px;color: #6d757a;}  #balh-settings h1 {color: #161a1e}  #balh-settings a {color: #00a1d6;}  #balh-settings a:hover {color: #f25d8e}  #balh-settings input {margin-left: 3px;margin-right: 3px;}  @keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;} ',
-        },
-        attr: {},
-        url: {
-            issue: 'https://github.com/ipcjs/bilibili-helper/issues',
-            issue_new: 'https://github.com/ipcjs/bilibili-helper/issues/new',
-            readme: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6',
-        },
-        script: {
-            is_dev: GM_info.script.name.includes('.dev'),
-        },
-        const: {
-            mode: {
-                DEFAULT: 'default',// 默认模式, 自动判断使用何种模式, 推荐;
-                REPLACE: 'replace', // 替换模式, 替换有区域限制的视频的接口的返回值;
-                REDIRECT: 'redirect',// 重定向模式, 直接重定向所有番剧视频的接口到代理服务器; 所有番剧视频都通过代理服务器获取视频地址, 如果代理服务器不稳定, 可能加载不出视频;
-            },
-            server: {
-                S0: 'https://biliplus.ipcjs.top',
-                S1: 'https://www.biliplus.com',
-                CUSTOM: '__custom__',
-                defaultServer: function () {
-                    return this.S1
-                },
-            },
-            TRUE: 'Y',
-            FALSE: '',
-        },
-        baipiao: [
-            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.epInfo && window.__INITIAL_STATE__.epInfo.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
-            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__ && window.__INITIAL_STATE__.mediaInfo && window.__INITIAL_STATE__.mediaInfo.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
-        ]
     }
 
     const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')

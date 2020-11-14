@@ -8,10 +8,11 @@ export namespace Objects {
                 convertKeyToSnakeCase(item)
             }
         } else if (typeof obj === 'object') {
-            for (const key of Object.keys(obj as unknown as object)) {
-                const value = obj[key]
+            const o = obj as any;
+            for (const key of Object.keys(o)) {
+                const value = o[key]
                 convertKeyToSnakeCase(value)
-                obj[Strings.toSnakeCase(key)] = value
+                o[Strings.toSnakeCase(key)] = value
             }
         }
         return obj // 该方法会修改传入的obj的内容, 返回obj只是为了调用方便...

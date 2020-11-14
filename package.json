@@ -8,6 +8,7 @@
   "dependencies": {},
   "devDependencies": {
     "@rollup/plugin-typescript": "^6.1.0",
+    "@types/greasemonkey": "^4.0.0",
     "magic-string": "^0.25.7",
     "rollup": "^2.32.1",
     "rollup-plugin-scss-string": "^0.1.0",

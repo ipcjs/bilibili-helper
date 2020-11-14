@@ -9,7 +9,7 @@ const fetch = window.fetch
 * 模仿RxJava中的compose操作符
 * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
 */
-Promise.prototype.compose = function (transformer) {
+Promise.prototype.compose = function (transformer: any) {
     return transformer ? transformer(this) : this
 }
 
@@ -29,7 +29,7 @@ namespace Async {
         retryCount = Number.MAX_VALUE,
         interval = 1,
     ) {
-        const loop = (time): Promise<T> => {
+        const loop = (time: number): Promise<T> => {
             if (!condition()) {
                 if (time < retryCount) {
                     return timeout(interval).then(loop.bind(null, time + 1))
@@ -49,8 +49,8 @@ namespace Async {
     * @param resultTransformer 用于变换result的函数, 返回新的result或Promise
     * @param errorTransformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
     */
-    export function wrapper(promiseCreator: Function, resultTransformer: Function, errorTransformer: Function) {
-        return function (...args) {
+    export function wrapper(promiseCreator: (...args: any) => Promise<any>, resultTransformer: Function, errorTransformer: Function) {
+        return function (...args: any) {
             return new Promise((resolve, reject) => {
                 // log(promiseCreator, ...args)
                 promiseCreator(...args)
@@ -62,7 +62,7 @@ namespace Async {
                             // 若返回值不是Promise, 则表示是一个error
                             e = Promise.reject(e)
                         }
-                        e.then(r => resolve(r)).catch(e => reject(e))
+                        (e as Promise<any>).then(r => resolve(r)).catch(e => reject(e))
                     })
             })
         }
@@ -74,15 +74,15 @@ namespace Async {
 
 
     function ajaxBy$<T>(url: string): Promise<T> {
-        const creator = (): Promise<T> => new Promise((resolve, reject) => {
+        const creator = () => new Promise<T>((resolve, reject) => {
             let options: any = { url: url }
 
             options.async === undefined && (options.async = true);
             options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
-            options.success = function (data) {
+            options.success = function (data: T) {
                 resolve(data);
             };
-            options.error = function (err) {
+            options.error = function (err: any) {
                 reject(err);
             };
             util_debug(`ajax: ${options.url}`)

@@ -1,10 +1,11 @@
 import { util_error } from "./log";
+import { StringObject } from "./types";
 
 export namespace Bilibili {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
     export function bv2aid(bv: string) {
         var table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
-        var tr = {};
+        var tr: StringObject = {};
         for (var i = 0; i < 58; ++i) {
             tr[table[i]] = i;
         }
@@ -22,11 +23,11 @@ export namespace Bilibili {
 
     export function xml2obj(xml: Element) {
         try {
-            var obj = {}, text;
+            var obj: any = {}, text;
             var children = xml.children;
             if (children.length > 0) {
                 for (var i = 0; i < children.length; i++) {
-                    var item = children.item(i);
+                    var item = children.item(i)!;
                     var nodeName = item.nodeName;
 
                     if (typeof (obj[nodeName]) == "undefined") { // 若是新的属性, 则往obj中添加
@@ -42,7 +43,7 @@ export namespace Bilibili {
                     }
                 }
             } else {
-                text = xml.textContent;
+                text = xml.textContent!; // todo: 强转为非空是否有问题?
                 if (/^\d+(\.\d+)?$/.test(text)) {
                     obj = Number(text);
                 } else if (text === 'true' || text === 'false') {

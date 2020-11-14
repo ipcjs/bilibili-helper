@@ -1,3 +1,5 @@
+import { Nullable } from "./types";
+
 /**
 * 创建元素的快捷方法:
 * 1. type, props, children
@@ -8,7 +10,7 @@
 * @param children array, 子元素; 也可以直接是html文本;
 */
 function createElement(type: string, props: any | string, children: any[] | string) {
-    let elem: HTMLElement = null;
+    let elem: HTMLElement | null = null;
     if (type === "text") {
         return document.createTextNode(props);
     } else {
@@ -16,7 +18,7 @@ function createElement(type: string, props: any | string, children: any[] | stri
     }
     for (let n in props) {
         if (n === "style") {
-            for (let x in props.style) {
+            for (let x in props.style as CSSStyleDeclaration) {
                 elem.style[x] = props.style[x];
             }
         } else if (n === "className") {
