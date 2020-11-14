@@ -1,5 +1,3 @@
-import { Nullable } from "./types";
-
 /**
 * 创建元素的快捷方法:
 * 1. type, props, children
