@@ -5,6 +5,7 @@ import { Bilibili } from './util/bilibili';
 import { _ } from './util/react'
 import { Async, Promise } from './util/async';
 import { r, _t } from './feature/r'
+import { util_error, util_info, util_log, util_warn, util_debug, logHub } from './util/log'
 
 function scriptContent() {
     'use strict';
@@ -25,55 +26,6 @@ function scriptContent() {
     const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
     const util_regex_url_path = (path) => new RegExp(`^(https?:)?//[\\w\\-\\.]+${_raw(path)}`)
 
-    const util_log_hub = (function () {
-        const tag = GM_info.script.name + '.msg'
-
-        // 计算"楼层", 若当前window就是顶层的window, 则floor为0, 以此类推
-        function computefloor(w = window, floor = 0) {
-            if (w === window.top) {
-                return floor
-            } else {
-                return computefloor(w.parent, floor + 1)
-            }
-        }
-
-        let floor = computefloor()
-        let msgList = []
-        if (floor === 0) { // 只有顶层的Window才需要收集日志
-            window.addEventListener('message', (event) => {
-                if (event.data instanceof Array && event.data[0] === tag) {
-                    let [/*tag*/, fromFloor, msg] = event.data
-                    msgList.push(Strings.multiply('    ', fromFloor) + msg)
-                }
-            })
-        }
-        return {
-            msg: function (msg) {
-                window.top.postMessage([tag, floor, msg], '*')
-            },
-            getAllMsg: function () {
-                return msgList.join('\n')
-            }
-        }
-    }())
-    const util_log_impl = function (type) {
-        if (r.script.is_dev) {
-            // 直接打印, 会显示行数
-            return window.console[type].bind(window.console, type + ':');
-        } else {
-            // 将log收集到util_log_hub中, 显示的行数是错误的...
-            return function (...args) {
-                args.unshift(type + ':')
-                window.console[type].apply(window.console, args)
-                util_log_hub.msg(Objects.stringifyArray(args))
-            }
-        }
-    }
-    const util_log = util_log_impl('log')
-    const util_info = util_log_impl('info')
-    const util_debug = util_log_impl('debug')
-    const util_warn = util_log_impl('warn')
-    const util_error = util_log_impl('error')
     log = util_debug
     log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
@@ -2405,7 +2357,7 @@ function scriptContent() {
 
             let textarea = document.getElementById('balh-textarea-copy')
             textarea.style.display = 'inline-block'
-            if (util_ui_copy(util_log_hub.getAllMsg(), textarea)) {
+            if (util_ui_copy(logHub.getAllMsg(), textarea)) {
                 textarea.style.display = 'none'
                 util_ui_msg.show($(this),
                     continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',
@@ -2609,7 +2561,7 @@ function scriptContent() {
             getCookie: util_cookie.get,
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
-            getLog: util_log_hub.getAllMsg,
+            getLog: logHub.getAllMsg,
             showSettings: balh_ui_setting.show,
             set1080P: function () {
                 const settings = JSON.parse(localStorage.bilibili_player_settings)
