@@ -11,6 +11,7 @@ import { util_page } from './feature/page'
 import { access_key_param_if_exist } from './api/bilibili';
 import { BiliPlusApi } from './api/biliplus';
 import { ui } from './util/ui'
+import { Strings } from './util/strings'
 
 function scriptContent() {
     'use strict';
@@ -250,22 +251,6 @@ function scriptContent() {
     }())
 
 
-    const util_generate_sign = function (params, key) {
-        var s_keys = [];
-        for (var i in params) {
-            s_keys.push(i);
-        }
-        s_keys.sort();
-        var data = "";
-        for (var i = 0; i < s_keys.length; i++) {
-            // encodeURIComponent 返回的转义数字必须为大写( 如 %2F )
-            data += (data ? "&" : "") + s_keys[i] + "=" + encodeURIComponent(params[s_keys[i]]);
-        }
-        return {
-            "sign": hex_md5(data + key),
-            "params": data
-        };
-    }
 
 
 
@@ -352,9 +337,6 @@ function scriptContent() {
     }())
 
 
-    const util_url_param = function (url, key) {
-        return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
-    }
 
     const balh_is_close = false
 
@@ -562,7 +544,7 @@ function scriptContent() {
                                                 }
                                             }
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/web-interface/nav'))) {
-                                            const isFromReport = util_url_param(target.responseURL, 'from') === 'report'
+                                            const isFromReport = Strings.getSearchParam(target.responseURL, 'from') === 'report'
                                             let json = JSON.parse(target.responseText)
                                             log('/x/web-interface/nav', (json.data && json.data.isLogin)
                                                 ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus, isFromReport: isFromReport }
@@ -594,7 +576,7 @@ function scriptContent() {
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
                                         } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
-                                            && !util_url_param(target.responseURL, 'balh_ajax')) {
+                                            && !Strings.getSearchParam(target.responseURL, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
                                                 let json = target.response
@@ -666,7 +648,7 @@ function scriptContent() {
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
                                         } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
-                                            && !util_url_param(container.__url, 'balh_ajax')
+                                            && !Strings.getSearchParam(container.__url, 'balh_ajax')
                                             && needRedirect()) {
                                             log('/pgc/player/web/playurl')
                                             // debugger
@@ -902,7 +884,7 @@ function scriptContent() {
                                 oriResult => {
                                     util_debug('injectFetch:', target.url)
                                     if (target.url.match(util_regex_url_path('/player/web_api/v2/playurl/html5'))) {
-                                        let cid = util_url_param(target.url, 'cid')
+                                        let cid = Strings.getSearchParam(target.url, 'cid')
                                         return BiliPlusApi.playurl(cid)
                                             .then(result => {
                                                 if (result.code) {
@@ -1015,7 +997,7 @@ function scriptContent() {
             }
             // 最后, 若没取到, 则试图取出当前页面url中的aid
             if (!seasonId) {
-                seasonId = util_url_param(window.location.href, 'aid');
+                seasonId = Strings.getSearchParam(window.location.href, 'aid');
                 if (seasonId) {
                     seasonId = 'aid' + seasonId;
                 }
@@ -1139,13 +1121,13 @@ function scriptContent() {
                     const SEC_BANGUMI = '9b288147e5474dd2aa67085f716c560d'
 
                     // 不设置module; 带module的接口都是有区域限制的...
-                    let module = undefined /*util_url_param(originUrl, 'module')*/
+                    let module = undefined /*Strings.getSearchParam(originUrl, 'module')*/
                     // 不使用json; 让服务器直接返回json时, 获取的视频url不能直接播放...天知道为什么
                     let useJson = false
                     let paramDict = {
-                        cid: util_url_param(originUrl, 'cid'),
-                        quality: util_url_param(originUrl, 'quality'),
-                        qn: util_url_param(originUrl, 'qn'), // 增加这个参数, 返回的清晰度更多
+                        cid: Strings.getSearchParam(originUrl, 'cid'),
+                        quality: Strings.getSearchParam(originUrl, 'quality'),
+                        qn: Strings.getSearchParam(originUrl, 'qn'), // 增加这个参数, 返回的清晰度更多
                         player: 1,
                         ts: Math.floor(Date.now() / 1000),
                     }
@@ -1154,7 +1136,7 @@ function scriptContent() {
                     }
                     if (module) paramDict.module = module
                     if (useJson) paramDict.otype = 'json'
-                    let { sign, params } = util_generate_sign(paramDict, module ? SEC_BANGUMI : SEC_NORMAL)
+                    let { sign, params } = Converters.generateSign(paramDict, module ? SEC_BANGUMI : SEC_NORMAL)
                     let url = module ? bangumi_api_url : api_url + params + '&sign=' + sign
                     return url
                 },
@@ -1199,7 +1181,7 @@ function scriptContent() {
                         // av页面中的iframe标签形式的player, 不是番剧视频
                         bangumi = !util_page.player_in_av()
                         // url中存在season_type的情况
-                        let season_type_param = util_url_param(url, 'season_type')
+                        let season_type_param = Strings.getSearchParam(url, 'season_type')
                         if (season_type_param && !isBangumi(+season_type_param)) {
                             bangumi = false
                         }
@@ -1315,7 +1297,7 @@ function scriptContent() {
                             if (e instanceof AjaxException) {
                                 ui.playerMsg(e)
                                 if (e.code === 1 // code: 1 表示非番剧视频, 不能使用番剧视频参数
-                                    || (util_url_param(originUrl, 'module') === 'bangumi' && e.code === -404)) { // 某些番剧视频又不需要加module=bangumi, 详见: https://github.com/ipcjs/bilibili-helper/issues/494
+                                    || (Strings.getSearchParam(originUrl, 'module') === 'bangumi' && e.code === -404)) { // 某些番剧视频又不需要加module=bangumi, 详见: https://github.com/ipcjs/bilibili-helper/issues/494
                                     ui.playerMsg('尝试使用非番剧视频接口拉取视频地址...')
                                     return playurl_by_proxy._asyncAjax(originUrl, false)
                                         .catch(e2 => Promise.reject(e)) // 忽略e2, 返回原始错误e
@@ -1448,7 +1430,7 @@ function scriptContent() {
     const balh_feature_remove_pre_ad = (function () {
         if (util_page.player()) {
             // 播放页面url中的pre_ad参数, 决定是否播放广告...
-            if (balh_config.remove_pre_ad && util_url_param(location.href, 'pre_ad') == 1) {
+            if (balh_config.remove_pre_ad && Strings.getSearchParam(location.href, 'pre_ad') == 1) {
                 log('需要跳转到不含广告的url')
                 location.href = location.href.replace(/&?pre_ad=1/, '')
             }

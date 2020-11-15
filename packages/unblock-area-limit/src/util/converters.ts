@@ -1,5 +1,5 @@
 import { util_error } from "./log";
-import { StringAnyObject } from "./types";
+import { StringAnyObject, StringStringObject } from "./types";
 
 export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
@@ -56,5 +56,22 @@ export namespace Converters {
         } catch (e) {
             util_error(e);
         }
+    }
+
+    export function generateSign(params: StringStringObject, key: string) {
+        let s_keys = [];
+        for (let i in params) {
+            s_keys.push(i);
+        }
+        s_keys.sort();
+        let data = "";
+        for (let i = 0; i < s_keys.length; i++) {
+            // encodeURIComponent 返回的转义数字必须为大写( 如 %2F )
+            data += (data ? "&" : "") + s_keys[i] + "=" + encodeURIComponent(params[s_keys[i]]);
+        }
+        return {
+            sign: hex_md5(data + key),
+            params: data,
+        };
     }
 }

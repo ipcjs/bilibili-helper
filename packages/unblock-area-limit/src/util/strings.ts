@@ -10,4 +10,8 @@ export namespace Strings {
     export function toSnakeCase(str: string) {
         return str.replace(/[A-Z]/g, (a) => `_${a.toLowerCase()}`).replace(/^_/, "")
     }
+
+    export function getSearchParam(url: string, key: string) {
+        return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
+    }
 }
