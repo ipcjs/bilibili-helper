@@ -1,5 +1,6 @@
 import { Exception } from "./error";
 import { util_debug } from "./log";
+import { _ } from "./react";
 
 // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
 const Promise = window.Promise
@@ -105,6 +106,22 @@ namespace Async {
                     return Promise.reject(e)
                 }
             })
+    }
+
+    export function jsonp(url: string) {
+        return new Promise((resolve, reject) => {
+            document.head.appendChild(_('script', {
+                src: url,
+                event: {
+                    load: function () {
+                        resolve()
+                    },
+                    error: function () {
+                        reject()
+                    }
+                }
+            }));
+        })
     }
 }
 export { Promise, Async }

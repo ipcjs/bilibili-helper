@@ -1,11 +1,11 @@
 import { util_error } from "./log";
-import { StringObject } from "./types";
+import { StringAnyObject } from "./types";
 
-export namespace Bilibili {
+export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
     export function bv2aid(bv: string) {
         var table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
-        var tr: StringObject = {};
+        var tr: StringAnyObject = {};
         for (var i = 0; i < 58; ++i) {
             tr[table[i]] = i;
         }

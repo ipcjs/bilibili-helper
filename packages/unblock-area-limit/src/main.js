@@ -1,9 +1,13 @@
 import { Objects } from './util/objects'
-import { Bilibili } from './util/bilibili';
+import { Converters } from './util/converters';
 import { _ } from './util/react'
 import { Async, Promise } from './util/async';
 import { r, _t } from './feature/r'
 import { util_error, util_info, util_log, util_warn, util_debug, logHub } from './util/log'
+import { cookieStorage } from './util/cookie'
+import { balh_config } from './feature/config'
+import { Func } from './util/utils';
+import { util_page } from './feature/page'
 
 function scriptContent() {
     'use strict';
@@ -27,41 +31,6 @@ function scriptContent() {
     log = util_debug
     log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
-    const util_func_noop = function () { }
-    const util_func_catched = function (func, onError) {
-        let ret = function () {
-            try {
-                return func.apply(this, arguments)
-            } catch (e) {
-                if (onError) return onError(e) // onError可以处理报错时的返回值
-                // 否则打印log, 并返回undefined
-                util_error('Exception while run %o: %o\n%o', func, e, e.stack)
-                return undefined
-            }
-        }
-        // 函数的name属性是不可写+可配置的, 故需要如下代码实现类似这样的效果: ret.name = func.name
-        // 在Edge上匿名函数的name的描述符会为undefined, 需要做特殊处理, fuck
-        let funcNameDescriptor = Object.getOwnPropertyDescriptor(func, 'name') || {
-            value: '',
-            writable: false,
-            configurable: true,
-        }
-        Object.defineProperty(ret, 'name', funcNameDescriptor)
-        return ret
-    }
-
-    const util_safe_get = (code) => {
-        return eval(`
-        (()=>{
-            try{
-                return ${code}
-            }catch(e){
-                console.warn(e.toString())
-                return null
-            }
-        })()
-        `)
-    }
 
     const util_ui_alert = function (message, resolve, reject) {
         setTimeout(() => {
@@ -128,7 +97,7 @@ function scriptContent() {
         window.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
 
         const util_init = function (func, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
-            func = util_func_catched(func)
+            func = Func.runCatching(func)
             if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去
                 callbacks[runAt].push({
                     priority,
@@ -293,70 +262,8 @@ function scriptContent() {
             showNotificationAnyway
         };
     }())
-    const util_cookie = (function () {
-        function getCookies() {
-            var map = document.cookie.split('; ').reduce(function (obj, item) {
-                var entry = item.split('=');
-                obj[entry[0]] = entry[1];
-                return obj;
-            }, {});
-            return map;
-        }
 
-        function getCookie(key) {
-            return getCookies()[key];
-        }
 
-        /**
-         * @param key     key
-         * @param value   为undefined时, 表示删除cookie
-         * @param options 为undefined时, 表示过期时间为3年
-         *          为''时, 表示Session cookie
-         *          为数字时, 表示指定过期时间
-         *          为{}时, 表示指定所有的属性
-         * */
-        function setCookie(key, value, options) {
-            if (typeof options !== 'object') {
-                options = {
-                    domain: '.bilibili.com',
-                    path: '/',
-                    'max-age': value === undefined ? 0 : (options === undefined ? 94608000 : options)
-                };
-            }
-            var c = Object.keys(options).reduce(function (str, key) {
-                return str + '; ' + key + '=' + options[key];
-            }, key + '=' + value);
-            document.cookie = c;
-            return c;
-        }
-
-        return new Proxy({ set: setCookie, get: getCookie, all: getCookies }, {
-            get: function (target, prop) {
-                if (prop in target) return target[prop]
-                return getCookie(prop)
-            },
-            set: function (target, prop, value) {
-                setCookie(prop, value)
-                return true
-            }
-        })
-    }())
-
-    const util_jsonp = function (url, callback) {
-        return new Promise((resolve, reject) => {
-            document.head.appendChild(_('script', {
-                src: url,
-                event: {
-                    load: function () {
-                        resolve()
-                    },
-                    error: function () {
-                        reject()
-                    }
-                }
-            }));
-        })
-    }
     const util_generate_sign = function (params, key) {
         var s_keys = [];
         for (var i in params) {
@@ -475,7 +382,7 @@ function scriptContent() {
             show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
                 util_ui_alert(message, buttonTypeConfirmCallback)
             },
-            close: util_func_noop
+            close: Func.noop
         }
 
         util_init(() => {
@@ -549,77 +456,6 @@ function scriptContent() {
         return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
     }
 
-    const util_page = {
-        player: () => location.href.includes('www.bilibili.com/blackboard/html5player'),
-        // 在av页面中的iframe标签形式的player
-        player_in_av: util_func_catched(() => util_page.player() && window.top.location.href.includes('www.bilibili.com/video/av'), (e) => log(e), false),
-        av: () => location.href.includes('www.bilibili.com/video/av') || location.href.includes('www.bilibili.com/video/BV'),
-        av_new: function () { return this.av() && (window.__playinfo__ || window.__playinfo__origin) },
-        bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),
-        bangumi_md: () => location.href.includes('www.bilibili.com/bangumi/media/md'),
-        // movie页面使用window.aid, 保存当前页面av号
-        movie: () => location.href.includes('bangumi.bilibili.com/movie/'),
-        // anime页面使用window.season_id, 保存当前页面season号
-        anime: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/play.*')),
-        anime_ep: () => location.href.includes('www.bilibili.com/bangumi/play/ep'),
-        anime_ss: () => location.href.includes('www.bilibili.com/bangumi/play/ss'),
-        anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
-        anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
-        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi')
-    }
-
-    const balh_config = (function () {
-        const cookies = util_cookie.all() // 缓存的cookies
-        return new Proxy({ /*保存config的对象*/ }, {
-            get: function (target, prop) {
-                if (prop === 'server') {
-                    // const server_inner = balh_config.server_inner
-                    // const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
-                    // return server
-                    return balh_config.server_inner
-                }
-                if (prop in target) {
-                    return target[prop]
-                } else { // 若target中不存在指定的属性, 则从缓存的cookies中读取, 并保存到target中
-                    let value = cookies['balh_' + prop]
-                    switch (prop) {
-                        case 'server_inner':
-                            value = value || r.const.server.defaultServer()
-                            // 迁移回biliplus, 只会执行一次
-                            if (util_page.new_bangumi() && !localStorage.balh_migrate_to_1) {
-                                localStorage.balh_migrate_to_1 = r.const.TRUE
-                                if (value.includes('biliplus.ipcjs.top')) {
-                                    value = r.const.server.defaultServer()
-                                    balh_config.server = value
-                                }
-                            }
-                            break
-                        case 'server_custom':
-                            value = value || ''
-                            break
-                        case 'mode':
-                            value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT)
-                            break
-                        case 'flv_prefer_ws':
-                            value = r.const.FALSE // 关闭该选项
-                            break
-                        default:
-                            // case 'blocked_vip':
-                            // case 'remove_pre_ad':
-                            break
-                    }
-                    target[prop] = value
-                    return value
-                }
-            },
-            set: function (target, prop, value) {
-                target[prop] = value // 更新值
-                util_cookie['balh_' + prop] = value // 更新cookie中的值
-                return true
-            }
-        })
-    }())
-
     const access_key_param_if_exist = function (isKghost) {
         // access_key是由B站验证的, B站帐号和BP帐号不同时, access_key无效
         // kghost的服务器使用的B站帐号, access_key有效
@@ -672,19 +508,19 @@ function scriptContent() {
             })
         }
         if (util_page.new_bangumi()) {
-            if (util_cookie.stardustpgcv === '0606') {
+            if (cookieStorage.stardustpgcv === '0606') {
                 util_init(() => {
                     let $panel = document.querySelector('.error-container > .server-error')
                     if ($panel) {
                         $panel.insertBefore(_('text', '临时切换到旧版番剧页面中...'), $panel.firstChild)
-                        util_cookie.stardustpgcv = '0'
+                        cookieStorage.stardustpgcv = '0'
                         localStorage.balh_temp_switch_to_old_page = r.const.TRUE
                         location.reload()
                     }
                 })
             }
             if (localStorage.balh_temp_switch_to_old_page) {
-                util_cookie.stardustpgcv = '0606'
+                cookieStorage.stardustpgcv = '0606'
                 delete localStorage.balh_temp_switch_to_old_page
             }
         }
@@ -1222,7 +1058,7 @@ function scriptContent() {
         }
 
         function isAreaLimitSeason() {
-            return util_cookie['balh_season_' + getSeasonId()];
+            return cookieStorage['balh_season_' + getSeasonId()];
         }
 
         function needRedirect() {
@@ -1235,7 +1071,7 @@ function scriptContent() {
 
         function setAreaLimitSeason(limit) {
             var season_id = getSeasonId();
-            util_cookie.set('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
+            cookieStorage.set('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
             log('setAreaLimitSeason', season_id, limit);
         }
         /** 使用该方法判断是否需要添加module=bangumi参数, 并不准确... */
@@ -1250,7 +1086,7 @@ function scriptContent() {
         }
 
         function isBangumiPage() {
-            return isBangumi(util_safe_get('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))
+            return isBangumi(Func.safeGet('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))
         }
 
         function getSeasonId() {
@@ -1445,7 +1281,7 @@ function scriptContent() {
                 },
                 processProxySuccess: function (result, alertWhenError = true) {
                     // 将xml解析成json
-                    let obj = Bilibili.xml2obj(result.documentElement)
+                    let obj = Converters.xml2obj(result.documentElement)
                     if (!obj || obj.code) {
                         if (alertWhenError) {
                             util_ui_alert(`从B站接口获取视频地址失败\nresult: ${JSON.stringify(obj)}\n\n点击确定, 进入设置页面关闭'使用B站接口获取视频地址'功能`, balh_ui_setting.show)
@@ -1807,12 +1643,12 @@ function scriptContent() {
         }
 
         function updateLoginFlag(loadCallback) {
-            util_jsonp(balh_config.server + '/login?act=expiretime')
+            Async.jsonp(balh_config.server + '/login?act=expiretime')
                 .then(() => loadCallback && loadCallback(true))
             // .catch(() => loadCallback && loadCallback(false)) // 请求失败不需要回调
         }
         function isLoginBiliBili() {
-            return util_cookie['DedeUserID'] !== undefined
+            return cookieStorage['DedeUserID'] !== undefined
         }
         // 当前在如下情况才会弹一次登录提示框:
         // 1. 第一次使用
@@ -1898,7 +1734,7 @@ function scriptContent() {
                     //登入
                     localStorage.balh_must_updateLoginFlag = r.const.TRUE
                     Promise.resolve('start')
-                        .then(() => util_jsonp(balh_config.server + '/login?act=getlevel'))
+                        .then(() => Async.jsonp(balh_config.server + '/login?act=getlevel'))
                         .then(() => location.reload())
                         .catch(() => location.reload())
                     break;
@@ -1952,7 +1788,7 @@ function scriptContent() {
             if (!aid) {
                 let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1]
                 if (bv) {
-                    aid = Bilibili.bv2aid(bv)
+                    aid = Converters.bv2aid(bv)
                 }
             }
             balh_api_plus_view(aid)
@@ -2505,7 +2341,7 @@ function scriptContent() {
         function main() {
             for (let bp of r.baipiao) {
                 const cookie_key = `balh_baipao_${bp.key}`
-                if (bp.match() && !util_cookie[cookie_key]) {
+                if (bp.match() && !cookieStorage[cookie_key]) {
                     util_ui_pop({
                         content: [
                             _('text', '发现白嫖地址: '), _('a', { href: bp.link }, bp.link),
@@ -2513,7 +2349,7 @@ function scriptContent() {
                         ],
                         confirmBtn: '一键跳转',
                         onConfirm: () => { location.href = bp.link },
-                        onClose: () => { util_cookie.set(cookie_key, r.const.TRUE, '') }
+                        onClose: () => { cookieStorage.set(cookie_key, r.const.TRUE, '') }
                     })
                     break
                 }
@@ -2531,7 +2367,7 @@ function scriptContent() {
         // 服务器需要通过这个接口判断是否有区域限制
         // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
         util_init(() => {
-            const season_id = util_safe_get(`window.__INITIAL_STATE__.mediaInfo.param.season_id`)
+            const season_id = Func.safeGet(`window.__INITIAL_STATE__.mediaInfo.param.season_id`)
             if (season_id) {
                 balh_api_plus_season(season_id)
                     .then(r => log(`season${season_id}`, r))
@@ -2555,8 +2391,8 @@ function scriptContent() {
         )
         // 暴露接口
         window.bangumi_area_limit_hack = {
-            setCookie: util_cookie.set,
-            getCookie: util_cookie.get,
+            setCookie: cookieStorage.set,
+            getCookie: cookieStorage.get,
             login: balh_feature_sign.showLogin,
             logout: balh_feature_sign.showLogout,
             getLog: logHub.getAllMsg,

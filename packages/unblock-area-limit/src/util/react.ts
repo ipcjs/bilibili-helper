@@ -7,7 +7,7 @@
 * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
 * @param children array, 子元素; 也可以直接是html文本;
 */
-function createElement(type: string, props: any | string, children: any[] | string) {
+function createElement(type: string, props?: any | string, children?: any[] | string) {
     let elem: HTMLElement | null = null;
     if (type === "text") {
         return document.createTextNode(props);
