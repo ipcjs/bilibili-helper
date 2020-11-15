@@ -9,7 +9,11 @@
 
 **不要在Greasyfork中提交反馈，去GitHub，Greasyfork问题追踪系统太弱了，不好用**
 
-![设置截图](https://greasyfork.org/system/screenshots/screenshots/000/009/536/original/Image.png)
+![设置截图](https://greasyfork.s3.us-east-2.amazonaws.com/malm3g4mdbzjgqcgjx2mt1pu6chl?response-content-disposition=inline%3B%20filename%3D%22Image.png%22%3B%20filename%2A%3DUTF-8%27%27Image.png&response-content-type=image%2Fpng&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQVNJDSASOPLR55E4%2F20201115%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20201115T160156Z&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=8a475986a15baf1ebcbef1bcc76533355a692dac11491e900ed06471d98443cb)
+
+## 开发
+
+最新版引入了rollup.js来打包脚本, 克隆代码后要执行`npm i`安装依赖, 修改代码时要执行`npm run dev:balh`生成打包好的user.js
 
 ## 问&答
 
@@ -98,4 +102,4 @@ Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibi
 1. [yujincheng08/BiliRoaming: 哔哩漫游，解除B站客户端番剧区域限制的Xposed模块，并且提供其他小功能](https://github.com/yujincheng08/BiliRoaming)
 2. [kghost/bilibili-area-limit: Bilibili 港澳台, 解除区域限制](https://github.com/kghost/bilibili-area-limit)
 
-## [高级设置/更新日志/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/bilibili_bangumi_area_limit_hack.dev.md)
+## [高级设置/更新日志/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.dev.md)

@@ -7,8 +7,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Compress",
-            "program": "${workspaceFolder}/!compress.js"
+            "name": "Compress-deleted",
+            "program": "${workspaceFolder}/!compress.js",
             "args": [
                 "bangumi_evaluation_.user"
             ]

@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        // "target": "ES2016",
+        "lib": [
+            "ES6",
+            "DOM",
+        ]
+    },
+}
