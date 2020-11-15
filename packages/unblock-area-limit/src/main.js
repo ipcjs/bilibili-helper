@@ -12,6 +12,9 @@ import { access_key_param_if_exist } from './api/bilibili';
 import { BiliPlusApi } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
+import { util_init } from './util/initiator'
+import { util_ui_msg } from './util/message'
+import { RegExps } from './util/regexps'
 
 function scriptContent() {
     'use strict';
@@ -28,315 +31,8 @@ function scriptContent() {
         return
     }
 
-    const _raw = (str) => str.replace(/(\.|\?)/g, '\\$1')
-    const util_regex_url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`)
-    const util_regex_url_path = (path) => new RegExp(`^(https?:)?//[\\w\\-\\.]+${_raw(path)}`)
-
     log = util_debug
     log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
-
-    const util_init = (function () {
-        const RUN_AT = {
-            DOM_LOADED: 0,
-            DOM_LOADED_AFTER: 1,
-            COMPLETE: 2,
-        }
-        const PRIORITY = {
-            FIRST: 1e6,
-            HIGH: 1e5,
-            BEFORE: 1e3,
-            DEFAULT: 0,
-            AFTER: -1e3,
-            LOW: -1e5,
-            LAST: -1e6,
-        }
-        const callbacks = {
-            [RUN_AT.DOM_LOADED]: [],
-            [RUN_AT.DOM_LOADED_AFTER]: [],
-            [RUN_AT.COMPLETE]: [],
-        }
-        const util_page_valid = () => true // 是否要运行
-        const dclCreator = function (runAt) {
-            let dcl = function () {
-                util_init.atRun = runAt // 更新运行状态
-                const valid = util_page_valid()
-                // 优先级从大到小, index从小到大, 排序
-                callbacks[runAt].sort((a, b) => b.priority - a.priority || a.index - b.index)
-                    .filter(item => valid || item.always)
-                    .forEach(item => item.func(valid))
-            }
-            return dcl
-        }
-
-        if (window.document.readyState !== 'loading') {
-            const msg = `${GM_info.script.name} 加载时机不对, 不能保证正常工作\n\n1. 点击'确定', 刷新页面/重载脚本\n2. 若依然出现该提示, 请尝试'硬性重新加载'(快捷键一般为ctrl+f5)\n3. 若还是出现该提示, 请尝试关闭再重新打开该页面\n4. 若反复出现该提示, 请尝试换个浏览器\n`
-            /*
-            ui.alert(msg, () => {
-                location.reload(true)
-            })
-            */
-            // throw new Error('unit_init must run at loading, current is ' + document.readyState)
-            util_warn(msg)
-        }
-
-        window.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
-        window.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED_AFTER))
-        window.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
-
-        const util_init = function (func, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
-            func = Func.runCatching(func)
-            if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去
-                callbacks[runAt].push({
-                    priority,
-                    index: callbacks[runAt].length, // 使用callback数组的长度, 作为添加元素的index属性
-                    func,
-                    always
-                })
-            } else { // 否则直接运行
-                let valid = util_page_valid()
-                setTimeout(() => (valid || always) && func(valid), 1)
-            }
-            return func
-        }
-        util_init.atRun = -1 // 用来表示当前运行到什么状态
-        util_init.RUN_AT = RUN_AT
-        util_init.PRIORITY = PRIORITY
-        return util_init
-    }())
-    /** 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/ */
-    const util_notify = (function () {
-        var available = {};
-        var shown = [];
-        var use = {
-            'hasPermission': function () { return null; },
-            'requestPermission': function (callback) { return null; },
-            'hideNotification': function (notify) { return null; },
-            'showNotification': function (id, title, body, icon, delay, onclick) { return null; }
-        };
-
-        // 检查一个微博是不是已经被显示过了，如果显示过了不重复显示
-        var shownFeed = function (id) {
-            return false;
-        };
-
-        // webkitNotifications
-        // Tab Notifier 扩展实现此接口，但显示的桌面提示最多只能显示前两行
-        if (typeof webkitNotifications !== 'undefined') available.webkit = {
-            'hasPermission': function () {
-                return [true, null, false][webkitNotifications.checkPermission()];
-            },
-            'requestPermission': function (callback) {
-                return webkitNotifications.requestPermission(callback);
-            },
-            'hideNotification': function (notify) {
-                notify.cancel();
-                afterHideNotification(notify);
-            },
-            'showNotification': function (id, title, body, icon, delay, onclick) {
-                if (shownFeed(id)) return null;
-                var notify = webkitNotifications.createNotification(icon, title, body);
-                if (delay && delay > 0) notify.addEventListener('display', function () {
-                    setTimeout(function () { hideNotification(notify); }, delay);
-                });
-                if (onclick) notify.addEventListener('click', function () {
-                    onclick.apply(this, arguments);
-                    hideNotification(notify);
-                });
-                notify.show();
-                return notify;
-            },
-        };
-
-        // Notification
-        // Firefox 22+
-        // 显示4秒会自动关闭 https://bugzil.la/875114
-        if (typeof Notification !== 'undefined') available.standard = {
-            'hasPermission': function () {
-                return {
-                    'granted': true,
-                    'denied': false,
-                    'default': null,
-                }[Notification.permission];
-            },
-            'requestPermission': function (callback) {
-                return Notification.requestPermission(callback);
-            },
-            'hideNotification': function (notify) {
-                notify.close();
-                afterHideNotification(notify);
-            },
-            'showNotification': function (id, title, body, icon, delay, onclick) {
-                if (shownFeed(id)) return null;
-                var notify = new Notification(title, { 'body': body, 'icon': icon, 'requireInteraction': !delay });
-                if (delay && delay > 0) notify.addEventListener('show', function () {
-                    setTimeout(function () {
-                        hideNotification(notify);
-                    }, delay);
-                });
-                if (onclick) notify.addEventListener('click', function () {
-                    onclick.apply(this, arguments);
-                    hideNotification(notify);
-                });
-                return notify;
-            },
-        };
-
-        // 有哪些接口可用
-        var availableNotification = function () {
-            return Object.keys(available);
-        };
-        // 选择用哪个接口
-        var choseNotification = function (prefer) {
-            return (use = prefer && available[prefer] || available.standard);
-        };
-        choseNotification();
-        // 检查权限
-        var hasPermission = function () {
-            return use.hasPermission.apply(this, arguments);
-        };
-        // 请求权限
-        var requestPermission = function () {
-            return use.requestPermission.apply(this, arguments);
-        };
-        // 显示消息
-        var showNotification = function (id, title, body, icon, delay, onclick) {
-            var notify = use.showNotification.apply(this, arguments);
-            shown.push(notify);
-            return notify;
-        };
-        // 隐藏已经显示的消息
-        var hideNotification = function (notify) {
-            use.hideNotification.apply(this, arguments);
-            return notify;
-        };
-        var afterHideNotification = function (notify) {
-            shown = shown.filter(function (x) { return x !== notify; });
-        };
-
-        document.addEventListener('unload', function () {
-            shown.forEach(hideNotification);
-            shown = [];
-        });
-        var showNotificationAnyway = function (id, title, body, icon, delay, onclick) {
-            var that = this, thatArguments = arguments;
-            switch (that.hasPermission()) {
-                case null: // default
-                    that.requestPermission(function () {
-                        showNotificationAnyway.apply(that, thatArguments);
-                    });
-                    break;
-                case true: // granted
-                    // 只有已获取了授权, 才能有返回值...
-                    return that.showNotification.apply(that, thatArguments);
-                    break;
-                case false: // denied
-                    log('Notification permission: denied');
-                    break;
-            }
-            return null;
-        }
-
-        return {
-            'availableNotification': availableNotification,
-            'choseNotification': choseNotification,
-            'hasPermission': hasPermission,
-            'requestPermission': requestPermission,
-            'showNotification': showNotification,
-            'hideNotification': hideNotification,
-            show: function (body, onclick, delay = 3e3) {
-                return this.showNotificationAnyway(Date.now(), GM_info.script.name, body, '//bangumi.bilibili.com/favicon.ico', delay, onclick)
-            },
-            showNotificationAnyway
-        };
-    }())
-
-
-
-
-
-    /**
-     * MessageBox -> from base.core.js
-     * MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
-     * MessageBox.close()
-     */
-    const util_ui_msg = (function () {
-        function MockMessageBox() {
-            this.show = (...args) => util_log(MockMessageBox.name, 'show', args)
-            this.close = (...args) => util_log(MockMessageBox.name, 'close', args)
-        }
-
-        let popMessage = null
-        let mockPopMessage = new MockMessageBox()
-        let notifyPopMessage = {
-            _current_notify: null,
-            show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-                this.close()
-                this._current_notify = util_notify.show(message, buttonTypeConfirmCallback, closeTime)
-            },
-            close: function () {
-                if (this._current_notify) {
-                    util_notify.hideNotification(this._current_notify)
-                    this._current_notify = null
-                }
-            }
-        }
-        let alertPopMessage = {
-            show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-                ui.alert(message, buttonTypeConfirmCallback)
-            },
-            close: Func.noop
-        }
-
-        util_init(() => {
-            if (!popMessage && window.MessageBox) {
-                popMessage = new window.MessageBox()
-                let orignShow = popMessage.show
-                popMessage.show = function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-                    // 这个窗，有一定机率弹不出来。。。不知道为什么
-                    orignShow.call(this, referenceElement, message.replace('\n', '<br>'), closeTime, boxType, buttonTypeConfirmCallback)
-                }
-                popMessage.close = function () {
-                    // 若没调用过show, 就调用close, msgbox会为null, 导致报错
-                    this.msgbox != null && window.MessageBox.prototype.close.apply(this, arguments)
-                }
-            }
-        }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED_AFTER)
-
-        return {
-            _impl: function () {
-                return popMessage || alertPopMessage
-            },
-            show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
-                let pop = this._impl()
-                return pop.show.apply(pop, arguments)
-            },
-            close: function () {
-                let pop = this._impl()
-                return pop.close.apply(pop, arguments)
-            },
-            setMsgBoxFixed: function (fixed) {
-                if (popMessage) {
-                    popMessage.msgbox[0].style.position = fixed ? 'fixed' : ''
-                } else {
-                    util_log(MockMessageBox.name, 'setMsgBoxFixed', fixed)
-                }
-            },
-            showOnNetError: function (e) {
-                if (e.readyState === 0) {
-                    this.show($('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', balh_ui_setting.show);
-                }
-            },
-            showOnNetErrorInPromise: function () {
-                return p => p
-                    .catch(e => {
-                        this.showOnNetError(e)
-                        return Promise.reject(e)
-                    })
-            }
-        }
-    }())
-
-
 
     const balh_is_close = false
 
@@ -475,6 +171,7 @@ function scriptContent() {
         replaceUserState()
         replacePlayInfo()
     })()
+
     const balh_feature_area_limit = (function () {
         if (balh_is_close) return
 
@@ -514,8 +211,8 @@ function scriptContent() {
                                 let cb = value
                                 value = function (event) {
                                     if (target.readyState === 4) {
-                                        if (target.responseURL.match(util_regex_url('bangumi.bilibili.com/view/web_api/season/user/status'))
-                                            || target.responseURL.match(util_regex_url('api.bilibili.com/pgc/view/web/season/user/status'))) {
+                                        if (target.responseURL.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
+                                            || target.responseURL.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
                                             log('/season/user/status:', target.responseText)
                                             let json = JSON.parse(target.responseText)
                                             let rewriteResult = false
@@ -533,7 +230,7 @@ function scriptContent() {
                                                     container.responseText = JSON.stringify(json)
                                                 }
                                             }
-                                        } else if (target.responseURL.match(util_regex_url('bangumi.bilibili.com/web_api/season_area'))) {
+                                        } else if (target.responseURL.match(RegExps.url('bangumi.bilibili.com/web_api/season_area'))) {
                                             log('/season_area', target.responseText)
                                             let json = JSON.parse(target.responseText)
                                             if (json.code === 0 && json.result) {
@@ -543,7 +240,7 @@ function scriptContent() {
                                                     container.responseText = JSON.stringify(json)
                                                 }
                                             }
-                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/web-interface/nav'))) {
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/web-interface/nav'))) {
                                             const isFromReport = Strings.getSearchParam(target.responseURL, 'from') === 'report'
                                             let json = JSON.parse(target.responseText)
                                             log('/x/web-interface/nav', (json.data && json.data.isLogin)
@@ -556,7 +253,7 @@ function scriptContent() {
                                                 json.data.vipStatus = 1; // 状态, 启用
                                                 container.responseText = JSON.stringify(json)
                                             }
-                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player.so'))) {
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player.so'))) {
                                             // 这个接口的返回数据貌似并不会影响界面...
                                             if (balh_config.blocked_vip) {
                                                 log('/x/player.so')
@@ -571,11 +268,11 @@ function scriptContent() {
                                                     container.response = container.responseText
                                                 }
                                             }
-                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/x/player/playurl'))) {
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/playurl'))) {
                                             log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
-                                        } else if (target.responseURL.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
                                             && !Strings.getSearchParam(target.responseURL, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
@@ -630,7 +327,7 @@ function scriptContent() {
                                             container.__block_response = true
                                             return dispatchResultTransformer
                                         }
-                                        if (container.__url.match(util_regex_url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
+                                        if (container.__url.match(RegExps.url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
                                             log('/x/player/playurl')
                                             // debugger
                                             bilibiliApis._playurl.asyncAjax(container.__url)
@@ -647,7 +344,7 @@ function scriptContent() {
                                                     return data
                                                 })
                                                 .compose(dispatchResultTransformerCreator())
-                                        } else if (container.__url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))
+                                        } else if (container.__url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
                                             && !Strings.getSearchParam(container.__url, 'balh_ajax')
                                             && needRedirect()) {
                                             log('/pgc/player/web/playurl')
@@ -708,7 +405,7 @@ function scriptContent() {
                 let oriResultTransformerWhenProxyError
                 let one_api;
                 // log(param)
-                if (param.url.match(util_regex_url_path('/web_api/get_source'))) {
+                if (param.url.match(RegExps.urlPath('/web_api/get_source'))) {
                     one_api = bilibiliApis._get_source;
                     oriResultTransformer = p => p
                         .then(json => {
@@ -726,17 +423,17 @@ function scriptContent() {
                                 return json;
                             }
                         })
-                } else if (param.url.match(util_regex_url_path('/player/web_api/playurl')) // 老的番剧页面playurl接口
-                    || param.url.match(util_regex_url_path('/player/web_api/v2/playurl')) // 新的番剧页面playurl接口
-                    || param.url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl')) // 新的番剧页面playurl接口
-                    || (balh_config.enable_in_av && param.url.match(util_regex_url('interface.bilibili.com/v2/playurl'))) // 普通的av页面playurl接口
+                } else if (param.url.match(RegExps.urlPath('/player/web_api/playurl')) // 老的番剧页面playurl接口
+                    || param.url.match(RegExps.urlPath('/player/web_api/v2/playurl')) // 新的番剧页面playurl接口
+                    || param.url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl')) // 新的番剧页面playurl接口
+                    || (balh_config.enable_in_av && param.url.match(RegExps.url('interface.bilibili.com/v2/playurl'))) // 普通的av页面playurl接口
                 ) {
                     // 新playrul:
                     // 1. 部分页面参数放在param.data中
                     // 2. 成功时, 返回的结果放到了result中: {"code":0,"message":"success","result":{}}
                     // 3. 失败时, 返回的结果没变
                     let isNewPlayurl
-                    if (isNewPlayurl = param.url.match(util_regex_url('api.bilibili.com/pgc/player/web/playurl'))) {
+                    if (isNewPlayurl = param.url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))) {
                         if (param.data) {
                             param.url += `?${Object.keys(param.data).map(key => `${key}=${param.data[key]}`).join('&')}`
                             param.data = undefined
@@ -794,7 +491,7 @@ function scriptContent() {
                             return r
                         })
                         .compose(oriDispatchResultTransformer)
-                } else if (param.url.match(util_regex_url('interface.bilibili.com/player?'))) {
+                } else if (param.url.match(RegExps.url('interface.bilibili.com/player?'))) {
                     if (balh_config.blocked_vip) {
                         mySuccess = function (data) {
                             try {
@@ -813,7 +510,7 @@ function scriptContent() {
                             oriSuccess(data);
                         };
                     }
-                } else if (param.url.match(util_regex_url('api.bilibili.com/x/ad/video?'))) {
+                } else if (param.url.match(RegExps.url('api.bilibili.com/x/ad/video?'))) {
                     if (balh_config.remove_pre_ad) {
                         mySuccess = function (data) {
                             log('/ad/video', data)
@@ -883,7 +580,7 @@ function scriptContent() {
                             return Async.wrapper(target.json.bind(target),
                                 oriResult => {
                                     util_debug('injectFetch:', target.url)
-                                    if (target.url.match(util_regex_url_path('/player/web_api/v2/playurl/html5'))) {
+                                    if (target.url.match(RegExps.urlPath('/player/web_api/v2/playurl/html5'))) {
                                         let cid = Strings.getSearchParam(target.url, 'cid')
                                         return BiliPlusApi.playurl(cid)
                                             .then(result => {
