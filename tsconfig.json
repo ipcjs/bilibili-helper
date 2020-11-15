@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "strict": true,
-        // "target": "ESNext",
+        // "target": "ES2016",
         "lib": [
             "ES6",
             "DOM",

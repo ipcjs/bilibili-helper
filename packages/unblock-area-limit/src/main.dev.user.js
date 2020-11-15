@@ -21,7 +21,7 @@
 // @include      *://link.acg.tv/forum.php*
 // @run-at       document-start
 // @grant        none
-// @require      file:///C:/GitHub/bilibili-helper/bilibili_bangumi_area_limit_hack.user.js
+// @require      file:///C:/GitHub/bilibili-helper/scripts/bilibili_bangumi_area_limit_hack.user.js
 // ==/UserScript==
 
 `使用@require的方式执行本地磁盘中的脚本, 达到使用外部编辑器编辑脚本的目的`;

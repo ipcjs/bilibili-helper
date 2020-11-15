@@ -1,5 +1,9 @@
 import { util_error } from "./log"
 
+export async function asyncTest() {
+    return 'asyncTest'
+}
+
 export namespace Func {
     export function noop() { }
 
