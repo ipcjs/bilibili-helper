@@ -1,5 +1,3 @@
-import { StringAnyObject } from "../util/types";
-
 interface BalhInterface {
     showSettings: () => void
 }

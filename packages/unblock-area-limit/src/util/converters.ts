@@ -1,5 +1,4 @@
 import { util_error } from "./log";
-import { StringAnyObject, StringStringObject } from "./types";
 
 export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code

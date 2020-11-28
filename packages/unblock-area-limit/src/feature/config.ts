@@ -1,5 +1,4 @@
 import { cookieStorage } from "../util/cookie"
-import { StringStringObject } from "../util/types"
 import { util_page } from "./page"
 import { r } from "./r"
 

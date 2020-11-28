@@ -1,5 +1,4 @@
 import { util_warn } from "./log"
-import { ValueOf } from "./types"
 import { Func } from "./utils"
 
 interface CallbackItem {

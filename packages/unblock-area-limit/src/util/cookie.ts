@@ -1,4 +1,3 @@
-import { StringAnyObject as StringAnyObject, StringStringObject } from "./types";
 
 function getCookies(): StringStringObject {
     var map = document.cookie.split('; ').reduce(function (obj: any, item) {
