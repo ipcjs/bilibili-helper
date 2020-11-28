@@ -9,6 +9,7 @@ declare global {
         __playinfo__?: StringAnyObject
         __playinfo__origin?: StringAnyObject
         bangumi_area_limit_hack: BalhInterface
+        GrayManager?: StringAnyObject
     }
     interface Promise<T> {
         compose: any

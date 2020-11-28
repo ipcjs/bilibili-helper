@@ -15,6 +15,7 @@ import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
 import { util_ui_msg } from './util/message'
 import { RegExps } from './util/regexps'
+import * as bili from './feature/bili';
 
 function scriptContent() {
     'use strict';
@@ -36,52 +37,9 @@ function scriptContent() {
 
     const balh_is_close = false
 
-    const balh_version_remind = (function () {
-        if (!util_page.new_bangumi()) return
+    bili.version_remind()
+    bili.switch_to_old_player()
 
-        util_init(() => {
-            if ((localStorage.balh_version || '0') < GM_info.script.version) {
-                localStorage.balh_version = GM_info.script.version
-                let version_remind = _t('version_remind')
-                if (version_remind) {
-                    ui.pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新日志</h3>${version_remind}` })
-                }
-            }
-        })
-    })()
-
-    const balh_feature_switch_to_old_player = (function () {
-        if (util_page.av() && !localStorage.balh_disable_switch_to_old_player) {
-            util_init(() => {
-                let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a')
-                if ($switchToOldBtn) {
-                    ui.pop({
-                        content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
-                        confirmBtn: '切换回旧版',
-                        onConfirm: () => $switchToOldBtn.click(),
-                        onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
-                    })
-                }
-            })
-        }
-        if (util_page.new_bangumi()) {
-            if (cookieStorage.stardustpgcv === '0606') {
-                util_init(() => {
-                    let $panel = document.querySelector('.error-container > .server-error')
-                    if ($panel) {
-                        $panel.insertBefore(_('text', '临时切换到旧版番剧页面中...'), $panel.firstChild)
-                        cookieStorage.stardustpgcv = '0'
-                        localStorage.balh_temp_switch_to_old_page = r.const.TRUE
-                        location.reload()
-                    }
-                })
-            }
-            if (localStorage.balh_temp_switch_to_old_page) {
-                cookieStorage.stardustpgcv = '0606'
-                delete localStorage.balh_temp_switch_to_old_page
-            }
-        }
-    })()
     const balh_feature_area_limit_new = (function () {
         if (balh_is_close) return
 
@@ -1133,35 +1091,9 @@ function scriptContent() {
             }
         }
     }())
-    const balh_feature_check_html5 = (function () {
-        function isHtml5Player() {
-            return localStorage.defaulth5 === '1'
-        }
 
-        function checkHtml5() {
-            var playerContent = document.querySelector('.player-content');
-            if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
-                new MutationObserver(function (mutations, observer) {
-                    observer.disconnect();
-                    localStorage.balh_h5_not_first = r.const.TRUE;
-                    if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
-                        window.GrayManager.clickMenu('change_h5');// change_flash, change_h5
-                    }
-                }).observe(playerContent, {
-                    childList: true, // 监听child的增减
-                    attributes: false, // 监听属性的变化
-                });
-            }
-        }
+    bili.check_html5()
 
-        util_init(() => {
-            // 除了播放器和番剧列表页面, 其他页面都需要检测html5
-            if (!(util_page.bangumi() || util_page.bangumi_md() || util_page.player())) {
-                checkHtml5()
-            }
-        })
-        return isHtml5Player
-    }())
     const balh_feature_runPing = function () {
         var pingOutput = document.getElementById('balh_server_ping');
 
@@ -1895,44 +1827,8 @@ function scriptContent() {
         }
     }())
 
-    const balh_jump_to_baipiao = (function () {
-        function main() {
-            for (let bp of r.baipiao) {
-                const cookie_key = `balh_baipao_${bp.key}`
-                if (bp.match() && !cookieStorage[cookie_key]) {
-                    ui.pop({
-                        content: [
-                            _('text', '发现白嫖地址: '), _('a', { href: bp.link }, bp.link),
-                            _('div', {}, bp.message),
-                        ],
-                        confirmBtn: '一键跳转',
-                        onConfirm: () => { location.href = bp.link },
-                        onClose: () => { cookieStorage.set(cookie_key, r.const.TRUE, '') }
-                    })
-                    break
-                }
-            }
-        }
-        util_init(() => {
-            main()
-        }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
-    }())
-
-    const balh_mark_serve_check_area_limit_state = (function () {
-        if (!util_page.bangumi_md()) {
-            return
-        }
-        // 服务器需要通过这个接口判断是否有区域限制
-        // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
-        util_init(() => {
-            const season_id = Func.safeGet(`window.__INITIAL_STATE__.mediaInfo.param.season_id`)
-            if (season_id) {
-                BiliPlusApi.season(season_id)
-                    .then(r => log(`season${season_id}`, r))
-                    .catch(e => log(`season${season_id}`, e))
-            }
-        })
-    }())
+    bili.jump_to_baipiao()
+    bili.biliplus_check_area_limit()
 
     function main() {
         util_info(
