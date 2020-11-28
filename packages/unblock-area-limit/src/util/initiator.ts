@@ -1,4 +1,5 @@
 import { util_warn } from "./log"
+import { ValueOf } from "./types"
 import { Func } from "./utils"
 
 interface CallbackItem {
@@ -12,7 +13,7 @@ const RUN_AT = {
     DOM_LOADED: 0,
     DOM_LOADED_AFTER: 1,
     COMPLETE: 2,
-}
+} as const;
 const PRIORITY = {
     FIRST: 1e6,
     HIGH: 1e5,
@@ -21,14 +22,14 @@ const PRIORITY = {
     AFTER: -1e3,
     LOW: -1e5,
     LAST: -1e6,
-}
+} as const;
 const callbacks = {
     [RUN_AT.DOM_LOADED]: <CallbackItem[]>[],
     [RUN_AT.DOM_LOADED_AFTER]: <CallbackItem[]>[],
     [RUN_AT.COMPLETE]: <CallbackItem[]>[],
 }
 const util_page_valid = () => true // 是否要运行
-const dclCreator = function (runAt: number) {
+const dclCreator = function (runAt: ValueOf<typeof RUN_AT>) {
     let dcl = function () {
         util_init.atRun = runAt // 更新运行状态
         const valid = util_page_valid()
@@ -56,7 +57,12 @@ window.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED_AFTER))
 window.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
 
 
-const util_init = function (func: Function, priority = PRIORITY.DEFAULT, runAt = RUN_AT.DOM_LOADED, always = false) {
+const util_init = function (
+    func: Function,
+    priority: ValueOf<typeof PRIORITY> = PRIORITY.DEFAULT,
+    runAt: ValueOf<typeof RUN_AT> = RUN_AT.DOM_LOADED,
+    always = false,
+) {
     func = Func.runCatching(func)
     if (util_init.atRun < runAt) { // 若还没运行到runAt指定的状态, 则放到队列里去
         callbacks[runAt].push({
