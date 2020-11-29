@@ -2,9 +2,14 @@
     "compilerOptions": {
         "strict": true,
         // "target": "ES2016",
+        "allowJs": true,
         "lib": [
             "ES6",
             "DOM",
-        ]
+        ],
     },
+    "include": [
+        "packages/**/*.ts",
+        "types/**/*.ts",
+    ],
 }

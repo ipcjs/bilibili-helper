@@ -10,6 +10,12 @@ declare global {
         __playinfo__origin?: StringAnyObject
         bangumi_area_limit_hack: BalhInterface
         GrayManager?: StringAnyObject
+        __balh_app_only__?: boolean
+        balh_auth_window?: Window
+        MessageBox?: {
+            new(): BiliMessageBox
+            prototype: BiliMessageBox
+        }
     }
     interface Promise<T> {
         compose: any

@@ -29,7 +29,7 @@ export function fill_season_page() {
         }catch(e){util_error(e);}
         */
 
-        const msg = _('a', { href: '//bangumi.bilibili.com/anime/' + season_id + '/play', style: { fontSize: '20px' } }, [_('text', `【${GM_info.script.name}】尝试获取视频列表中...`)]) as HTMLElement
+        const msg = _('a', { href: '//bangumi.bilibili.com/anime/' + season_id + '/play', style: { fontSize: '20px' } }, [_('text', `【${GM_info.script.name}】尝试获取视频列表中...`)])
         const content = _('div');
 
         error_container.insertBefore(content, error_container.firstChild);
@@ -51,7 +51,7 @@ export function fill_season_page() {
                                 _('div', { className: 'text-wrp-num' }, [_('div', { className: 'text-wrp-num-content' }, [_('text', `第${i.index}话`)])]),
                                 _('div', { className: 'text-wrp-title trunc' }, [_('text', i.index_title)])
                             ])
-                        ])]) as HTMLElement);
+                        ])]));
                     });
                     return children;
                 }

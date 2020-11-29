@@ -4,7 +4,7 @@ import { Objects } from "./objects"
 import { _ } from "./react"
 
 export namespace ui {
-    export const alert = function (message: string, resolve: Function, reject?: Function) {
+    export const alert = function (message: string, resolve?: Function, reject?: Function) {
         setTimeout(() => {
             if (resolve) {
                 if (window.confirm(message)) {
@@ -48,7 +48,7 @@ export namespace ui {
      */
     export const pop = function (param: PopParam) {
         if (typeof param.content === 'string') {
-            let template = _('template') as HTMLTemplateElement;
+            let template = _('template');
             template.innerHTML = param.content.trim()
             param.content = Array.from(template.content.childNodes)
         } else if (!(param.content instanceof Array)) {
@@ -63,7 +63,7 @@ export namespace ui {
 
         document.querySelector('#AHP_Notice')?.remove();
 
-        let div = _('div', { id: 'AHP_Notice' }) as HTMLElement;
+        let div = _('div', { id: 'AHP_Notice' });
         let children = [];
         if (param.showConfirm || param.confirmBtn || param.onConfirm) {
             children.push(_('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));

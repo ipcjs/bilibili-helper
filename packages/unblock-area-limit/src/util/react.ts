@@ -1,3 +1,6 @@
+interface TypeNameMap extends HTMLElementTagNameMap {
+    'text': Text
+}
 /**
 * 创建元素的快捷方法:
 * 1. type, props, children
@@ -7,10 +10,14 @@
 * @param props object, 属性; 特殊的属性名有: className, 类名; style, 样式, 值为(样式名, 值)形式的object; event, 值为(事件名, 监听函数)形式的object;
 * @param children array, 子元素; 也可以直接是html文本;
 */
-function createElement(type: string, props?: any | string, children?: any[] | string) {
+function createElement<K extends keyof TypeNameMap>(
+    type: K,
+    props?: any | string,
+    children?: any[] | string
+): TypeNameMap[K] {
     let elem: HTMLElement | null = null;
     if (type === "text") {
-        return document.createTextNode(props);
+        return document.createTextNode(props) as any;
     } else {
         elem = document.createElement(type);
     }
@@ -39,7 +46,7 @@ function createElement(type: string, props?: any | string, children?: any[] | st
             }
         }
     }
-    return elem;
+    return elem as any;
 }
 
 export {

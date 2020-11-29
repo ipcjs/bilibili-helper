@@ -2,13 +2,22 @@ import { cookieStorage } from "../util/cookie"
 import { util_page } from "./page"
 import { r } from "./r"
 
+export const balh_is_close = false
+
 interface BalhConfig {
     server: string
     server_inner: string
     server_custom: string
     mode: string
     flv_prefer_ws: string
-    blocked_vip: boolean
+    upos_server?: string
+    /** 值为{@link r.const.TRUE} 或 {@link r.const.FALSE}, 当成boolean看也没太大问题 */
+    blocked_vip?: boolean
+    /** 同上 */
+    enable_in_av?: boolean
+    /** 同上 */
+    remove_pre_ad?: boolean
+    [k: string]: string | boolean | undefined
 }
 
 const cookies = cookieStorage.all() // 缓存的cookies

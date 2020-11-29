@@ -2,11 +2,10 @@ import { util_init } from "../../util/initiator";
 import { util_page } from "../page";
 import { r } from "../r";
 
+export function isHtml5Player() {
+    return localStorage.defaulth5 === '1'
+}
 export function check_html5() {
-    function isHtml5Player() {
-        return localStorage.defaulth5 === '1'
-    }
-
     function checkHtml5() {
         var playerContent = document.querySelector('.player-content');
         if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
@@ -29,5 +28,4 @@ export function check_html5() {
             checkHtml5()
         }
     })
-    return isHtml5Player
 }

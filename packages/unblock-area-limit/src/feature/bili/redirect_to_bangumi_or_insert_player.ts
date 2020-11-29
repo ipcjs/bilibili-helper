@@ -112,7 +112,7 @@ export function redirect_to_bangumi_or_insert_player() {
 
             return pages.map(function (item, index) {
                 let isCurPage = item.page == page
-                let $item = _('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)]) as HTMLElement
+                let $item = _('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [_('text', item.page + ': ' + item.part)])
                 if (isCurPage) $curPage = $item
                 return $item
             });
@@ -120,12 +120,12 @@ export function redirect_to_bangumi_or_insert_player() {
         // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
         let $pageBody = document.querySelector<HTMLElement>('.b-page-body');
         if (!$pageBody) { // 若不存在, 则创建
-            $pageBody = _('div', { className: '.b-page-body' }) as HTMLElement;
+            $pageBody = _('div', { className: '.b-page-body' });
             document.querySelector('body')!.insertBefore($pageBody, document.querySelector('#app'))
             // 添加相关样式
             document.head.appendChild(_('link', { type: 'text/css', rel: 'stylesheet', href: '//static.hdslb.com/css/core-v5/page-core.css' }))
         }
-        let iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) }) as HTMLFrameElement
+        let iframe = _('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) })
 
         // 添加播放器
         $pageBody.appendChild(_('div', { className: 'player-wrapper' }, [

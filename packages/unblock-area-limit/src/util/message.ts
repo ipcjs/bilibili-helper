@@ -5,21 +5,17 @@ import { util_notify } from './notification'
 import { ui } from './ui'
 import { Func } from './utils'
 /**
+ * {@link BiliMessageBox}
  * MessageBox -> from base.core.js
  * MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
  * MessageBox.close()
- * 
- * 用的少, 懒得加类型注释_(:3」∠)_
  */
-
-function MockMessageBox() {
-    this.show = (...args) => util_log(MockMessageBox.name, 'show', args)
-    this.close = (...args) => util_log(MockMessageBox.name, 'close', args)
+let popMessage: BiliMessageBox | null = null
+let mockPopMessage: BiliMessageBox = {
+    show: (...args) => util_log('MockMessageBox', 'show', args),
+    close: (...args) => util_log('MockMessageBox', 'close', args),
 }
-
-let popMessage = null
-let mockPopMessage = new MockMessageBox()
-let notifyPopMessage = {
+let notifyPopMessage: BiliMessageBox = {
     _current_notify: null,
     show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
         this.close()
@@ -32,7 +28,7 @@ let notifyPopMessage = {
         }
     }
 }
-let alertPopMessage = {
+let alertPopMessage: BiliMessageBox = {
     show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
         ui.alert(message, buttonTypeConfirmCallback)
     },
@@ -49,12 +45,12 @@ util_init(() => {
         }
         popMessage.close = function () {
             // 若没调用过show, 就调用close, msgbox会为null, 导致报错
-            this.msgbox != null && window.MessageBox.prototype.close.apply(this, arguments)
+            this.msgbox != null && window.MessageBox!.prototype.close.apply(this, [])
         }
     }
 }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED_AFTER)
 
-export const util_ui_msg = {
+export const util_ui_msg: BiliMessageBox = {
     _impl: function () {
         return popMessage || alertPopMessage
     },
@@ -66,21 +62,21 @@ export const util_ui_msg = {
         let pop = this._impl()
         return pop.close.apply(pop, arguments)
     },
-    setMsgBoxFixed: function (fixed) {
+    setMsgBoxFixed: function (fixed: boolean) {
         if (popMessage) {
             popMessage.msgbox[0].style.position = fixed ? 'fixed' : ''
         } else {
-            util_log(MockMessageBox.name, 'setMsgBoxFixed', fixed)
+            util_log('MockMessageBox', 'setMsgBoxFixed', fixed)
         }
     },
-    showOnNetError: function (e) {
+    showOnNetError: function (e: any) {
         if (e.readyState === 0) {
-            this.show($('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', window.bangumi_area_limit_hack.showSettings);
+            this.show(window.$('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', window.bangumi_area_limit_hack.showSettings);
         }
     },
     showOnNetErrorInPromise: function () {
-        return p => p
-            .catch(e => {
+        return (p: any) => p
+            .catch((e: any) => {
                 this.showOnNetError(e)
                 return Promise.reject(e)
             })

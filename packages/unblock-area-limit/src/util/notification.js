@@ -130,7 +130,7 @@ var showNotificationAnyway = function (id, title, body, icon, delay, onclick) {
             return that.showNotification.apply(that, thatArguments);
             break;
         case false: // denied
-            log('Notification permission: denied');
+            console.log('Notification permission: denied');
             break;
     }
     return null;
