@@ -886,7 +886,7 @@ function scriptContent() {
                             return Promise.reject(e)
                         })
                         // 报错时, 延时1秒再发送错误信息
-                        .catch(e => util_promise_timeout(1000).then(r => Promise.reject(e)))
+                        .catch(e => Async.timeout(1000).then(r => Promise.reject(e)))
                         .catch(e => {
                             let msg
                             if (typeof e === 'object' && e.statusText == 'error') {

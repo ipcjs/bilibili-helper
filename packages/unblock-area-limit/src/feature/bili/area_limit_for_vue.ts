@@ -1,4 +1,6 @@
-import { log } from "../../util/log"
+import { util_init } from "../../util/initiator"
+import { log, util_warn } from "../../util/log"
+import { _ } from "../../util/react"
 import { balh_config, balh_is_close } from "../config"
 import { util_page } from "../page"
 
@@ -20,6 +22,23 @@ export function modifyGlobalValue<T = any>(name: string, modifyFn: (value: T) =>
     if (_window[name_origin]) {
         _window[name] = _window[name_origin]
     }
+}
+
+function fixBangumiPlayPage() {
+    util_init(() => {
+        let $eplist_module = document.getElementById('eplist_module')
+        if (!$eplist_module) {
+            const $danmukuBox = document.getElementById('danmukuBox')
+            if (!$danmukuBox) {
+                util_warn('danmukuBox not found!')
+                return
+            }
+            // 插入eplist_module的位置和内容一定要是这样... 不能改...
+            const $template = _('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <span/> <span/></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim())
+            $danmukuBox.parentElement?.replaceChild($template.content.firstElementChild!, $danmukuBox.nextSibling!.nextSibling!)
+        }
+
+    })
 }
 
 export function area_limit_for_vue() {
@@ -83,7 +102,7 @@ export function area_limit_for_vue() {
                     }
                 }
             }
-            if (value && value.mediaInfo && value.mediaInfo.rights && value.mediaInfo.rights.appOnly === true) {
+            if (value?.mediaInfo?.rights?.appOnly === true) {
                 value.mediaInfo.rights.appOnly = false
                 window.__balh_app_only__ = true
             }
@@ -93,4 +112,5 @@ export function area_limit_for_vue() {
     replaceInitialState()
     replaceUserState()
     replacePlayInfo()
+    fixBangumiPlayPage()
 }
