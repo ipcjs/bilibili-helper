@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.0.0
+// @version      8.0.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -70,8 +70,7 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content
-    var Strings;
+    // @template-content    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -307,6 +306,12 @@ function scriptSource(invokeBy) {
             };
         }
         Converters.generateSign = generateSign;
+        /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
+        function replaceUpos(data, host = 'upos-sz-upcdntx.bilivideo.com') {
+            const str = JSON.stringify(data);
+            return JSON.parse(str.replace(/:\/\/[^/]+\//g, `://${host}/`));
+        }
+        Converters.replaceUpos = replaceUpos;
     })(Converters || (Converters = {}));
 
     /**
@@ -371,8 +376,6 @@ function scriptSource(invokeBy) {
 
     // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
     const Promise$1 = window.Promise;
-    // 页面中倒是不会修改fetch, 但我们会修改(, 故也还是备份下
-    const fetch = window.fetch;
     /**
     * 模仿RxJava中的compose操作符
     * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
@@ -433,10 +436,25 @@ function scriptSource(invokeBy) {
             };
         }
         Async.wrapper = wrapper;
-        function ajaxByFetch(url) {
-            return fetch(url).then(it => it.json());
+        function requestByXhr(url) {
+            return new Promise$1((resolve, reject) => {
+                const req = new XMLHttpRequest();
+                req.onreadystatechange = (event) => {
+                    if (req.readyState === 4) {
+                        if (req.status === 200) {
+                            resolve(JSON.parse(req.responseText));
+                        }
+                        else {
+                            reject(req);
+                        }
+                    }
+                };
+                req.withCredentials = true;
+                req.open('GET', url);
+                req.send();
+            });
         }
-        function ajaxBy$(url) {
+        function requestByJQuery(url) {
             const creator = () => new Promise$1((resolve, reject) => {
                 let options = { url: url };
                 options.async === undefined && (options.async = true);
@@ -458,10 +476,10 @@ function scriptSource(invokeBy) {
         }
         function ajax(url) {
             // todo: 直接用fetch实现更简单?
-            return ajaxBy$(url)
+            return requestByJQuery(url)
                 .catch(e => {
                 if (e instanceof RetryUntilTimeoutException) {
-                    return ajaxByFetch(url);
+                    return requestByXhr(url);
                 }
                 else {
                     return Promise$1.reject(e);
@@ -945,18 +963,11 @@ function scriptSource(invokeBy) {
 
     // @ts-check-off
     /**
+     * {@link BiliMessageBox}
      * MessageBox -> from base.core.js
      * MessageBox.show(referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback)
      * MessageBox.close()
-     * 
-     * 用的少, 懒得加类型注释_(:3」∠)_
      */
-
-    function MockMessageBox() {
-        this.show = (...args) => util_log(MockMessageBox.name, 'show', args);
-        this.close = (...args) => util_log(MockMessageBox.name, 'close', args);
-    }
-
     let popMessage = null;
     let alertPopMessage = {
         show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
@@ -964,7 +975,6 @@ function scriptSource(invokeBy) {
         },
         close: Func.noop
     };
-
     util_init(() => {
         if (!popMessage && window.MessageBox) {
             popMessage = new window.MessageBox();
@@ -975,41 +985,41 @@ function scriptSource(invokeBy) {
             };
             popMessage.close = function () {
                 // 若没调用过show, 就调用close, msgbox会为null, 导致报错
-                this.msgbox != null && window.MessageBox.prototype.close.apply(this, arguments);
+                this.msgbox != null && window.MessageBox.prototype.close.apply(this, []);
             };
         }
     }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED_AFTER);
-
     const util_ui_msg = {
         _impl: function () {
-            return popMessage || alertPopMessage
+            return popMessage || alertPopMessage;
         },
         show: function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
             let pop = this._impl();
-            return pop.show.apply(pop, arguments)
+            return pop.show.apply(pop, arguments);
         },
         close: function () {
             let pop = this._impl();
-            return pop.close.apply(pop, arguments)
+            return pop.close.apply(pop, arguments);
         },
         setMsgBoxFixed: function (fixed) {
             if (popMessage) {
                 popMessage.msgbox[0].style.position = fixed ? 'fixed' : '';
-            } else {
-                util_log(MockMessageBox.name, 'setMsgBoxFixed', fixed);
+            }
+            else {
+                util_log('MockMessageBox', 'setMsgBoxFixed', fixed);
             }
         },
         showOnNetError: function (e) {
             if (e.readyState === 0) {
-                this.show($('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', window.bangumi_area_limit_hack.showSettings);
+                this.show(window.$('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', window.bangumi_area_limit_hack.showSettings);
             }
         },
         showOnNetErrorInPromise: function () {
-            return p => p
-                .catch(e => {
-                    this.showOnNetError(e);
-                    return Promise.reject(e)
-                })
+            return (p) => p
+                .catch((e) => {
+                this.showOnNetError(e);
+                return Promise.reject(e);
+            });
         }
     };
 
@@ -1019,6 +1029,961 @@ function scriptSource(invokeBy) {
         RegExps.url = (url) => new RegExp(`^(https?:)?//${_raw(url)}`);
         RegExps.urlPath = (path) => new RegExp(`^(https?:)?//[\\w\\-\\.]+${_raw(path)}`);
     })(RegExps || (RegExps = {}));
+
+    function switch_to_old_player() {
+        if (util_page.av() && !localStorage.balh_disable_switch_to_old_player) {
+            util_init(() => {
+                const $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a');
+                if ($switchToOldBtn) {
+                    ui.pop({
+                        content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
+                        confirmBtn: '切换回旧版',
+                        onConfirm: () => $switchToOldBtn.click(),
+                        onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
+                    });
+                }
+            });
+        }
+        if (util_page.new_bangumi()) {
+            if (cookieStorage.stardustpgcv === '0606') {
+                util_init(() => {
+                    let $panel = document.querySelector('.error-container > .server-error');
+                    if ($panel) {
+                        $panel.insertBefore(createElement('text', '临时切换到旧版番剧页面中...'), $panel.firstChild);
+                        cookieStorage.stardustpgcv = '0';
+                        localStorage.balh_temp_switch_to_old_page = r.const.TRUE;
+                        location.reload();
+                    }
+                });
+            }
+            if (localStorage.balh_temp_switch_to_old_page) {
+                cookieStorage.stardustpgcv = '0606';
+                delete localStorage.balh_temp_switch_to_old_page;
+            }
+        }
+    }
+
+    function version_remind() {
+        if (!util_page.new_bangumi())
+            return;
+        util_init(() => {
+            if ((localStorage.balh_version || '0') < GM_info.script.version) {
+                localStorage.balh_version = GM_info.script.version;
+                let version_remind = _t('version_remind');
+                if (version_remind) {
+                    ui.pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新日志</h3>${version_remind}` });
+                }
+            }
+        });
+    }
+
+    function isHtml5Player() {
+        return localStorage.defaulth5 === '1';
+    }
+    function check_html5() {
+        function checkHtml5() {
+            var playerContent = document.querySelector('.player-content');
+            if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
+                new MutationObserver(function (mutations, observer) {
+                    var _a;
+                    observer.disconnect();
+                    localStorage.balh_h5_not_first = r.const.TRUE;
+                    if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
+                        (_a = window.GrayManager) === null || _a === void 0 ? void 0 : _a.clickMenu('change_h5'); // change_flash, change_h5
+                    }
+                }).observe(playerContent, {
+                    childList: true,
+                    attributes: false,
+                });
+            }
+        }
+        util_init(() => {
+            // 除了播放器和番剧列表页面, 其他页面都需要检测html5
+            if (!(util_page.bangumi() || util_page.bangumi_md() || util_page.player())) {
+                checkHtml5();
+            }
+        });
+    }
+
+    function jump_to_baipiao() {
+        util_init(() => {
+            for (let bp of r.baipiao) {
+                const cookie_key = `balh_baipao_${bp.key}`;
+                if (bp.match() && !cookieStorage[cookie_key]) {
+                    ui.pop({
+                        content: [
+                            createElement('text', '发现白嫖地址: '), createElement('a', { href: bp.link }, bp.link),
+                            createElement('div', {}, bp.message),
+                        ],
+                        confirmBtn: '一键跳转',
+                        onConfirm: () => { location.href = bp.link; },
+                        onClose: () => { cookieStorage.set(cookie_key, r.const.TRUE, ''); }
+                    });
+                    break;
+                }
+            }
+        }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
+    }
+
+    function biliplus_check_area_limit() {
+        if (!util_page.bangumi_md()) {
+            return;
+        }
+        // 服务器需要通过这个接口判断是否有区域限制
+        // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
+        util_init(() => {
+            var _a, _b, _c;
+            const season_id = (_c = (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.param) === null || _c === void 0 ? void 0 : _c.season_id;
+            if (season_id) {
+                BiliPlusApi.season(season_id)
+                    .then(r => util_debug(`season${season_id}`, r))
+                    .catch(e => util_debug(`season${season_id}`, e));
+            }
+        });
+    }
+
+    function fill_season_page() {
+        function tryFillSeasonList() {
+            var _a;
+            const error_container = document.querySelector('div.error-container');
+            if (!error_container) {
+                return;
+            }
+            let season_id = (_a = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)) === null || _a === void 0 ? void 0 : _a[1];
+            if (!season_id) {
+                return;
+            }
+            //尝试解决怪异模式渲染
+            /*
+            会造成变量丢失，等待官方重写doctype
+            try{
+            window.stop();
+                var xhr = new XMLHttpRequest();
+            xhr.open('GET',location.href,false);
+            xhr.send();
+            document.head.appendChild(_('script',{},[_('text',
+                'document.write(unescape("'+escape(xhr.response.replace(/<!DOCTYPE.+?>/,'<!DOCTYPE HTML>'))+'"));window.stop()'
+            )]));
+            }catch(e){util_error(e);}
+            */
+            const msg = createElement('a', { href: '//bangumi.bilibili.com/anime/' + season_id + '/play', style: { fontSize: '20px' } }, [createElement('text', `【${GM_info.script.name}】尝试获取视频列表中...`)]);
+            const content = createElement('div');
+            error_container.insertBefore(content, error_container.firstChild);
+            content.appendChild(msg);
+            util_debug('season>:', season_id);
+            BiliPlusApi.season(season_id)
+                .then(function (data) {
+                var _a;
+                util_debug('season>then:', data);
+                if (data.code) {
+                    return Promise.reject(data);
+                }
+                function generateEpisodeList(episodes) {
+                    const children = [];
+                    episodes.reverse().forEach(function (i) {
+                        children.push(createElement('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [createElement('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
+                                createElement('div', { className: 'img-wrp' }, [createElement('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
+                                createElement('div', { className: 'text-wrp' }, [
+                                    createElement('div', { className: 'text-wrp-num' }, [createElement('div', { className: 'text-wrp-num-content' }, [createElement('text', `第${i.index}话`)])]),
+                                    createElement('div', { className: 'text-wrp-title trunc' }, [createElement('text', i.index_title)])
+                                ])
+                            ])]));
+                    });
+                    return children;
+                }
+                function generateSeasonList(seasons) {
+                    function onSeasonClick(event) {
+                        var _a;
+                        window.location.href = '//bangumi.bilibili.com/anime/' + ((_a = event.target) === null || _a === void 0 ? void 0 : _a.attributes['data-season-id'].value);
+                    }
+                    return seasons.map(function (season) {
+                        return createElement('li', { className: season.season_id == season_id ? 'cur' : '', 'data-season-id': season.season_id, event: { click: onSeasonClick } }, [createElement('text', season.title)]);
+                    });
+                }
+                if (data.result) {
+                    if (((_a = msg.parentNode) === null || _a === void 0 ? void 0 : _a.parentNode) != error_container) {
+                        util_error('`msg.parentNode?.parentNode != error_container`, 按理来说不可能...');
+                    }
+                    document.title = data.result.title;
+                    document.head.appendChild(createElement('link', { href: 'https://s3.hdslb.com/bfs/static/anime/css/tag-index.css?v=110', rel: 'stylesheet' }));
+                    document.head.appendChild(createElement('link', { href: 'https://s1.hdslb.com/bfs/static/anime/css/bangumi-index.css?v=110', rel: 'stylesheet' }));
+                    document.body.insertBefore(createElement('div', { className: 'main-container-wrapper' }, [createElement('div', { className: 'main-container' }, [
+                            createElement('div', { className: 'page-info-wrp' }, [createElement('div', { className: 'bangumi-info-wrapper' }, [
+                                    createElement('div', { className: 'bangumi-info-blurbg-wrapper' }, [createElement('div', { className: 'bangumi-info-blurbg blur', style: { backgroundImage: 'url(' + data.result.cover + ')' } })]),
+                                    createElement('div', { className: 'main-inner' }, [createElement('div', { className: 'info-content' }, [
+                                            createElement('div', { className: 'bangumi-preview' }, [createElement('img', { alt: data.result.title, src: data.result.cover })]),
+                                            createElement('div', { className: 'bangumi-info-r' }, [
+                                                createElement('div', { className: 'b-head' }, [createElement('h1', { className: 'info-title', 'data-seasonid': season_id, title: data.result.title }, [createElement('text', data.result.title)])]),
+                                                createElement('div', { className: 'info-count' }, [
+                                                    createElement('span', { className: 'info-count-item info-count-item-play' }, [createElement('span', { className: 'info-label' }, [createElement('text', '总播放')]), createElement('em', {}, [createElement('text', data.result.play_count)])]),
+                                                    createElement('span', { className: 'info-count-item info-count-item-fans' }, [createElement('span', { className: 'info-label' }, [createElement('text', '追番人数')]), createElement('em', {}, [createElement('text', data.result.favorites)])]),
+                                                    createElement('span', { className: 'info-count-item info-count-item-review' }, [createElement('span', { className: 'info-label' }, [createElement('text', '弹幕总数')]), createElement('em', {}, [createElement('text', data.result.danmaku_count)])])
+                                                ]),
+                                                //_('div',{className:'info-row info-update'},[]),
+                                                //_('div',{className:'info-row info-cv'},[]),
+                                                createElement('div', { className: 'info-row info-desc-wrp' }, [
+                                                    createElement('div', { className: 'info-row-label' }, [createElement('text', '简介：')]),
+                                                    createElement('div', { className: 'info-desc' }, [createElement('text', data.result.evaluate)])
+                                                ]),
+                                            ])
+                                        ])])
+                                ])]),
+                            createElement('div', { className: 'main-inner' }, [createElement('div', { className: 'v1-bangumi-list-wrapper clearfix' }, [
+                                    createElement('div', { className: 'v1-bangumi-list-season-wrapper' }, [
+                                        createElement('div', { className: 'v1-bangumi-list-season-content slider-list-content' }, [
+                                            createElement('div', {}, [
+                                                createElement('ul', { className: 'v1-bangumi-list-season clearfix slider-list', 'data-current-season-id': season_id, style: { opacity: 1 } }, generateSeasonList(data.result.seasons))
+                                            ])
+                                        ])
+                                    ]),
+                                    createElement('div', { className: 'v1-bangumi-list-part-wrapper slider-part-wrapper' }, [createElement('div', { className: 'v1-bangumi-list-part clearfix', 'data-current-season-id': season_id, style: { display: 'block' } }, [
+                                            createElement('div', { className: 'complete-list', style: { display: 'block' } }, [createElement('div', { className: 'video-slider-list-wrapper' }, [createElement('div', { className: 'slider-part-wrapper' }, [createElement('ul', { className: 'slider-part clearfix hide', style: { display: 'block' } }, generateEpisodeList(data.result.episodes))])])])
+                                        ])])
+                                ])])
+                        ])]), error_container);
+                    error_container.remove();
+                }
+            })
+                .catch(function (error) {
+                util_debug('season>catch', error);
+                msg.innerText = 'error:' + JSON.stringify(error) + '\n点击跳转到播放界面 (不一定能够正常播放...)';
+            });
+        }
+        util_init(() => {
+            if (util_page.bangumi()) {
+                tryFillSeasonList();
+            }
+        });
+    }
+
+    function redirect_to_bangumi_or_insert_player() {
+        // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
+        function tryRedirectToBangumiOrInsertPlayer() {
+            let $errorPanel;
+            if (!($errorPanel = document.querySelector('.error-container > .error-panel'))) {
+                return;
+            }
+            let msg = document.createElement('a');
+            $errorPanel.insertBefore(msg, $errorPanel.firstChild);
+            msg.innerText = '获取番剧页Url中...';
+            let aid = (location.pathname.match('/\/video\/av(\d+)') || ['', ''])[1], page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1], cid, season_id, episode_id;
+            let avData;
+            if (!aid) {
+                let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1];
+                if (bv) {
+                    aid = Converters.bv2aid(bv);
+                }
+            }
+            BiliPlusApi.view(aid)
+                .then(function (data) {
+                avData = data;
+                if (data.code) {
+                    return Promise.reject(JSON.stringify(data));
+                }
+                // 计算当前页面的cid
+                for (let i = 0; i < data.list.length; i++) {
+                    if (data.list[i].page == page) {
+                        cid = data.list[i].cid;
+                        break;
+                    }
+                }
+                if (!data.bangumi) {
+                    generatePlayer(data, aid, page, cid);
+                    // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
+                }
+                else {
+                    // 当前av属于番剧页面, 继续处理
+                    season_id = data.bangumi.season_id;
+                    return BiliPlusApi.season(season_id);
+                }
+            })
+                .then(function (result) {
+                if (result === undefined)
+                    return; // 上一个then不返回内容时, 不需要处理
+                if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
+                    let ep_id_newest = avData && avData.bangumi && avData.bangumi.newest_ep_id;
+                    if (ep_id_newest) {
+                        episode_id = ep_id_newest; // 此时, 若avData中有最新的ep_id, 则直接使用它
+                    }
+                    else {
+                        util_debug(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`);
+                        generatePlayer(avData, aid, page, cid);
+                        return;
+                    }
+                }
+                else if (result.code) {
+                    return Promise.reject(JSON.stringify(result));
+                }
+                else {
+                    let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid, episodes = result.result.episodes, ep;
+                    // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
+                    for (let i = 0; i < episodes.length; i++) {
+                        ep = episodes[i];
+                        if (ep.danmaku == cid) {
+                            ep_id_by_cid = ep.episode_id;
+                        }
+                        if (ep.av_id == aid && ep.page == page) {
+                            ep_id_by_aid_page = ep.episode_id;
+                        }
+                        if (ep.av_id == aid) {
+                            ep_id_by_aid = ep.episode_id;
+                        }
+                    }
+                    episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
+                }
+                if (episode_id) {
+                    let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`;
+                    util_debug('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, 'season_id:', season_id, 'ep_id:', episode_id);
+                    msg.innerText = '即将跳转到：' + bangumi_url;
+                    location.href = bangumi_url;
+                }
+                else {
+                    return Promise.reject('查询episode_id失败');
+                }
+            })
+                .catch(function (e) {
+                util_debug('error:', arguments);
+                msg.innerText = 'error:' + e;
+            });
+        }
+        function generatePlayer(data, aid, page, cid) {
+            var _a;
+            let generateSrc = function (aid, cid) {
+                return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
+            };
+            let generatePageList = function (pages) {
+                let $curPage = null;
+                function onPageBtnClick(e) {
+                    e.target.className = 'curPage';
+                    $curPage && ($curPage.className = '');
+                    let index = e.target.attributes['data-index'].value;
+                    iframe.src = generateSrc(aid, pages[index].cid);
+                }
+                return pages.map(function (item, index) {
+                    let isCurPage = item.page == page;
+                    let $item = createElement('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [createElement('text', item.page + ': ' + item.part)]);
+                    if (isCurPage)
+                        $curPage = $item;
+                    return $item;
+                });
+            };
+            // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
+            let $pageBody = document.querySelector('.b-page-body');
+            if (!$pageBody) { // 若不存在, 则创建
+                $pageBody = createElement('div', { className: '.b-page-body' });
+                document.querySelector('body').insertBefore($pageBody, document.querySelector('#app'));
+                // 添加相关样式
+                document.head.appendChild(createElement('link', { type: 'text/css', rel: 'stylesheet', href: '//static.hdslb.com/css/core-v5/page-core.css' }));
+            }
+            let iframe = createElement('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
+            // 添加播放器
+            $pageBody.appendChild(createElement('div', { className: 'player-wrapper' }, [
+                createElement('div', { className: 'main-inner' }, [
+                    createElement('div', { className: 'v-plist' }, [
+                        createElement('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
+                    ])
+                ]),
+                createElement('div', { id: 'bofqi', className: 'scontent' }, [iframe])
+            ]));
+            // 添加评论区
+            $pageBody.appendChild(createElement('div', { className: 'main-inner' }, [
+                createElement('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
+                    createElement('div', { className: 'b-head' }, [
+                        createElement('span', { className: 'b-head-t results' }),
+                        createElement('span', { className: 'b-head-t' }, [createElement('text', '评论')]),
+                        createElement('a', { className: 'del-log', href: `//www.bilibili.com/replydeletelog?aid=${aid}&title=${data.title}`, target: '_blank' }, [createElement('text', '查看删除日志')])
+                    ]),
+                    createElement('div', { className: 'comm', id: 'bbComment' }, [
+                        createElement('div', { id: 'load_comment', className: 'comm_open_btn', onclick: "var fb = new bbFeedback('.comm', 'arc');fb.show(" + aid + ", 1);", style: { cursor: 'pointer' } })
+                    ])
+                ])
+            ]));
+            // 添加包含bbFeedback的js
+            document.head.appendChild(createElement('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }));
+            document.title = data.title;
+            (_a = (document.querySelector('.error-body') || document.querySelector('.error-container'))) === null || _a === void 0 ? void 0 : _a.remove(); // 移除错误信息面板
+        }
+        util_init(() => {
+            if (util_page.av()) {
+                tryRedirectToBangumiOrInsertPlayer();
+            }
+        }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.COMPLETE);
+    }
+
+    function modifyGlobalValue(name, options) {
+        const _window = window;
+        const name_origin = `${name}_origin`;
+        _window[name_origin] = _window[name];
+        let value = undefined;
+        Object.defineProperty(_window, name, {
+            configurable: true,
+            enumerable: true,
+            get: () => {
+                var _a;
+                (_a = options === null || options === void 0 ? void 0 : options.onRead) === null || _a === void 0 ? void 0 : _a.call(options, value);
+                return value;
+            },
+            set: (val) => {
+                value = options.onWrite(val);
+            }
+        });
+        if (_window[name_origin]) {
+            _window[name] = _window[name_origin];
+        }
+    }
+    function fixBangumiPlayPage() {
+        util_init(() => {
+            var _a;
+            let $eplist_module = document.getElementById('eplist_module');
+            if (!$eplist_module) {
+                const $danmukuBox = document.getElementById('danmukuBox');
+                if (!$danmukuBox) {
+                    util_warn('danmukuBox not found!');
+                    return;
+                }
+                // 插入eplist_module的位置和内容一定要是这样... 不能改...
+                // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
+                const $template = createElement('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim());
+                (_a = $danmukuBox.parentElement) === null || _a === void 0 ? void 0 : _a.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
+            }
+        });
+    }
+    function area_limit_for_vue() {
+        if (!((util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi())) {
+            return;
+        }
+        function replacePlayInfo() {
+            util_debug("window.__playinfo__", window.__playinfo__);
+            window.__playinfo__origin = window.__playinfo__;
+            let playinfo = undefined;
+            // 将__playinfo__置空, 让播放器去重新加载它...
+            Object.defineProperty(window, '__playinfo__', {
+                configurable: true,
+                enumerable: true,
+                get: () => {
+                    util_debug('__playinfo__', 'get');
+                    return playinfo;
+                },
+                set: (value) => {
+                    // debugger
+                    util_debug('__playinfo__', 'set');
+                    // 原始的playinfo为空, 且页面在loading状态, 说明这是html中对playinfo进行的赋值, 这个值可能是有区域限制的, 不能要
+                    if (!window.__playinfo__origin && window.document.readyState === 'loading') {
+                        util_debug('__playinfo__', 'init in html', value);
+                        window.__playinfo__origin = value;
+                        return;
+                    }
+                    playinfo = value;
+                },
+            });
+        }
+        function replaceUserState() {
+            modifyGlobalValue('__PGC_USERSTATE__', {
+                onWrite: (value) => {
+                    if (value) {
+                        // 区域限制
+                        // todo      : 调用areaLimit(limit), 保存区域限制状态
+                        // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+                        value.area_limit = 0;
+                        // 会员状态
+                        if (balh_config.blocked_vip && value.vip_info) {
+                            value.vip_info.status = 1;
+                            value.vip_info.type = 2;
+                        }
+                    }
+                    return value;
+                }
+            });
+        }
+        function replaceInitialState() {
+            modifyGlobalValue('__INITIAL_STATE__', {
+                onWrite: (value) => {
+                    var _a, _b;
+                    if (value && value.epInfo && value.epList && balh_config.blocked_vip) {
+                        for (let ep of [value.epInfo, ...value.epList]) {
+                            // 13貌似表示会员视频, 2为普通视频
+                            if (ep.epStatus === 13) {
+                                util_debug('epStatus 13 => 2', ep);
+                                ep.epStatus = 2;
+                            }
+                        }
+                    }
+                    if (((_b = (_a = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _a === void 0 ? void 0 : _a.rights) === null || _b === void 0 ? void 0 : _b.appOnly) === true) {
+                        value.mediaInfo.rights.appOnly = false;
+                        window.__balh_app_only__ = true;
+                    }
+                    return value;
+                }
+            });
+        }
+        replaceInitialState();
+        replaceUserState();
+        replacePlayInfo();
+        fixBangumiPlayPage();
+        modifyGlobalValue('BilibiliPlayer', {
+            onWrite: (value) => {
+                return value;
+            },
+            onRead: (value) => {
+            }
+        });
+    }
+
+    function isLogin() {
+        return localStorage.oauthTime !== undefined;
+    }
+    function clearLoginFlag() {
+        delete localStorage.oauthTime;
+    }
+    function updateLoginFlag(loadCallback) {
+        Async.jsonp(balh_config.server + '/login?act=expiretime')
+            .then(() => loadCallback && loadCallback(true));
+        // .catch(() => loadCallback && loadCallback(false)) // 请求失败不需要回调
+    }
+    function isLoginBiliBili() {
+        return cookieStorage['DedeUserID'] !== undefined;
+    }
+    // 当前在如下情况才会弹一次登录提示框:
+    // 1. 第一次使用
+    // 2. 主站+服务器都退出登录后, 再重新登录主站
+    function checkLoginState() {
+        // 给一些状态，设置初始值
+        localStorage.balh_must_remind_login_v3 === undefined && (localStorage.balh_must_remind_login_v3 = r.const.TRUE);
+        if (isLoginBiliBili()) {
+            if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
+                || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
+                || localStorage.balh_must_remind_login_v3) { // 设置了"必须提醒"flag
+                clearLoginFlag();
+                updateLoginFlag(() => {
+                    if (!isLogin() || !localStorage.access_key) {
+                        localStorage.balh_must_remind_login_v3 = r.const.FALSE;
+                        ui.pop({
+                            content: [
+                                createElement('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
+                            ],
+                            onConfirm: () => {
+                                var _a;
+                                biliplus_login.showLogin();
+                                (_a = document.querySelector('#AHP_Notice')) === null || _a === void 0 ? void 0 : _a.remove();
+                            }
+                        });
+                    }
+                });
+            }
+            else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
+                || localStorage.balh_must_updateLoginFlag) { // 某些情况下，必须更新一次
+                updateLoginFlag(() => localStorage.balh_must_updateLoginFlag = r.const.FALSE);
+            }
+        }
+        localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? r.const.TRUE : r.const.FALSE;
+        localStorage.balh_pre_server = balh_config.server;
+    }
+    function showLogin() {
+        const balh_auth_window = window.open('about:blank');
+        balh_auth_window.document.title = 'BALH - 授权';
+        balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
+        window.balh_auth_window = balh_auth_window;
+        window.$.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
+            xhrFields: { withCredentials: true },
+            type: 'GET',
+            dataType: 'json',
+            success: (data) => {
+                if (data.data.has_login) {
+                    balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
+                    balh_auth_window.location.href = data.data.confirm_uri;
+                }
+                else {
+                    balh_auth_window.close();
+                    ui.alert('必须登录B站才能正常授权', () => {
+                        location.href = 'https://passport.bilibili.com/login';
+                    });
+                }
+            },
+            error: (e) => {
+                alert('error');
+            }
+        });
+    }
+    function showLogout() {
+        ui.popFrame(balh_config.server + '/login?act=logout');
+    }
+    // 监听登录message
+    window.addEventListener('message', function (e) {
+        var _a;
+        if (typeof e.data !== 'string')
+            return; // 只处理e.data为string的情况
+        switch (e.data.split(':')[0]) {
+            case 'BiliPlus-Login-Success': {
+                //登入
+                localStorage.balh_must_updateLoginFlag = r.const.TRUE;
+                Promise.resolve('start')
+                    .then(() => Async.jsonp(balh_config.server + '/login?act=getlevel'))
+                    .then(() => location.reload())
+                    .catch(() => location.reload());
+                break;
+            }
+            case 'BiliPlus-Logout-Success': {
+                //登出
+                clearLoginFlag();
+                location.reload();
+                break;
+            }
+            case 'balh-login-credentials': {
+                (_a = window.balh_auth_window) === null || _a === void 0 ? void 0 : _a.close();
+                let url = e.data.split(': ')[1];
+                const access_key = new URL(url).searchParams.get('access_key');
+                localStorage.access_key = access_key;
+                ui.popFrame(url.replace('https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png', balh_config.server + '/login'));
+                break;
+            }
+        }
+    });
+    util_init(() => {
+        if (!(util_page.player() || util_page.av())) {
+            checkLoginState();
+        }
+    }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
+    const biliplus_login = {
+        showLogin,
+        showLogout,
+        isLogin,
+        isLoginBiliBili,
+    };
+
+    const balh_feature_runPing = function () {
+        const pingOutput = document.getElementById('balh_server_ping');
+        if (!pingOutput) {
+            return;
+        }
+        let xhr = new XMLHttpRequest();
+        let testUrl = [r.const.server.S0, r.const.server.S1];
+        let testUrlIndex = 0;
+        let isReused = false;
+        let prevNow;
+        let outputArr = [];
+        if (balh_config.server_custom) {
+            testUrl.push(balh_config.server_custom);
+        }
+        pingOutput.textContent = '正在进行服务器测速…';
+        pingOutput.style.height = '100px';
+        xhr.open('GET', '', true);
+        xhr.onreadystatechange = function () {
+            this.readyState == 4 && pingResult();
+        };
+        var pingLoop = function () {
+            prevNow = performance.now();
+            xhr.open('GET', testUrl[testUrlIndex] + '/api/bangumi', true);
+            xhr.send();
+        };
+        var pingResult = function () {
+            var duration = (performance.now() - prevNow) | 0;
+            if (isReused)
+                outputArr.push('\t复用连接：' + duration + 'ms'), isReused = false, testUrlIndex++;
+            else
+                outputArr.push(testUrl[testUrlIndex] + ':'), outputArr.push('\t初次连接：' + duration + 'ms'), isReused = true;
+            pingOutput.textContent = outputArr.join('\n');
+            testUrlIndex < testUrl.length ? pingLoop() : pingOutput.appendChild(createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '\n再测一次？')]));
+        };
+        pingLoop();
+    };
+    function settings() {
+        function addSettingsButton() {
+            let indexNav = document.querySelector('.bangumi-nav-right, #index_nav, #fixnav_report');
+            let settingBtnSvgContainer;
+            const createBtnStyle = (size, diffCss) => {
+                diffCss = diffCss || `
+                        #balh-settings-btn {
+                            bottom: 110px;
+                            border: 1px solid #e5e9ef;
+                            border-radius: 4px;
+                            background: #f6f9fa;
+                            margin-top: 4px;
+                        }
+                        #balh-settings-btn .btn-gotop {
+                            text-align: center;
+                        }
+                    `;
+                return createElement('style', {}, [createElement('text', `
+                        ${diffCss}
+                        #balh-settings-btn {
+                            width: ${size};
+                            height: ${size};
+                            cursor: pointer;
+                        }
+                        #balh-settings-btn:hover {
+                            background: #00a1d6;
+                            border-color: #00a1d6;
+                        }
+                        #balh-settings-btn .icon-saturn {
+                            width: 30px;
+                            height: ${size};
+                            fill: rgb(153,162,170);
+                        }
+                        #balh-settings-btn:hover .icon-saturn {
+                            fill: white;
+                        }
+                `)]);
+            };
+            if (indexNav == null) {
+                // 信息页添加到按钮右侧
+                if (util_page.bangumi_md()) {
+                    indexNav = document.querySelector('.media-info-btns');
+                    indexNav === null || indexNav === void 0 ? void 0 : indexNav.appendChild(createBtnStyle('44px', `
+                            #balh-settings-btn {
+                                float: left;
+                                margin: 3px 0 0 20px;
+                                background: #FFF;
+                                border-radius: 10px;
+                            }
+                            #balh-settings-btn>:first-child {
+                                text-align: center;
+                                height: 100%;
+                            }
+                        `));
+                }
+                else {
+                    // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
+                    let navTools = document.querySelector('.nav-tools, .float-nav');
+                    if (navTools) {
+                        let bottom = navTools.className.includes('float-nav') ? '53px' : '45px';
+                        const _indexNav = indexNav = document.body.appendChild(createElement('div', { style: { position: 'fixed', right: '6px', bottom: bottom, zIndex: '129', textAlign: 'center', display: 'none' } }));
+                        indexNav.appendChild(createBtnStyle('45px'));
+                        window.addEventListener('scroll', (event) => {
+                            _indexNav.style.display = window.scrollY < 600 ? 'none' : '';
+                        });
+                    }
+                }
+                if (indexNav) {
+                    settingBtnSvgContainer = indexNav.appendChild(createElement('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [createElement('div', {})])).firstChild;
+                }
+            }
+            else {
+                // 视频页添加到回顶部下方
+                window.dispatchEvent(new Event('resize'));
+                indexNav.style.display = 'block';
+                indexNav.appendChild(createBtnStyle('46px'));
+                settingBtnSvgContainer = indexNav.appendChild(createElement('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [createElement('div', { className: 'btn-gotop' })])).firstChild;
+            }
+            settingBtnSvgContainer && (settingBtnSvgContainer.innerHTML = `<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg class="icon-saturn" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>`);
+        }
+        function _showSettings() {
+            document.body.appendChild(settingsDOM);
+            var form = settingsDOM.querySelector('form');
+            // elements包含index的属性, 和以name命名的属性, 其中以name命名的属性是不可枚举的, 只能通过这种方式获取出来
+            Object.getOwnPropertyNames(form.elements).forEach(function (name) {
+                if (name.startsWith('balh_')) {
+                    var key = name.replace('balh_', '');
+                    var ele = form.elements[name];
+                    if (ele.type === 'checkbox') {
+                        ele.checked = balh_config[key];
+                    }
+                    else {
+                        ele.value = balh_config[key];
+                    }
+                }
+            });
+            document.body.style.overflow = 'hidden';
+        }
+        // 往顶层窗口发显示设置的请求
+        function showSettings() {
+            window.top.postMessage('balh-show-setting', '*');
+        }
+        // 只有顶层窗口才接收请求
+        if (window === window.top) {
+            window.addEventListener('message', (event) => {
+                if (event.data === 'balh-show-setting') {
+                    _showSettings();
+                    window.$('#upos-server')[0].value = balh_config.upos_server || '';
+                }
+            });
+        }
+        function onSignClick(event) {
+            settingsDOM.click();
+            switch (event.target.attributes['data-sign'].value) {
+                default:
+                case 'in':
+                    biliplus_login.showLogin();
+                    break;
+                case 'out':
+                    biliplus_login.showLogout();
+                    break;
+            }
+        }
+        function onSettingsFormChange(e) {
+            const target = e.target;
+            var name = target.name;
+            var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim();
+            balh_config[name.replace('balh_', '')] = value;
+            util_debug(name, ' => ', value);
+        }
+        // 第一次点击时:
+        // 1. '复制日志&问题反馈' => '复制日志'
+        // 2. 显示'问题反馈'
+        // 3. 复制成功后请求跳转到GitHub
+        // 之后的点击, 只是正常的复制功能~~
+        function onCopyClick(event) {
+            let issueLink = document.getElementById('balh-issue-link');
+            if (!issueLink) {
+                return;
+            }
+            let continueToIssue = issueLink.style.display === 'none';
+            if (continueToIssue) {
+                issueLink.style.display = 'inline';
+                let copyBtn = document.getElementById('balh-copy-log');
+                copyBtn.innerText = '复制日志';
+            }
+            let textarea = document.getElementById('balh-textarea-copy');
+            textarea.style.display = 'inline-block';
+            if (ui.copy(logHub.getAllMsg(), textarea)) {
+                textarea.style.display = 'none';
+                util_ui_msg.show(window.$(this), continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功', continueToIssue ? 0 : 3e3, continueToIssue ? 'button' : undefined, continueToIssue ? openIssuePage : undefined);
+            }
+            else {
+                util_ui_msg.show(window.$(this), '复制失败, 请从下面的文本框手动复制', 5e3);
+            }
+        }
+        function openIssuePage() {
+            // window.open(r.url.issue)
+            window.open(r.url.readme);
+        }
+        let printSystemInfoOk = false;
+        // 鼠标移入设置底部的时候, 打印一些系统信息, 方便问题反馈
+        function onMouseEnterSettingBottom(event) {
+            if (!printSystemInfoOk) {
+                printSystemInfoOk = true;
+                util_debug('userAgent', navigator.userAgent);
+            }
+        }
+        let customServerCheckText;
+        var settingsDOM = createElement('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this)
+                    util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
+            createElement('style', {}, [createElement('text', r.css.settings)]),
+            createElement('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
+                createElement('h1', {}, [createElement('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
+                createElement('br'),
+                createElement('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
+                    createElement('text', '代理服务器：'), createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '测速')]), createElement('br'),
+                    createElement('div', { style: { display: 'flex' } }, [
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), createElement('text', '土豆服')]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus')]),
+                        createElement('label', { style: { flex: 2 } }, [
+                            createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义: `),
+                            createElement('input', {
+                                type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
+                                event: {
+                                    input: (event) => {
+                                        customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test(event.target.value.trim()) ? '✔️' : '❌';
+                                        onSettingsFormChange(event);
+                                    }
+                                }
+                            }),
+                            customServerCheckText = createElement('span'),
+                        ]),
+                    ]),
+                    createElement('br'),
+                    createElement('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
+                    createElement('div', { style: { display: '' } }, [
+                        createElement('text', 'upos服务器：'), createElement('br'),
+                        createElement('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
+                            createElement('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
+                            createElement('text', '替换upos视频服务器：'),
+                            createElement('select', {
+                                id: 'upos-server',
+                                event: {
+                                    change: function () {
+                                        let server = this.value;
+                                        let message = window.$('#upos-server-message');
+                                        let clearMsg = function () { message.text(''); };
+                                        message.text('保存中...');
+                                        window.$.ajax(balh_config.server + '/api/setUposServer?server=' + server, {
+                                            xhrFields: { withCredentials: true },
+                                            dataType: 'json',
+                                            success: function (json) {
+                                                if (json.code == 0) {
+                                                    message.text('已保存');
+                                                    setTimeout(clearMsg, 3e3);
+                                                    balh_config.upos_server = server;
+                                                }
+                                            },
+                                            error: function () {
+                                                message.text('保存出错');
+                                                setTimeout(clearMsg, 3e3);
+                                            }
+                                        });
+                                    }
+                                }
+                            }, [
+                                createElement('option', { value: "" }, [createElement('text', '不替换')]),
+                                createElement('option', { value: "ks3u" }, [createElement('text', 'ks3（金山）')]),
+                                createElement('option', { value: "kodou" }, [createElement('text', 'kodo（七牛）')]),
+                                createElement('option', { value: "cosu" }, [createElement('text', 'cos（腾讯）')]),
+                                createElement('option', { value: "bosu" }, [createElement('text', 'bos（百度）')]),
+                                createElement('option', { value: "wcsu" }, [createElement('text', 'wcs（网宿）')]),
+                                createElement('option', { value: "xycdn" }, [createElement('text', 'xycdn（迅雷）')]),
+                                createElement('option', { value: "hw" }, [createElement('text', 'hw（251）')]),
+                            ]),
+                            createElement('span', { 'id': 'upos-server-message' })
+                        ]),
+                        createElement('br'),
+                    ]),
+                    createElement('text', '脚本工作模式：'), createElement('br'),
+                    createElement('div', { style: { display: 'flex' } }, [
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), createElement('text', '默认：自动判断')]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), createElement('text', '替换：在需要时处理番剧')]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), createElement('text', '重定向：完全代理所有番剧')])
+                    ]), createElement('br'),
+                    createElement('text', '其他：'), createElement('br'),
+                    createElement('div', { style: { display: 'flex' } }, [
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_blocked_vip' }), createElement('text', '被永封的大会员'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#大会员账号被b站永封了', target: '_blank' }, [createElement('text', '(？)')])]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_enable_in_av' }), createElement('text', '在AV页面启用'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [createElement('text', '(？)')])]),
+                        createElement('div', { style: { flex: 1, display: 'flex' } }, [
+                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), createElement('text', '去前置广告')]),
+                        ])
+                    ]), createElement('br'),
+                    createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
+                    createElement('text', '　'),
+                    createElement('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [createElement('text', '取消授权')]),
+                    createElement('text', '　　'),
+                    createElement('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show(window.$(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [createElement('text', '（这是什么？）')]),
+                    createElement('br'), createElement('br'),
+                    createElement('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
+                        createElement('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [createElement('text', '脚本主页')]),
+                        createElement('text', '　'),
+                        createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md', target: '_blank' }, [createElement('text', '帮助说明')]),
+                        createElement('text', '　'),
+                        createElement('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [createElement('text', '复制日志&问题反馈')]),
+                        createElement('text', '　'),
+                        createElement('a', { id: 'balh-issue-link', href: 'javascript:;', event: { click: openIssuePage }, style: { display: 'none' } }, [createElement('text', '问题反馈')]),
+                        createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/graphs/contributors' }, [createElement('text', '贡献者')]),
+                        createElement('text', ' 接口：'),
+                        createElement('a', { href: 'https://www.biliplus.com/' }, [createElement('text', 'BiliPlus ')]),
+                        createElement('a', { href: 'https://github.com/kghost/bilibili-area-limit' }, [createElement('text', 'kghost ')]),
+                        createElement('a', { href: 'https://github.com/yujincheng08/BiliRoaming' }, [createElement('text', 'BiliRoaming ')]),
+                    ]),
+                    createElement('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
+                ])
+            ])
+        ]);
+        util_init(() => {
+            if (!(util_page.player() || (util_page.av() && !balh_config.enable_in_av))) {
+                addSettingsButton();
+            }
+        }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
+        return {
+            dom: settingsDOM,
+            show: showSettings,
+        };
+    }
+
+    function remove_pre_ad() {
+        if (util_page.player()) {
+            // 播放页面url中的pre_ad参数, 决定是否播放广告...
+            if (balh_config.remove_pre_ad && Strings.getSearchParam(location.href, 'pre_ad') === '1') {
+                util_debug('需要跳转到不含广告的url');
+                location.href = location.href.replace(/&?pre_ad=1/, '');
+            }
+        }
+    }
 
     function scriptContent() {
         let log = console.log.bind(console, 'injector:');
@@ -1037,140 +2002,10 @@ function scriptSource(invokeBy) {
         log = util_debug;
         log(`[${GM_info.script.name} v${GM_info.script.version} (${invokeBy})] run on: ${window.location.href}`);
 
-        const balh_version_remind = (function () {
-            if (!util_page.new_bangumi()) return
+        version_remind();
+        switch_to_old_player();
 
-            util_init(() => {
-                if ((localStorage.balh_version || '0') < GM_info.script.version) {
-                    localStorage.balh_version = GM_info.script.version;
-                    let version_remind = _t('version_remind');
-                    if (version_remind) {
-                        ui.pop({ content: `<h3>${GM_info.script.name} v${GM_info.script.version} 更新日志</h3>${version_remind}` });
-                    }
-                }
-            });
-        })();
-
-        const balh_feature_switch_to_old_player = (function () {
-            if (util_page.av() && !localStorage.balh_disable_switch_to_old_player) {
-                util_init(() => {
-                    let $switchToOldBtn = document.querySelector('#entryOld > .old-btn > a');
-                    if ($switchToOldBtn) {
-                        ui.pop({
-                            content: `${GM_info.script.name} 对新版播放器的支持还在测试阶段, 不稳定, 推荐切换回旧版`,
-                            confirmBtn: '切换回旧版',
-                            onConfirm: () => $switchToOldBtn.click(),
-                            onClose: () => localStorage.balh_disable_switch_to_old_player = r.const.TRUE,
-                        });
-                    }
-                });
-            }
-            if (util_page.new_bangumi()) {
-                if (cookieStorage.stardustpgcv === '0606') {
-                    util_init(() => {
-                        let $panel = document.querySelector('.error-container > .server-error');
-                        if ($panel) {
-                            $panel.insertBefore(createElement('text', '临时切换到旧版番剧页面中...'), $panel.firstChild);
-                            cookieStorage.stardustpgcv = '0';
-                            localStorage.balh_temp_switch_to_old_page = r.const.TRUE;
-                            location.reload();
-                        }
-                    });
-                }
-                if (localStorage.balh_temp_switch_to_old_page) {
-                    cookieStorage.stardustpgcv = '0606';
-                    delete localStorage.balh_temp_switch_to_old_page;
-                }
-            }
-        })();
-        const balh_feature_area_limit_new = (function () {
-
-            if (!(
-                (util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi()
-            )) {
-                return
-            }
-            function replacePlayInfo() {
-                log("window.__playinfo__", window.__playinfo__);
-                window.__playinfo__origin = window.__playinfo__;
-                let playinfo = undefined;
-                // 将__playinfo__置空, 让播放器去重新加载它...
-                Object.defineProperty(window, '__playinfo__', {
-                    configurable: true,
-                    enumerable: true,
-                    get: () => {
-                        log('__playinfo__', 'get');
-                        return playinfo
-                    },
-                    set: (value) => {
-                        // debugger
-                        log('__playinfo__', 'set');
-                        // 原始的playinfo为空, 且页面在loading状态, 说明这是html中对playinfo进行的赋值, 这个值可能是有区域限制的, 不能要
-                        if (!window.__playinfo__origin && window.document.readyState === 'loading') {
-                            log('__playinfo__', 'init in html', value);
-                            window.__playinfo__origin = value;
-                            return
-                        }
-                        playinfo = value;
-                    },
-                });
-            }
-            function modifyGlobalValue(name, modifyFn) {
-                const name_origin = `${name}_origin`;
-                window[name_origin] = window[name];
-                let value = undefined;
-                Object.defineProperty(window, name, {
-                    configurable: true,
-                    enumerable: true,
-                    get: () => {
-                        return value
-                    },
-                    set: (val) => {
-                        value = modifyFn(val);
-                    }
-                });
-                if (window[name_origin]) {
-                    window[name] = window[name_origin];
-                }
-            }
-            function replaceUserState() {
-                modifyGlobalValue('__PGC_USERSTATE__', (value) => {
-                    if (value) {
-                        // 区域限制
-                        // todo      : 调用areaLimit(limit), 保存区域限制状态
-                        // 2019-08-17: 之前的接口还有用, 这里先不保存~~
-                        value.area_limit = 0;
-                        // 会员状态
-                        if (balh_config.blocked_vip && value.vip_info) {
-                            value.vip_info.status = 1;
-                            value.vip_info.type = 2;
-                        }
-                    }
-                    return value
-                });
-            }
-            function replaceInitialState() {
-                modifyGlobalValue('__INITIAL_STATE__', (value) => {
-                    if (value && value.epInfo && value.epList && balh_config.blocked_vip) {
-                        for (let ep of [value.epInfo, ...value.epList]) {
-                            // 13貌似表示会员视频, 2为普通视频
-                            if (ep.epStatus === 13) {
-                                log('epStatus 13 => 2', ep);
-                                ep.epStatus = 2;
-                            }
-                        }
-                    }
-                    if (value && value.mediaInfo && value.mediaInfo.rights && value.mediaInfo.rights.appOnly === true) {
-                        value.mediaInfo.rights.appOnly = false;
-                        window.__app_only__ = true;
-                    }
-                    return value
-                });
-            }
-            replaceInitialState();
-            replaceUserState();
-            replacePlayInfo();
-        })();
+        area_limit_for_vue();
 
         const balh_feature_area_limit = (function () {
 
@@ -1826,7 +2661,7 @@ function scriptSource(invokeBy) {
                         let obj = Converters.xml2obj(result.documentElement);
                         if (!obj || obj.code) {
                             if (alertWhenError) {
-                                ui.alert(`从B站接口获取视频地址失败\nresult: ${JSON.stringify(obj)}\n\n点击确定, 进入设置页面关闭'使用B站接口获取视频地址'功能`, balh_ui_setting.show);
+                                ui.alert(`从B站接口获取视频地址失败\nresult: ${JSON.stringify(obj)}\n\n点击确定, 进入设置页面关闭'使用B站接口获取视频地址'功能`, settings$1.show);
                             } else {
                                 return Promise$1.reject(`服务器错误: ${JSON.stringify(obj)}`)
                             }
@@ -1877,14 +2712,14 @@ function scriptSource(invokeBy) {
                         }
                         // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                         params = params.replace(/(&?module)=bangumi/, '$1=pgc');
-                        return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__app_only__ ? '&platform=android&fnval=0' : ''}`;
+                        return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__balh_app_only__ ? '&platform=android&fnval=0' : ''}`;
                     },
                     processProxySuccess: function (data, alertWhenError = true) {
                         // data有可能为null
                         if (data && data.code === -403) {
                             ui.pop({
                                 content: `<b>code-403</b>: <i style="font-size:4px;white-space:nowrap;">${JSON.stringify(data)}</i>\n\n当前代理服务器（${balh_config.server}）依然有区域限制\n\n可以考虑进行如下尝试:\n1. 进行“帐号授权”\n2. 换个代理服务器\n3. 耐心等待服务端修复问题\n\n点击确定, 打开设置页面`,
-                                onConfirm: balh_ui_setting.show,
+                                onConfirm: settings$1.show,
                             });
                         } else if (data === null || data.code) {
                             util_error(data);
@@ -1897,7 +2732,7 @@ function scriptSource(invokeBy) {
                             util_error('>>area limit');
                             ui.pop({
                                 content: `突破黑洞失败\n需要登录\n点此确定进行登录`,
-                                onConfirm: balh_feature_sign.showLogin
+                                onConfirm: biliplus_login.showLogin
                             });
                         } else {
                             if (balh_config.flv_prefer_ws) {
@@ -2002,7 +2837,7 @@ function scriptSource(invokeBy) {
                                 return Promise$1.reject(e)
                             })
                             // 报错时, 延时1秒再发送错误信息
-                            .catch(e => util_promise_timeout(1000).then(r => Promise$1.reject(e)))
+                            .catch(e => Async.timeout(1000).then(r => Promise$1.reject(e)))
                             .catch(e => {
                                 let msg;
                                 if (typeof e === 'object' && e.statusText == 'error') {
@@ -2108,804 +2943,19 @@ function scriptSource(invokeBy) {
                 });
             }
         }());
-        const balh_feature_remove_pre_ad = (function () {
-            if (util_page.player()) {
-                // 播放页面url中的pre_ad参数, 决定是否播放广告...
-                if (balh_config.remove_pre_ad && Strings.getSearchParam(location.href, 'pre_ad') == 1) {
-                    log('需要跳转到不含广告的url');
-                    location.href = location.href.replace(/&?pre_ad=1/, '');
-                }
-            }
-        }());
-        const balh_feature_check_html5 = (function () {
-            function isHtml5Player() {
-                return localStorage.defaulth5 === '1'
-            }
 
-            function checkHtml5() {
-                var playerContent = document.querySelector('.player-content');
-                if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
-                    new MutationObserver(function (mutations, observer) {
-                        observer.disconnect();
-                        localStorage.balh_h5_not_first = r.const.TRUE;
-                        if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
-                            window.GrayManager.clickMenu('change_h5');// change_flash, change_h5
-                        }
-                    }).observe(playerContent, {
-                        childList: true, // 监听child的增减
-                        attributes: false, // 监听属性的变化
-                    });
-                }
-            }
+        remove_pre_ad();
 
-            util_init(() => {
-                // 除了播放器和番剧列表页面, 其他页面都需要检测html5
-                if (!(util_page.bangumi() || util_page.bangumi_md() || util_page.player())) {
-                    checkHtml5();
-                }
-            });
-            return isHtml5Player
-        }());
-        const balh_feature_runPing = function () {
-            var pingOutput = document.getElementById('balh_server_ping');
+        check_html5();
 
-            var xhr = new XMLHttpRequest(), testUrl = [r.const.server.S0, r.const.server.S1],
-                testUrlIndex = 0, isReused = false, prevNow, outputArr = [];
-            if (balh_config.server_custom) {
-                testUrl.push(balh_config.server_custom);
-            }
-            pingOutput.textContent = '正在进行服务器测速…';
-            pingOutput.style.height = '100px';
-            xhr.open('GET', '', true);
-            xhr.onreadystatechange = function () {
-                this.readyState == 4 && pingResult();
-            };
-            var pingLoop = function () {
-                prevNow = performance.now();
-                xhr.open('GET', testUrl[testUrlIndex] + '/api/bangumi', true);
-                xhr.send();
-            };
-            var pingResult = function () {
-                var duration = (performance.now() - prevNow) | 0;
-                if (isReused)
-                    outputArr.push('\t复用连接：' + duration + 'ms'), isReused = false, testUrlIndex++;
-                else
-                    outputArr.push(testUrl[testUrlIndex] + ':'), outputArr.push('\t初次连接：' + duration + 'ms'), isReused = true;
-                pingOutput.textContent = outputArr.join('\n');
-                testUrlIndex < testUrl.length ? pingLoop() : pingOutput.appendChild(createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '\n再测一次？')]));
-            };
-            pingLoop();
-        };
-        const balh_feature_sign = (function () {
-            function isLogin() {
-                return localStorage.oauthTime !== undefined
-            }
-            function clearLoginFlag() {
-                delete localStorage.oauthTime;
-            }
+        redirect_to_bangumi_or_insert_player();
 
-            function updateLoginFlag(loadCallback) {
-                Async.jsonp(balh_config.server + '/login?act=expiretime')
-                    .then(() => loadCallback && loadCallback(true));
-                // .catch(() => loadCallback && loadCallback(false)) // 请求失败不需要回调
-            }
-            function isLoginBiliBili() {
-                return cookieStorage['DedeUserID'] !== undefined
-            }
-            // 当前在如下情况才会弹一次登录提示框:
-            // 1. 第一次使用
-            // 2. 主站+服务器都退出登录后, 再重新登录主站
-            function checkLoginState() {
-                // 给一些状态，设置初始值
-                localStorage.balh_must_remind_login_v3 === undefined && (localStorage.balh_must_remind_login_v3 = r.const.TRUE);
+        fill_season_page();
 
-                if (isLoginBiliBili()) {
-                    if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
-                        || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
-                        || localStorage.balh_must_remind_login_v3) { // 设置了"必须提醒"flag
-                        clearLoginFlag();
-                        updateLoginFlag(() => {
-                            if (!isLogin() || !localStorage.access_key) {
-                                localStorage.balh_must_remind_login_v3 = r.const.FALSE;
-                                ui.pop({
-                                    content: [
-                                        createElement('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
-                                    ],
-                                    onConfirm: () => {
-                                        balh_feature_sign.showLogin();
-                                        document.querySelector('#AHP_Notice').remove();
-                                    }
-                                });
-                            }
-                        });
-                    } else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
-                        || localStorage.balh_must_updateLoginFlag) {// 某些情况下，必须更新一次
-                        updateLoginFlag(() => localStorage.balh_must_updateLoginFlag = r.const.FALSE);
-                    }
-                }
-                localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? r.const.TRUE : r.const.FALSE;
-                localStorage.balh_pre_server = balh_config.server;
-            }
+        const settings$1 = settings();
 
-            function showLogin() {
-                const balh_auth_window = window.open('about:blank');
-                balh_auth_window.document.title = 'BALH - 授权';
-                balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
-                window.balh_auth_window = balh_auth_window;
-                $.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
-                    xhrFields: { withCredentials: true },
-                    type: 'GET',
-                    dataType: 'json',
-                    success: (data) => {
-                        if (data.data.has_login) {
-                            balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-                            balh_auth_window.location.href = data.data.confirm_uri;
-                        } else {
-                            balh_auth_window.close();
-                            ui.alert('必须登录B站才能正常授权', () => {
-                                location.href = 'https://passport.bilibili.com/login';
-                            });
-                        }
-                    },
-                    error: (e) => {
-                        alert('error');
-                    }
-                });
-            }
-
-            function showLogout() {
-                ui.popFrame(balh_config.server + '/login?act=logout');
-            }
-
-            // 监听登录message
-            window.addEventListener('message', function (e) {
-                if (typeof e.data !== 'string') return // 只处理e.data为string的情况
-                switch (e.data.split(':')[0]) {
-                    case 'BiliPlus-Login-Success': {
-                        //登入
-                        localStorage.balh_must_updateLoginFlag = r.const.TRUE;
-                        Promise$1.resolve('start')
-                            .then(() => Async.jsonp(balh_config.server + '/login?act=getlevel'))
-                            .then(() => location.reload())
-                            .catch(() => location.reload());
-                        break;
-                    }
-                    case 'BiliPlus-Logout-Success': {
-                        //登出
-                        clearLoginFlag();
-                        location.reload();
-                        break;
-                    }
-                    case 'balh-login-credentials': {
-                        balh_auth_window.close();
-                        let url = e.data.split(': ')[1];
-                        const access_key = new URL(url).searchParams.get('access_key');
-                        localStorage.access_key = access_key;
-                        ui.popFrame(url.replace('https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png', balh_config.server + '/login'));
-                        break;
-                    }
-                }
-            });
-
-
-            util_init(() => {
-                if (!(util_page.player() || util_page.av())) {
-                    checkLoginState();
-                }
-            }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
-            return {
-                showLogin,
-                showLogout,
-                isLogin,
-                isLoginBiliBili,
-            }
-        }());
-        const balh_feature_RedirectToBangumiOrInsertPlayer = (function () {
-            // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
-            function tryRedirectToBangumiOrInsertPlayer() {
-                let $errorPanel;
-                if (!($errorPanel = document.querySelector('.error-container > .error-panel'))) {
-                    return;
-                }
-                let msg = document.createElement('a');
-                $errorPanel.insertBefore(msg, $errorPanel.firstChild);
-                msg.innerText = '获取番剧页Url中...';
-                let aid = (location.pathname.match('/\/video\/av(\d+)') || ['', ''])[1],
-                    page = (location.pathname.match(/\/index_(\d+).html/) || ['', '1'])[1],
-                    cid,
-                    season_id,
-                    episode_id;
-                let avData;
-                if (!aid) {
-                    let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1];
-                    if (bv) {
-                        aid = Converters.bv2aid(bv);
-                    }
-                }
-                BiliPlusApi.view(aid)
-                    .then(function (data) {
-                        avData = data;
-                        if (data.code) {
-                            return Promise$1.reject(JSON.stringify(data));
-                        }
-                        // 计算当前页面的cid
-                        for (let i = 0; i < data.list.length; i++) {
-                            if (data.list[i].page == page) {
-                                cid = data.list[i].cid;
-                                break;
-                            }
-                        }
-                        if (!data.bangumi) {
-                            generatePlayer(data, aid, page, cid);
-                            // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
-                        } else {
-                            // 当前av属于番剧页面, 继续处理
-                            season_id = data.bangumi.season_id;
-                            return BiliPlusApi.season(season_id);
-                        }
-                    })
-                    .then(function (result) {
-                        if (result === undefined) return // 上一个then不返回内容时, 不需要处理
-                        if (result.code === 10) { // av属于番剧页面, 通过接口却未能找到番剧信息
-                            let ep_id_newest = avData && avData.bangumi && avData.bangumi.newest_ep_id;
-                            if (ep_id_newest) {
-                                episode_id = ep_id_newest; // 此时, 若avData中有最新的ep_id, 则直接使用它
-                            } else {
-                                log(`av${aid}属于番剧${season_id}, 但却不能找到番剧页的信息, 试图直接创建播放器`);
-                                generatePlayer(avData, aid, page, cid);
-                                return
-                            }
-                        } else if (result.code) {
-                            return Promise$1.reject(JSON.stringify(result))
-                        } else {
-                            let ep_id_by_cid, ep_id_by_aid_page, ep_id_by_aid,
-                                episodes = result.result.episodes,
-                                ep;
-                            // 为何要用三种不同方式匹配, 详见: https://greasyfork.org/zh-CN/forum/discussion/22379/x#Comment_34127
-                            for (let i = 0; i < episodes.length; i++) {
-                                ep = episodes[i];
-                                if (ep.danmaku == cid) {
-                                    ep_id_by_cid = ep.episode_id;
-                                }
-                                if (ep.av_id == aid && ep.page == page) {
-                                    ep_id_by_aid_page = ep.episode_id;
-                                }
-                                if (ep.av_id == aid) {
-                                    ep_id_by_aid = ep.episode_id;
-                                }
-                            }
-                            episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
-                        }
-                        if (episode_id) {
-                            let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`;
-                            log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, 'season_id:', season_id, 'ep_id:', episode_id);
-                            msg.innerText = '即将跳转到：' + bangumi_url;
-                            location.href = bangumi_url;
-                        } else {
-                            return Promise$1.reject('查询episode_id失败')
-                        }
-                    })
-                    .catch(function (e) {
-                        log('error:', arguments);
-                        msg.innerText = 'error:' + e;
-                    });
-            }
-
-            function generatePlayer(data, aid, page, cid) {
-                let generateSrc = function (aid, cid) {
-                    return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
-                };
-                let generatePageList = function (pages) {
-                    let $curPage = null;
-                    function onPageBtnClick(e) {
-                        e.target.className = 'curPage';
-                        $curPage && ($curPage.className = '');
-
-                        let index = e.target.attributes['data-index'].value;
-                        iframe.src = generateSrc(aid, pages[index].cid);
-                    }
-
-                    return pages.map(function (item, index) {
-                        let isCurPage = item.page == page;
-                        let $item = createElement('a', { 'data-index': index, className: isCurPage ? 'curPage' : '', event: { click: onPageBtnClick } }, [createElement('text', item.page + ': ' + item.part)]);
-                        if (isCurPage) $curPage = $item;
-                        return $item
-                    });
-                };
-                // 当前av不属于番剧页面, 直接在当前页面插入一个播放器的iframe
-                let $pageBody = document.querySelector('.b-page-body');
-                if (!$pageBody) { // 若不存在, 则创建
-                    $pageBody = createElement('div', { className: '.b-page-body' });
-                    document.querySelector('body').insertBefore($pageBody, document.querySelector('#app'));
-                    // 添加相关样式
-                    document.head.appendChild(createElement('link', { type: 'text/css', rel: 'stylesheet', href: '//static.hdslb.com/css/core-v5/page-core.css' }));
-                }
-                let iframe = createElement('iframe', { className: 'player bilibiliHtml5Player', style: { position: 'relative' }, src: generateSrc(aid, cid) });
-
-                // 添加播放器
-                $pageBody.appendChild(createElement('div', { className: 'player-wrapper' }, [
-                    createElement('div', { className: 'main-inner' }, [
-                        createElement('div', { className: 'v-plist' }, [
-                            createElement('div', { id: 'plist', className: 'plist-content open' }, generatePageList(data.list))
-                        ])
-                    ]),
-                    createElement('div', { id: 'bofqi', className: 'scontent' }, [iframe])
-                ]));
-                // 添加评论区
-                $pageBody.appendChild(createElement('div', { className: 'main-inner' }, [
-                    createElement('div', { className: 'common report-scroll-module report-wrap-module', id: 'common_report' }, [
-                        createElement('div', { className: 'b-head' }, [
-                            createElement('span', { className: 'b-head-t results' }),
-                            createElement('span', { className: 'b-head-t' }, [createElement('text', '评论')]),
-                            createElement('a', { className: 'del-log', href: `//www.bilibili.com/replydeletelog?aid=${aid}&title=${data.title}`, target: '_blank' }, [createElement('text', '查看删除日志')])
-                        ]),
-                        createElement('div', { className: 'comm', id: 'bbComment' }, [
-                            createElement('div', { id: 'load_comment', className: 'comm_open_btn', onclick: "var fb = new bbFeedback('.comm', 'arc');fb.show(" + aid + ", 1);", style: { cursor: 'pointer' } })
-                        ])
-                    ])
-                ]));
-                // 添加包含bbFeedback的js
-                document.head.appendChild(createElement('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }));
-
-                document.title = data.title;
-                (document.querySelector('.error-body') || document.querySelector('.error-container')).remove(); // 移除错误信息面板
-            }
-
-            util_init(() => {
-                if (util_page.av()) {
-                    tryRedirectToBangumiOrInsertPlayer();
-                }
-            }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.COMPLETE);
-            return true // 随便返回一个值...
-        }());
-        const balh_feature_FillSeasonList = (function () {
-            function tryFillSeasonList() {
-                var error_container, season_id;
-                if (!(error_container = document.querySelector('div.error-container'))) {
-                    return;
-                }
-                if (!(season_id = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)[1])) {
-                    return;
-                }
-
-                //尝试解决怪异模式渲染
-                /*
-                会造成变量丢失，等待官方重写doctype
-                try{
-                window.stop();
-                    var xhr = new XMLHttpRequest();
-                xhr.open('GET',location.href,false);
-                xhr.send();
-                document.head.appendChild(_('script',{},[_('text',
-                    'document.write(unescape("'+escape(xhr.response.replace(/<!DOCTYPE.+?>/,'<!DOCTYPE HTML>'))+'"));window.stop()'
-                )]));
-                }catch(e){util_error(e);}
-                */
-
-                var msg = createElement('a', { href: '//bangumi.bilibili.com/anime/' + season_id + '/play', style: { fontSize: '20px' } }, [createElement('text', `【${GM_info.script.name}】尝试获取视频列表中...`)]),
-                    content = createElement('div');
-
-                error_container.insertBefore(content, error_container.firstChild);
-                content.appendChild(msg);
-                log('season>:', season_id);
-                BiliPlusApi.season(season_id)
-                    .then(function (data) {
-                        log('season>then:', data);
-                        if (data.code) {
-                            return Promise$1.reject(data);
-                        }
-
-                        function generateEpisodeList(episodes) {
-                            var children = [];
-                            episodes.reverse().forEach(function (i) {
-                                children.push(createElement('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [createElement('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [
-                                    createElement('div', { className: 'img-wrp' }, [createElement('img', { src: i.cover, style: { opacity: 1 }, loaded: 'loaded', alt: i.index + ' ' + i.index_title })]),
-                                    createElement('div', { className: 'text-wrp' }, [
-                                        createElement('div', { className: 'text-wrp-num' }, [createElement('div', { className: 'text-wrp-num-content' }, [createElement('text', `第${i.index}话`)])]),
-                                        createElement('div', { className: 'text-wrp-title trunc' }, [createElement('text', i.index_title)])
-                                    ])
-                                ])]));
-                            });
-                            return children;
-                        }
-
-                        function generateSeasonList(seasons) {
-                            function onSeasonClick(event) {
-                                window.location.href = '//bangumi.bilibili.com/anime/' + event.target.attributes['data-season-id'].value;
-                            }
-
-                            return seasons.map(function (season) {
-                                return createElement('li', { className: season.season_id == season_id ? 'cur' : '', 'data-season-id': season.season_id, event: { click: onSeasonClick } }, [createElement('text', season.title)]);
-                            });
-                        }
-
-                        if (data.result) {
-                            document.title = data.result.title;
-                            document.head.appendChild(createElement('link', { href: 'https://s3.hdslb.com/bfs/static/anime/css/tag-index.css?v=110', rel: 'stylesheet' }));
-                            document.head.appendChild(createElement('link', { href: 'https://s1.hdslb.com/bfs/static/anime/css/bangumi-index.css?v=110', rel: 'stylesheet' }));
-                            document.body.insertBefore(createElement('div', { className: 'main-container-wrapper' }, [createElement('div', { className: 'main-container' }, [
-                                createElement('div', { className: 'page-info-wrp' }, [createElement('div', { className: 'bangumi-info-wrapper' }, [
-                                    createElement('div', { className: 'bangumi-info-blurbg-wrapper' }, [createElement('div', { className: 'bangumi-info-blurbg blur', style: { backgroundImage: 'url(' + data.result.cover + ')' } })]),
-                                    createElement('div', { className: 'main-inner' }, [createElement('div', { className: 'info-content' }, [
-                                        createElement('div', { className: 'bangumi-preview' }, [createElement('img', { alt: data.result.title, src: data.result.cover })]),
-                                        createElement('div', { className: 'bangumi-info-r' }, [
-                                            createElement('div', { className: 'b-head' }, [createElement('h1', { className: 'info-title', 'data-seasonid': season_id, title: data.result.title }, [createElement('text', data.result.title)])]),
-                                            createElement('div', { className: 'info-count' }, [
-                                                createElement('span', { className: 'info-count-item info-count-item-play' }, [createElement('span', { className: 'info-label' }, [createElement('text', '总播放')]), createElement('em', {}, [createElement('text', data.result.play_count)])]),
-                                                createElement('span', { className: 'info-count-item info-count-item-fans' }, [createElement('span', { className: 'info-label' }, [createElement('text', '追番人数')]), createElement('em', {}, [createElement('text', data.result.favorites)])]),
-                                                createElement('span', { className: 'info-count-item info-count-item-review' }, [createElement('span', { className: 'info-label' }, [createElement('text', '弹幕总数')]), createElement('em', {}, [createElement('text', data.result.danmaku_count)])])
-                                            ]),
-                                            //_('div',{className:'info-row info-update'},[]),
-                                            //_('div',{className:'info-row info-cv'},[]),
-                                            createElement('div', { className: 'info-row info-desc-wrp' }, [
-                                                createElement('div', { className: 'info-row-label' }, [createElement('text', '简介：')]),
-                                                createElement('div', { className: 'info-desc' }, [createElement('text', data.result.evaluate)])
-                                            ]),
-                                        ])
-                                    ])])
-                                ])]),
-                                createElement('div', { className: 'main-inner' }, [createElement('div', { className: 'v1-bangumi-list-wrapper clearfix' }, [
-                                    createElement('div', { className: 'v1-bangumi-list-season-wrapper' }, [
-                                        createElement('div', { className: 'v1-bangumi-list-season-content slider-list-content' }, [
-                                            createElement('div', {}, [
-                                                createElement('ul', { className: 'v1-bangumi-list-season clearfix slider-list', 'data-current-season-id': season_id, style: { opacity: 1 } }, generateSeasonList(data.result.seasons))
-                                            ])
-                                        ])
-                                    ]),
-                                    createElement('div', { className: 'v1-bangumi-list-part-wrapper slider-part-wrapper' }, [createElement('div', { className: 'v1-bangumi-list-part clearfix', 'data-current-season-id': season_id, style: { display: 'block' } }, [
-                                        createElement('div', { className: 'complete-list', style: { display: 'block' } }, [createElement('div', { className: 'video-slider-list-wrapper' }, [createElement('div', { className: 'slider-part-wrapper' }, [createElement('ul', { className: 'slider-part clearfix hide', style: { display: 'block' } }, generateEpisodeList(data.result.episodes))])])])
-                                    ])])
-                                ])])
-                            ])]), msg.parentNode.parentNode);
-                            msg.parentNode.parentNode.remove();
-                        }
-                    })
-                    .catch(function (error) {
-                        log('season>catch', error);
-                        msg.innerText = 'error:' + JSON.stringify(error) + '\n点击跳转到播放界面 (不一定能够正常播放...)';
-                    });
-            }
-
-            util_init(() => {
-                if (util_page.bangumi()) {
-                    tryFillSeasonList();
-                }
-            });
-            return true
-        }());
-
-        const balh_ui_setting = (function () {
-            function addSettingsButton() {
-                let indexNav = document.querySelector('.bangumi-nav-right, #index_nav, #fixnav_report');
-                let settingBtnSvgContainer;
-                const createBtnStyle = (size, diffCss) => {
-                    diffCss = diffCss || `
-                        #balh-settings-btn {
-                            bottom: 110px;
-                            border: 1px solid #e5e9ef;
-                            border-radius: 4px;
-                            background: #f6f9fa;
-                            margin-top: 4px;
-                        }
-                        #balh-settings-btn .btn-gotop {
-                            text-align: center;
-                        }
-                    `;
-                    return createElement('style', {}, [createElement('text', `
-                        ${diffCss}
-                        #balh-settings-btn {
-                            width: ${size};
-                            height: ${size};
-                            cursor: pointer;
-                        }
-                        #balh-settings-btn:hover {
-                            background: #00a1d6;
-                            border-color: #00a1d6;
-                        }
-                        #balh-settings-btn .icon-saturn {
-                            width: 30px;
-                            height: ${size};
-                            fill: rgb(153,162,170);
-                        }
-                        #balh-settings-btn:hover .icon-saturn {
-                            fill: white;
-                        }
-                `)])
-                };
-                if (indexNav == null) {
-                    // 信息页添加到按钮右侧
-                    if (util_page.bangumi_md()) {
-                        indexNav = document.querySelector('.media-info-btns');
-                        indexNav.appendChild(createBtnStyle('44px', `
-                            #balh-settings-btn {
-                                float: left;
-                                margin: 3px 0 0 20px;
-                                background: #FFF;
-                                border-radius: 10px;
-                            }
-                            #balh-settings-btn>:first-child {
-                                text-align: center;
-                                height: 100%;
-                            }
-                        `));
-                    } else {
-                        // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
-                        let navTools = document.querySelector('.nav-tools, .float-nav');
-                        if (navTools) {
-                            let bottom = navTools.className.includes('float-nav') ? '53px' : '45px';
-                            indexNav = document.body.appendChild(createElement('div', { style: { position: 'fixed', right: '6px', bottom: bottom, zIndex: '129', textAlign: 'center', display: 'none' } }));
-                            indexNav.appendChild(createBtnStyle('45px'));
-                            window.addEventListener('scroll', (event) => {
-                                indexNav.style.display = window.scrollY < 600 ? 'none' : '';
-                            });
-                        }
-                    }
-                    if (indexNav) {
-                        settingBtnSvgContainer = indexNav.appendChild(createElement('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [createElement('div', {})])).firstChild;
-                    }
-                } else {
-                    // 视频页添加到回顶部下方
-                    window.dispatchEvent(new Event('resize'));
-                    indexNav.style.display = 'block';
-                    indexNav.appendChild(createBtnStyle('46px'));
-                    settingBtnSvgContainer = indexNav.appendChild(createElement('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [createElement('div', { className: 'btn-gotop' })])).firstChild;
-                }
-                settingBtnSvgContainer && (settingBtnSvgContainer.innerHTML = `<!-- https://www.flaticon.com/free-icon/saturn_53515 --><svg class="icon-saturn" viewBox="0 0 612.017 612.017"><path d="M596.275,15.708C561.978-18.59,478.268,5.149,380.364,68.696c-23.51-7.384-48.473-11.382-74.375-11.382c-137.118,0-248.679,111.562-248.679,248.679c0,25.902,3.998,50.865,11.382,74.375C5.145,478.253-18.575,561.981,15.724,596.279c34.318,34.318,118.084,10.655,216.045-52.949c23.453,7.365,48.378,11.344,74.241,11.344c137.137,0,248.679-111.562,248.679-248.68c0-25.862-3.979-50.769-11.324-74.24C606.931,133.793,630.574,50.026,596.275,15.708zM66.435,545.53c-18.345-18.345-7.919-61.845,23.338-117.147c22.266,39.177,54.824,71.716,94.02,93.943C128.337,553.717,84.837,563.933,66.435,545.53z M114.698,305.994c0-105.478,85.813-191.292,191.292-191.292c82.524,0,152.766,52.605,179.566,125.965c-29.918,41.816-68.214,87.057-113.015,131.839c-44.801,44.819-90.061,83.116-131.877,113.034C167.303,458.76,114.698,388.479,114.698,305.994z M305.99,497.286c-3.156,0-6.236-0.325-9.354-0.459c35.064-27.432,70.894-58.822,106.11-94.059c35.235-35.235,66.646-71.046,94.058-106.129c0.153,3.118,0.479,6.198,0.479,9.354C497.282,411.473,411.469,497.286,305.99,497.286z M428.379,89.777c55.303-31.238,98.803-41.683,117.147-23.338c18.402,18.383,8.187,61.902-23.204,117.377C500.095,144.62,467.574,112.043,428.379,89.777z"/></svg>`);
-            }
-
-            function _showSettings() {
-                document.body.appendChild(settingsDOM);
-                var form = settingsDOM.querySelector('form');
-                // elements包含index的属性, 和以name命名的属性, 其中以name命名的属性是不可枚举的, 只能通过这种方式获取出来
-                Object.getOwnPropertyNames(form.elements).forEach(function (name) {
-                    if (name.startsWith('balh_')) {
-                        var key = name.replace('balh_', '');
-                        var ele = form.elements[name];
-                        if (ele.type === 'checkbox') {
-                            ele.checked = balh_config[key];
-                        } else {
-                            ele.value = balh_config[key];
-                        }
-                    }
-                });
-                document.body.style.overflow = 'hidden';
-            }
-
-            // 往顶层窗口发显示设置的请求
-            function showSettings() {
-                window.top.postMessage('balh-show-setting', '*');
-            }
-
-            // 只有顶层窗口才接收请求
-            if (window === window.top) {
-                window.addEventListener('message', (event) => {
-                    if (event.data === 'balh-show-setting') {
-                        _showSettings();
-                        $('#upos-server')[0].value = balh_config.upos_server || '';
-                    }
-                });
-            }
-
-            function onSignClick(event) {
-                settingsDOM.click();
-                switch (event.target.attributes['data-sign'].value) {
-                    default:
-                    case 'in':
-                        balh_feature_sign.showLogin();
-                        break;
-                    case 'out':
-                        balh_feature_sign.showLogout();
-                        break;
-                }
-            }
-
-            function onSettingsFormChange(e) {
-                var name = e.target.name;
-                var value = e.target.type === 'checkbox' ? (e.target.checked ? r.const.TRUE : r.const.FALSE) : e.target.value.trim();
-                balh_config[name.replace('balh_', '')] = value;
-                log(name, ' => ', value);
-            }
-
-            // 第一次点击时:
-            // 1. '复制日志&问题反馈' => '复制日志'
-            // 2. 显示'问题反馈'
-            // 3. 复制成功后请求跳转到GitHub
-            // 之后的点击, 只是正常的复制功能~~
-            function onCopyClick(event) {
-                let issueLink = document.getElementById('balh-issue-link');
-                let continueToIssue = issueLink.style.display === 'none';
-                if (continueToIssue) {
-                    issueLink.style.display = 'inline';
-                    let copyBtn = document.getElementById('balh-copy-log');
-                    copyBtn.innerText = '复制日志';
-                }
-
-                let textarea = document.getElementById('balh-textarea-copy');
-                textarea.style.display = 'inline-block';
-                if (ui.copy(logHub.getAllMsg(), textarea)) {
-                    textarea.style.display = 'none';
-                    util_ui_msg.show($(this),
-                        continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',
-                        continueToIssue ? 0 : 3e3,
-                        continueToIssue ? 'button' : undefined,
-                        continueToIssue ? openIssuePage : undefined);
-                } else {
-                    util_ui_msg.show($(this), '复制失败, 请从下面的文本框手动复制', 5e3);
-                }
-            }
-
-            function openIssuePage() {
-                // window.open(r.url.issue)
-                window.open(r.url.readme);
-            }
-
-            let printSystemInfoOk = false;
-
-            // 鼠标移入设置底部的时候, 打印一些系统信息, 方便问题反馈
-            function onMouseEnterSettingBottom(event) {
-                if (!printSystemInfoOk) {
-                    printSystemInfoOk = true;
-                    util_debug('userAgent', navigator.userAgent);
-                }
-            }
-
-            let customServerCheckText;
-            var settingsDOM = createElement('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
-                createElement('style', {}, [createElement('text', r.css.settings)]),
-                createElement('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
-                    createElement('h1', {}, [createElement('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
-                    createElement('br'),
-                    createElement('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
-                        createElement('text', '代理服务器：'), createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '测速')]), createElement('br'),
-                        createElement('div', { style: { display: 'flex' } }, [
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), createElement('text', '土豆服')]),
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus')]),
-                            createElement('label', { style: { flex: 2 } }, [
-                                createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义: `),
-                                createElement('input', {
-                                    type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
-                                        input: (event) => {
-                                            customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test(event.target.value.trim()) ? '✔️' : '❌';
-                                            onSettingsFormChange(event);
-                                        }
-                                    }
-                                }),
-                                customServerCheckText = createElement('span'),
-                            ]),
-                        ]), createElement('br'),
-                        createElement('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
-                        createElement('div', { style: { display: '' } }, [ // 这个功能貌似没作用了...隐藏掉 => 貌似还有用...重新显示
-                            createElement('text', 'upos服务器：'), createElement('br'),
-                            createElement('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
-                                createElement('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
-                                createElement('text', '替换upos视频服务器：'),
-                                createElement('select', {
-                                    id: 'upos-server',
-                                    event: {
-                                        change: function () {
-                                            let server = this.value;
-                                            let message = $('#upos-server-message');
-                                            let clearMsg = function () { message.text(''); };
-                                            message.text('保存中...');
-                                            $.ajax(balh_config.server + '/api/setUposServer?server=' + server, {
-                                                xhrFields: { withCredentials: true },
-                                                dataType: 'json',
-                                                success: function (json) {
-                                                    if (json.code == 0) {
-                                                        message.text('已保存');
-                                                        setTimeout(clearMsg, 3e3);
-                                                        balh_config.upos_server = server;
-                                                    }
-                                                },
-                                                error: function () {
-                                                    message.text('保存出错');
-                                                    setTimeout(clearMsg, 3e3);
-                                                }
-                                            });
-                                        }
-                                    }
-                                }, [
-                                    createElement('option', { value: "" }, [createElement('text', '不替换')]),
-                                    createElement('option', { value: "ks3u" }, [createElement('text', 'ks3（金山）')]),
-                                    createElement('option', { value: "kodou" }, [createElement('text', 'kodo（七牛）')]),
-                                    createElement('option', { value: "cosu" }, [createElement('text', 'cos（腾讯）')]),
-                                    createElement('option', { value: "bosu" }, [createElement('text', 'bos（百度）')]),
-                                    createElement('option', { value: "wcsu" }, [createElement('text', 'wcs（网宿）')]),
-                                    createElement('option', { value: "xycdn" }, [createElement('text', 'xycdn（迅雷）')]),
-                                    createElement('option', { value: "hw" }, [createElement('text', 'hw（251）')]),
-                                ]),
-                                createElement('span', { 'id': 'upos-server-message' })
-                            ]), createElement('br'),
-                        ]),
-                        createElement('text', '脚本工作模式：'), createElement('br'),
-                        createElement('div', { style: { display: 'flex' } }, [
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.DEFAULT }), createElement('text', '默认：自动判断')]),
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REPLACE }), createElement('text', '替换：在需要时处理番剧')]),
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_mode', value: r.const.mode.REDIRECT }), createElement('text', '重定向：完全代理所有番剧')])
-                        ]), createElement('br'),
-                        createElement('text', '其他：'), createElement('br'),
-                        createElement('div', { style: { display: 'flex' } }, [
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_blocked_vip' }), createElement('text', '被永封的大会员'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#大会员账号被b站永封了', target: '_blank' }, [createElement('text', '(？)')])]),
-                            createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_enable_in_av' }), createElement('text', '在AV页面启用'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [createElement('text', '(？)')])]),
-                            createElement('div', { style: { flex: 1, display: 'flex' } }, [
-                                createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), createElement('text', '去前置广告')]),
-                                // _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
-                            ])
-                        ]), createElement('br'),
-                        createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
-                        createElement('text', '　'),
-                        createElement('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [createElement('text', '取消授权')]),
-                        createElement('text', '　　'),
-                        createElement('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show($(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [createElement('text', '（这是什么？）')]),
-                        createElement('br'), createElement('br'),
-                        createElement('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
-                            createElement('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [createElement('text', '脚本主页')]),
-                            createElement('text', '　'),
-                            createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md', target: '_blank' }, [createElement('text', '帮助说明')]),
-                            createElement('text', '　'),
-                            createElement('a', { id: 'balh-copy-log', href: 'javascript:;', event: { click: onCopyClick } }, [createElement('text', '复制日志&问题反馈')]),
-                            createElement('text', '　'),
-                            createElement('a', { id: 'balh-issue-link', href: 'javascript:;', event: { click: openIssuePage }, style: { display: 'none' } }, [createElement('text', '问题反馈')]),
-                            createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/graphs/contributors' }, [createElement('text', '贡献者')]),
-                            createElement('text', ' 接口：'),
-                            createElement('a', { href: 'https://www.biliplus.com/' }, [createElement('text', 'BiliPlus ')]),
-                            createElement('a', { href: 'https://github.com/kghost/bilibili-area-limit' }, [createElement('text', 'kghost ')]),
-                            createElement('a', { href: 'https://github.com/yujincheng08/BiliRoaming' }, [createElement('text', 'BiliRoaming ')]),
-                        ]),
-                        createElement('textarea', { id: 'balh-textarea-copy', style: { display: 'none' } })
-                    ])
-                ])
-            ]);
-
-            util_init(() => {
-                if (!(util_page.player() || (util_page.av() && !balh_config.enable_in_av))) {
-                    addSettingsButton();
-                }
-            }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
-            return {
-                dom: settingsDOM,
-                show: showSettings,
-            }
-        }());
-
-        const balh_jump_to_baipiao = (function () {
-            function main() {
-                for (let bp of r.baipiao) {
-                    const cookie_key = `balh_baipao_${bp.key}`;
-                    if (bp.match() && !cookieStorage[cookie_key]) {
-                        ui.pop({
-                            content: [
-                                createElement('text', '发现白嫖地址: '), createElement('a', { href: bp.link }, bp.link),
-                                createElement('div', {}, bp.message),
-                            ],
-                            confirmBtn: '一键跳转',
-                            onConfirm: () => { location.href = bp.link; },
-                            onClose: () => { cookieStorage.set(cookie_key, r.const.TRUE, ''); }
-                        });
-                        break
-                    }
-                }
-            }
-            util_init(() => {
-                main();
-            }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
-        }());
-
-        const balh_mark_serve_check_area_limit_state = (function () {
-            if (!util_page.bangumi_md()) {
-                return
-            }
-            // 服务器需要通过这个接口判断是否有区域限制
-            // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
-            util_init(() => {
-                const season_id = Func.safeGet(`window.__INITIAL_STATE__.mediaInfo.param.season_id`);
-                if (season_id) {
-                    BiliPlusApi.season(season_id)
-                        .then(r => log(`season${season_id}`, r))
-                        .catch(e => log(`season${season_id}`, e));
-                }
-            });
-        }());
+        jump_to_baipiao();
+        biliplus_check_area_limit();
 
         function main() {
             util_info(
@@ -2917,17 +2967,17 @@ function scriptSource(invokeBy) {
                 'remove_pre_ad:', balh_config.remove_pre_ad,
                 'enable_in_av:', balh_config.enable_in_av,
                 'readyState:', document.readyState,
-                'isLogin:', balh_feature_sign.isLogin(),
-                'isLoginBiliBili:', balh_feature_sign.isLoginBiliBili()
+                'isLogin:', biliplus_login.isLogin(),
+                'isLoginBiliBili:', biliplus_login.isLoginBiliBili()
             );
             // 暴露接口
             window.bangumi_area_limit_hack = {
                 setCookie: cookieStorage.set,
                 getCookie: cookieStorage.get,
-                login: balh_feature_sign.showLogin,
-                logout: balh_feature_sign.showLogout,
+                login: biliplus_login.showLogin,
+                logout: biliplus_login.showLogout,
                 getLog: logHub.getAllMsg,
-                showSettings: balh_ui_setting.show,
+                showSettings: settings$1.show,
                 set1080P: function () {
                     const settings = JSON.parse(localStorage.bilibili_player_settings);
                     const oldQuality = settings.setting_config.defquality;
