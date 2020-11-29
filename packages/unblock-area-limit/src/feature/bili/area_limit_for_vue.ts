@@ -4,7 +4,15 @@ import { _ } from "../../util/react"
 import { balh_config, balh_is_close } from "../config"
 import { util_page } from "../page"
 
-export function modifyGlobalValue<T = any>(name: string, modifyFn: (value: T) => T) {
+export function modifyGlobalValue<T = any>(
+    name: string,
+    options: {
+        // onWrite可以修改写入的值
+        onWrite: (value: T | undefined) => T | undefined,
+        // onRead可以用来打断点...
+        onRead?: (value: T | undefined) => void
+    },
+) {
     const _window = window as StringAnyObject
     const name_origin = `${name}_origin`
     _window[name_origin] = _window[name]
@@ -13,10 +21,11 @@ export function modifyGlobalValue<T = any>(name: string, modifyFn: (value: T) =>
         configurable: true,
         enumerable: true,
         get: () => {
+            options?.onRead?.(value)
             return value
         },
         set: (val) => {
-            value = modifyFn(val)
+            value = options.onWrite(val)
         }
     })
     if (_window[name_origin]) {
@@ -34,7 +43,8 @@ function fixBangumiPlayPage() {
                 return
             }
             // 插入eplist_module的位置和内容一定要是这样... 不能改...
-            const $template = _('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <span/> <span/></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim())
+            // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
+            const $template = _('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim())
             $danmukuBox.parentElement?.replaceChild($template.content.firstElementChild!, $danmukuBox.nextSibling!.nextSibling!)
         }
 
@@ -76,41 +86,54 @@ export function area_limit_for_vue() {
     }
 
     function replaceUserState() {
-        modifyGlobalValue('__PGC_USERSTATE__', (value) => {
-            if (value) {
-                // 区域限制
-                // todo      : 调用areaLimit(limit), 保存区域限制状态
-                // 2019-08-17: 之前的接口还有用, 这里先不保存~~
-                value.area_limit = 0
-                // 会员状态
-                if (balh_config.blocked_vip && value.vip_info) {
-                    value.vip_info.status = 1
-                    value.vip_info.type = 2
+        modifyGlobalValue('__PGC_USERSTATE__', {
+            onWrite: (value) => {
+                if (value) {
+                    // 区域限制
+                    // todo      : 调用areaLimit(limit), 保存区域限制状态
+                    // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+                    value.area_limit = 0
+                    // 会员状态
+                    if (balh_config.blocked_vip && value.vip_info) {
+                        value.vip_info.status = 1
+                        value.vip_info.type = 2
+                    }
                 }
+                return value
             }
-            return value
         })
     }
     function replaceInitialState() {
-        modifyGlobalValue('__INITIAL_STATE__', (value) => {
-            if (value && value.epInfo && value.epList && balh_config.blocked_vip) {
-                for (let ep of [value.epInfo, ...value.epList]) {
-                    // 13貌似表示会员视频, 2为普通视频
-                    if (ep.epStatus === 13) {
-                        log('epStatus 13 => 2', ep)
-                        ep.epStatus = 2
+        modifyGlobalValue('__INITIAL_STATE__', {
+            onWrite: (value) => {
+                if (value && value.epInfo && value.epList && balh_config.blocked_vip) {
+                    for (let ep of [value.epInfo, ...value.epList]) {
+                        // 13貌似表示会员视频, 2为普通视频
+                        if (ep.epStatus === 13) {
+                            log('epStatus 13 => 2', ep)
+                            ep.epStatus = 2
+                        }
                     }
                 }
+                if (value?.mediaInfo?.rights?.appOnly === true) {
+                    value.mediaInfo.rights.appOnly = false
+                    window.__balh_app_only__ = true
+                }
+                return value
             }
-            if (value?.mediaInfo?.rights?.appOnly === true) {
-                value.mediaInfo.rights.appOnly = false
-                window.__balh_app_only__ = true
-            }
-            return value
         })
     }
     replaceInitialState()
     replaceUserState()
     replacePlayInfo()
     fixBangumiPlayPage()
+
+    modifyGlobalValue('BilibiliPlayer', {
+        onWrite: (value) => {
+            return value
+        },
+        onRead: (value) => {
+
+        }
+    })
 }
