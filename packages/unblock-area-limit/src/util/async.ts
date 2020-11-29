@@ -69,12 +69,31 @@ namespace Async {
         }
     }
 
-    function ajaxByFetch<T>(url: string): Promise<T> {
+    /** fetch没法发送cookies, 详见: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API#Differences_from_jQuery */
+    function requestByFetch<T>(url: string): Promise<T> {
         return fetch(url).then(it => it.json())
     }
 
+    function requestByXhr<T>(url: string): Promise<T> {
+        return new Promise((resolve, reject) => {
+            const req = new XMLHttpRequest()
+            req.onreadystatechange = (event) => {
+                if (req.readyState === 4) {
+                    if (req.status === 200) {
+                        resolve(JSON.parse(req.responseText))
+                    } else {
+                        reject(req)
+                    }
+                }
+            }
+            req.withCredentials = true
+            req.open('GET', url)
+            req.send()
+        });
+    }
 
-    function ajaxBy$<T>(url: string): Promise<T> {
+
+    function requestByJQuery<T>(url: string): Promise<T> {
         const creator = () => new Promise<T>((resolve, reject) => {
             let options: any = { url: url }
 
@@ -98,10 +117,10 @@ namespace Async {
 
     export function ajax<T>(url: string): Promise<T> {
         // todo: 直接用fetch实现更简单?
-        return ajaxBy$<T>(url)
+        return requestByJQuery<T>(url)
             .catch(e => {
                 if (e instanceof RetryUntilTimeoutException) {
-                    return ajaxByFetch<T>(url);
+                    return requestByXhr<T>(url);
                 } else {
                     return Promise.reject(e)
                 }
