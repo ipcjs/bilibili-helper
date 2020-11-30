@@ -126,7 +126,9 @@ export function area_limit_for_vue() {
     replaceInitialState()
     replaceUserState()
     replacePlayInfo()
-    fixBangumiPlayPage()
+    if (util_page.new_bangumi()) {
+        fixBangumiPlayPage()
+    }
 
     modifyGlobalValue('BilibiliPlayer', {
         onWrite: (value) => {
