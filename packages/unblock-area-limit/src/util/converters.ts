@@ -1,5 +1,31 @@
 import { util_error } from "./log";
 
+
+/** @see https://github.com/yujincheng08/BiliRoaming/blob/f689b138da7ac45d2591d375f19698c969844324/app/src/main/res/values/strings.xml#L112-L131 */
+export const uposMap = {
+    ks3: 'upos-sz-mirrorks3.bilivideo.com',
+    ks3b: 'upos-sz-mirrorks3b.bilivideo.com',
+    ks3c: 'upos-sz-mirrorks3c.bilivideo.com',
+    ks32: 'upos-sz-mirrorks32.bilivideo.com',
+    kodo: 'upos-sz-mirrorkodo.bilivideo.com',
+    kodob: 'upos-sz-mirrorkodob.bilivideo.com',
+    cos: 'upos-sz-mirrorcos.bilivideo.com',
+    cosb: 'upos-sz-mirrorcosb.bilivideo.com',
+    bos: 'upos-sz-mirrorbos.bilivideo.com',
+    wcs: 'upos-sz-mirrorwcs.bilivideo.com',
+    wcsb: 'upos-sz-mirrorwcsb.bilivideo.com',
+    /** 不限CROS, 限制UA */
+    hw: 'upos-sz-mirrorhw.bilivideo.com',
+    hwb: 'upos-sz-mirrorhwb.bilivideo.com',
+    upbda2: 'upos-sz-upcdnbda2.bilivideo.com',
+    upws: 'upos-sz-upcdnws.bilivideo.com',
+    uptx: 'upos-sz-upcdntx.bilivideo.com',
+    uphw: 'upos-sz-upcdnhw.bilivideo.com',
+    js: 'upos-tf-all-js.bilivideo.com',
+    hk: 'cn-hk-eq-bcache-01.bilivideo.com',
+    akamai: 'upos-hz-mirrorakam.akamaized.net',
+}
+
 export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
     export function bv2aid(bv: string) {
@@ -75,7 +101,7 @@ export namespace Converters {
     }
 
     /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
-    export function replaceUpos<T>(data: T, host: string = 'upos-sz-upcdntx.bilivideo.com') {
+    export function replaceUpos<T>(data: T, host: string = uposMap.uptx) {
         const str = JSON.stringify(data)
         return JSON.parse(str.replace(/:\/\/[^/]+\//g, `://${host}/`))
     }

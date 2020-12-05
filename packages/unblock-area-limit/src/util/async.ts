@@ -50,7 +50,7 @@ namespace Async {
     * @param resultTransformer 用于变换result的函数, 返回新的result或Promise
     * @param errorTransformer  用于变换error的函数, 返回新的error或Promise, 返回的Promise可以做状态恢复...
     */
-    export function wrapper(promiseCreator: (...args: any) => Promise<any>, resultTransformer: Function, errorTransformer: Function) {
+    export function wrapper(promiseCreator: (...args: any) => Promise<any>, resultTransformer: (r: any) => any, errorTransformer: (e: any) => any) {
         return function (...args: any) {
             return new Promise((resolve, reject) => {
                 // log(promiseCreator, ...args)

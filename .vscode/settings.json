@@ -9,5 +9,7 @@
         "biliplus",
         "bili",
         "acfun",
-    ]
+        "upos",
+    ],
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }

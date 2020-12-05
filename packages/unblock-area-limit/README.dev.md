@@ -60,7 +60,9 @@ key为`'balh_server'`，可选的`value`为：
 
 ## 测试页
 
-4. 解除区域限制测试：
+1. appOnly测试：
+    - [安达与岛村 _ 番剧 _ bilibili _ 哔哩哔哩弹幕视频网](https://www.bilibili.com/bangumi/media/md28230188/)
+2. 解除区域限制测试：
     - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](https://bangumi.bilibili.com/anime/5551)[[第1话](https://bangumi.bilibili.com/anime/5551/play#96703)]
     - 内地：[小魔女学园 TV版_番剧](https://bangumi.bilibili.com/anime/5788)[[第1话](https://bangumi.bilibili.com/anime/5788/play#101761)]
     - 内地(新): [品酒要在成为夫妻后](https://bangumi.bilibili.com/anime/6423)
@@ -72,7 +74,7 @@ key为`'balh_server'`，可选的`value`为：
     - av页面：
         - 港澳台：[【日剧/医疗】产科医鸿鸟2 02【2017】](https://www.bilibili.com/video/av15659129/)
         - 国内：[【5月】游戏王VRAINS 24【VRAINSTORM】](https://www.bilibili.com/video/av15730139/)
-5. 自动跳转到番剧页测试
+3. 自动跳转到番剧页测试
     - 舊番、av_id共用、不分P：[/av4044639/](https://www.bilibili.com/video/av4044639/) → [/3398/play#84776](https://bangumi.bilibili.com/anime/3398/play#84776)
     - 舊番、av_id共用、分P：[/av2182637/index_3.html](https://www.bilibili.com/video/av2182637/index_3.html) → [/4300/play#88679](https://bangumi.bilibili.com/anime/4300/play#88679)
     - 舊番、av_id獨立：[/av2229121/](https://www.bilibili.com/video/av2229121/) → [/1559/play#29944](https://bangumi.bilibili.com/anime/1559/play#29944)

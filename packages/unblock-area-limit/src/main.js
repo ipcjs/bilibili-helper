@@ -1,5 +1,5 @@
 import { Objects } from './util/objects'
-import { Converters } from './util/converters';
+import { Converters, uposMap } from './util/converters';
 import { _ } from './util/react'
 import { Async, Promise } from './util/async';
 import { r, _t } from './feature/r'
@@ -16,7 +16,7 @@ import { util_init } from './util/initiator'
 import { util_ui_msg } from './util/message'
 import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
-
+import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
 function scriptContent() {
     'use strict';
     let log = console.log.bind(console, 'injector:')
@@ -42,7 +42,7 @@ function scriptContent() {
 
     const balh_feature_area_limit = (function () {
         if (balh_is_close) return
-
+        injectFetch()
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
             let firstCreateXHR = true
@@ -440,48 +440,7 @@ function scriptContent() {
             };
         }
 
-        function injectFetch() {
-            window.fetch = Async.wrapper(window.fetch,
-                resp => new Proxy(resp, {
-                    get: function (target, prop, receiver) {
-                        if (prop === 'json') {
-                            return Async.wrapper(target.json.bind(target),
-                                oriResult => {
-                                    util_debug('injectFetch:', target.url)
-                                    if (target.url.match(RegExps.urlPath('/player/web_api/v2/playurl/html5'))) {
-                                        let cid = Strings.getSearchParam(target.url, 'cid')
-                                        return BiliPlusApi.playurl(cid)
-                                            .then(result => {
-                                                if (result.code) {
-                                                    return Promise.reject('error: ' + JSON.stringify(result))
-                                                } else {
-                                                    return BiliPlusApi.playurl_for_mp4(cid)
-                                                        .then(url => {
-                                                            util_debug(`mp4地址, 移动版: ${url}, pc版: ${result.durl[0].url}`)
-                                                            return {
-                                                                "code": 0,
-                                                                "cid": `http://comment.bilibili.com/${cid}.xml`,
-                                                                "timelength": result.timelength,
-                                                                "src": url || result.durl[0].url, // 只取第一个片段的url...
-                                                            }
-                                                        })
-                                                }
-                                            })
-                                            .catch(e => {
-                                                // 若拉取视频地址失败, 则返回原始的结果
-                                                log('fetch mp4 url failed', e)
-                                                return oriResult
-                                            })
-                                    }
-                                    return oriResult
-                                },
-                                error => error)
-                        }
-                        return target[prop]
-                    }
-                }),
-                error => error)
-        }
+
 
         function isAreaLimitSeason() {
             return cookieStorage['balh_season_' + getSeasonId()];
@@ -907,6 +866,8 @@ function scriptContent() {
                                 // dash中的字段全部变成了类似C语言的下划线风格...
                                 Objects.convertKeyToSnakeCase(data.dash)
                             }
+                            // 替换后大多数bangumi下的视频都会报CROS错误
+                            // if (!window.__balh_app_only__) return Converters.replaceUpos(data, uposMap.kodo)
                             return data
                         })
                 }
@@ -922,7 +883,7 @@ function scriptContent() {
             // 故这里设置meta, 使页面不发送Referer
             // 注意动态改变引用策略的方式并不是标准行为, 目前在Chrome上测试是有用的
             document.head.appendChild(_('meta', { name: "referrer", content: "no-referrer" }))
-            injectFetch()
+            injectFetch4Mobile()
             util_init(() => {
                 const $wrapper = document.querySelector('.player-wrapper')
                 new MutationObserver(function (mutations, observer) {
