@@ -60,9 +60,10 @@ Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibi
 
 参考链接:  
 
-1. [如何提高B站海外CDN连接速度](https://www.bilibili.com/read/cv3118508)
+1. [zz5678/akamBiliChecker: 测试Bilibili海外CDN的下载速度](https://github.com/zz5678/akamBiliChecker)
 2. [miyouzi/akamTester: 批量测试B站海外CDN](https://github.com/miyouzi/akamTester)
-3. [播放番剧，5秒一卡，速度非常慢 · Issue #401](https://github.com/ipcjs/bilibili-helper/issues/401)
+3. [如何提高B站海外CDN连接速度](https://www.bilibili.com/read/cv3118508)
+4. [播放番剧，5秒一卡，速度非常慢 · Issue #401](https://github.com/ipcjs/bilibili-helper/issues/401)
 
 ### 看不了1080P画质？
 
