@@ -8,7 +8,7 @@ import { cookieStorage } from './util/cookie'
 import { balh_config, balh_is_close } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
-import { access_key_param_if_exist } from './api/bilibili';
+import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
 import { BiliPlusApi } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
@@ -720,7 +720,7 @@ function scriptContent() {
                     }
                     // 管他三七二十一, 强行将module=bangumi替换成module=pgc _(:3」∠)_
                     params = params.replace(/(&?module)=bangumi/, '$1=pgc')
-                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${window.__balh_app_only__ ? '&platform=android&fnval=0' : ''}`;
+                    return `${balh_config.server}/BPplayurl.php?${params}${access_key_param_if_exist()}${platform_android_param_if_app_only()}`;
                 },
                 processProxySuccess: function (data, alertWhenError = true) {
                     // data有可能为null
@@ -835,7 +835,7 @@ function scriptContent() {
                         })))
                         .catch(e => {
                             if ((typeof e === 'object' && e.statusText == 'error')
-                                || (e instanceof AjaxException && e.code === -502)
+                                || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/))
                                 || (typeof e === 'object' && e.code === -10403)
                             ) {
                                 ui.playerMsg('尝试使用kghost的服务器拉取视频地址...')
