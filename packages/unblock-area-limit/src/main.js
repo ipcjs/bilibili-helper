@@ -769,14 +769,17 @@ function scriptContent() {
             const playurl_by_kghost = new BilibiliApi({
                 _asyncAjax: function (originUrl) {
                     const proxyHostMap = [
-                        [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/'],
-                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
-                        [/仅限东南亚/, '//bilibili-sg-api.kghost.info/'],
-                        [/.*/, '//bilibili-cn-api.kghost.info/'],
+                        [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/', []],
+                        [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/', [
+                            34680, // 安达与岛村
+                            36297,
+                        ]],
+                        [/仅限东南亚/, '//bilibili-sg-api.kghost.info/', []],
+                        [/.*/, '//bilibili-cn-api.kghost.info/', []],
                     ];
                     let proxyHost
-                    for (const [regex, host] of proxyHostMap) {
-                        if (document.title.match(regex)) {
+                    for (const [regex, host, ssIds] of proxyHostMap) {
+                        if (document.title.match(regex) || ssIds.includes(window.__INITIAL_STATE__?.mediaInfo?.ssId)) {
                             proxyHost = host
                             break;
                         }
@@ -835,7 +838,7 @@ function scriptContent() {
                         })))
                         .catch(e => {
                             if ((typeof e === 'object' && e.statusText == 'error')
-                                || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/))
+                                || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/ || e.code === -500/*已爆炸*/))
                                 || (typeof e === 'object' && e.code === -10403)
                             ) {
                                 ui.playerMsg('尝试使用kghost的服务器拉取视频地址...')
