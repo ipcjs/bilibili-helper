@@ -236,7 +236,8 @@ export function settings() {
                 _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
                     _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
-                    _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus')]),
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus'), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')]),
+                    ]),
                     _('label', { style: { flex: 2 } }, [
                         _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
                         _('input', {
