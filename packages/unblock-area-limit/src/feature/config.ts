@@ -1,8 +1,6 @@
 import { cookieStorage } from "../util/cookie"
 import { util_page } from "./page"
-import { r } from "./r"
-
-export const balh_is_close = false
+import { r, TRUE, FALSE, BOOL } from "./r"
 
 interface BalhConfig {
     server: string
@@ -17,6 +15,7 @@ interface BalhConfig {
     enable_in_av?: boolean
     /** 同上 */
     remove_pre_ad?: boolean
+    is_closed: BOOL
     [k: string]: string | boolean | undefined
 }
 
@@ -55,6 +54,11 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
                 case 'flv_prefer_ws':
                     value = r.const.FALSE // 关闭该选项
                     break
+                case 'is_closed':
+                    if (value == null) {
+                        value = TRUE // 默认为true
+                    }
+                    break;
                 default:
                     // case 'blocked_vip':
                     // case 'remove_pre_ad':

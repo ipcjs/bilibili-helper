@@ -1,7 +1,7 @@
 import { util_init } from "../../util/initiator"
 import { log, util_warn } from "../../util/log"
 import { _ } from "../../util/react"
-import { balh_config, balh_is_close } from "../config"
+import { balh_config } from "../config"
 import { util_page } from "../page"
 
 export function modifyGlobalValue<T = any>(
@@ -52,7 +52,7 @@ function fixBangumiPlayPage() {
 }
 
 export function area_limit_for_vue() {
-    if (balh_is_close) return
+    if (balh_config.is_closed) return
 
     if (!(
         (util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi()

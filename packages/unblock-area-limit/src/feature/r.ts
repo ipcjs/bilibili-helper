@@ -11,6 +11,11 @@ export function _t(key: keyof typeof r_text) {
     return typeof text === 'string' ? text : text[lang]
 }
 
+export const TRUE = 'Y'
+export const FALSE = ''
+
+export type BOOL = typeof TRUE | typeof FALSE
+
 export const r = {
     html: {},
     css: {
@@ -42,8 +47,8 @@ export const r = {
                 return this.S1
             },
         },
-        TRUE: 'Y',
-        FALSE: '',
+        TRUE: TRUE,
+        FALSE: FALSE,
     },
     baipiao: [
         { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },

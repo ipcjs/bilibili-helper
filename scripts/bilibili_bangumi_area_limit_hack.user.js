@@ -142,6 +142,8 @@ function scriptSource(invokeBy) {
         const lang = 'zh_cn';
         return typeof text === 'string' ? text : text[lang];
     }
+    const TRUE = 'Y';
+    const FALSE = '';
     const r = {
         html: {},
         css: {
@@ -173,8 +175,8 @@ function scriptSource(invokeBy) {
                     return this.S1;
                 },
             },
-            TRUE: 'Y',
-            FALSE: '',
+            TRUE: TRUE,
+            FALSE: FALSE,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -683,6 +685,11 @@ function scriptSource(invokeBy) {
                         break;
                     case 'flv_prefer_ws':
                         value = r.const.FALSE; // 关闭该选项
+                        break;
+                    case 'is_closed':
+                        if (value == null) {
+                            value = TRUE; // 默认为true
+                        }
                         break;
                 }
                 target[prop] = value;
@@ -1476,6 +1483,8 @@ function scriptSource(invokeBy) {
         });
     }
     function area_limit_for_vue() {
+        if (balh_config.is_closed)
+            return;
         if (!((util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi())) {
             return;
         }
@@ -1970,6 +1979,9 @@ function scriptSource(invokeBy) {
                             createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), createElement('text', '去前置广告')]),
                         ])
                     ]), createElement('br'),
+                    createElement('div', { style: { display: 'flex' } }, [
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_is_closed' }), createElement('text', '关闭脚本'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/710', target: '_blank' }, [createElement('text', '(？)')])]),
+                    ]), createElement('br'),
                     createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
                     createElement('text', '　'),
                     createElement('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [createElement('text', '取消授权')]),
@@ -2091,6 +2103,7 @@ function scriptSource(invokeBy) {
         area_limit_for_vue();
 
         const balh_feature_area_limit = (function () {
+            if (balh_config.is_closed) return
             injectFetch();
             function injectXHR() {
                 util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'));

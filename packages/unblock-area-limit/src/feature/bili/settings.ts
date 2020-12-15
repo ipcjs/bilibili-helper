@@ -310,6 +310,9 @@ export function settings() {
                         // _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
                     ])
                 ]), _('br'),
+                _('div', { style: { display: 'flex' } }, [
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_is_closed' }), _('text', '关闭脚本'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/710', target: '_blank' }, [_('text', '(？)')])]),
+                ]), _('br'),
                 _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                 _('text', '　'),
                 _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
