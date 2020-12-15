@@ -1,6 +1,32 @@
 import { balh_config } from "../feature/config";
 import { Async } from "../util/async";
+import { Converters } from "../util/converters";
 import { access_key_param_if_exist } from "./bilibili";
+
+function convertPlayUrl(originUrl: string) {
+    let params = new URLSearchParams(originUrl.split('?')[1])
+    let queryMap: StringStringObject = {
+        appKey: '1d8b6e7d45233436',
+        build: '6080000',
+        device: 'android',
+        mobi_app: 'android',
+        platform: 'android',
+    }
+    params.forEach((value, key) => {
+        if (['t', 'sign'].indexOf(key) === -1) {
+            queryMap[key] = value
+        }
+    })
+    const result = Converters.generateSign(queryMap, '9b288147e5474dd2aa67085f716c560d')
+
+    let url = new URL(`${balh_config.server}/BPplayurl.php`)
+    url.search = result.params
+    url.searchParams.append('sign', result.sign)
+    url.searchParams.append('module', 'pgc')
+    url.searchParams.append('otype', 'json')
+    url.searchParams.append('platform', 'android')
+    return url.href
+}
 
 export namespace BiliPlusApi {
     export interface ViewResult {
