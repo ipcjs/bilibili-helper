@@ -243,7 +243,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test((event.target as any).value.trim()) ? '✔️' : '❌'
+                                    customServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '❌'
                                     onSettingsFormChange(event)
                                 }
                             }

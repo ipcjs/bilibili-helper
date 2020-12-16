@@ -807,7 +807,12 @@ function scriptContent() {
                         .then(r => this.processProxySuccess(r))
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
-                    return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                    if (r.regex.custom_server.test(proxyHost)) {
+                        return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                    }
+                    // 将proxyHost当成接口的完整路径进行拼接
+                    const params = originUrl.split('?')[1]
+                    return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
                 },
                 processProxySuccess: function (result) {
                     if (result.code) {
