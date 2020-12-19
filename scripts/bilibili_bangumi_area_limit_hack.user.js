@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.0.5
+// @version      8.0.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -725,6 +725,10 @@ function scriptSource(invokeBy) {
      * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
      */
     function getMobiPlayUrl(originUrl, host) {
+        // 合成完整 mobi api url
+        return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`;
+    }
+    function generateMobiPlayUrlParams(originUrl) {
         // 提取参数为数组
         let a = originUrl.split('?')[1].split('&');
         // 参数数组转换为对象
@@ -747,7 +751,7 @@ function scriptSource(invokeBy) {
         theRequest.track_path = '0';
         theRequest.device = 'android';
         theRequest.fnval = '0'; // 强制 FLV
-        theRequest.ts = `${Date.now() / 1000}`;
+        theRequest.ts = `${Math.trunc(Date.now() / 1000)}`;
         // 所需参数数组
         let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
         // 生成 mobi api 参数字符串
@@ -759,9 +763,7 @@ function scriptSource(invokeBy) {
         let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
         // 生成 sign
         let ciphertext = hex_md5(plaintext);
-        // 合成完整 mobi api url
-        let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
-        return mobi_api_url;
+        return `${mobi_api_params}sign=${ciphertext}`;
     }
     var BiliPlusApi;
     (function (BiliPlusApi) {
@@ -2908,10 +2910,15 @@ function scriptSource(invokeBy) {
                                 return getMobiPlayUrl(originUrl, proxyHost)
                             }
                             return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                        } else {
+                            if (window.__balh_app_only__) {
+                                return `${proxyHost}?${generateMobiPlayUrlParams(originUrl)}`
+                            }
+                            // 将proxyHost当成接口的完整路径进行拼接
+                            const params = originUrl.split('?')[1];
+                            return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
+
                         }
-                        // 将proxyHost当成接口的完整路径进行拼接
-                        const params = originUrl.split('?')[1];
-                        return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
                     },
                     processProxySuccess: function (result) {
                         if (result.code) {

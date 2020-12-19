@@ -63,7 +63,7 @@ export function generateMobiPlayUrlParams(originUrl: String) {
     theRequest.track_path = '0';
     theRequest.device = 'android';
     theRequest.fnval = '0'; // 强制 FLV
-    theRequest.ts = `${Date.now() / 1000}`;
+    theRequest.ts = `${Math.trunc(Date.now() / 1000)}`;
     // 所需参数数组
     let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
     // 生成 mobi api 参数字符串
