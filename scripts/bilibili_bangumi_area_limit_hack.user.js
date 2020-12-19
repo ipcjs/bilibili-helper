@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.0.4
+// @version      8.0.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2588,6 +2588,49 @@ function scriptSource(invokeBy) {
             function isAreaLimitForPlayUrl(json) {
                 return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627);
             }
+			
+            // 构建 mobi api 解析链接
+            // host 举例: 'https://example.com'
+            function getMobiPlayUrl(originUrl, host){
+                // 提取参数为数组
+                let a = originUrl.split('?')[1].split('&');
+                // 参数数组转换为对象
+                let theRequest = new Object();
+                for (let i = 0; i < a.length; i++) {
+                    let key = a[i].split("=")[0];
+                    let value = a[i].split("=")[1];
+                    // 给对象赋值
+                    theRequest[key] = value;
+                }
+                // 追加 mobi api 需要的参数
+                theRequest.access_key = localStorage.access_key;
+                theRequest.appkey = '07da50c9a0bf829f';
+                theRequest.build = '5380700';
+                theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
+                theRequest.device = 'android';
+                theRequest.force_host = '2';
+                theRequest.mobi_app = 'android_b';
+                theRequest.platform = 'android_b';
+                theRequest.track_path = '0';
+                theRequest.device = 'android';
+                theRequest.fnval = '0'; // 强制 FLV
+                theRequest.ts = Date.parse(new Date())/1000;
+                // 所需参数数组
+                let param_wanted = ['access_key','appkey','build','buvid','cid','device','ep_id','fnval','fnver','force_host','fourk','mobi_app','platform','qn','track_path','ts'];
+                // 生成 mobi api 参数字符串
+                let mobi_api_params = '';
+                for (let i = 0; i < param_wanted.length; i++){
+                    mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+                }
+                // 准备明文
+                let plaintext = mobi_api_params.slice(0,-1) + `25bdede4e1581c836cab73a48790ca6e`;
+                // 生成 sign
+                let ciphertext = hex_md5(plaintext);
+                // 合成完整 mobi api url
+                let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
+
+                return mobi_api_url;
+            }
 
             var bilibiliApis = (function () {
                 function AjaxException(message, code = 0/*用0表示未知错误*/) {
@@ -2851,11 +2894,19 @@ function scriptSource(invokeBy) {
                             .then(r => this.processProxySuccess(r))
                     },
                     transToProxyUrl: function (originUrl, proxyHost) {
+                        if (window.__balh_app_only__){
+                            // APP 限定用 mobi api
+                            return getMobiPlayUrl(originUrl, proxyHost);
+                        }
                         return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
                     },
                     processProxySuccess: function (result) {
                         if (result.code) {
                             return Promise$1.reject(result)
+                        }
+                        // 在APP限定情况启用 mobi api 解析
+                        if (window.__balh_app_only__){
+                            return result;
                         }
                         return result.result
                     },
