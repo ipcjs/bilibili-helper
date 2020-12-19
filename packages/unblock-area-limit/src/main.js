@@ -9,7 +9,7 @@ import { balh_config } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
-import { BiliPlusApi, getMobiPlayUrl } from './api/biliplus';
+import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
@@ -813,10 +813,15 @@ function scriptContent() {
                             return getMobiPlayUrl(originUrl, proxyHost)
                         }
                         return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                    } else {
+                        if (window.__balh_app_only__) {
+                            return `${proxyHost}?${generateMobiPlayUrlParams(originUrl)}`
+                        }
+                        // 将proxyHost当成接口的完整路径进行拼接
+                        const params = originUrl.split('?')[1]
+                        return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
+
                     }
-                    // 将proxyHost当成接口的完整路径进行拼接
-                    const params = originUrl.split('?')[1]
-                    return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
                 },
                 processProxySuccess: function (result) {
                     if (result.code) {

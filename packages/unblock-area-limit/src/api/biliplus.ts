@@ -36,6 +36,11 @@ function convertPlayUrl(originUrl: string) {
  * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
  */
 export function getMobiPlayUrl(originUrl: String, host: String) {
+    // 合成完整 mobi api url
+    return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`
+}
+
+export function generateMobiPlayUrlParams(originUrl: String) {
     // 提取参数为数组
     let a = originUrl.split('?')[1].split('&');
     // 参数数组转换为对象
@@ -70,10 +75,7 @@ export function getMobiPlayUrl(originUrl: String, host: String) {
     let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
     // 生成 sign
     let ciphertext = hex_md5(plaintext);
-    // 合成完整 mobi api url
-    let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
-
-    return mobi_api_url;
+    return `${mobi_api_params}sign=${ciphertext}`;
 }
 
 
