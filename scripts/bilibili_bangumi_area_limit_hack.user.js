@@ -178,6 +178,9 @@ function scriptSource(invokeBy) {
             TRUE: TRUE,
             FALSE: FALSE,
         },
+        regex: {
+            custom_server: /^https?:\/\/[\w-_.]+$/,
+        },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.media_id) === 140772; }, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
@@ -715,6 +718,51 @@ function scriptSource(invokeBy) {
         return window.__balh_app_only__ ? '&platform=android&fnval=0' : '';
     };
 
+    /**
+     * 构建 mobi api 解析链接
+     * host 举例: 'https://example.com'
+     *
+     * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
+     */
+    function getMobiPlayUrl(originUrl, host) {
+        // 提取参数为数组
+        let a = originUrl.split('?')[1].split('&');
+        // 参数数组转换为对象
+        let theRequest = {};
+        for (let i = 0; i < a.length; i++) {
+            let key = a[i].split("=")[0];
+            let value = a[i].split("=")[1];
+            // 给对象赋值
+            theRequest[key] = value;
+        }
+        // 追加 mobi api 需要的参数
+        theRequest.access_key = localStorage.access_key;
+        theRequest.appkey = '07da50c9a0bf829f';
+        theRequest.build = '5380700';
+        theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
+        theRequest.device = 'android';
+        theRequest.force_host = '2';
+        theRequest.mobi_app = 'android_b';
+        theRequest.platform = 'android_b';
+        theRequest.track_path = '0';
+        theRequest.device = 'android';
+        theRequest.fnval = '0'; // 强制 FLV
+        theRequest.ts = `${Date.now() / 1000}`;
+        // 所需参数数组
+        let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+        // 生成 mobi api 参数字符串
+        let mobi_api_params = '';
+        for (let i = 0; i < param_wanted.length; i++) {
+            mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+        }
+        // 准备明文
+        let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+        // 生成 sign
+        let ciphertext = hex_md5(plaintext);
+        // 合成完整 mobi api url
+        let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
+        return mobi_api_url;
+    }
     var BiliPlusApi;
     (function (BiliPlusApi) {
         BiliPlusApi.view = function (aid, update = true) {
@@ -1911,7 +1959,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customServerCheckText.innerText = /^https?:\/\/[\w.]+$/.test(event.target.value.trim()) ? '✔️' : '❌';
+                                        customServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '❌';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2588,49 +2636,6 @@ function scriptSource(invokeBy) {
             function isAreaLimitForPlayUrl(json) {
                 return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627);
             }
-			
-            // 构建 mobi api 解析链接
-            // host 举例: 'https://example.com'
-            function getMobiPlayUrl(originUrl, host){
-                // 提取参数为数组
-                let a = originUrl.split('?')[1].split('&');
-                // 参数数组转换为对象
-                let theRequest = new Object();
-                for (let i = 0; i < a.length; i++) {
-                    let key = a[i].split("=")[0];
-                    let value = a[i].split("=")[1];
-                    // 给对象赋值
-                    theRequest[key] = value;
-                }
-                // 追加 mobi api 需要的参数
-                theRequest.access_key = localStorage.access_key;
-                theRequest.appkey = '07da50c9a0bf829f';
-                theRequest.build = '5380700';
-                theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
-                theRequest.device = 'android';
-                theRequest.force_host = '2';
-                theRequest.mobi_app = 'android_b';
-                theRequest.platform = 'android_b';
-                theRequest.track_path = '0';
-                theRequest.device = 'android';
-                theRequest.fnval = '0'; // 强制 FLV
-                theRequest.ts = Date.parse(new Date())/1000;
-                // 所需参数数组
-                let param_wanted = ['access_key','appkey','build','buvid','cid','device','ep_id','fnval','fnver','force_host','fourk','mobi_app','platform','qn','track_path','ts'];
-                // 生成 mobi api 参数字符串
-                let mobi_api_params = '';
-                for (let i = 0; i < param_wanted.length; i++){
-                    mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
-                }
-                // 准备明文
-                let plaintext = mobi_api_params.slice(0,-1) + `25bdede4e1581c836cab73a48790ca6e`;
-                // 生成 sign
-                let ciphertext = hex_md5(plaintext);
-                // 合成完整 mobi api url
-                let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
-
-                return mobi_api_url;
-            }
 
             var bilibiliApis = (function () {
                 function AjaxException(message, code = 0/*用0表示未知错误*/) {
@@ -2859,14 +2864,17 @@ function scriptSource(invokeBy) {
                 const playurl_by_kghost = new BilibiliApi({
                     _asyncAjax: function (originUrl) {
                         const proxyHostMap = [
-                            [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/'],
-                            [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/'],
-                            [/仅限东南亚/, '//bilibili-sg-api.kghost.info/'],
-                            [/.*/, '//bilibili-cn-api.kghost.info/'],
+                            [/僅.*台.*地區/, '//bilibili-tw-api.kghost.info/', []],
+                            [/僅.*港.*地區/, '//bilibili-hk-api.kghost.info/', [
+                                34680, // 安达与岛村
+                                36297,
+                            ]],
+                            [/仅限东南亚/, '//bilibili-sg-api.kghost.info/', []],
+                            [/.*/, '//bilibili-cn-api.kghost.info/', []],
                         ];
                         let proxyHost;
-                        for (const [regex, host] of proxyHostMap) {
-                            if (document.title.match(regex)) {
+                        for (const [regex, host, ssIds] of proxyHostMap) {
+                            if (document.title.match(regex) || ssIds.includes(window.__INITIAL_STATE__?.mediaInfo?.ssId)) {
                                 proxyHost = host;
                                 break;
                             }
@@ -2894,18 +2902,23 @@ function scriptSource(invokeBy) {
                             .then(r => this.processProxySuccess(r))
                     },
                     transToProxyUrl: function (originUrl, proxyHost) {
-                        if (window.__balh_app_only__){
-                            // APP 限定用 mobi api
-                            return getMobiPlayUrl(originUrl, proxyHost);
+                        if (r.regex.custom_server.test(proxyHost)) {
+                            if (window.__balh_app_only__) {
+                                // APP 限定用 mobi api
+                                return getMobiPlayUrl(originUrl, proxyHost)
+                            }
+                            return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
                         }
-                        return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                        // 将proxyHost当成接口的完整路径进行拼接
+                        const params = originUrl.split('?')[1];
+                        return `${proxyHost}?${params}${access_key_param_if_exist(true)}`
                     },
                     processProxySuccess: function (result) {
                         if (result.code) {
                             return Promise$1.reject(result)
                         }
                         // 在APP限定情况启用 mobi api 解析
-                        if (window.__balh_app_only__){
+                        if (window.__balh_app_only__) {
                             return result;
                         }
                         return result.result
@@ -2933,7 +2946,7 @@ function scriptSource(invokeBy) {
                             })))
                             .catch(e => {
                                 if ((typeof e === 'object' && e.statusText == 'error')
-                                    || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/))
+                                    || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/ || e.code === -500/*已爆炸*/))
                                     || (typeof e === 'object' && e.code === -10403)
                                 ) {
                                     ui.playerMsg('尝试使用kghost的服务器拉取视频地址...');

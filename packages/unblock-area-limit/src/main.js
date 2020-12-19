@@ -9,7 +9,7 @@ import { balh_config } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
-import { BiliPlusApi } from './api/biliplus';
+import { BiliPlusApi, getMobiPlayUrl } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
@@ -808,6 +808,10 @@ function scriptContent() {
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
                     if (r.regex.custom_server.test(proxyHost)) {
+                        if (window.__balh_app_only__) {
+                            // APP 限定用 mobi api
+                            return getMobiPlayUrl(originUrl, proxyHost)
+                        }
                         return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
                     }
                     // 将proxyHost当成接口的完整路径进行拼接
@@ -817,6 +821,10 @@ function scriptContent() {
                 processProxySuccess: function (result) {
                     if (result.code) {
                         return Promise.reject(result)
+                    }
+                    // 在APP限定情况启用 mobi api 解析
+                    if (window.__balh_app_only__) {
+                        return result;
                     }
                     return result.result
                 },

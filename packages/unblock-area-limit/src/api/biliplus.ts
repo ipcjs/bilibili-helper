@@ -28,6 +28,55 @@ function convertPlayUrl(originUrl: string) {
     return url.href
 }
 
+
+/**
+ * 构建 mobi api 解析链接
+ * host 举例: 'https://example.com'
+ * 
+ * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
+ */
+export function getMobiPlayUrl(originUrl: String, host: String) {
+    // 提取参数为数组
+    let a = originUrl.split('?')[1].split('&');
+    // 参数数组转换为对象
+    let theRequest: StringStringObject = {};
+    for (let i = 0; i < a.length; i++) {
+        let key = a[i].split("=")[0];
+        let value = a[i].split("=")[1];
+        // 给对象赋值
+        theRequest[key] = value;
+    }
+    // 追加 mobi api 需要的参数
+    theRequest.access_key = localStorage.access_key;
+    theRequest.appkey = '07da50c9a0bf829f';
+    theRequest.build = '5380700';
+    theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
+    theRequest.device = 'android';
+    theRequest.force_host = '2';
+    theRequest.mobi_app = 'android_b';
+    theRequest.platform = 'android_b';
+    theRequest.track_path = '0';
+    theRequest.device = 'android';
+    theRequest.fnval = '0'; // 强制 FLV
+    theRequest.ts = `${Date.now() / 1000}`;
+    // 所需参数数组
+    let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+    // 生成 mobi api 参数字符串
+    let mobi_api_params = '';
+    for (let i = 0; i < param_wanted.length; i++) {
+        mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+    }
+    // 准备明文
+    let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+    // 生成 sign
+    let ciphertext = hex_md5(plaintext);
+    // 合成完整 mobi api url
+    let mobi_api_url = `${host}/pgc/player/api/playurl?` + mobi_api_params + `sign=` + ciphertext;
+
+    return mobi_api_url;
+}
+
+
 export namespace BiliPlusApi {
     export interface ViewResult {
         code?: number
