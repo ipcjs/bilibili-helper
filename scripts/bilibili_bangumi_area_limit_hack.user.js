@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.0.6
+// @version      8.0.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -658,10 +658,10 @@ function scriptSource(invokeBy) {
             if (typeof prop !== 'string')
                 throw new TypeError(`unsupported prop: ${String(prop)}`);
             if (prop === 'server') {
-                // const server_inner = balh_config.server_inner
-                // const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
-                // return server
-                return balh_config.server_inner;
+                const server_inner = balh_config.server_inner;
+                // 保证balh_config.server一定指向biliplus
+                const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner;
+                return server;
             }
             if (prop in target) {
                 return target[prop];
@@ -670,15 +670,7 @@ function scriptSource(invokeBy) {
                 let value = cookies['balh_' + prop];
                 switch (prop) {
                     case 'server_inner':
-                        value = value || r.const.server.defaultServer();
-                        // 迁移回biliplus, 只会执行一次
-                        if (util_page.new_bangumi() && !localStorage.balh_migrate_to_1) {
-                            localStorage.balh_migrate_to_1 = r.const.TRUE;
-                            if (value.includes('biliplus.ipcjs.top')) {
-                                value = r.const.server.defaultServer();
-                                balh_config.server = value;
-                            }
-                        }
+                        value = value || r.const.server.CUSTOM;
                         break;
                     case 'server_custom':
                         value = value || '';
@@ -691,7 +683,7 @@ function scriptSource(invokeBy) {
                         break;
                     case 'is_closed':
                         if (value == null) {
-                            value = TRUE; // 默认为true
+                            value = FALSE; // 默认为false
                         }
                         break;
                 }
@@ -708,6 +700,16 @@ function scriptSource(invokeBy) {
             return true;
         }
     });
+    // 迁移到自定义代理服务器, 只会执行一次
+    if (util_page.new_bangumi() && !localStorage.balh_migrate_to_2) {
+        localStorage.balh_migrate_to_2 = r.const.TRUE;
+        balh_config.server_inner = r.const.server.CUSTOM;
+        balh_config.is_closed = FALSE;
+        util_debug('迁移配置完成');
+    }
+    function isClosed() {
+        return balh_config.is_closed || !balh_config.server_custom;
+    }
 
     const access_key_param_if_exist = function (isKghost = false) {
         // access_key是由B站验证的, B站帐号和BP帐号不同时, access_key无效
@@ -751,7 +753,7 @@ function scriptSource(invokeBy) {
         theRequest.track_path = '0';
         theRequest.device = 'android';
         theRequest.fnval = '0'; // 强制 FLV
-        theRequest.ts = `${Math.trunc(Date.now() / 1000)}`;
+        theRequest.ts = `${~~(Date.now() / 1000)}`;
         // 所需参数数组
         let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
         // 生成 mobi api 参数字符串
@@ -1533,7 +1535,7 @@ function scriptSource(invokeBy) {
         });
     }
     function area_limit_for_vue() {
-        if (balh_config.is_closed)
+        if (isClosed())
             return;
         if (!((util_page.av() && balh_config.enable_in_av) || util_page.new_bangumi())) {
             return;
@@ -1949,11 +1951,13 @@ function scriptSource(invokeBy) {
             createElement('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
                 createElement('h1', {}, [createElement('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
                 createElement('br'),
+                createElement('h6', { style: { color: '#d01d00', display: balh_config.server_custom ? 'none' : '' } }, [createElement('text', 'BiliPlus已被屏蔽，请填写自定义代理服务, 详见: '), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8', target: '_blank' }, [createElement('text', '帮助>自定义代理服务器')])]),
+                createElement('br'),
                 createElement('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                     createElement('text', '代理服务器：'), createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '测速')]), createElement('br'),
                     createElement('div', { style: { display: 'flex' } }, [
-                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), createElement('text', '土豆服')]),
-                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus'), createElement('a', { href: 'https://www.biliplus.com/?about' }, [createElement('text', '（捐赠）')]),
+                        // _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', disabled: 'true', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus'), createElement('a', { href: 'https://www.biliplus.com/?about' }, [createElement('text', '（捐赠）')]),
                         ]),
                         createElement('label', { style: { flex: 2 } }, [
                             createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义: `),
@@ -1961,7 +1965,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '❌';
+                                        customServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2030,7 +2034,7 @@ function scriptSource(invokeBy) {
                         ])
                     ]), createElement('br'),
                     createElement('div', { style: { display: 'flex' } }, [
-                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_is_closed' }), createElement('text', '关闭脚本'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/710', target: '_blank' }, [createElement('text', '(？)')])]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_is_closed' }), createElement('text', '关闭脚本（脚本当前还有挺多问题, 若影响正常使用, 可以临时关闭它）'),]),
                     ]), createElement('br'),
                     createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
                     createElement('text', '　'),
@@ -2153,7 +2157,7 @@ function scriptSource(invokeBy) {
         area_limit_for_vue();
 
         const balh_feature_area_limit = (function () {
-            if (balh_config.is_closed) return
+            if (isClosed()) return
             injectFetch();
             function injectXHR() {
                 util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'));

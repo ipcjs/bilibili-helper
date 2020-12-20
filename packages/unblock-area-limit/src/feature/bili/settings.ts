@@ -232,18 +232,20 @@ export function settings() {
         _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
             _('h1', {}, [_('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
             _('br'),
+            _('h6', { style: { color: '#d01d00', display: balh_config.server_custom ? 'none' : '' } }, [_('text', 'BiliPlus已被屏蔽，请填写自定义代理服务, 详见: '), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8', target: '_blank' }, [_('text', '帮助>自定义代理服务器')])]),
+            _('br'),
             _('form', { id: 'balh-settings-form', event: { change: onSettingsFormChange } }, [
                 _('text', '代理服务器：'), _('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [_('text', '测速')]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
-                    _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
-                    _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus'), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')]),
+                    // _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', disabled: 'true', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus'), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')]),
                     ]),
                     _('label', { style: { flex: 2 } }, [
                         _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
                         _('input', {
                             type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '❌'
+                                    customServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
@@ -311,7 +313,7 @@ export function settings() {
                     ])
                 ]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
-                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_is_closed' }), _('text', '关闭脚本'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/710', target: '_blank' }, [_('text', '(？)')])]),
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_is_closed' }), _('text', '关闭脚本（脚本当前还有挺多问题, 若影响正常使用, 可以临时关闭它）'),]),
                 ]), _('br'),
                 _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                 _('text', '　'),

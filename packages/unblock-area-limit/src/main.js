@@ -5,7 +5,7 @@ import { Async, Promise } from './util/async';
 import { r, _t } from './feature/r'
 import { util_error, util_info, util_log, util_warn, util_debug, logHub } from './util/log'
 import { cookieStorage } from './util/cookie'
-import { balh_config } from './feature/config'
+import { balh_config, isClosed } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
@@ -41,7 +41,7 @@ function scriptContent() {
     bili.area_limit_for_vue()
 
     const balh_feature_area_limit = (function () {
-        if (balh_config.is_closed) return
+        if (isClosed()) return
         injectFetch()
         function injectXHR() {
             util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))

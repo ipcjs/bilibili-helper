@@ -1,10 +1,14 @@
 import { cookieStorage } from "../util/cookie"
+import { log } from "../util/log"
 import { util_page } from "./page"
 import { r, TRUE, FALSE, BOOL } from "./r"
 
 interface BalhConfig {
+    /** BiliPlus的地址 */
     server: string
+    /** 设置中的"代理服务器"选项, 可能为{@link r.const.server.CUSTOM}, 表示需要使用自定义代理服务器 */
     server_inner: string
+    /** 自定义代理服务器的地址 */
     server_custom: string
     mode: string
     flv_prefer_ws: string
@@ -24,10 +28,10 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
     get: function (target, prop) {
         if (typeof prop !== 'string') throw new TypeError(`unsupported prop: ${String(prop)}`)
         if (prop === 'server') {
-            // const server_inner = balh_config.server_inner
-            // const server = server_inner === r.const.server.CUSTOM ? balh_config.server_custom : server_inner
-            // return server
-            return balh_config.server_inner
+            const server_inner = balh_config.server_inner
+            // 保证balh_config.server一定指向biliplus
+            const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner
+            return server
         }
         if (prop in target) {
             return (target as any)[prop]
@@ -35,15 +39,7 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
             let value = cookies['balh_' + prop]
             switch (prop) {
                 case 'server_inner':
-                    value = value || r.const.server.defaultServer()
-                    // 迁移回biliplus, 只会执行一次
-                    if (util_page.new_bangumi() && !localStorage.balh_migrate_to_1) {
-                        localStorage.balh_migrate_to_1 = r.const.TRUE
-                        if (value.includes('biliplus.ipcjs.top')) {
-                            value = r.const.server.defaultServer()
-                            balh_config.server = value
-                        }
-                    }
+                    value = value || r.const.server.CUSTOM
                     break
                 case 'server_custom':
                     value = value || ''
@@ -56,7 +52,7 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
                     break
                 case 'is_closed':
                     if (value == null) {
-                        value = TRUE // 默认为true
+                        value = FALSE // 默认为false
                     }
                     break;
                 default:
@@ -77,3 +73,15 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
         return true
     }
 })
+
+// 迁移到自定义代理服务器, 只会执行一次
+if (util_page.new_bangumi() && !localStorage.balh_migrate_to_2) {
+    localStorage.balh_migrate_to_2 = r.const.TRUE
+    balh_config.server_inner = r.const.server.CUSTOM
+    balh_config.is_closed = FALSE
+    log('迁移配置完成')
+}
+
+export function isClosed() {
+    return balh_config.is_closed || !balh_config.server_custom
+}
