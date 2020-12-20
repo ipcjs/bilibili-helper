@@ -63,7 +63,8 @@ key为`'balh_server'`，可选的`value`为：
 1. appOnly测试：
     - [安达与岛村 _ 番剧 _ bilibili _ 哔哩哔哩弹幕视频网](https://www.bilibili.com/bangumi/media/md28230188/)
 2. 解除区域限制测试：
-    - 港澳台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](https://bangumi.bilibili.com/anime/5551)[[第1话](https://bangumi.bilibili.com/anime/5551/play#96703)]
+    - 台：[吹響吧！上低音號 第二季（僅限台灣地區）_番剧](https://bangumi.bilibili.com/anime/5551)[[第1话](https://bangumi.bilibili.com/anime/5551/play#96703)]
+    - 港：[食戟之靈 神之皿（僅限港澳台地區）](https://www.bilibili.com/bangumi/media/md28222747)
     - 内地：[小魔女学园 TV版_番剧](https://bangumi.bilibili.com/anime/5788)[[第1话](https://bangumi.bilibili.com/anime/5788/play#101761)]
     - 内地(新): [品酒要在成为夫妻后](https://bangumi.bilibili.com/anime/6423)
     - 付费抢先看：[全职高手_国产动画](https://bangumi.bilibili.com/anime/5852)[[第3话](https://bangumi.bilibili.com/anime/5852/play#103960)][[第5话](https://bangumi.bilibili.com/anime/6012/play#103819)]

@@ -1,6 +1,3 @@
-
-# BiliPlus已暂停服务，脚本已失效
-
 # 解除B站区域限制
 
 该脚本**只支持HTML5版**播放器，在播放器右上角可以切换成HTML5版。
@@ -12,6 +9,32 @@
 **不要在Greasyfork中提交反馈，去GitHub，Greasyfork问题追踪系统太弱了，不好用**
 
 ![设置截图](https://greasyfork.s3.us-east-2.amazonaws.com/malm3g4mdbzjgqcgjx2mt1pu6chl?response-content-disposition=inline%3B%20filename%3D%22Image.png%22%3B%20filename%2A%3DUTF-8%27%27Image.png&response-content-type=image%2Fpng&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQVNJDSASOPLR55E4%2F20201115%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20201115T160156Z&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=8a475986a15baf1ebcbef1bcc76533355a692dac11491e900ed06471d98443cb)
+
+## 自定义代理服务器
+
+由于用的人太多，前段时间BiliPlus直接被B站屏蔽了。故今后只能自己搭建代理服务器。  
+这里简述几种可用的代理服务器，搭建完成后将网址添到脚本的“自定义代理服务”里面就行了。
+
+**注意，代理服务器拥有你B站帐号的大部分访问权限，请不要使用不可信之人提供的代理服务器**
+
+### 1. 反向代理
+
+用Nginx反代`api.bilibili.com`，需要有VPS，比较贵，配置文件见[这里](https://github.com/ipcjs/bilibili-helper/pull/711#issue-542876230)
+
+### 2. PHP空间
+
+PHP空间相比VPS会便宜很多，目前有些小公司会提供PHP空间，php脚本用@zzc1086写的[这个](https://github.com/zzc10086/grocery_store/blob/master/bili_proxy/BPplayurl.php)就行
+
+### 3. 阿里云函数计算
+
+[阿里云函数计算](https://www.aliyun.com/product/fc)按次计费，还有免费额度，可以算是最便宜的了，配置也十分简单。@zzc1086也写了[函数计算版的php脚本](https://github.com/zzc10086/grocery_store/blob/master/bili_proxy/aliyun_Serverless_BPplayurl.php)，直接用就行
+
+### 4. 网友搭建的服务器（可信度自己判断，我**不保证**这些代理服务器的安全性）
+
+| 提供者                                   | 类型    | 区域 | 网址                         |
+| ---------------------------------------- | ------- | ---- | ---------------------------- |
+| [@zzc10086](https://github.com/zzc10086) | PHP空间 | 香港 | `https://bili-proxy.98e.org` |
+
 
 ## 开发
 
