@@ -649,7 +649,11 @@ function scriptSource(invokeBy) {
         anime_ss: () => location.href.includes('www.bilibili.com/bangumi/play/ss'),
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
-        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi')
+        new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+        get ssId() {
+            var _a, _b;
+            return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
+        },
     };
 
     const cookies = cookieStorage.all(); // 缓存的cookies
@@ -2880,7 +2884,7 @@ function scriptSource(invokeBy) {
                         ];
                         let proxyHost;
                         for (const [regex, host, ssIds] of proxyHostMap) {
-                            if (document.title.match(regex) || ssIds.includes(window.__INITIAL_STATE__?.mediaInfo?.ssId)) {
+                            if (document.title.match(regex) || ssIds.includes(util_page.ssId)) {
                                 proxyHost = host;
                                 break;
                             }

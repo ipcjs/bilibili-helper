@@ -779,7 +779,7 @@ function scriptContent() {
                     ];
                     let proxyHost
                     for (const [regex, host, ssIds] of proxyHostMap) {
-                        if (document.title.match(regex) || ssIds.includes(window.__INITIAL_STATE__?.mediaInfo?.ssId)) {
+                        if (document.title.match(regex) || ssIds.includes(util_page.ssId)) {
                             proxyHost = host
                             break;
                         }
