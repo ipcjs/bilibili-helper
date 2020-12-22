@@ -179,7 +179,7 @@ function scriptSource(invokeBy) {
             FALSE: FALSE,
         },
         regex: {
-            custom_server: /^https?:\/\/[\w-_.]+$/,
+            custom_server: /^https?:\/\/[\w-_.\/]+$/,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
