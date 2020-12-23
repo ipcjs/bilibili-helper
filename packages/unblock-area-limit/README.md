@@ -34,6 +34,7 @@ PHP空间相比VPS会便宜很多，目前有些小公司会提供PHP空间，ph
 | 提供者                                   | 类型    | 区域 | 网址                         |
 | ---------------------------------------- | ------- | ---- | ---------------------------- |
 | [@zzc10086](https://github.com/zzc10086) | PHP空间 | 香港 | `https://bili-proxy.98e.org` |
+| [@znAaron](https://github.com/znAaron) | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
 
 
 ## 开发
