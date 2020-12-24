@@ -119,6 +119,8 @@ export function area_limit_for_vue() {
                     value.mediaInfo.rights.appOnly = false
                     window.__balh_app_only__ = true
                 }
+                value?.epInfo?.rights?.area_limit = 0
+                value?.epList?.forEach((it) => it?.rights?.area_limit = 0)
                 return value
             }
         })
