@@ -29,13 +29,20 @@ PHP空间相比VPS会便宜很多，目前有些小公司会提供PHP空间，ph
 
 [阿里云函数计算](https://www.aliyun.com/product/fc)按次计费，还有免费额度，可以算是最便宜的了，配置也十分简单。@zzc1086也写了[函数计算版的php脚本](https://github.com/zzc10086/grocery_store/blob/master/bili_proxy/aliyun_Serverless_BPplayurl.php)，直接用就行
 
-### 4. 网友搭建的服务器（**不保证**这些代理服务器是安全的，可信度需要你自己判断）
+详细搭建方式，参考@realLyans写的[简易教程](https://github.com/ipcjs/bilibili-helper/issues/710#issuecomment-748976481)
 
-| 提供者                                   | 类型    | 区域 | 网址                         |
-| ---------------------------------------- | ------- | ---- | ---------------------------- |
-| [@zzc10086](https://github.com/zzc10086) | PHP空间 | 香港 | `https://bili-proxy.98e.org` |
-| [@znAaron](https://github.com/znAaron) | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
+### 4. 腾讯云CDN
 
+CDN本质也是反向代理（  
+详见@MoeACG-Xyrh写的教程：[使用腾讯云CDN解除哔哩哔哩番剧区域限制](https://www.lovewx.club/%e4%bd%bf%e7%94%a8%e8%85%be%e8%ae%af%e4%ba%91cdn%e8%a7%a3%e9%99%a4%e5%93%94%e5%93%a9%e5%93%94%e5%93%a9%e7%95%aa%e5%89%a7%e5%8c%ba%e5%9f%9f%e9%99%90%e5%88%b6/)
+
+### 5. 网友搭建的服务器（**不保证**这些代理服务器是安全的，可信度需要你自己判断）
+
+| 提供者                                                       | 类型       | 区域 | 网址                                                                                    |
+| ------------------------------------------------------------ | ---------- | ---- | --------------------------------------------------------------------------------------- |
+| [@zzc10086](https://github.com/zzc10086)                     | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
+| [@znAaron](https://github.com/znAaron)                       | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
+| [@yukiaisukaaisuka](https://disqus.com/by/yukiaisukaaisuka/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
 
 ## 开发
 
