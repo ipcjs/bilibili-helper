@@ -12,7 +12,7 @@
 
 ## 自定义代理服务器
 
-由于用的人太多，前段时间BiliPlus直接被B站屏蔽了。故今后只能自己搭建代理服务器。  
+由于用的人太多，前段时间BiliPlus直接被B站屏蔽了。故今后只能自己搭建代理服务器。
 这里简述几种可用的代理服务器，搭建完成后将网址添到脚本的“自定义代理服务”里面就行了。
 
 **注意，代理服务器拥有你B站帐号的大部分访问权限，请不要使用不可信之人提供的代理服务器**
@@ -33,7 +33,7 @@ PHP空间相比VPS会便宜很多，目前有些小公司会提供PHP空间，ph
 
 ### 4. 腾讯云CDN
 
-CDN本质也是反向代理（  
+CDN本质也是反向代理（
 详见@MoeACG-Xyrh写的教程：[使用腾讯云CDN解除哔哩哔哩番剧区域限制](https://www.lovewx.club/%e4%bd%bf%e7%94%a8%e8%85%be%e8%ae%af%e4%ba%91cdn%e8%a7%a3%e9%99%a4%e5%93%94%e5%93%a9%e5%93%94%e5%93%a9%e7%95%aa%e5%89%a7%e5%8c%ba%e5%9f%9f%e9%99%90%e5%88%b6/)
 
 ### 5. 网友搭建的服务器（**不保证**这些代理服务器是安全的，可信度需要你自己判断）
@@ -43,6 +43,7 @@ CDN本质也是反向代理（
 | [@zzc10086](https://github.com/zzc10086)                     | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
 | [@znAaron](https://github.com/znAaron)                       | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
 | [@yukiaisukaaisuka](https://disqus.com/by/yukiaisukaaisuka/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
+| [@silicer](https://github.com/silicer)                       | 腾讯云函数 | 香港 | `https://service-fi0gz11m-1252917345.hk.apigw.tencentcs.com`                            |
 
 ## 开发
 
@@ -91,7 +92,7 @@ Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibi
 
 港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，能够缓解卡顿的问题。
 
-参考链接:  
+参考链接:
 
 1. [zz5678/akamBiliChecker: 测试Bilibili海外CDN的下载速度](https://github.com/zz5678/akamBiliChecker)
 2. [miyouzi/akamTester: 批量测试B站海外CDN](https://github.com/miyouzi/akamTester)
