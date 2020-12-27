@@ -42,7 +42,7 @@ CDN本质也是反向代理（
 | ------------------------------------------------------------ | ---------- | ---- | --------------------------------------------------------------------------------------- |
 | [@zzc10086](https://github.com/zzc10086)                     | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
 | [@znAaron](https://github.com/znAaron)                       | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
-| [@yukiaisukaaisuka](https://disqus.com/by/yukiaisukaaisuka/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
+| [@AisukaYuki](https://github.com/AisukaYuki/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
 
 ## 开发
 
