@@ -42,7 +42,8 @@ CDN本质也是反向代理（
 | ------------------------------------------------------------ | ---------- | ---- | --------------------------------------------------------------------------------------- |
 | [@zzc10086](https://github.com/zzc10086)                     | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
 | [@znAaron](https://github.com/znAaron)                       | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
-| [@AisukaYuki](https://github.com/AisukaYuki/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
+| [@AisukaYuki](https://github.com/AisukaYuki/)                | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
+| [@silicer](https://github.com/silicer)                       | 腾讯云函数 | 香港 | `https://service-fi0gz11m-1252917345.hk.apigw.tencentcs.com`                            |
 
 ## 开发
 
@@ -91,7 +92,7 @@ Chrome 80+上有可能出现的问题，详见：https://github.com/ipcjs/bilibi
 
 港澳台的视频解析出来的视频文件的域名是`upos-hz-mirrorakam.akamaized.net`，这家CDN貌似没有国内的节点，大多数情况下这个域名都会指向美国的IP，速度特别慢。他们是有香港/台湾节点的，速度会快很多。手动改hosts，将域名解析到较快的IP，能够缓解卡顿的问题。
 
-参考链接:  
+参考链接:
 
 1. [zz5678/akamBiliChecker: 测试Bilibili海外CDN的下载速度](https://github.com/zz5678/akamBiliChecker)
 2. [miyouzi/akamTester: 批量测试B站海外CDN](https://github.com/miyouzi/akamTester)
