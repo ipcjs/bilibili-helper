@@ -2252,6 +2252,48 @@ function scriptSource(invokeBy) {
                                                         container.response = container.responseText;
                                                     }
                                                 }
+                                            } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
+                                                // 上一个接口的新版本
+                                                let json = JSON.parse(target.responseText);
+                                                if (json.code == -404) {
+                                                    log('/x/player/v2', '404', target.responseText);
+                                                    container.__block_response = true;
+                                                    let url = container.__url.replace('player/v2', 'v2/dm/view').replace('cid', 'oid') + '&type=1'; //从APP接口拉取字幕信息
+                                                    Async.ajax(url).then(data => {
+                                                        if (!data.code && data.data.subtitle) {
+                                                            // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
+                                                            const subtitle = data.data.subtitle;
+                                                            subtitle.subtitles.forEach(item=>(item.subtitle_url = item.subtitle_url.replace(/https?:\/\//,'//')));
+                                                            subtitle.allow_submit = false;
+                                                            json.data = {subtitle};
+                                                            json.code = 0;
+                                                            if (balh_config.blocked_vip) {
+                                                                json.data.vip = {
+                                                                    type: 2, //年费大会员
+                                                                    status: 1 //启用
+                                                                };
+                                                                log('/x/player/v2', 'vip');
+                                                            }
+                                                            log('/x/player/v2', 'rebuild', json);
+                                                        }
+                                                        container.responseText = JSON.stringify(json);
+                                                        container.response = container.responseText;
+                                                        cb.apply(container.responseText ? receiver : this, arguments);
+                                                    }).catch(e => {
+                                                        util_error('/x/player/v2', e);
+                                                        cb.apply(this, arguments);
+                                                    });
+                                                }
+                                                else if (!json.code && json.data && balh_config.blocked_vip) {
+                                                    log('/x/player/v2', 'vip');
+                                                    const vip = json.data.vip;
+                                                    if (vip) {
+                                                        vip.type = 2; // 同上
+                                                        vip.status = 1;
+                                                        container.responseText = JSON.stringify(json);
+                                                        container.response = container.responseText;
+                                                    }
+                                                }
                                             } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/playurl'))) {
                                                 log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response);
                                                 // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
