@@ -4,7 +4,7 @@ import { _ } from "../../util/react"
 import { ifNotNull } from "../../util/utils"
 import { balh_config, isClosed } from "../config"
 import { util_page } from "../page"
-import pageTemplate from './bangumi-play-page-template.html'
+import pageTemplate from './bangumi-play-page-template.html' // 不用管这个报错
 
 export function modifyGlobalValue<T = any>(
     name: string,
@@ -34,32 +34,49 @@ export function modifyGlobalValue<T = any>(
         _window[name] = _window[name_origin]
     }
 }
-
-function cloneNodes(fromNode: Node, toNode: Node) {
+let callbackCount = 1000
+function appendScript(node: Node, script: string, type?: string, src?: string) {
+    return new Promise((resolve, reject) => {
+        if (src) {
+            node.appendChild(_('script', { type: type, src: src, event: { load: resolve, error: reject } }, script))
+        } else if (!type || type === 'text/javascript') {
+            const anyWindow = window as any
+            const key: string = `balh_appendScript_${callbackCount++}`
+            anyWindow[key] = resolve
+            node.appendChild(_('script', { type: type, }, `(()=>{${script}})();\n window['${key}']();`))
+        } else {
+            node.appendChild(_('script', { type: type, }, script))
+            setTimeout(resolve, 0)
+        }
+    })
+}
+async function cloneChildNodes(fromNode: Node, toNode: Node) {
     // 坑1: 一定要倒序遍历, forEach内部使用的顺序遍历实现, 直接remove()会让顺序混乱
     for (let i = toNode.childNodes.length - 1; i >= 0; i--) {
         toNode.childNodes[i].remove()
     }
 
-    fromNode.childNodes.forEach((it) => {
+    for (let i = 0; i < fromNode.childNodes.length; i++) {
+        const it = fromNode.childNodes[i]
+        log(it)
         if (it instanceof HTMLScriptElement) {
             // 坑2: 要让script内容正常执行, 一定要重新构建script标签
-            toNode.appendChild(_('script', { type: it.type }, it.innerHTML))
+            await appendScript(toNode, it.innerHTML, it.type, it.src)
         } else {
             // 坑3: 不clone可能导致forEach方法出问题...
             toNode.appendChild(it.cloneNode(true))
         }
-    })
+    }
 }
 
 function fixBangumiPlayPage() {
-    util_init(() => {
+    util_init(async () => {
         const $app = document.getElementById('app')
         if (!$app) {
             const template = new DOMParser().parseFromString(pageTemplate, 'text/html')
-            cloneNodes(template.getElementsByTagName('head')[0], document.head)
-            cloneNodes(template.getElementsByTagName('body')[0], document.body)
-            // TODO: 目前还是跑不起来...
+            await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
+            await cloneChildNodes(template.getElementsByTagName('body')[0], document.body)
+            // TODO: 构造正确的window.__INITIAL_STATE__
         }
         let $eplist_module = document.getElementById('eplist_module')
         if (!$eplist_module) {
