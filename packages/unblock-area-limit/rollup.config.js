@@ -2,6 +2,7 @@ import path from 'path'
 import scssToString from 'rollup-plugin-scss-string'
 import typescript from '@rollup/plugin-typescript'
 import template from '../rollup-plugin-output-template/index'
+import html from 'rollup-plugin-html'
 
 export default {
     input: path.resolve(__dirname, 'src/main.js'),
@@ -20,5 +21,8 @@ export default {
         template({
             filePath: path.resolve(__dirname, 'src/main.user.js'),
         }),
+        html({
+            include: '**/*.html',
+        })
     ]
 }

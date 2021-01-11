@@ -1,8 +1,10 @@
 import { util_init } from "../../util/initiator"
 import { log, util_warn } from "../../util/log"
 import { _ } from "../../util/react"
+import { ifNotNull } from "../../util/utils"
 import { balh_config, isClosed } from "../config"
 import { util_page } from "../page"
+import pageTemplate from './bangumi-play-page-template.html'
 
 export function modifyGlobalValue<T = any>(
     name: string,
@@ -33,8 +35,32 @@ export function modifyGlobalValue<T = any>(
     }
 }
 
+function cloneNodes(fromNode: Node, toNode: Node) {
+    // 坑1: 一定要倒序遍历, forEach内部使用的顺序遍历实现, 直接remove()会让顺序混乱
+    for (let i = toNode.childNodes.length - 1; i >= 0; i--) {
+        toNode.childNodes[i].remove()
+    }
+
+    fromNode.childNodes.forEach((it) => {
+        if (it instanceof HTMLScriptElement) {
+            // 坑2: 要让script内容正常执行, 一定要重新构建script标签
+            toNode.appendChild(_('script', { type: it.type }, it.innerHTML))
+        } else {
+            // 坑3: 不clone可能导致forEach方法出问题...
+            toNode.appendChild(it.cloneNode(true))
+        }
+    })
+}
+
 function fixBangumiPlayPage() {
     util_init(() => {
+        const $app = document.getElementById('app')
+        if (!$app) {
+            const template = new DOMParser().parseFromString(pageTemplate, 'text/html')
+            cloneNodes(template.getElementsByTagName('head')[0], document.head)
+            cloneNodes(template.getElementsByTagName('body')[0], document.body)
+            // TODO: 目前还是跑不起来...
+        }
         let $eplist_module = document.getElementById('eplist_module')
         if (!$eplist_module) {
             const $danmukuBox = document.getElementById('danmukuBox')
@@ -119,8 +145,8 @@ export function area_limit_for_vue() {
                     value.mediaInfo.rights.appOnly = false
                     window.__balh_app_only__ = true
                 }
-                value?.epInfo?.rights?.area_limit = 0
-                value?.epList?.forEach((it) => it?.rights?.area_limit = 0)
+                ifNotNull(value?.epInfo?.rights, (it) => it.area_limit = 0)
+                value?.epList?.forEach((it: any) => ifNotNull(it?.rights, (it) => it.area_limit = 0))
                 return value
             }
         })

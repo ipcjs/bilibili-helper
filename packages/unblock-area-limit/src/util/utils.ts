@@ -42,3 +42,13 @@ export namespace Func {
         `)
     }
 }
+
+/**
+ * TS不支持可选链赋值, 详见: https://github.com/tc39/proposal-optional-chaining#not-supported
+ * 可以使用该方法简化书写
+ * */
+export function ifNotNull<T>(value: T, block: (value: T) => void) {
+    if (value != null) {
+        block(value)
+    }
+}
