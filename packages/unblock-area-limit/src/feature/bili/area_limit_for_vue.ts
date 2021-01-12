@@ -34,20 +34,37 @@ export function modifyGlobalValue<T = any>(
         _window[name] = _window[name_origin]
     }
 }
+
 let callbackCount = 1000
-function appendScript(node: Node, script: string, type?: string, src?: string) {
+function appendScript(
+    node: Node,
+    innerHTML: string,
+    props: {
+        type: string | '',
+        src: string | '',
+        crossOrigin: string | null,
+    },
+) {
+    // log(`fuck: ${JSON.stringify(props)}`)
     return new Promise((resolve, reject) => {
-        if (src) {
-            node.appendChild(_('script', { type: type, src: src, event: { load: resolve, error: reject } }, script))
-        } else if (!type || type === 'text/javascript') {
+        let onLoad
+        if (props.src) {
+            onLoad = resolve
+        } else if (!props.type || props.type === 'text/javascript') {
             const anyWindow = window as any
             const key: string = `balh_appendScript_${callbackCount++}`
             anyWindow[key] = resolve
-            node.appendChild(_('script', { type: type, }, `(()=>{${script}})();\n window['${key}']();`))
+            innerHTML = `try { ${innerHTML} } finally { window['${key}'](); } `
         } else {
-            node.appendChild(_('script', { type: type, }, script))
             setTimeout(resolve, 0)
         }
+        node.appendChild(_('script', {
+            // 所有属性为null/''时都替换成undefined
+            type: props.type || undefined,
+            src: props.src || undefined,
+            crossOrigin: props.crossOrigin || undefined,
+            event: { load: onLoad },
+        }, innerHTML))
     })
 }
 async function cloneChildNodes(fromNode: Node, toNode: Node) {
@@ -58,10 +75,9 @@ async function cloneChildNodes(fromNode: Node, toNode: Node) {
 
     for (let i = 0; i < fromNode.childNodes.length; i++) {
         const it = fromNode.childNodes[i]
-        log(it)
         if (it instanceof HTMLScriptElement) {
             // 坑2: 要让script内容正常执行, 一定要重新构建script标签
-            await appendScript(toNode, it.innerHTML, it.type, it.src)
+            await appendScript(toNode, it.innerHTML, { type: it.type, src: it.src, crossOrigin: it.crossOrigin })
         } else {
             // 坑3: 不clone可能导致forEach方法出问题...
             toNode.appendChild(it.cloneNode(true))

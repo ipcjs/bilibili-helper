@@ -33,7 +33,8 @@ function createElement<K extends keyof TypeNameMap>(
                 elem.addEventListener(x, props.event[x]);
             }
         } else {
-            elem.setAttribute(n, props[n]);
+            // 用undefined表示不设置这个属性
+            props[n] !== undefined && elem.setAttribute(n, props[n]);
         }
     }
     if (children) {

@@ -1,5 +1,8 @@
 {
     "editor.formatOnSave": true,
+    "[html]": {
+        "editor.formatOnSave": false,
+    },
     "cSpell.enabled": true,
     "cSpell.userWords": [
         "balh",
