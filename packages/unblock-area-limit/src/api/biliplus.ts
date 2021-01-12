@@ -114,7 +114,10 @@ export namespace BiliPlusApi {
             seasons: [{
                 season_id: string
                 title: string
-            }]
+            }],
+            media?: {
+                media_id: number
+            }
         }
     }
     export const season = function (season_id: string) {

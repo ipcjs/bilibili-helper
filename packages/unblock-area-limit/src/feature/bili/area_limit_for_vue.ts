@@ -122,6 +122,9 @@ function fixBangumiPlayPage() {
                     bvid: Converters.aid2bv(+ep.av_id),
                     title: ep.index,
                     titleFormat: ep.index_title,
+                    htmlTitle: result.result.title,
+                    mediaInfoTitle: result.result.title,
+                    mediaInfoId: result.result.media?.media_id ?? 28229002,
                 })
                 const template = new DOMParser().parseFromString(pageTemplateString, 'text/html')
                 await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
