@@ -28,22 +28,30 @@ export const uposMap = {
 
 export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
+    const table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
+    const tr: StringAnyObject = {};
+    for (var i = 0; i < 58; ++i) {
+        tr[table[i]] = i;
+    }
+
+    const s = [11, 10, 3, 8, 4, 6];
+    const xor = 177451812;
+    const add = 8728348608;
+
     export function bv2aid(bv: string) {
-        var table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
-        var tr: StringAnyObject = {};
-        for (var i = 0; i < 58; ++i) {
-            tr[table[i]] = i;
-        }
-
-        var s = [11, 10, 3, 8, 4, 6];
-        var xor = 177451812;
-        var add = 8728348608;
-
-        var r = 0;
-        for (var i = 0; i < 6; ++i) {
-            r += tr[bv[s[i]]] * (Math.pow(58, i));
+        let r = 0;
+        for (let i = 0; i < 6; ++i) {
+            r += tr[bv[s[i]]] * (58 ** i);
         }
         return String((r - add) ^ xor);
+    }
+    export function aid2bv(x: number) {
+        x = (x ^ xor) + add
+        const r = Array.from('BV1  4 1 7  ')
+        for (let i = 0; i < 6; i++) {
+            r[s[i]] = table[Math.trunc(x / (58 ** i)) % 58]
+        }
+        return r.join('')
     }
 
     export function xml2obj(xml: Element) {

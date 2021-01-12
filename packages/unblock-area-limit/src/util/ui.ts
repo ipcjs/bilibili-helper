@@ -1,4 +1,5 @@
 import { _t } from "../feature/r"
+import { Async } from "./async"
 import { util_error, util_info, util_log } from "./log"
 import { Objects } from "./objects"
 import { _ } from "./react"
@@ -18,6 +19,11 @@ export namespace ui {
                 window.alert(message)
             }
         }, 500)
+    }
+
+    export async function prompt(message?: string, defaultValue?: string) {
+        await Async.timeout(500)
+        return window.prompt(message, defaultValue)
     }
 
     export const copy = function (text: string, textarea: HTMLTextAreaElement) {

@@ -102,9 +102,12 @@ export namespace BiliPlusApi {
             episodes: [{
                 index: number
                 index_title: string
+                /** epInfo.cid */
                 danmaku: string
+                /** epInfo.aid */
                 av_id: string
                 page: string
+                /** epInfo.id */
                 episode_id: string
                 cover: string
             }],

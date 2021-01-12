@@ -1,6 +1,11 @@
+import { BiliPlusApi } from "../../api/biliplus"
+import { Converters } from "../../util/converters"
+import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
 import { log, util_warn } from "../../util/log"
 import { _ } from "../../util/react"
+import { Strings } from "../../util/strings"
+import { ui } from "../../util/ui"
 import { ifNotNull } from "../../util/utils"
 import { balh_config, isClosed } from "../config"
 import { util_page } from "../page"
@@ -87,26 +92,56 @@ async function cloneChildNodes(fromNode: Node, toNode: Node) {
 
 function fixBangumiPlayPage() {
     util_init(async () => {
-        const $app = document.getElementById('app')
-        if (!$app) {
-            const template = new DOMParser().parseFromString(pageTemplate, 'text/html')
-            await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
-            await cloneChildNodes(template.getElementsByTagName('body')[0], document.body)
-            // TODO: 构造正确的window.__INITIAL_STATE__
+        if (util_page.bangumi_md()) {
+            // 临时保存当前的season_id
+            cookieStorage.set('balh_curr_season_id', window?.__INITIAL_STATE__?.mediaInfo?.season_id, '')
         }
-        let $eplist_module = document.getElementById('eplist_module')
-        if (!$eplist_module) {
-            const $danmukuBox = document.getElementById('danmukuBox')
-            if (!$danmukuBox) {
-                util_warn('danmukuBox not found!')
-                return
+        if (util_page.anime_ep()) {
+            const $app = document.getElementById('app')
+            if (!$app) {
+                // 读取保存的season_id
+                const season_id = cookieStorage.get('balh_curr_season_id')
+                const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
+                if (!season_id) {
+                    ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
+                    return
+                }
+                const result = await BiliPlusApi.season(season_id)
+                if (result.code) {
+                    return
+                }
+                const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id)
+                if (!ep) {
+                    ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
+                    return
+                }
+                const pageTemplateString = Strings.replaceTemplate(pageTemplate, {
+                    id: ep.episode_id,
+                    aid: ep.av_id,
+                    cid: ep.danmaku,
+                    bvid: Converters.aid2bv(+ep.av_id),
+                    title: ep.index,
+                    titleFormat: ep.index_title,
+                })
+                const template = new DOMParser().parseFromString(pageTemplateString, 'text/html')
+                await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
+                await cloneChildNodes(template.getElementsByTagName('body')[0], document.body)
             }
-            // 插入eplist_module的位置和内容一定要是这样... 不能改...
-            // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
-            const $template = _('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim())
-            $danmukuBox.parentElement?.replaceChild($template.content.firstElementChild!, $danmukuBox.nextSibling!.nextSibling!)
         }
-
+        if (util_page.new_bangumi()) {
+            let $eplist_module = document.getElementById('eplist_module')
+            if (!$eplist_module) {
+                const $danmukuBox = document.getElementById('danmukuBox')
+                if (!$danmukuBox) {
+                    util_warn('danmukuBox not found!')
+                    return
+                }
+                // 插入eplist_module的位置和内容一定要是这样... 不能改...
+                // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
+                const $template = _('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim())
+                $danmukuBox.parentElement?.replaceChild($template.content.firstElementChild!, $danmukuBox.nextSibling!.nextSibling!)
+            }
+        }
     })
 }
 
@@ -187,9 +222,7 @@ export function area_limit_for_vue() {
     replaceInitialState()
     replaceUserState()
     replacePlayInfo()
-    if (util_page.new_bangumi()) {
-        fixBangumiPlayPage()
-    }
+    fixBangumiPlayPage()
 
     modifyGlobalValue('BilibiliPlayer', {
         onWrite: (value) => {

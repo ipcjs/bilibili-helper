@@ -14,4 +14,9 @@ export namespace Strings {
     export function getSearchParam(url: string, key: string) {
         return (url.match(new RegExp('[?|&]' + key + '=(\\w+)')) || ['', ''])[1];
     }
+    export function replaceTemplate(template: string, values: StringAnyObject) {
+        return template.replace(/___(\w+)___/g, (match, name) => {
+            return values[name]
+        })
+    }
 }
