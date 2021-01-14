@@ -1664,63 +1664,73 @@ function scriptSource(invokeBy) {
             if (util_page.anime_ep()) {
                 const $app = document.getElementById('app');
                 if (!$app) {
-                    // 读取保存的season_id
-                    const season_id = cookieStorage.get('balh_curr_season_id');
-                    const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
-                    let templateArgs;
-                    if (balh_config.server_bilibili_api_proxy) {
-                        const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
-                        const result = yield bilibiliApi.getSeasonInfoByEpId(ep_id);
-                        if (result.code) {
-                            return;
+                    try {
+                        // 读取保存的season_id
+                        const season_id = cookieStorage.get('balh_curr_season_id');
+                        const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
+                        let templateArgs = null;
+                        if (balh_config.server_bilibili_api_proxy) {
+                            const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
+                            try {
+                                const result = yield bilibiliApi.getSeasonInfoByEpId(ep_id);
+                                if (result.code) {
+                                    throw result;
+                                }
+                                const ep = result.result.episodes.find(ep => ep.id === +ep_id);
+                                if (!ep) {
+                                    throw `未找到${ep_id}对应的视频信息`;
+                                }
+                                templateArgs = {
+                                    id: ep.id,
+                                    aid: ep.aid,
+                                    cid: ep.cid,
+                                    bvid: ep.bvid,
+                                    title: ep.title,
+                                    titleFormat: ep.long_title,
+                                    htmlTitle: result.result.season_title,
+                                    mediaInfoId: result.result.media_id,
+                                    mediaInfoTitle: result.result.season_title,
+                                };
+                            }
+                            catch (e) {
+                                // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
+                                // catch一下, 回退到用biliplus的api的读取ep的信息
+                                util_warn('通过自定义代理服务器获取ep信息失败', e);
+                            }
                         }
-                        const ep = result.result.episodes.find(ep => ep.id === +ep_id);
-                        if (!ep) {
-                            util_warn(`未找到${ep_id}对应的视频信息`);
-                            return;
+                        if (!templateArgs) {
+                            if (!season_id) {
+                                throw '无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面';
+                            }
+                            const result = yield BiliPlusApi.season(season_id);
+                            if (result.code) {
+                                throw result;
+                            }
+                            const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id);
+                            if (!ep) {
+                                throw '无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面';
+                            }
+                            templateArgs = {
+                                id: ep.episode_id,
+                                aid: ep.av_id,
+                                cid: ep.danmaku,
+                                bvid: Converters.aid2bv(+ep.av_id),
+                                title: ep.index,
+                                titleFormat: ep.index_title,
+                                htmlTitle: result.result.title,
+                                mediaInfoTitle: result.result.title,
+                                mediaInfoId: (_d = (_c = result.result.media) === null || _c === void 0 ? void 0 : _c.media_id) !== null && _d !== void 0 ? _d : 28229002,
+                            };
                         }
-                        templateArgs = {
-                            id: ep.id,
-                            aid: ep.aid,
-                            cid: ep.cid,
-                            bvid: ep.bvid,
-                            title: ep.title,
-                            titleFormat: ep.long_title,
-                            htmlTitle: result.result.season_title,
-                            mediaInfoId: result.result.media_id,
-                            mediaInfoTitle: result.result.season_title,
-                        };
+                        const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs);
+                        const template = new DOMParser().parseFromString(pageTemplateString, 'text/html');
+                        yield cloneChildNodes(template.getElementsByTagName('head')[0], document.head);
+                        yield cloneChildNodes(template.getElementsByTagName('body')[0], document.body);
                     }
-                    else {
-                        if (!season_id) {
-                            ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
-                            return;
-                        }
-                        const result = yield BiliPlusApi.season(season_id);
-                        if (result.code) {
-                            return;
-                        }
-                        const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id);
-                        if (!ep) {
-                            ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
-                            return;
-                        }
-                        templateArgs = {
-                            id: ep.episode_id,
-                            aid: ep.av_id,
-                            cid: ep.danmaku,
-                            bvid: Converters.aid2bv(+ep.av_id),
-                            title: ep.index,
-                            titleFormat: ep.index_title,
-                            htmlTitle: result.result.title,
-                            mediaInfoTitle: result.result.title,
-                            mediaInfoId: (_d = (_c = result.result.media) === null || _c === void 0 ? void 0 : _c.media_id) !== null && _d !== void 0 ? _d : 28229002,
-                        };
+                    catch (e) {
+                        util_warn('重建ep页面失败', e);
+                        ui.alert(Objects.stringify(e));
                     }
-                    const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs);
-                    const template = new DOMParser().parseFromString(pageTemplateString, 'text/html');
-                    yield cloneChildNodes(template.getElementsByTagName('head')[0], document.head);
-                    yield cloneChildNodes(template.getElementsByTagName('body')[0], document.body);
                 }
             }
             if (util_page.new_bangumi()) {
