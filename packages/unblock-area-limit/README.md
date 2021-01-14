@@ -38,12 +38,14 @@ CDN本质也是反向代理（
 
 ### 5. 网友搭建的服务器（**不保证**这些代理服务器是安全的，可信度需要你自己判断）
 
-| 提供者                                                       | 类型       | 区域 | 网址                                                                                    |
-| ------------------------------------------------------------ | ---------- | ---- | --------------------------------------------------------------------------------------- |
-| [@zzc10086](https://github.com/zzc10086)                     | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
-| [@znAaron](https://github.com/znAaron)                       | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
-| [@AisukaYuki](https://github.com/AisukaYuki/)                | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
-| [@silicer](https://github.com/silicer)                       | 腾讯云函数 | 香港 | `https://service-fi0gz11m-1252917345.hk.apigw.tencentcs.com`                            |
+1. [公共解析服务器](https://github.com/yujincheng08/BiliRoaming/wiki/%E5%85%AC%E5%85%B1%E8%A7%A3%E6%9E%90%E6%9C%8D%E5%8A%A1%E5%99%A8)，哔哩漫游的服务器，脚本也能用，只要记得在地址前加上`https://`就行
+
+| 提供者                                        | 类型       | 区域 | 网址                                                                                    |
+| --------------------------------------------- | ---------- | ---- | --------------------------------------------------------------------------------------- |
+| [@zzc10086](https://github.com/zzc10086)      | PHP空间    | 香港 | `https://bili-proxy.98e.org`                                                            |
+| [@znAaron](https://github.com/znAaron)        | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
+| [@AisukaYuki](https://github.com/AisukaYuki/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
+| [@silicer](https://github.com/silicer)        | 腾讯云函数 | 香港 | `https://service-fi0gz11m-1252917345.hk.apigw.tencentcs.com`                            |
 
 ## 开发
 
