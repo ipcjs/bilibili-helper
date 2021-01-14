@@ -10,6 +10,8 @@ interface BalhConfig {
     server_inner: string
     /** 自定义代理服务器的地址 */
     server_custom: string
+    /** api.bilibili.com的代理 */
+    server_bilibili_api_proxy?: string
     mode: string
     flv_prefer_ws: string
     upos_server?: string
@@ -32,6 +34,8 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
             // 保证balh_config.server一定指向biliplus
             const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner
             return server
+        } else if (prop === 'server_bilibili_api_proxy') {
+            return r.regex.custom_server.test(balh_config.server_custom) ? balh_config.server_custom : undefined
         }
         if (prop in target) {
             return (target as any)[prop]

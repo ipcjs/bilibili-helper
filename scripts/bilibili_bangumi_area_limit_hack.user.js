@@ -717,6 +717,9 @@ function scriptSource(invokeBy) {
                 const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner;
                 return server;
             }
+            else if (prop === 'server_bilibili_api_proxy') {
+                return r.regex.custom_server.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
+            }
             if (prop in target) {
                 return target[prop];
             }
@@ -773,6 +776,17 @@ function scriptSource(invokeBy) {
     const platform_android_param_if_app_only = function () {
         return window.__balh_app_only__ ? '&platform=android&fnval=0' : '';
     };
+    class BiliBiliApi {
+        constructor(server = '//api.bilibili.com') {
+            this.server = server;
+        }
+        getSeasonInfoByEpId(ep_id) {
+            return Async.ajax(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`);
+        }
+        getSeasonInfo(season_id) {
+            return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
+        }
+    }
 
     /**
      * 构建 mobi api 解析链接
@@ -1653,30 +1667,57 @@ function scriptSource(invokeBy) {
                     // 读取保存的season_id
                     const season_id = cookieStorage.get('balh_curr_season_id');
                     const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
-                    if (!season_id) {
-                        ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
-                        return;
+                    let templateArgs;
+                    if (balh_config.server_bilibili_api_proxy) {
+                        const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
+                        const result = yield bilibiliApi.getSeasonInfoByEpId(ep_id);
+                        if (result.code) {
+                            return;
+                        }
+                        const ep = result.result.episodes.find(ep => ep.id === +ep_id);
+                        if (!ep) {
+                            util_warn(`未找到${ep_id}对应的视频信息`);
+                            return;
+                        }
+                        templateArgs = {
+                            id: ep.id,
+                            aid: ep.aid,
+                            cid: ep.cid,
+                            bvid: ep.bvid,
+                            title: ep.title,
+                            titleFormat: ep.long_title,
+                            htmlTitle: result.result.season_title,
+                            mediaInfoId: result.result.media_id,
+                            mediaInfoTitle: result.result.season_title,
+                        };
                     }
-                    const result = yield BiliPlusApi.season(season_id);
-                    if (result.code) {
-                        return;
+                    else {
+                        if (!season_id) {
+                            ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
+                            return;
+                        }
+                        const result = yield BiliPlusApi.season(season_id);
+                        if (result.code) {
+                            return;
+                        }
+                        const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id);
+                        if (!ep) {
+                            ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
+                            return;
+                        }
+                        templateArgs = {
+                            id: ep.episode_id,
+                            aid: ep.av_id,
+                            cid: ep.danmaku,
+                            bvid: Converters.aid2bv(+ep.av_id),
+                            title: ep.index,
+                            titleFormat: ep.index_title,
+                            htmlTitle: result.result.title,
+                            mediaInfoTitle: result.result.title,
+                            mediaInfoId: (_d = (_c = result.result.media) === null || _c === void 0 ? void 0 : _c.media_id) !== null && _d !== void 0 ? _d : 28229002,
+                        };
                     }
-                    const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id);
-                    if (!ep) {
-                        ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面');
-                        return;
-                    }
-                    const pageTemplateString = Strings.replaceTemplate(pageTemplate, {
-                        id: ep.episode_id,
-                        aid: ep.av_id,
-                        cid: ep.danmaku,
-                        bvid: Converters.aid2bv(+ep.av_id),
-                        title: ep.index,
-                        titleFormat: ep.index_title,
-                        htmlTitle: result.result.title,
-                        mediaInfoTitle: result.result.title,
-                        mediaInfoId: (_d = (_c = result.result.media) === null || _c === void 0 ? void 0 : _c.media_id) !== null && _d !== void 0 ? _d : 28229002,
-                    });
+                    const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs);
                     const template = new DOMParser().parseFromString(pageTemplateString, 'text/html');
                     yield cloneChildNodes(template.getElementsByTagName('head')[0], document.head);
                     yield cloneChildNodes(template.getElementsByTagName('body')[0], document.body);

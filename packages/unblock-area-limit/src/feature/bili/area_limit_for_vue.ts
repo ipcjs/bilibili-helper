@@ -1,3 +1,4 @@
+import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
@@ -90,6 +91,18 @@ async function cloneChildNodes(fromNode: Node, toNode: Node) {
     }
 }
 
+interface TemplateArgs {
+    id: any,
+    aid: any,
+    cid: any,
+    bvid: any,
+    title: any,
+    titleFormat: any,
+    htmlTitle: any,
+    mediaInfoTitle: any,
+    mediaInfoId: any,
+}
+
 function fixBangumiPlayPage() {
     util_init(async () => {
         if (util_page.bangumi_md()) {
@@ -102,30 +115,57 @@ function fixBangumiPlayPage() {
                 // 读取保存的season_id
                 const season_id = cookieStorage.get('balh_curr_season_id')
                 const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
-                if (!season_id) {
-                    ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
-                    return
+                let templateArgs: TemplateArgs
+                if (balh_config.server_bilibili_api_proxy) {
+                    const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy)
+
+                    const result = await bilibiliApi.getSeasonInfoByEpId(ep_id)
+                    if (result.code) {
+                        return
+                    }
+                    const ep = result.result.episodes.find(ep => ep.id === +ep_id)
+                    if (!ep) {
+                        util_warn(`未找到${ep_id}对应的视频信息`)
+                        return
+                    }
+                    templateArgs = {
+                        id: ep.id,
+                        aid: ep.aid,
+                        cid: ep.cid,
+                        bvid: ep.bvid,
+                        title: ep.title,
+                        titleFormat: ep.long_title,
+                        htmlTitle: result.result.season_title,
+                        mediaInfoId: result.result.media_id,
+                        mediaInfoTitle: result.result.season_title,
+                    }
+                } else {
+                    if (!season_id) {
+                        ui.alert('无法获取season_id, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
+                        return
+                    }
+                    const result = await BiliPlusApi.season(season_id)
+                    if (result.code) {
+                        return
+                    }
+                    const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id)
+                    if (!ep) {
+                        ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
+                        return
+                    }
+                    templateArgs = {
+                        id: ep.episode_id,
+                        aid: ep.av_id,
+                        cid: ep.danmaku,
+                        bvid: Converters.aid2bv(+ep.av_id),
+                        title: ep.index,
+                        titleFormat: ep.index_title,
+                        htmlTitle: result.result.title,
+                        mediaInfoTitle: result.result.title,
+                        mediaInfoId: result.result.media?.media_id ?? 28229002,
+                    }
                 }
-                const result = await BiliPlusApi.season(season_id)
-                if (result.code) {
-                    return
-                }
-                const ep = result.result.episodes.find((ep) => ep.episode_id === ep_id)
-                if (!ep) {
-                    ui.alert('无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面')
-                    return
-                }
-                const pageTemplateString = Strings.replaceTemplate(pageTemplate, {
-                    id: ep.episode_id,
-                    aid: ep.av_id,
-                    cid: ep.danmaku,
-                    bvid: Converters.aid2bv(+ep.av_id),
-                    title: ep.index,
-                    titleFormat: ep.index_title,
-                    htmlTitle: result.result.title,
-                    mediaInfoTitle: result.result.title,
-                    mediaInfoId: result.result.media?.media_id ?? 28229002,
-                })
+                const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)
                 const template = new DOMParser().parseFromString(pageTemplateString, 'text/html')
                 await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
                 await cloneChildNodes(template.getElementsByTagName('body')[0], document.body)
