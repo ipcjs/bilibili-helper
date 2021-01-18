@@ -25,6 +25,8 @@ interface SeasonInfo {
             title: string
             long_title: string
         }]
+        evaluate: string
+        cover: string
     }
 }
 

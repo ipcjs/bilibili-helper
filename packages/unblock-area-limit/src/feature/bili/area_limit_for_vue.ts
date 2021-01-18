@@ -102,6 +102,8 @@ interface TemplateArgs {
     htmlTitle: any,
     mediaInfoTitle: any,
     mediaInfoId: any,
+    evaluate: any,
+    cover: any,
 }
 
 
@@ -140,6 +142,8 @@ function fixBangumiPlayPage() {
                                 htmlTitle: result.result.season_title,
                                 mediaInfoId: result.result.media_id,
                                 mediaInfoTitle: result.result.season_title,
+                                evaluate: result.result.evaluate,
+                                cover: result.result.cover,
                             }
                         } catch (e) {
                             // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
@@ -169,6 +173,8 @@ function fixBangumiPlayPage() {
                             htmlTitle: result.result.title,
                             mediaInfoTitle: result.result.title,
                             mediaInfoId: result.result.media?.media_id ?? 28229002,
+                            evaluate: result.result.evaluate,
+                            cover: result.result.cover,
                         }
                     }
                     const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)
