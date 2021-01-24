@@ -820,7 +820,7 @@ function scriptSource(invokeBy) {
         theRequest.platform = 'android_b';
         theRequest.track_path = '0';
         theRequest.device = 'android';
-        theRequest.fnval = '0'; // 强制 FLV
+        // theRequest.fnval = '0'; // 强制 FLV
         theRequest.ts = `${~~(Date.now() / 1000)}`;
         // 所需参数数组
         let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
@@ -834,6 +834,90 @@ function scriptSource(invokeBy) {
         // 生成 sign
         let ciphertext = hex_md5(plaintext);
         return `${mobi_api_params}sign=${ciphertext}`;
+    }
+    function fixMobiPlayUrlJson(originJson) {
+        const codecsMap = {
+            30112: 'avc1.640028',
+            30080: 'avc1.640028',
+            30077: 'hev1.1.6.L120.90',
+            30064: 'avc1.64001F',
+            30066: 'hev1.1.6.L120.90',
+            30032: 'avc1.64001E',
+            30033: 'hev1.1.6.L120.90',
+            30011: 'hev1.1.6.L120.90',
+            30016: 'avc1.64001E',
+            30280: 'mp4a.40.2',
+            30232: 'mp4a.40.2',
+            30216: 'mp4a.40.2' // 低码音频
+        };
+        const resolutionMap = {
+            30112: [1920, 1080],
+            30080: [1920, 1080],
+            30077: [1920, 1080],
+            30064: [1280, 720],
+            30066: [1280, 720],
+            30032: [852, 480],
+            30033: [852, 480],
+            30011: [640, 360],
+            30016: [640, 360],
+        };
+        let result = JSON.parse(JSON.stringify(originJson));
+        result.dash.duration = Math.round(result.timelength / 1000);
+        result.dash.minBufferTime = 1.5;
+        result.dash.min_buffer_time = 1.5;
+        // 填充视频流数据
+        result.dash.video.forEach((video) => {
+            let i = /\d{5}\.m4s/.exec(video.baseUrl);
+            let video_id;
+            if (i !== null) {
+                video_id = i[0].replace('.m4s', '');
+            }
+            else {
+                video_id = '30080';
+            }
+            // let video_id: string = /\d{5}\.m4s/.exec(video.baseUrl)?[0] ?? '30080' ;
+            video.codecs = codecsMap[video_id];
+            video.width = resolutionMap[video_id][0];
+            video.height = resolutionMap[video_id][1];
+            video.mimeType = 'video/mp4';
+            video.mime_type = 'video/mp4';
+            video.frameRate = '16000/672';
+            video.frame_rate = '16000/672';
+            video.sar = "1:1";
+            video.startWithSAP = 1;
+            video.start_with_sap = 1;
+            video.segment_base = {
+                initialization: "0-973",
+                index_range: "974-4485"
+            };
+            video.SegmentBase = {
+                Initialization: "0-973",
+                indexRange: "974-4485"
+            };
+        });
+        // 填充音频流数据
+        result.dash.audio.forEach((audio) => {
+            let i = /\d{5}\.m4s/.exec(audio.baseUrl);
+            let audio_id;
+            if (i !== null) {
+                audio_id = i[0].replace('.m4s', '');
+            }
+            else {
+                audio_id = '30280';
+            }
+            audio.codecs = codecsMap[audio_id];
+            audio.mimeType = 'audio/mp4';
+            audio.mime_type = 'audio/mp4';
+            audio.segment_base = {
+                initialization: "0-973",
+                index_range: "974-4485"
+            };
+            audio.SegmentBase = {
+                Initialization: "0-973",
+                indexRange: "974-4485"
+            };
+        });
+        return result;
     }
     var BiliPlusApi;
     (function (BiliPlusApi) {
@@ -2476,9 +2560,9 @@ function scriptSource(invokeBy) {
                                                         if (!data.code && data.data.subtitle) {
                                                             // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
                                                             const subtitle = data.data.subtitle;
-                                                            subtitle.subtitles.forEach(item=>(item.subtitle_url = item.subtitle_url.replace(/https?:\/\//,'//')));
+                                                            subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
                                                             subtitle.allow_submit = false;
-                                                            json.data = {subtitle};
+                                                            json.data = { subtitle };
                                                             json.code = 0;
                                                             if (balh_config.blocked_vip) {
                                                                 json.data.vip = {
@@ -3191,6 +3275,12 @@ function scriptSource(invokeBy) {
                         }
                         // 在APP限定情况启用 mobi api 解析
                         if (window.__balh_app_only__) {
+                            if (result['type'] == "DASH") {
+                                let i = fixMobiPlayUrlJson(result);
+                                log('fixMobiPlayUrlJson', i);
+                                log('fixMobiPlayUrlJson_str', JSON.stringify(i));
+                                return i
+                            }
                             return result;
                         }
                         return result.result

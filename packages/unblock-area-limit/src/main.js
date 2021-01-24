@@ -9,7 +9,7 @@ import { balh_config, isClosed } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
-import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl } from './api/biliplus';
+import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
@@ -147,9 +147,9 @@ function scriptContent() {
                                                     if (!data.code && data.data.subtitle) {
                                                         // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
                                                         const subtitle = data.data.subtitle;
-                                                        subtitle.subtitles.forEach(item=>(item.subtitle_url = item.subtitle_url.replace(/https?:\/\//,'//')));
+                                                        subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
                                                         subtitle.allow_submit = false;
-                                                        json.data = {subtitle};
+                                                        json.data = { subtitle };
                                                         json.code = 0;
                                                         if (balh_config.blocked_vip) {
                                                             json.data.vip = {
@@ -871,6 +871,12 @@ function scriptContent() {
                     }
                     // 在APP限定情况启用 mobi api 解析
                     if (window.__balh_app_only__) {
+                        if (result['type'] == "DASH") {
+                            let i = fixMobiPlayUrlJson(result)
+                            log('fixMobiPlayUrlJson', i)
+                            log('fixMobiPlayUrlJson_str', JSON.stringify(i))
+                            return i
+                        }
                         return result;
                     }
                     return result.result

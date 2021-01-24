@@ -62,7 +62,7 @@ export function generateMobiPlayUrlParams(originUrl: String) {
     theRequest.platform = 'android_b';
     theRequest.track_path = '0';
     theRequest.device = 'android';
-    theRequest.fnval = '0'; // 强制 FLV
+    // theRequest.fnval = '0'; // 强制 FLV
     theRequest.ts = `${~~(Date.now() / 1000)}`;
     // 所需参数数组
     let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
@@ -78,6 +78,139 @@ export function generateMobiPlayUrlParams(originUrl: String) {
     return `${mobi_api_params}sign=${ciphertext}`;
 }
 
+export function fixMobiPlayUrlJson(originJson: object) {
+    interface PlayUrlResult {
+        type: string
+        timelength: number
+        dash: {
+            duration: number
+            minBufferTime: number
+            min_buffer_time: number
+            video: [{
+                baseUrl: string
+                codecs: string
+                sar: string
+                startWithSAP: number
+                start_with_sap: number
+                mimeType: string
+                mime_type: string
+                frameRate: string
+                frame_rate: string
+                width: number
+                height: number
+                segment_base?: {
+                    initialization: string
+                    index_range: string
+                }
+                SegmentBase?: {
+                    Initialization: string
+                    indexRange: string
+                }
+            }]
+            audio: [{
+                baseUrl: string
+                codecs: string
+                startWithSAP: number
+                start_with_sap: number
+                mimeType: string
+                mime_type: string
+                segment_base?: {
+                    initialization: string
+                    index_range: string
+                }
+                SegmentBase?: {
+                    Initialization: string
+                    indexRange: string
+                }
+            }]
+        }
+    }
+    const codecsMap: StringStringObject = {
+        30112: 'avc1.640028',  // 1080P+
+        30080: 'avc1.640028',  // 1080P
+        30077: 'hev1.1.6.L120.90',  // HEVC 1080P
+        30064: 'avc1.64001F',  // 720P
+        30066: 'hev1.1.6.L120.90',  // HEVC 720P
+        30032: 'avc1.64001E',  // 480P
+        30033: 'hev1.1.6.L120.90',  // HEVC 480P
+        30011: 'hev1.1.6.L120.90',  // HEVC 360P
+        30016: 'avc1.64001E',  // 360P
+        30280: 'mp4a.40.2',  // 高码音频
+        30232: 'mp4a.40.2',  // 中码音频
+        30216: 'mp4a.40.2'  // 低码音频
+    }
+    const resolutionMap: { [k: string]: [w: number, h: number] } = {
+        30112: [1920, 1080],  // 1080P+
+        30080: [1920, 1080],  // 1080P
+        30077: [1920, 1080],  // HEVC 1080P
+        30064: [1280, 720],  // 720P
+        30066: [1280, 720],  // HEVC 720P
+        30032: [852, 480],  // 480P
+        30033: [852, 480],  // HEVC 480P
+        30011: [640, 360],  // HEVC 360P
+        30016: [640, 360],  // 360P
+    }
+
+    let result: PlayUrlResult = JSON.parse(JSON.stringify(originJson));
+
+    result.dash.duration = Math.round(result.timelength / 1000)
+    result.dash.minBufferTime = 1.5
+    result.dash.min_buffer_time = 1.5
+
+    // 填充视频流数据
+    result.dash.video.forEach((video) => {
+        let i = /\d{5}\.m4s/.exec(video.baseUrl)
+        let video_id: string
+        if (i !== null) {
+            video_id = i[0].replace('.m4s', '')
+        } else {
+            video_id = '30080'
+        }
+
+        // let video_id: string = /\d{5}\.m4s/.exec(video.baseUrl)?[0] ?? '30080' ;
+        video.codecs = codecsMap[video_id]
+        video.width = resolutionMap[video_id][0]
+        video.height = resolutionMap[video_id][1]
+        video.mimeType = 'video/mp4'
+        video.mime_type = 'video/mp4'
+        video.frameRate = '16000/672'
+        video.frame_rate = '16000/672'
+        video.sar = "1:1"
+        video.startWithSAP = 1
+        video.start_with_sap = 1
+        video.segment_base = {
+            initialization: "0-973",
+            index_range: "974-4485"
+        }
+        video.SegmentBase = {
+            Initialization: "0-973",
+            indexRange: "974-4485"
+        }
+    });
+
+    // 填充音频流数据
+    result.dash.audio.forEach((audio) => {
+        let i = /\d{5}\.m4s/.exec(audio.baseUrl)
+        let audio_id: string
+        if (i !== null) {
+            audio_id = i[0].replace('.m4s', '')
+        } else {
+            audio_id = '30280'
+        }
+        audio.codecs = codecsMap[audio_id]
+        audio.mimeType = 'audio/mp4'
+        audio.mime_type = 'audio/mp4'
+        audio.segment_base = {
+            initialization: "0-973",
+            index_range: "974-4485"
+        }
+        audio.SegmentBase = {
+            Initialization: "0-973",
+            indexRange: "974-4485"
+        }
+    });
+    return result
+}
 
 export namespace BiliPlusApi {
     export interface ViewResult {
