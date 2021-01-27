@@ -19,5 +19,9 @@ type StringAnyObject = { [k: string]: any }
 
 type StringStringObject = { [k: string]: string }
 
+type SegmentBaseMapObject = { [k: string]: [initialization: string, indexRange: string] }
+
+type ResolutionMapObject = { [k: string]: [w: number, h: number] }
+
 /** T的所有value的联合类型 */
 type ValueOf<T> = T[keyof T]
