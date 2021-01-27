@@ -19,6 +19,7 @@
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @include      *://link.acg.tv/forum.php*
+// @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
 // @require      file:///C:/GitHub/bilibili-helper/scripts/bilibili_bangumi_area_limit_hack.user.js

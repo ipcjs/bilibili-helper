@@ -835,6 +835,145 @@ function scriptSource(invokeBy) {
         let ciphertext = hex_md5(plaintext);
         return `${mobi_api_params}sign=${ciphertext}`;
     }
+    function fixMobiPlayUrlJson(originJson) {
+        const codecsMap = {
+            30112: 'avc1.640028',
+            30102: 'hev1.1.6.L120.90',
+            30080: 'avc1.640028',
+            30077: 'hev1.1.6.L120.90',
+            30064: 'avc1.64001F',
+            30066: 'hev1.1.6.L120.90',
+            30032: 'avc1.64001E',
+            30033: 'hev1.1.6.L120.90',
+            30011: 'hev1.1.6.L120.90',
+            30016: 'avc1.64001E',
+            30280: 'mp4a.40.2',
+            30232: 'mp4a.40.2',
+            30216: 'mp4a.40.2',
+            'nb2-1-30016': 'avc1.64001E',
+            'nb2-1-30032': 'avc1.64001F',
+            'nb2-1-30064': 'avc1.640028',
+            'nb2-1-30080': 'avc1.640032',
+            'nb2-1-30216': 'mp4a.40.2',
+            'nb2-1-30232': 'mp4a.40.2',
+            'nb2-1-30280': 'mp4a.40.2' // APP源 高码音频
+        };
+        const resolutionMap = {
+            30112: [1920, 1080],
+            30102: [1920, 1080],
+            30080: [1920, 1080],
+            30077: [1920, 1080],
+            30064: [1280, 720],
+            30066: [1280, 720],
+            30032: [852, 480],
+            30033: [852, 480],
+            30011: [640, 360],
+            30016: [640, 360],
+        };
+        const frameRateMap = {
+            30112: '16000/672',
+            30102: '16000/672',
+            30080: '16000/672',
+            30077: '16000/656',
+            30064: '16000/672',
+            30066: '16000/656',
+            30032: '16000/672',
+            30033: '16000/656',
+            30011: '16000/656',
+            30016: '16000/672'
+        };
+        function getSegmentBase(url, id) {
+            // 从 window 中读取已有的值
+            if (window.__segment_base_map__) {
+                if (window.__segment_base_map__.hasOwnProperty(id)) {
+                    // console.log('SegmentBase read from cache ', window.__segment_base_map__[id])
+                    return window.__segment_base_map__[id];
+                }
+            }
+            // 同步模式下 xhr 无法设置 responseType  https://stackoverflow.com/questions/9855127/setting-xmlhttprequest-responsetype-forbidden-all-of-a-sudden
+            let xhr = new XMLHttpRequest();
+            xhr.overrideMimeType('text/plain; charset=x-user-defined');
+            xhr.open('GET', url, false); // 同步模式
+            xhr.setRequestHeader('Range', 'bytes=0-6000'); // 下载前 6000 字节数据用于查找 sidx 位置
+            xhr.send(null); // 发送请求
+            // 数据读取为 arraybuffer
+            let data = Uint8Array.from(xhr.response, c => c.charCodeAt(0)); // 不用管这句红蚯蚓
+            // 转换成 hex
+            let hex_data = Array.prototype.map.call(data, x => ('00' + x.toString(16)).slice(-2)).join('');
+            let indexRangeStart = hex_data.indexOf('73696478') / 2 - 4; // 73696478 是 'sidx' 的 hex ，前面还有 4 个字节才是 sidx 的开始
+            let indexRagneEnd = hex_data.indexOf('6d6f6f66') / 2 - 5; // 6d6f6f66 是 'moof' 的 hex，前面还有 4 个字节才是 moof 的开始，-1为sidx结束位置
+            let result = ['0-' + String(indexRangeStart - 1), String(indexRangeStart) + '-' + String(indexRagneEnd)];
+            // 储存在 window，切换清晰度不用重新解析
+            if (window.__segment_base_map__) {
+                window.__segment_base_map__[id] = result;
+            }
+            else {
+                window.__segment_base_map__ = {};
+                window.__segment_base_map__[id] = result;
+            }
+            // console.log('get SegmentBase', result)
+            return result;
+        }
+        let result = JSON.parse(JSON.stringify(originJson));
+        result.dash.duration = Math.round(result.timelength / 1000) + 1; // 最后result数据会很奇怪的 -1，所以 +1 补上
+        result.dash.minBufferTime = 1.5;
+        result.dash.min_buffer_time = 1.5;
+        // 填充视频流数据
+        result.dash.video.forEach((video) => {
+            let i = /(nb2-1-)?\d{5}\.m4s/.exec(video.baseUrl);
+            let video_id;
+            if (i !== null) {
+                video_id = i[0].replace('.m4s', '');
+            }
+            else {
+                video_id = '30080';
+            }
+            video.codecs = codecsMap[video_id];
+            video_id = video_id.replace('nb2-1-', '');
+            video.width = resolutionMap[video_id][0];
+            video.height = resolutionMap[video_id][1];
+            video.mimeType = 'video/mp4';
+            video.mime_type = 'video/mp4';
+            video.frameRate = frameRateMap[video_id];
+            video.frame_rate = frameRateMap[video_id];
+            video.sar = "1:1";
+            video.startWithSAP = 1;
+            video.start_with_sap = 1;
+            let segmentBase = getSegmentBase(video.baseUrl, video_id);
+            video.segment_base = {
+                initialization: segmentBase[0],
+                index_range: segmentBase[1]
+            };
+            video.SegmentBase = {
+                Initialization: segmentBase[0],
+                indexRange: segmentBase[1]
+            };
+        });
+        // 填充音频流数据
+        result.dash.audio.forEach((audio) => {
+            let i = /\d{5}\.m4s/.exec(audio.baseUrl);
+            let audio_id;
+            if (i !== null) {
+                audio_id = i[0].replace('.m4s', '');
+            }
+            else {
+                audio_id = '30280';
+            }
+            audio.codecs = codecsMap[audio_id];
+            audio.mimeType = 'audio/mp4';
+            audio.mime_type = 'audio/mp4';
+            let segmentBase = getSegmentBase(audio.baseUrl, audio_id);
+            audio.segment_base = {
+                initialization: segmentBase[0],
+                index_range: segmentBase[1]
+            };
+            audio.SegmentBase = {
+                Initialization: segmentBase[0],
+                indexRange: segmentBase[1]
+            };
+        });
+        return result;
+    }
     var BiliPlusApi;
     (function (BiliPlusApi) {
         BiliPlusApi.view = function (aid, update = true) {
@@ -2476,9 +2615,9 @@ function scriptSource(invokeBy) {
                                                         if (!data.code && data.data.subtitle) {
                                                             // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
                                                             const subtitle = data.data.subtitle;
-                                                            subtitle.subtitles.forEach(item=>(item.subtitle_url = item.subtitle_url.replace(/https?:\/\//,'//')));
+                                                            subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
                                                             subtitle.allow_submit = false;
-                                                            json.data = {subtitle};
+                                                            json.data = { subtitle };
                                                             json.code = 0;
                                                             if (balh_config.blocked_vip) {
                                                                 json.data.vip = {
@@ -3191,6 +3330,9 @@ function scriptSource(invokeBy) {
                         }
                         // 在APP限定情况启用 mobi api 解析
                         if (window.__balh_app_only__) {
+                            if (result['type'] == "DASH") {
+                                return fixMobiPlayUrlJson(result)
+                            }
                             return result;
                         }
                         return result.result
