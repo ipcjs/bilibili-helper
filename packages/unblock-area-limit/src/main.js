@@ -873,8 +873,6 @@ function scriptContent() {
                     if (window.__balh_app_only__) {
                         if (result['type'] == "DASH") {
                             let i = fixMobiPlayUrlJson(result)
-                            log('fixMobiPlayUrlJson', i)
-                            log('fixMobiPlayUrlJson_str', JSON.stringify(i))
                             return i
                         }
                         return result;

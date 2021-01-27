@@ -16,6 +16,7 @@ declare global {
             new(): BiliMessageBox
             prototype: BiliMessageBox
         }
+        __segment_base_map__?: { [k: string]: [initialization: string, indexRange: string] }
     }
     interface Promise<T> {
         compose: any
