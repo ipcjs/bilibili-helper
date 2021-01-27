@@ -3331,8 +3331,7 @@ function scriptSource(invokeBy) {
                         // 在APP限定情况启用 mobi api 解析
                         if (window.__balh_app_only__) {
                             if (result['type'] == "DASH") {
-                                let i = fixMobiPlayUrlJson(result);
-                                return i
+                                return fixMobiPlayUrlJson(result)
                             }
                             return result;
                         }
