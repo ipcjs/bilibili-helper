@@ -78,7 +78,7 @@ export function generateMobiPlayUrlParams(originUrl: String) {
     return `${mobi_api_params}sign=${ciphertext}`;
 }
 
-export function fixMobiPlayUrlJson(originJson: object) {
+export async function fixMobiPlayUrlJson(originJson: object) {
     interface PlayUrlResult {
         type: string
         timelength: number
@@ -154,7 +154,7 @@ export function fixMobiPlayUrlJson(originJson: object) {
         'nb2-1-30232': 'mp4a.40.2',  // APP源 中码音频
         'nb2-1-30280': 'mp4a.40.2'  // APP源 高码音频
     }
-    const resolutionMap: { [k: string]: [w: number, h: number] } = {
+    const resolutionMap: ResolutionMapObject = {
         30112: [1920, 1080],  // 1080P+
         30102: [1920, 1080],  // HEVC 1080P+
         30080: [1920, 1080],  // 1080P
@@ -178,39 +178,52 @@ export function fixMobiPlayUrlJson(originJson: object) {
         30011: '16000/656',
         30016: '16000/672'
     }
+    let segmentBaseMap: SegmentBaseMapObject = {}
 
-    function getSegmentBase(url: string, id: string): [string, string] {
-        // 从 window 中读取已有的值
-        if (window.__segment_base_map__) {
-            if (window.__segment_base_map__.hasOwnProperty(id)) {
-                // console.log('SegmentBase read from cache ', window.__segment_base_map__[id])
-                return window.__segment_base_map__[id]
-            }
-        }
-
-        // 同步模式下 xhr 无法设置 responseType  https://stackoverflow.com/questions/9855127/setting-xmlhttprequest-responsetype-forbidden-all-of-a-sudden
-        let xhr = new XMLHttpRequest();
-        xhr.overrideMimeType('text/plain; charset=x-user-defined');
-        xhr.open('GET', url, false)  // 同步模式
-        xhr.setRequestHeader('Range', 'bytes=0-6000')  // 下载前 6000 字节数据用于查找 sidx 位置
-        xhr.send(null)  // 发送请求
-        // 数据读取为 arraybuffer
-        let data = Uint8Array.from(xhr.response, c => c.charCodeAt(0));  // 不用管这句红蚯蚓
-        // 转换成 hex
-        let hex_data = Array.prototype.map.call(data, x => ('00' + x.toString(16)).slice(-2)).join('')
-        let indexRangeStart = hex_data.indexOf('73696478') / 2 - 4  // 73696478 是 'sidx' 的 hex ，前面还有 4 个字节才是 sidx 的开始
-        let indexRagneEnd = hex_data.indexOf('6d6f6f66') / 2 - 5  // 6d6f6f66 是 'moof' 的 hex，前面还有 4 个字节才是 moof 的开始，-1为sidx结束位置
-        let result: [string, string] = ['0-' + String(indexRangeStart - 1), String(indexRangeStart) + '-' + String(indexRagneEnd)]
-
-        // 储存在 window，切换清晰度不用重新解析
-        if (window.__segment_base_map__) {
-            window.__segment_base_map__[id] = result
+    function getId(url: string, default_value: string): string {
+        let i = /(nb2-1-)?\d{5}\.m4s/.exec(url)
+        if (i !== null) {
+            return i[0].replace('.m4s', '')
         } else {
-            window.__segment_base_map__ = {}
-            window.__segment_base_map__[id] = result
+            return default_value
         }
-        // console.log('get SegmentBase', result)
-        return result
+    }
+
+    function getSegmentBase(url: string, id: string) {
+        return new Promise((resolve, reject) => {
+            // 从 window 中读取已有的值
+            if (window.__segment_base_map__) {
+                if (window.__segment_base_map__.hasOwnProperty(id)) {
+                    // console.log('SegmentBase read from cache ', window.__segment_base_map__[id])
+                    resolve(window.__segment_base_map__[id]);
+                }
+            }
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true)
+            xhr.setRequestHeader('Range', 'bytes=0-6000')  // 下载前 6000 字节数据用于查找 sidx 位置
+            xhr.responseType = 'arraybuffer'
+            let data
+            xhr.onload = function (oEvent) {
+                data = new Uint8Array(xhr.response)
+                let hex_data = Array.prototype.map.call(data, x => ('00' + x.toString(16)).slice(-2)).join('')  // 转换成 hex
+                let indexRangeStart = hex_data.indexOf('73696478') / 2 - 4  // 73696478 是 'sidx' 的 hex ，前面还有 4 个字节才是 sidx 的开始
+                let indexRagneEnd = hex_data.indexOf('6d6f6f66') / 2 - 5  // 6d6f6f66 是 'moof' 的 hex，前面还有 4 个字节才是 moof 的开始，-1为sidx结束位置
+                let result: [string, string] = ['0-' + String(indexRangeStart - 1), String(indexRangeStart) + '-' + String(indexRagneEnd)]
+
+                // 储存在 window，切换清晰度不用重新解析
+                if (window.__segment_base_map__) {
+                    window.__segment_base_map__[id] = result
+                } else {
+                    window.__segment_base_map__ = {}
+                    window.__segment_base_map__[id] = result
+                }
+
+                // console.log('get SegmentBase', result);
+                resolve(result);
+            }
+            xhr.send(null)  // 发送请求
+        });
     }
 
     let result: PlayUrlResult = JSON.parse(JSON.stringify(originJson))
@@ -219,19 +232,32 @@ export function fixMobiPlayUrlJson(originJson: object) {
     result.dash.minBufferTime = 1.5
     result.dash.min_buffer_time = 1.5
 
+    // 异步构建 segmentBaseMap
+    let taskList: Promise<any>[] = []
+    result.dash.video.forEach((video) => {
+        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080')))
+    })
+    result.dash.audio.forEach((audio) => {
+        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080')))
+    })
+    await Promise.all(taskList)
+    if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
+
     // 填充视频流数据
     result.dash.video.forEach((video) => {
-        let i = /(nb2-1-)?\d{5}\.m4s/.exec(video.baseUrl)
-        let video_id: string
-        if (i !== null) {
-            video_id = i[0].replace('.m4s', '')
-        } else {
-            video_id = '30080'
-        }
+        let video_id = getId(video.baseUrl, '30280')
 
         video.codecs = codecsMap[video_id]
-        video_id = video_id.replace('nb2-1-', '')
+        video.segment_base = {
+            initialization: segmentBaseMap[video_id][0],
+            index_range: segmentBaseMap[video_id][1]
+        }
+        video.SegmentBase = {
+            Initialization: segmentBaseMap[video_id][0],
+            indexRange: segmentBaseMap[video_id][1]
+        }
 
+        video_id = video_id.replace('nb2-1-', '')
         video.width = resolutionMap[video_id][0]
         video.height = resolutionMap[video_id][1]
         video.mimeType = 'video/mp4'
@@ -241,42 +267,25 @@ export function fixMobiPlayUrlJson(originJson: object) {
         video.sar = "1:1"
         video.startWithSAP = 1
         video.start_with_sap = 1
-
-        let segmentBase = getSegmentBase(video.baseUrl, video_id)
-        video.segment_base = {
-            initialization: segmentBase[0],
-            index_range: segmentBase[1]
-        }
-        video.SegmentBase = {
-            Initialization: segmentBase[0],
-            indexRange: segmentBase[1]
-        }
     });
 
     // 填充音频流数据
     result.dash.audio.forEach((audio) => {
-        let i = /\d{5}\.m4s/.exec(audio.baseUrl)
-        let audio_id: string
-        if (i !== null) {
-            audio_id = i[0].replace('.m4s', '')
-        } else {
-            audio_id = '30280'
+        let audio_id = getId(audio.baseUrl, '30280')
+
+        audio.segment_base = {
+            initialization: segmentBaseMap[audio_id][0],
+            index_range: segmentBaseMap[audio_id][1]
         }
+        audio.SegmentBase = {
+            Initialization: segmentBaseMap[audio_id][0],
+            indexRange: segmentBaseMap[audio_id][1]
+        }
+
         audio.codecs = codecsMap[audio_id]
         audio.mimeType = 'audio/mp4'
         audio.mime_type = 'audio/mp4'
-
-        let segmentBase = getSegmentBase(audio.baseUrl, audio_id)
-        audio.segment_base = {
-            initialization: segmentBase[0],
-            index_range: segmentBase[1]
-        }
-        audio.SegmentBase = {
-            Initialization: segmentBase[0],
-            indexRange: segmentBase[1]
-        }
     });
-
     return result
 }
 
