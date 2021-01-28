@@ -228,7 +228,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
     let result: PlayUrlResult = JSON.parse(JSON.stringify(originJson))
 
-    result.dash.duration = Math.round(result.timelength / 1000) + 1  // 最后result数据会很奇怪的 -1，所以 +1 补上
+    result.dash.duration = Math.round(result.timelength / 1000)
     result.dash.minBufferTime = 1.5
     result.dash.min_buffer_time = 1.5
 
