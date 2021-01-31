@@ -104,6 +104,7 @@ interface TemplateArgs {
     mediaInfoId: any,
     evaluate: any,
     cover: any,
+    episodes?: any
 }
 
 
@@ -132,6 +133,14 @@ function fixBangumiPlayPage() {
                             if (!ep) {
                                 throw `未找到${ep_id}对应的视频信息`
                             }
+                            const eps = JSON.stringify(result.result.episodes.map((item, index) => {
+                                item.loaded = true
+                                item.epStatus = item.status
+                                item.sectionType = 0
+                                item.titleFormat = "第" + item.title + "话 " + item.long_title
+                                item.i = index
+                                return item
+                            }))
                             templateArgs = {
                                 id: ep.id,
                                 aid: ep.aid,
@@ -144,6 +153,7 @@ function fixBangumiPlayPage() {
                                 mediaInfoTitle: result.result.season_title,
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
+                                episodes: eps
                             }
                         } catch (e) {
                             // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
