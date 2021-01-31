@@ -173,6 +173,34 @@ function fixBangumiPlayPage() {
                         if (!ep) {
                             throw '无法查询到ep信息, 请先刷新动画对应的www.bilibili.com/bangumi/media/md页面'
                         }
+                        let pvCounter = 1
+                        const ep_length = result.result.episodes.length
+                        const eps = JSON.stringify(result.result.episodes.map((item) => {
+                            item.titleFormat = "第" + item.index + "话 " + item.index_title
+                            if (/^\d+$/.exec(item.index)) {
+                                item.i = +item.index - 1
+                            } else {
+                                item.i = ep_length - pvCounter
+                                pvCounter++
+                                item.index_title = item.index
+                            }
+                            item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.episode_id
+                            item.bvid = Converters.aid2bv(+item.av_id)
+                            item.badge = ''
+                            item.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" }
+                            item.badge_type = 0
+                            item.title = item.index.toString()
+                            item.id = +item.episode_id
+                            item.cid = +item.danmaku
+                            item.aid = +item.av_id
+                            item.loaded = true
+                            item.epStatus = item.episode_status
+                            item.sectionType = item.episode_type
+                            item.rights = { 'allow_demand': 0, 'allow_dm': 1, 'allow_download': 0, 'area_limit': 0 }
+                            return item
+                        }).sort((a, b) => {
+                            return a.i - b.i
+                        }))
                         templateArgs = {
                             id: ep.episode_id,
                             aid: ep.av_id,
@@ -185,6 +213,7 @@ function fixBangumiPlayPage() {
                             mediaInfoId: result.result.media?.media_id ?? 28229002,
                             evaluate: result.result.evaluate,
                             cover: result.result.cover,
+                            episodes: eps
                         }
                     }
                     const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)

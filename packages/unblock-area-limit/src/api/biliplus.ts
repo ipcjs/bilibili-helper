@@ -318,7 +318,7 @@ export namespace BiliPlusApi {
             favorites: number
             danmaku_count: number
             episodes: [{
-                index: number
+                index: string
                 index_title: string
                 /** epInfo.cid */
                 danmaku: string
@@ -328,6 +328,23 @@ export namespace BiliPlusApi {
                 /** epInfo.id */
                 episode_id: string
                 cover: string
+                episode_status: number
+                episode_type: number
+                i: number
+                link?: string
+                bvid?: string
+                badge?: string
+                badge_info?: any
+                badge_type?: number
+                title?: string
+                titleFormat?: string
+                id?: number
+                cid?: number
+                aid?: number
+                loaded?: boolean
+                epStatus?: number
+                sectionType?: number
+                rights?: any
             }],
             seasons: [{
                 season_id: string
