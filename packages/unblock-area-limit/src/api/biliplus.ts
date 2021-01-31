@@ -180,7 +180,13 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     }
     let segmentBaseMap: SegmentBaseMapObject = {}
 
-    function getId(url: string, default_value: string): string {
+    function getId(url: string, default_value: string, get_filename: boolean = false): string {
+        if (get_filename) {
+            // 作为SegmentBaseMap的Key，在同一个页面下切换集数不至于出错
+            let path = url.split('?')[0]
+            let pathArr = path.split('/')
+            return pathArr[pathArr.length - 1].replace('.m4s', '') // 返回文件名
+        }
         let i = /(nb2-1-)?\d{5}\.m4s/.exec(url)
         if (i !== null) {
             return i[0].replace('.m4s', '')
@@ -194,14 +200,14 @@ export async function fixMobiPlayUrlJson(originJson: object) {
             // 从 window 中读取已有的值
             if (window.__segment_base_map__) {
                 if (window.__segment_base_map__.hasOwnProperty(id)) {
-                    // console.log('SegmentBase read from cache ', window.__segment_base_map__[id])
-                    resolve(window.__segment_base_map__[id]);
+                    // console.log('SegmentBase read from cache ', window.__segment_base_map__[id], 'id=', id)
+                    return resolve(window.__segment_base_map__[id]);
                 }
             }
 
             let xhr = new XMLHttpRequest();
             xhr.open('GET', url, true)
-            xhr.setRequestHeader('Range', 'bytes=0-6000')  // 下载前 6000 字节数据用于查找 sidx 位置
+            xhr.setRequestHeader('Range', 'bytes=0-5000')  // 下载前 5000 字节数据用于查找 sidx 位置
             xhr.responseType = 'arraybuffer'
             let data
             xhr.onload = function (oEvent) {
@@ -219,7 +225,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                     window.__segment_base_map__[id] = result
                 }
 
-                // console.log('get SegmentBase', result);
+                // console.log('get SegmentBase ', result, 'id=', id);
                 resolve(result);
             }
             xhr.send(null)  // 发送请求
@@ -228,17 +234,17 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
     let result: PlayUrlResult = JSON.parse(JSON.stringify(originJson))
 
-    result.dash.duration = Math.round(result.timelength / 1000) + 1  // 最后result数据会很奇怪的 -1，所以 +1 补上
+    result.dash.duration = Math.round(result.timelength / 1000)
     result.dash.minBufferTime = 1.5
     result.dash.min_buffer_time = 1.5
 
     // 异步构建 segmentBaseMap
     let taskList: Promise<any>[] = []
     result.dash.video.forEach((video) => {
-        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080')))
+        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)))
     })
     result.dash.audio.forEach((audio) => {
-        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080')))
+        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)))
     })
     await Promise.all(taskList)
     if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
@@ -246,15 +252,16 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 填充视频流数据
     result.dash.video.forEach((video) => {
         let video_id = getId(video.baseUrl, '30280')
-
         video.codecs = codecsMap[video_id]
+
+        let segmentBaseId = getId(video.baseUrl, '30280', true)
         video.segment_base = {
-            initialization: segmentBaseMap[video_id][0],
-            index_range: segmentBaseMap[video_id][1]
+            initialization: segmentBaseMap[segmentBaseId][0],
+            index_range: segmentBaseMap[segmentBaseId][1]
         }
         video.SegmentBase = {
-            Initialization: segmentBaseMap[video_id][0],
-            indexRange: segmentBaseMap[video_id][1]
+            Initialization: segmentBaseMap[segmentBaseId][0],
+            indexRange: segmentBaseMap[segmentBaseId][1]
         }
 
         video_id = video_id.replace('nb2-1-', '')
@@ -273,13 +280,14 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     result.dash.audio.forEach((audio) => {
         let audio_id = getId(audio.baseUrl, '30280')
 
+        let segmentBaseId = getId(audio.baseUrl, '30280', true)
         audio.segment_base = {
-            initialization: segmentBaseMap[audio_id][0],
-            index_range: segmentBaseMap[audio_id][1]
+            initialization: segmentBaseMap[segmentBaseId][0],
+            index_range: segmentBaseMap[segmentBaseId][1]
         }
         audio.SegmentBase = {
-            Initialization: segmentBaseMap[audio_id][0],
-            indexRange: segmentBaseMap[audio_id][1]
+            Initialization: segmentBaseMap[segmentBaseId][0],
+            indexRange: segmentBaseMap[segmentBaseId][1]
         }
 
         audio.codecs = codecsMap[audio_id]
@@ -310,7 +318,7 @@ export namespace BiliPlusApi {
             favorites: number
             danmaku_count: number
             episodes: [{
-                index: number
+                index: string
                 index_title: string
                 /** epInfo.cid */
                 danmaku: string
@@ -320,6 +328,23 @@ export namespace BiliPlusApi {
                 /** epInfo.id */
                 episode_id: string
                 cover: string
+                episode_status: number
+                episode_type: number
+                i: number
+                link?: string
+                bvid?: string
+                badge?: string
+                badge_info?: any
+                badge_type?: number
+                title?: string
+                titleFormat?: string
+                id?: number
+                cid?: number
+                aid?: number
+                loaded?: boolean
+                epStatus?: number
+                sectionType?: number
+                rights?: any
             }],
             seasons: [{
                 season_id: string

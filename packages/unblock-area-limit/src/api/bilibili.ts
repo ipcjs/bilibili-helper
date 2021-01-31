@@ -24,6 +24,12 @@ interface SeasonInfo {
             id: number
             title: string
             long_title: string
+            status: number
+            titleFormat?: string
+            loaded?: boolean
+            epStatus?: number
+            sectionType?: number
+            i?: number
         }]
         evaluate: string
         cover: string
