@@ -176,10 +176,11 @@ function fixBangumiPlayPage() {
                         let pvCounter = 1
                         const ep_length = result.result.episodes.length
                         const eps = JSON.stringify(result.result.episodes.map((item) => {
-                            item.titleFormat = "第" + item.index + "话 " + item.index_title
                             if (/^\d+$/.exec(item.index)) {
+                                item.titleFormat = "第" + item.index + "话 " + item.index_title
                                 item.i = +item.index - 1
                             } else {
+                                item.titleFormat = item.index
                                 item.i = ep_length - pvCounter
                                 pvCounter++
                                 item.index_title = item.index
