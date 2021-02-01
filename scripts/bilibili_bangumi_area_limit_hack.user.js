@@ -786,6 +786,9 @@ function scriptSource(invokeBy) {
         getSeasonInfo(season_id) {
             return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
         }
+        getSeasonInfoByEpIdOnBangumi(ep_id) {
+            return Async.ajax(`//bangumi.bilibili.com/view/web_api/season?ep_id=${ep_id}`);
+        }
     }
 
     /**
@@ -1824,9 +1827,65 @@ function scriptSource(invokeBy) {
                         // 读取保存的season_id
                         const season_id = cookieStorage.get('balh_curr_season_id');
                         const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
+                        const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
                         let templateArgs = null;
-                        if (balh_config.server_bilibili_api_proxy) {
-                            const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
+                        // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
+                        // 如果该接口失效，自动尝试后面的方法
+                        try {
+                            if (!templateArgs) {
+                                const result = yield bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id);
+                                if (result.code) {
+                                    throw result;
+                                }
+                                const ep = result.result.episodes.find(ep => ep.ep_id === +ep_id);
+                                if (!ep) {
+                                    throw `通过bangumi接口未找到${ep_id}对应的视频信息`;
+                                }
+                                const eps = JSON.stringify(result.result.episodes.map((item, index) => {
+                                    // 返回的数据是有序的，不需要另外排序                                
+                                    if (/^\d+$/.exec(item.index)) {
+                                        item.titleFormat = "第" + item.index + "话 " + item.index_title;
+                                    }
+                                    else {
+                                        item.titleFormat = item.index;
+                                        item.index_title = item.index;
+                                    }
+                                    item.loaded = true;
+                                    item.epStatus = item.episode_status;
+                                    item.sectionType = 0;
+                                    item.id = +item.ep_id;
+                                    item.i = index;
+                                    item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.ep_id;
+                                    item.title = item.index;
+                                    return item;
+                                }));
+                                let titleForma;
+                                if (ep.index_title) {
+                                    titleForma = ep.index_title;
+                                }
+                                else {
+                                    titleForma = "第" + ep.index + "话";
+                                }
+                                templateArgs = {
+                                    id: ep.ep_id,
+                                    aid: ep.aid,
+                                    cid: ep.cid,
+                                    bvid: ep.bvid,
+                                    title: ep.index,
+                                    titleFormat: titleForma,
+                                    htmlTitle: result.result.title,
+                                    mediaInfoId: result.result.media_id,
+                                    mediaInfoTitle: result.result.title,
+                                    evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
+                                    cover: result.result.cover,
+                                    episodes: eps
+                                };
+                            }
+                        }
+                        catch (e) {
+                            util_warn('通过bangumi接口获取ep信息失败', e);
+                        }
+                        if (balh_config.server_bilibili_api_proxy && !templateArgs) {
                             try {
                                 const result = yield bilibiliApi.getSeasonInfoByEpId(ep_id);
                                 if (result.code) {
@@ -1880,11 +1939,12 @@ function scriptSource(invokeBy) {
                             let pvCounter = 1;
                             const ep_length = result.result.episodes.length;
                             const eps = JSON.stringify(result.result.episodes.map((item) => {
-                                item.titleFormat = "第" + item.index + "话 " + item.index_title;
                                 if (/^\d+$/.exec(item.index)) {
+                                    item.titleFormat = "第" + item.index + "话 " + item.index_title;
                                     item.i = +item.index - 1;
                                 }
                                 else {
+                                    item.titleFormat = item.index;
                                     item.i = ep_length - pvCounter;
                                     pvCounter++;
                                     item.index_title = item.index;
@@ -1894,7 +1954,7 @@ function scriptSource(invokeBy) {
                                 item.badge = '';
                                 item.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" };
                                 item.badge_type = 0;
-                                item.title = item.index.toString();
+                                item.title = item.index;
                                 item.id = +item.episode_id;
                                 item.cid = +item.danmaku;
                                 item.aid = +item.av_id;
@@ -1904,7 +1964,7 @@ function scriptSource(invokeBy) {
                                 item.rights = { 'allow_demand': 0, 'allow_dm': 1, 'allow_download': 0, 'area_limit': 0 };
                                 return item;
                             }).sort((a, b) => {
-                                return a.i - b.i;
+                                return a.i - b.i; // BP接口返回的数据是无序的，需要排序
                             }));
                             templateArgs = {
                                 id: ep.episode_id,
