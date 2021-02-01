@@ -36,6 +36,36 @@ interface SeasonInfo {
     }
 }
 
+interface SeasonInfoOnBangumi {
+    code: number
+    result: {
+        season_id: number
+        season_title: string   // 季度标题，如 “TV” “第一季”
+        media_id: number
+        episodes: [{
+            aid: number
+            bvid: string
+            cid: number
+            ep_id: number
+            index: string  // 集数/简短名，显示在缩略集数
+            index_title: string  // 分集标题，泰区番剧通常为空
+            episode_status: number
+            episode_type: number
+            titleFormat?: string
+            loaded?: boolean
+            epStatus?: number
+            sectionType?: number
+            i?: number
+            id?: number
+            link?: string
+            title?: string
+        }]
+        evaluate: string  // 简介
+        cover: string
+        title: string  // 番剧名
+    }
+}
+
 export class BiliBiliApi {
     private server: string
     constructor(server: string = '//api.bilibili.com') {
@@ -47,5 +77,8 @@ export class BiliBiliApi {
     }
     getSeasonInfo(season_id: string | number) {
         return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?season_id=${season_id}`)
+    }
+    getSeasonInfoByEpIdOnBangumi(ep_id: string | number) {
+        return Async.ajax<SeasonInfoOnBangumi>(`//bangumi.bilibili.com/view/web_api/season?ep_id=${ep_id}`)
     }
 }
