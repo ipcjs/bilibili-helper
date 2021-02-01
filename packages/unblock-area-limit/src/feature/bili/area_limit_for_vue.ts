@@ -127,52 +127,50 @@ function fixBangumiPlayPage() {
                     // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                     // 如果该接口失效，自动尝试后面的方法
                     try {
-                        if (!templateArgs) {
-                            const result = await bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id)
-                            if (result.code) {
-                                throw result
-                            }
-                            const ep = result.result.episodes.find(ep => ep.ep_id === +ep_id)
-                            if (!ep) {
-                                throw `通过bangumi接口未找到${ep_id}对应的视频信息`
-                            }
-                            const eps = JSON.stringify(result.result.episodes.map((item, index) => {
-                                // 返回的数据是有序的，不需要另外排序                                
-                                if (/^\d+$/.exec(item.index)) {
-                                    item.titleFormat = "第" + item.index + "话 " + item.index_title
-                                } else {
-                                    item.titleFormat = item.index
-                                    item.index_title = item.index
-                                }
-                                item.loaded = true
-                                item.epStatus = item.episode_status
-                                item.sectionType = 0
-                                item.id = +item.ep_id
-                                item.i = index
-                                item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.ep_id
-                                item.title = item.index
-                                return item
-                            }))
-                            let titleForma
-                            if (ep.index_title) {
-                                titleForma = ep.index_title
+                        const result = await bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id)
+                        if (result.code) {
+                            throw result
+                        }
+                        const ep = result.result.episodes.find(ep => ep.ep_id === +ep_id)
+                        if (!ep) {
+                            throw `通过bangumi接口未找到${ep_id}对应的视频信息`
+                        }
+                        const eps = JSON.stringify(result.result.episodes.map((item, index) => {
+                            // 返回的数据是有序的，不需要另外排序                                
+                            if (/^\d+$/.exec(item.index)) {
+                                item.titleFormat = "第" + item.index + "话 " + item.index_title
                             } else {
-                                titleForma = "第" + ep.index + "话"
+                                item.titleFormat = item.index
+                                item.index_title = item.index
                             }
-                            templateArgs = {
-                                id: ep.ep_id,
-                                aid: ep.aid,
-                                cid: ep.cid,
-                                bvid: ep.bvid,
-                                title: ep.index,
-                                titleFormat: titleForma,
-                                htmlTitle: result.result.title,
-                                mediaInfoId: result.result.media_id,
-                                mediaInfoTitle: result.result.title,
-                                evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
-                                cover: result.result.cover,
-                                episodes: eps
-                            }
+                            item.loaded = true
+                            item.epStatus = item.episode_status
+                            item.sectionType = 0
+                            item.id = +item.ep_id
+                            item.i = index
+                            item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.ep_id
+                            item.title = item.index
+                            return item
+                        }))
+                        let titleForma
+                        if (ep.index_title) {
+                            titleForma = ep.index_title
+                        } else {
+                            titleForma = "第" + ep.index + "话"
+                        }
+                        templateArgs = {
+                            id: ep.ep_id,
+                            aid: ep.aid,
+                            cid: ep.cid,
+                            bvid: ep.bvid,
+                            title: ep.index,
+                            titleFormat: titleForma,
+                            htmlTitle: result.result.title,
+                            mediaInfoId: result.result.media_id,
+                            mediaInfoTitle: result.result.title,
+                            evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
+                            cover: result.result.cover,
+                            episodes: eps
                         }
                     } catch (e) {
                         util_warn('通过bangumi接口获取ep信息失败', e)
