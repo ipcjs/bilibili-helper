@@ -933,7 +933,9 @@ function scriptContent() {
                                 Objects.convertKeyToSnakeCase(data.dash)
                             }
                             // 替换后大多数bangumi下的视频都会报CROS错误
-                            // if (!window.__balh_app_only__) return Converters.replaceUpos(data, uposMap.kodo)
+                            if (!window.__balh_app_only__ && balh_config.upos_server) {
+                                return Converters.replaceUpos(data, uposMap[balh_config.upos_server])
+                            }
                             return data
                         })
                 }
