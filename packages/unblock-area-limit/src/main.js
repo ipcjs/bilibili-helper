@@ -845,8 +845,39 @@ function scriptContent() {
             })
             const playurl_by_custom = new BilibiliApi({
                 _asyncAjax: function (originUrl) {
-                    return Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
-                        .then(r => this.processProxySuccess(r))
+                    return this.selectServer(originUrl).then(r => this.processProxySuccess(r))
+                },
+                selectServer: async function (originUrl) {
+                    let result
+                    if (r.regex.custom_server.test(balh_config.server_custom)) {
+                        ui.playerMsg('使用首选代理服务器拉取视频地址...')
+                        result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
+                        if (!result.code) {
+                            return Promise.resolve(result)
+                        }
+                    }
+
+                    // 首选服务器失败后开始尝试服务器列表
+                    const server_list = {
+                        'tw': [balh_config.server_custom_tw, '台湾'],
+                        'hk': [balh_config.server_custom_hk, '香港'],
+                        'cn': [balh_config.server_custom_cn, '大陆'],
+                        'th': [balh_config.server_custom_th, '泰国（东南亚）'],
+                    }
+                    let server_index = ['tw', 'hk', 'th', 'cn']  // 解析顺序
+                    for (j = 0, len = server_index.length; j < len; j++) {
+                        let host = server_index[j]
+                        let host_info = server_list[host]
+                        // 首选服务器上面试过了，不用再试
+                        if (r.regex.custom_server.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
+                            ui.playerMsg('使用' + host_info[1] + '代理服务器拉取视频地址...')
+                            result = await Async.ajax(this.transToProxyUrl(originUrl, host_info[0]))
+                            if (!result.code) {
+                                return Promise.resolve(result)
+                            }
+                        }
+                    }
+                    return Promise.resolve(result)  // 都失败了，返回最后一次数据
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
                     if (r.regex.custom_server.test(proxyHost)) {

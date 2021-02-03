@@ -227,6 +227,10 @@ export function settings() {
     }
 
     let customServerCheckText: HTMLElement
+    let customTWServerCheckText: HTMLElement
+    let customHKServerCheckText: HTMLElement
+    let customCNServerCheckText: HTMLElement
+    let customTHServerCheckText: HTMLElement
     var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e: any) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', (this as any).remove(); } } }, [
         _('style', {}, [_('text', r.css.settings)]),
         _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
@@ -241,7 +245,7 @@ export function settings() {
                     _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', disabled: 'true', name: 'balh_server_inner', value: r.const.server.S1 }), _('text', 'BiliPlus'), _('a', { href: 'https://www.biliplus.com/?about' }, [_('text', '（捐赠）')]),
                     ]),
                     _('label', { style: { flex: 2 } }, [
-                        _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义: `),
+                        _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义（首选服务器）`),
                         _('input', {
                             type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
@@ -253,6 +257,63 @@ export function settings() {
                         customServerCheckText = _('span'),
                     ]),
                 ]), _('br'),
+
+                _('text', '自定义服务器列表'),
+                _('div', { style: { display: 'flex', 'flex-wrap': 'wrap' } }, [
+
+                    _('label', { style: { flex: '1 1 50%' } }, [
+                        _('text', `台湾: `),
+                        _('input', {
+                            type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com', event: {
+                                input: (event: Event) => {
+                                    customTWServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    onSettingsFormChange(event)
+                                }
+                            }
+                        }),
+                        customTWServerCheckText = _('span'),
+                    ]),
+
+                    _('label', { style: { flex: '1 1 50%' } }, [
+                        _('text', `香港: `),
+                        _('input', {
+                            type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com', event: {
+                                input: (event: Event) => {
+                                    customHKServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    onSettingsFormChange(event)
+                                }
+                            }
+                        }),
+                        customHKServerCheckText = _('span'),
+                    ]),
+
+                    _('label', { style: { flex: '1 1 50%' } }, [
+                        _('text', `大陆: `),
+                        _('input', {
+                            type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com', event: {
+                                input: (event: Event) => {
+                                    customCNServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    onSettingsFormChange(event)
+                                }
+                            }
+                        }),
+                        customCNServerCheckText = _('span'),
+                    ]),
+
+                    _('label', { style: { flex: '1 1 50%' } }, [
+                        _('text', `泰国/东南亚: `),
+                        _('input', {
+                            type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true', event: {
+                                input: (event: Event) => {
+                                    customTHServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    onSettingsFormChange(event)
+                                }
+                            }
+                        }),
+                        customTHServerCheckText = _('span'),
+                    ])
+                ]), _('br'),
+
                 _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                 _('div', { style: { display: '' } }, [ // 这个功能貌似没作用了...隐藏掉 => 貌似还有用...重新显示
                     _('text', 'upos服务器：'), _('br'),

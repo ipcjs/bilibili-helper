@@ -10,6 +10,10 @@ interface BalhConfig {
     server_inner: string
     /** 自定义代理服务器的地址 */
     server_custom: string
+    server_custom_tw: string
+    server_custom_hk: string
+    server_custom_cn: string
+    server_custom_th: string
     /** api.bilibili.com的代理 */
     server_bilibili_api_proxy?: string
     mode: string
@@ -46,6 +50,18 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
                     value = value || r.const.server.CUSTOM
                     break
                 case 'server_custom':
+                    value = value || ''
+                    break
+                case 'server_custom_tw':
+                    value = value || ''
+                    break
+                case 'server_custom_hk':
+                    value = value || ''
+                    break
+                case 'server_custom_cn':
+                    value = value || ''
+                    break
+                case 'server_custom_th':
                     value = value || ''
                     break
                 case 'mode':

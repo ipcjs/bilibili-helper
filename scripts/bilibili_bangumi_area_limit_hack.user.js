@@ -732,6 +732,18 @@ function scriptSource(invokeBy) {
                     case 'server_custom':
                         value = value || '';
                         break;
+                    case 'server_custom_tw':
+                        value = value || '';
+                        break;
+                    case 'server_custom_hk':
+                        value = value || '';
+                        break;
+                    case 'server_custom_cn':
+                        value = value || '';
+                        break;
+                    case 'server_custom_th':
+                        value = value || '';
+                        break;
                     case 'mode':
                         value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT);
                         break;
@@ -2417,6 +2429,10 @@ function scriptSource(invokeBy) {
             }
         }
         let customServerCheckText;
+        let customTWServerCheckText;
+        let customHKServerCheckText;
+        let customCNServerCheckText;
+        let customTHServerCheckText;
         var settingsDOM = createElement('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this)
                     util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
             createElement('style', {}, [createElement('text', r.css.settings)]),
@@ -2432,7 +2448,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', disabled: 'true', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus'), createElement('a', { href: 'https://www.biliplus.com/?about' }, [createElement('text', '（捐赠）')]),
                         ]),
                         createElement('label', { style: { flex: 2 } }, [
-                            createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义: `),
+                            createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义（首选服务器）`),
                             createElement('input', {
                                 type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
@@ -2444,6 +2460,62 @@ function scriptSource(invokeBy) {
                             }),
                             customServerCheckText = createElement('span'),
                         ]),
+                    ]),
+                    createElement('br'),
+                    createElement('text', '自定义服务器列表'),
+                    createElement('div', { style: { display: 'flex', 'flex-wrap': 'wrap' } }, [
+                        createElement('label', { style: { flex: '1 1 50%' } }, [
+                            createElement('text', `台湾: `),
+                            createElement('input', {
+                                type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com',
+                                event: {
+                                    input: (event) => {
+                                        customTWServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        onSettingsFormChange(event);
+                                    }
+                                }
+                            }),
+                            customTWServerCheckText = createElement('span'),
+                        ]),
+                        createElement('label', { style: { flex: '1 1 50%' } }, [
+                            createElement('text', `香港: `),
+                            createElement('input', {
+                                type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com',
+                                event: {
+                                    input: (event) => {
+                                        customHKServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        onSettingsFormChange(event);
+                                    }
+                                }
+                            }),
+                            customHKServerCheckText = createElement('span'),
+                        ]),
+                        createElement('label', { style: { flex: '1 1 50%' } }, [
+                            createElement('text', `大陆: `),
+                            createElement('input', {
+                                type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com',
+                                event: {
+                                    input: (event) => {
+                                        customCNServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        onSettingsFormChange(event);
+                                    }
+                                }
+                            }),
+                            customCNServerCheckText = createElement('span'),
+                        ]),
+                        createElement('label', { style: { flex: '1 1 50%' } }, [
+                            createElement('text', `泰国/东南亚: `),
+                            createElement('input', {
+                                type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true',
+                                event: {
+                                    input: (event) => {
+                                        customTHServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        onSettingsFormChange(event);
+                                    }
+                                }
+                            }),
+                            customTHServerCheckText = createElement('span'),
+                        ])
                     ]),
                     createElement('br'),
                     createElement('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
@@ -3418,8 +3490,39 @@ function scriptSource(invokeBy) {
                 });
                 const playurl_by_custom = new BilibiliApi({
                     _asyncAjax: function (originUrl) {
-                        return Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
-                            .then(r => this.processProxySuccess(r))
+                        return this.selectServer(originUrl).then(r => this.processProxySuccess(r))
+                    },
+                    selectServer: async function (originUrl) {
+                        let result;
+                        if (r.regex.custom_server.test(balh_config.server_custom)) {
+                            ui.playerMsg('使用首选代理服务器拉取视频地址...');
+                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom));
+                            if (!result.code) {
+                                return Promise$1.resolve(result)
+                            }
+                        }
+
+                        // 首选服务器失败后开始尝试服务器列表
+                        const server_list = {
+                            'tw': [balh_config.server_custom_tw, '台湾'],
+                            'hk': [balh_config.server_custom_hk, '香港'],
+                            'cn': [balh_config.server_custom_cn, '大陆'],
+                            'th': [balh_config.server_custom_th, '泰国（东南亚）'],
+                        };
+                        let server_index = ['tw', 'hk', 'th', 'cn'];  // 解析顺序
+                        for (j = 0, len = server_index.length; j < len; j++) {
+                            let host = server_index[j];
+                            let host_info = server_list[host];
+                            // 首选服务器上面试过了，不用再试
+                            if (r.regex.custom_server.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
+                                ui.playerMsg('使用' + host_info[1] + '代理服务器拉取视频地址...');
+                                result = await Async.ajax(this.transToProxyUrl(originUrl, host_info[0]));
+                                if (!result.code) {
+                                    return Promise$1.resolve(result)
+                                }
+                            }
+                        }
+                        return Promise$1.resolve(result)  // 都失败了，返回最后一次数据
                     },
                     transToProxyUrl: function (originUrl, proxyHost) {
                         if (r.regex.custom_server.test(proxyHost)) {
