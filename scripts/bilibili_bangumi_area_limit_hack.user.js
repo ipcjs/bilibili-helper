@@ -354,7 +354,7 @@ function scriptSource(invokeBy) {
         /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
         function replaceUpos(data, host = uposMap.uptx) {
             const str = JSON.stringify(data);
-            return JSON.parse(str.replace(/:\/\/[^/]+\//g, `://${host}/`));
+            return JSON.parse(str.replace(/:\\?\/\\?\/[^/]+\\?\//g, `://${host}/`));
         }
         Converters.replaceUpos = replaceUpos;
     })(Converters || (Converters = {}));

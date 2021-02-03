@@ -111,6 +111,6 @@ export namespace Converters {
     /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
     export function replaceUpos<T>(data: T, host: string = uposMap.uptx) {
         const str = JSON.stringify(data)
-        return JSON.parse(str.replace(/:\/\/[^/]+\//g, `://${host}/`))
+        return JSON.parse(str.replace(/:\\?\/\\?\/[^/]+\\?\//g, `://${host}/`))
     }
 }
