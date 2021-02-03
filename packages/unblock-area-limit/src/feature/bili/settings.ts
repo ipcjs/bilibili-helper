@@ -266,32 +266,18 @@ export function settings() {
                                     let server = this.value;
                                     let message = window.$('#upos-server-message');
                                     let clearMsg = function () { message.text('') }
-                                    message.text('保存中...')
-                                    window.$.ajax(balh_config.server + '/api/setUposServer?server=' + server, {
-                                        xhrFields: { withCredentials: true },
-                                        dataType: 'json',
-                                        success: function (json: any) {
-                                            if (json.code == 0) {
-                                                message.text('已保存');
-                                                setTimeout(clearMsg, 3e3);
-                                                balh_config.upos_server = server;
-                                            }
-                                        },
-                                        error: function () {
-                                            message.text('保存出错');
-                                            setTimeout(clearMsg, 3e3);
-                                        }
-                                    })
+                                    setTimeout(clearMsg, 3e3);
+                                    balh_config.upos_server = server;
+                                    message.text(`upos服务器已改为${server}`)
                                 }
                             }
                         }, [
                             _('option', { value: "" }, [_('text', '不替换')]),
-                            _('option', { value: "ks3u" }, [_('text', 'ks3（金山）')]),
-                            _('option', { value: "kodou" }, [_('text', 'kodo（七牛）')]),
-                            _('option', { value: "cosu" }, [_('text', 'cos（腾讯）')]),
-                            _('option', { value: "bosu" }, [_('text', 'bos（百度）')]),
-                            _('option', { value: "wcsu" }, [_('text', 'wcs（网宿）')]),
-                            _('option', { value: "xycdn" }, [_('text', 'xycdn（迅雷）')]),
+                            _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
+                            _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
+                            _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
+                            _('option', { value: "bos" }, [_('text', 'bos（百度）')]),
+                            _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
                             _('option', { value: "hw" }, [_('text', 'hw（251）')]),
                         ]),
                         _('span', { 'id': 'upos-server-message' })
