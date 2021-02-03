@@ -51,7 +51,8 @@ export const r = {
         FALSE: FALSE,
     },
     regex: {
-        custom_server: /^https?:\/\/[\w-_.]+$/,
+        /** api.bilibili.com的全站代理 */
+        bilibili_api_proxy: /^https?:\/\/[\w-_.:]+$/,
     },
     baipiao: [
         { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },

@@ -39,7 +39,7 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
             const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner
             return server
         } else if (prop === 'server_bilibili_api_proxy') {
-            return r.regex.custom_server.test(balh_config.server_custom) ? balh_config.server_custom : undefined
+            return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined
         }
         if (prop in target) {
             return (target as any)[prop]

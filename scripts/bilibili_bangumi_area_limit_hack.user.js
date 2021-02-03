@@ -185,7 +185,8 @@ function scriptSource(invokeBy) {
             FALSE: FALSE,
         },
         regex: {
-            custom_server: /^https?:\/\/[\w-_.]+$/,
+            /** api.bilibili.com的全站代理 */
+            bilibili_api_proxy: /^https?:\/\/[\w-_.:]+$/,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -718,7 +719,7 @@ function scriptSource(invokeBy) {
                 return server;
             }
             else if (prop === 'server_bilibili_api_proxy') {
-                return r.regex.custom_server.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
+                return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
             }
             if (prop in target) {
                 return target[prop];
@@ -2453,7 +2454,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        customServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2470,7 +2471,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customTWServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2483,7 +2484,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customHKServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2496,7 +2497,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customCNServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -2509,7 +2510,7 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true',
                                 event: {
                                     input: (event) => {
-                                        customTHServerCheckText.innerText = r.regex.custom_server.test(event.target.value.trim()) ? '✔️' : '🔗️';
+                                        customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
                                     }
                                 }
@@ -3480,7 +3481,7 @@ function scriptSource(invokeBy) {
                     },
                     selectServer: async function (originUrl) {
                         let result;
-                        if (r.regex.custom_server.test(balh_config.server_custom)) {
+                        if (r.regex.bilibili_api_proxy.test(balh_config.server_custom)) {
                             ui.playerMsg('使用首选代理服务器拉取视频地址...');
                             result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom));
                             if (!result.code) {
@@ -3500,7 +3501,7 @@ function scriptSource(invokeBy) {
                             let host = server_index[j];
                             let host_info = server_list[host];
                             // 首选服务器上面试过了，不用再试
-                            if (r.regex.custom_server.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
+                            if (r.regex.bilibili_api_proxy.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
                                 ui.playerMsg('使用' + host_info[1] + '代理服务器拉取视频地址...');
                                 result = await Async.ajax(this.transToProxyUrl(originUrl, host_info[0]));
                                 if (!result.code) {
@@ -3511,7 +3512,7 @@ function scriptSource(invokeBy) {
                         return Promise$1.resolve(result)  // 都失败了，返回最后一次数据
                     },
                     transToProxyUrl: function (originUrl, proxyHost) {
-                        if (r.regex.custom_server.test(proxyHost)) {
+                        if (r.regex.bilibili_api_proxy.test(proxyHost)) {
                             if (window.__balh_app_only__) {
                                 // APP 限定用 mobi api
                                 return getMobiPlayUrl(originUrl, proxyHost)

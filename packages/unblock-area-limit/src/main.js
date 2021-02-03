@@ -849,7 +849,7 @@ function scriptContent() {
                 },
                 selectServer: async function (originUrl) {
                     let result
-                    if (r.regex.custom_server.test(balh_config.server_custom)) {
+                    if (r.regex.bilibili_api_proxy.test(balh_config.server_custom)) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
                         result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
                         if (!result.code) {
@@ -869,7 +869,7 @@ function scriptContent() {
                         let host = server_index[j]
                         let host_info = server_list[host]
                         // 首选服务器上面试过了，不用再试
-                        if (r.regex.custom_server.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
+                        if (r.regex.bilibili_api_proxy.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
                             ui.playerMsg('使用' + host_info[1] + '代理服务器拉取视频地址...')
                             result = await Async.ajax(this.transToProxyUrl(originUrl, host_info[0]))
                             if (!result.code) {
@@ -880,7 +880,7 @@ function scriptContent() {
                     return Promise.resolve(result)  // 都失败了，返回最后一次数据
                 },
                 transToProxyUrl: function (originUrl, proxyHost) {
-                    if (r.regex.custom_server.test(proxyHost)) {
+                    if (r.regex.bilibili_api_proxy.test(proxyHost)) {
                         if (window.__balh_app_only__) {
                             // APP 限定用 mobi api
                             return getMobiPlayUrl(originUrl, proxyHost)

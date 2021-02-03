@@ -249,7 +249,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    customServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
@@ -266,7 +266,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customTWServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
@@ -279,7 +279,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customHKServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
@@ -292,7 +292,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customCNServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
@@ -305,7 +305,7 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true', event: {
                                 input: (event: Event) => {
-                                    customTHServerCheckText.innerText = r.regex.custom_server.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
+                                    customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
                                 }
                             }
