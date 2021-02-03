@@ -849,7 +849,7 @@ function scriptContent() {
                 },
                 selectServer: async function (originUrl) {
                     let result
-                    if (r.regex.bilibili_api_proxy.test(balh_config.server_custom)) {
+                    if (balh_config.server_custom) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
                         result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
                         if (!result.code) {
@@ -857,21 +857,21 @@ function scriptContent() {
                         }
                     }
 
-                    // 首选服务器失败后开始尝试服务器列表
-                    const server_list = {
-                        'tw': [balh_config.server_custom_tw, '台湾'],
-                        'hk': [balh_config.server_custom_hk, '香港'],
-                        'cn': [balh_config.server_custom_cn, '大陆'],
-                        'th': [balh_config.server_custom_th, '泰国（东南亚）'],
-                    }
-                    let server_index = ['tw', 'hk', 'th', 'cn']  // 解析顺序
-                    for (j = 0, len = server_index.length; j < len; j++) {
-                        let host = server_index[j]
-                        let host_info = server_list[host]
+                    // 首选服务器失败后开始尝试服务器列表, 按顺序解析
+                    const server_list = [
+                        [balh_config.server_custom_tw, '台湾'],
+                        [balh_config.server_custom_hk, '香港'],
+                        [balh_config.server_custom_th, '泰国（东南亚）'],
+                        [balh_config.server_custom_cn, '大陆'],
+                    ]
+
+                    for (let server_info of server_list) {
+                        const host = server_info[0]
+                        const host_name = server_info[1]
                         // 首选服务器上面试过了，不用再试
-                        if (r.regex.bilibili_api_proxy.test(host_info[0]) && host_info[0] != balh_config.server_custom) {
-                            ui.playerMsg('使用' + host_info[1] + '代理服务器拉取视频地址...')
-                            result = await Async.ajax(this.transToProxyUrl(originUrl, host_info[0]))
+                        if (host && host != balh_config.server_custom) {
+                            ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`)
+                            result = await Async.ajax(this.transToProxyUrl(originUrl, host))
                             if (!result.code) {
                                 return Promise.resolve(result)
                             }
