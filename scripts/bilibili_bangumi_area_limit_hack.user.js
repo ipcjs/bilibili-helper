@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.1
+// @version      8.1.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2531,32 +2531,18 @@ function scriptSource(invokeBy) {
                                         let server = this.value;
                                         let message = window.$('#upos-server-message');
                                         let clearMsg = function () { message.text(''); };
-                                        message.text('保存中...');
-                                        window.$.ajax(balh_config.server + '/api/setUposServer?server=' + server, {
-                                            xhrFields: { withCredentials: true },
-                                            dataType: 'json',
-                                            success: function (json) {
-                                                if (json.code == 0) {
-                                                    message.text('已保存');
-                                                    setTimeout(clearMsg, 3e3);
-                                                    balh_config.upos_server = server;
-                                                }
-                                            },
-                                            error: function () {
-                                                message.text('保存出错');
-                                                setTimeout(clearMsg, 3e3);
-                                            }
-                                        });
+                                        setTimeout(clearMsg, 3e3);
+                                        balh_config.upos_server = server;
+                                        message.text(`upos服务器已改为${server}`);
                                     }
                                 }
                             }, [
                                 createElement('option', { value: "" }, [createElement('text', '不替换')]),
-                                createElement('option', { value: "ks3u" }, [createElement('text', 'ks3（金山）')]),
-                                createElement('option', { value: "kodou" }, [createElement('text', 'kodo（七牛）')]),
-                                createElement('option', { value: "cosu" }, [createElement('text', 'cos（腾讯）')]),
-                                createElement('option', { value: "bosu" }, [createElement('text', 'bos（百度）')]),
-                                createElement('option', { value: "wcsu" }, [createElement('text', 'wcs（网宿）')]),
-                                createElement('option', { value: "xycdn" }, [createElement('text', 'xycdn（迅雷）')]),
+                                createElement('option', { value: "ks3" }, [createElement('text', 'ks3（金山）')]),
+                                createElement('option', { value: "kodo" }, [createElement('text', 'kodo（七牛）')]),
+                                createElement('option', { value: "cos" }, [createElement('text', 'cos（腾讯）')]),
+                                createElement('option', { value: "bos" }, [createElement('text', 'bos（百度）')]),
+                                createElement('option', { value: "wcs" }, [createElement('text', 'wcs（网宿）')]),
                                 createElement('option', { value: "hw" }, [createElement('text', 'hw（251）')]),
                             ]),
                             createElement('span', { 'id': 'upos-server-message' })
@@ -3609,7 +3595,9 @@ function scriptSource(invokeBy) {
                                     Objects.convertKeyToSnakeCase(data.dash);
                                 }
                                 // 替换后大多数bangumi下的视频都会报CROS错误
-                                // if (!window.__balh_app_only__) return Converters.replaceUpos(data, uposMap.kodo)
+                                if (!window.__balh_app_only__ && balh_config.upos_server) {
+                                    return Converters.replaceUpos(data, uposMap[balh_config.upos_server])
+                                }
                                 return data
                             })
                     }
