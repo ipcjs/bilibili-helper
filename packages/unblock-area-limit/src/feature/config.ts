@@ -19,6 +19,8 @@ interface BalhConfig {
     mode: string
     flv_prefer_ws: string
     upos_server?: string
+    /** 开启upos替换时, 是否替换`akamaized.net` */
+    upos_replace_akamai?: BOOL
     /** 值为{@link r.const.TRUE} 或 {@link r.const.FALSE}, 当成boolean看也没太大问题 */
     blocked_vip?: boolean
     /** 同上 */

@@ -4,7 +4,7 @@
         "editor.formatOnSave": false,
     },
     "cSpell.enabled": true,
-    "cSpell.userWords": [
+    "cSpell.words": [
         "balh",
         "ipcjs",
         "bangumi",
@@ -13,6 +13,7 @@
         "bili",
         "acfun",
         "upos",
+        "akamaized",
     ],
-    "typescript.tsdk": "node_modules\\typescript\\lib"
+    "typescript.tsdk": "node_modules\\typescript\\lib",
 }
