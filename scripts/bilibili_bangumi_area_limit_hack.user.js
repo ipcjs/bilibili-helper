@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.3
+// @version      8.1.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -351,10 +351,16 @@ function scriptSource(invokeBy) {
             };
         }
         Converters.generateSign = generateSign;
-        /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
-        function replaceUpos(data, host = uposMap.uptx) {
-            const str = JSON.stringify(data);
-            return JSON.parse(str.replace(/:\\?\/\\?\/[^/]+\\?\//g, `://${host}/`));
+        /**
+         * 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知
+         * @param replaceAkamai 详见:`BalhConfig.upos_replace_akamai`
+         */
+        function replaceUpos(data, host = uposMap.uptx, replaceAkamai = false) {
+            var str = JSON.stringify(data);
+            if ((str.indexOf("akamaized.net") == -1) || (replaceAkamai == true)) {
+                str = str.replace(/:\\?\/\\?\/[^\/]+\\?\//g, `://${host}/`);
+            }
+            return JSON.parse(str);
         }
         Converters.replaceUpos = replaceUpos;
     })(Converters || (Converters = {}));
@@ -2522,31 +2528,33 @@ function scriptSource(invokeBy) {
                     createElement('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
                     createElement('div', { style: { display: '' } }, [
                         createElement('text', 'upos服务器：'), createElement('br'),
-                        createElement('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
-                            createElement('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
-                            createElement('text', '替换upos视频服务器：'),
-                            createElement('select', {
-                                id: 'upos-server',
-                                event: {
-                                    change: function () {
-                                        let server = this.value;
-                                        let message = window.$('#upos-server-message');
-                                        let clearMsg = function () { message.text(''); };
-                                        setTimeout(clearMsg, 3e3);
-                                        balh_config.upos_server = server;
-                                        message.text(`upos服务器已改为${server}`);
+                        createElement('div', { style: { display: 'flex' } }, [
+                            createElement('div', { title: '变更后 切换清晰度 或 刷新 生效', style: { flex: 1 } }, [
+                                createElement('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
+                                createElement('text', '替换upos视频服务器：'),
+                                createElement('select', {
+                                    id: 'upos-server',
+                                    event: {
+                                        change: function () {
+                                            let server = this.value;
+                                            let message = window.$('#upos-server-message');
+                                            balh_config.upos_server = server;
+                                            document.getElementById('balh-upos-replace-akamai').disabled = !server;
+                                            message.text(`已保存`);
+                                        }
                                     }
-                                }
-                            }, [
-                                createElement('option', { value: "" }, [createElement('text', '不替换')]),
-                                createElement('option', { value: "ks3" }, [createElement('text', 'ks3（金山）')]),
-                                createElement('option', { value: "kodo" }, [createElement('text', 'kodo（七牛）')]),
-                                createElement('option', { value: "cos" }, [createElement('text', 'cos（腾讯）')]),
-                                createElement('option', { value: "bos" }, [createElement('text', 'bos（百度）')]),
-                                createElement('option', { value: "wcs" }, [createElement('text', 'wcs（网宿）')]),
-                                createElement('option', { value: "hw" }, [createElement('text', 'hw（251）')]),
+                                }, [
+                                    createElement('option', { value: "" }, [createElement('text', '不替换')]),
+                                    createElement('option', { value: "ks3" }, [createElement('text', 'ks3（金山）')]),
+                                    createElement('option', { value: "kodo" }, [createElement('text', 'kodo（七牛）')]),
+                                    createElement('option', { value: "cos" }, [createElement('text', 'cos（腾讯）')]),
+                                    createElement('option', { value: "bos" }, [createElement('text', 'bos（百度）')]),
+                                    createElement('option', { value: "wcs" }, [createElement('text', 'wcs（网宿）')]),
+                                    createElement('option', { value: "hw" }, [createElement('text', 'hw（251）')]),
+                                ]),
+                                createElement('span', { 'id': 'upos-server-message' })
                             ]),
-                            createElement('span', { 'id': 'upos-server-message' })
+                            createElement('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [createElement('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? 'false' : 'true' }), createElement('text', '替换akamai'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [createElement('text', '(？)')])]),
                         ]),
                         createElement('br'),
                     ]),
@@ -3597,7 +3605,7 @@ function scriptSource(invokeBy) {
                                 }
                                 // 替换后大多数bangumi下的视频都会报CROS错误
                                 if (!window.__balh_app_only__ && balh_config.upos_server) {
-                                    return Converters.replaceUpos(data, uposMap[balh_config.upos_server])
+                                    return Converters.replaceUpos(data, uposMap[balh_config.upos_server], balh_config.upos_replace_akamai)
                                 }
                                 return data
                             })

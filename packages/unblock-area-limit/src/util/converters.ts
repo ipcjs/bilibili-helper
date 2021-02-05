@@ -108,8 +108,10 @@ export namespace Converters {
         };
     }
 
-    /** 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知 */
-    /** 添加replaceAkamai参数，用于判断是否将akamai upos也替换为为自定义upos */
+    /**
+     * 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知
+     * @param replaceAkamai 详见:`BalhConfig.upos_replace_akamai`
+     */
     export function replaceUpos<T>(data: T, host: string = uposMap.uptx, replaceAkamai: boolean = false) {
         var str = JSON.stringify(data);
         if ((str.indexOf("akamaized.net") == -1) || (replaceAkamai == true)) {

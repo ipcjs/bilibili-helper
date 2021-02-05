@@ -965,11 +965,7 @@ function scriptContent() {
                             }
                             // 替换后大多数bangumi下的视频都会报CROS错误
                             if (!window.__balh_app_only__ && balh_config.upos_server) {
-                                // 此处需要添加一个新的balh_config属性以决定是否一并替换akamai upos
-                                // e.g. balh_config.replace_akamai_upos
-                                // return Converters.replaceUpos(data, uposMap[balh_config.upos_server], balh_config.replace_akamai_upos)
-                                // 暂时设置为false，默认不替换akamai upos
-                                return Converters.replaceUpos(data, uposMap[balh_config.upos_server], false)
+                                return Converters.replaceUpos(data, uposMap[balh_config.upos_server], balh_config.upos_replace_akamai)
                             }
                             return data
                         })
