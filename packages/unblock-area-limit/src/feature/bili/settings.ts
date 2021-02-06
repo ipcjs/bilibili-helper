@@ -315,34 +315,38 @@ export function settings() {
                 ]), _('br'),
 
                 _('div', { id: 'balh_server_ping', style: { whiteSpace: 'pre-wrap', overflow: 'auto' } }, []),
-                _('div', { style: { display: '' } }, [ // 这个功能貌似没作用了...隐藏掉 => 貌似还有用...重新显示
+                _('div', { style: { display: '' } }, [
                     _('text', 'upos服务器：'), _('br'),
-                    _('div', { title: '变更后 切换清晰度 或 刷新 生效' }, [
-                        _('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
-                        _('text', '替换upos视频服务器：'),
-                        _('select', {
-                            id: 'upos-server',
-                            event: {
-                                change: function (this: HTMLSelectElement) {
-                                    let server = this.value;
-                                    let message = window.$('#upos-server-message');
-                                    let clearMsg = function () { message.text('') }
-                                    setTimeout(clearMsg, 3e3);
-                                    balh_config.upos_server = server;
-                                    message.text(`upos服务器已改为${server}`)
+                    _('div', { style: { display: 'flex' } }, [
+                        _('div', { title: '变更后 切换清晰度 或 刷新 生效', style: { flex: 1 } }, [
+                            _('input', { style: { visibility: 'hidden' }, type: 'checkbox' }),
+                            _('text', '替换upos视频服务器：'),
+                            _('select', {
+                                id: 'upos-server',
+                                event: {
+                                    change: function (this: HTMLSelectElement) {
+                                        let server = this.value;
+                                        let message = window.$('#upos-server-message');
+
+                                        balh_config.upos_server = server;
+                                        (document.getElementById('balh-upos-replace-akamai') as HTMLInputElement).disabled = !server;
+                                        message.text(`已保存`)
+                                    }
                                 }
-                            }
-                        }, [
-                            _('option', { value: "" }, [_('text', '不替换')]),
-                            _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
-                            _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
-                            _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
-                            _('option', { value: "bos" }, [_('text', 'bos（百度）')]),
-                            _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
-                            _('option', { value: "hw" }, [_('text', 'hw（251）')]),
+                            }, [
+                                _('option', { value: "" }, [_('text', '不替换')]),
+                                _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
+                                _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
+                                _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
+                                _('option', { value: "bos" }, [_('text', 'bos（百度）')]),
+                                _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
+                                _('option', { value: "hw" }, [_('text', 'hw（251）')]),
+                            ]),
+                            _('span', { 'id': 'upos-server-message' })
                         ]),
-                        _('span', { 'id': 'upos-server-message' })
-                    ]), _('br'),
+                        _('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [_('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? 'false' : 'true' }), _('text', '替换akamai'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [_('text', '(？)')])]),
+                    ]),
+                    _('br'),
                 ]),
                 _('text', '脚本工作模式：'), _('br'),
                 _('div', { style: { display: 'flex' } }, [
