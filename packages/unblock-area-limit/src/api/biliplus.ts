@@ -218,7 +218,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         }
     }
 
-    function getSegmentBase(url: string, id: string) {
+    function getSegmentBase(url: string, id: string, range: string = '5000') {
         return new Promise((resolve, reject) => {
             // 从 window 中读取已有的值
             if (window.__segment_base_map__) {
@@ -230,7 +230,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
             let xhr = new XMLHttpRequest();
             xhr.open('GET', url, true)
-            xhr.setRequestHeader('Range', 'bytes=0-5000')  // 下载前 5000 字节数据用于查找 sidx 位置
+            // TV 动画 range 通常在 4000~5000，剧场版动画大概 14000+
+            xhr.setRequestHeader('Range', `bytes=0-${range}`)  // 下载前 5000 字节数据用于查找 sidx 位置
             xhr.responseType = 'arraybuffer'
             let data
             xhr.onload = function (oEvent) {
@@ -263,19 +264,21 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
     // 异步构建 segmentBaseMap
     let taskList: Promise<any>[] = []
+    // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
+    let range = Math.round(result.dash.duration * 3.5).toString()
     result.dash.video.forEach((video) => {
         if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
             // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
             video.baseUrl = video.backupUrl[0]
         }
 
-        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)))
+        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range))
     })
     result.dash.audio.forEach((audio) => {
         if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
             audio.baseUrl = audio.backupUrl[0]
         }
-        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)))
+        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range))
     })
     await Promise.all(taskList)
     if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
