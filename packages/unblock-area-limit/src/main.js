@@ -9,7 +9,7 @@ import { balh_config, isClosed } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
-import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson } from './api/biliplus';
+import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from './api/biliplus';
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
@@ -143,11 +143,28 @@ function scriptContent() {
                                                 log('/x/player/v2', '404', target.responseText);
                                                 container.__block_response = true;
                                                 let url = container.__url.replace('player/v2', 'v2/dm/view').replace('cid', 'oid') + '&type=1'; //从APP接口拉取字幕信息
-                                                Async.ajax(url).then(data => {
+                                                Async.ajax(url).then(async data => {
                                                     if (!data.code && data.data.subtitle) {
                                                         // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
                                                         const subtitle = data.data.subtitle;
-                                                        subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
+                                                        if (subtitle.subtitles) {
+                                                            subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
+                                                        } else {
+                                                            // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
+                                                            let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`)
+                                                            let thailand_data = await Async.ajax(thailand_sub_url)
+                                                            subtitle.subtitles = []
+                                                            thailand_data.data.subtitles.forEach((item) => {
+                                                                let sub = {
+                                                                    'id': item.id,
+                                                                    'id_str': item.id.toString(),
+                                                                    'lan': item.key,
+                                                                    'lan_doc': item.title,
+                                                                    'subtitle_url': item.url.replace(/https?:\/\//, '//')
+                                                                }
+                                                                subtitle.subtitles.push(sub)
+                                                            })
+                                                        }
                                                         subtitle.allow_submit = false;
                                                         json.data = { subtitle };
                                                         json.code = 0;
@@ -871,7 +888,11 @@ function scriptContent() {
                         // 首选服务器上面试过了，不用再试
                         if (host && host != balh_config.server_custom) {
                             ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`)
-                            result = await Async.ajax(this.transToProxyUrl(originUrl, host))
+                            if (host_name == '泰国（东南亚）') {
+                                result = await Async.ajax(this.transToProxyUrl(originUrl, host, true))
+                            } else {
+                                result = await Async.ajax(this.transToProxyUrl(originUrl, host))
+                            }
                             if (!result.code) {
                                 return Promise.resolve(result)
                             }
@@ -879,8 +900,12 @@ function scriptContent() {
                     }
                     return Promise.resolve(result)  // 都失败了，返回最后一次数据
                 },
-                transToProxyUrl: function (originUrl, proxyHost) {
+                transToProxyUrl: function (originUrl, proxyHost, thailand = false) {
                     if (r.regex.bilibili_api_proxy.test(proxyHost)) {
+                        if (thailand) {
+                            // 泰区番剧解析
+                            return getMobiPlayUrl(originUrl, proxyHost, true)
+                        }
                         if (window.__balh_app_only__) {
                             // APP 限定用 mobi api
                             return getMobiPlayUrl(originUrl, proxyHost)
@@ -902,6 +927,10 @@ function scriptContent() {
                     }
                     // 在APP限定情况启用 mobi api 解析
                     if (window.__balh_app_only__) {
+                        // 泰区番也是 APP 限定
+                        if (result.hasOwnProperty('data')) {
+                            return fixThailandPlayUrlJson(result)
+                        }
                         if (result['type'] == "DASH") {
                             return fixMobiPlayUrlJson(result)
                         }

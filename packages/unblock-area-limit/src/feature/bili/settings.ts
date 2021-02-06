@@ -303,7 +303,7 @@ export function settings() {
                     _('label', { style: { flex: '1 1 50%' } }, [
                         _('text', `泰国/东南亚: `),
                         _('input', {
-                            type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true', event: {
+                            type: 'text', name: 'balh_server_custom_th', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
                                     customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)

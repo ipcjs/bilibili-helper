@@ -35,12 +35,16 @@ function convertPlayUrl(originUrl: string) {
  * 
  * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
  */
-export function getMobiPlayUrl(originUrl: String, host: String) {
+export function getMobiPlayUrl(originUrl: String, host: String, thailand = false) {
+    // 合成泰区 url
+    if (thailand) {
+        return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, true)}`
+    }
     // 合成完整 mobi api url
     return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`
 }
 
-export function generateMobiPlayUrlParams(originUrl: String) {
+export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     // 提取参数为数组
     let a = originUrl.split('?')[1].split('&');
     // 参数数组转换为对象
@@ -53,26 +57,39 @@ export function generateMobiPlayUrlParams(originUrl: String) {
     }
     // 追加 mobi api 需要的参数
     theRequest.access_key = localStorage.access_key;
-    theRequest.appkey = '07da50c9a0bf829f';
-    theRequest.build = '5380700';
-    theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
-    theRequest.device = 'android';
-    theRequest.force_host = '2';
-    theRequest.mobi_app = 'android_b';
-    theRequest.platform = 'android_b';
-    theRequest.track_path = '0';
-    theRequest.device = 'android';
-    theRequest.fnval = '0'; // 强制 FLV
+    if (thailand) {
+        theRequest.appkey = '7d089525d3611b1c';
+        theRequest.build = '1001310';
+        theRequest.mobi_app = 'bstar_a';
+        theRequest.platform = 'android';
+    } else {
+        theRequest.appkey = '07da50c9a0bf829f';
+        theRequest.build = '5380700';
+        theRequest.device = 'android';
+        theRequest.mobi_app = 'android_b';
+        theRequest.platform = 'android_b';
+        theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
+        theRequest.fnval = '0'; // 强制 FLV
+        theRequest.track_path = '0';
+    }
+    theRequest.force_host = '2';  // 强制音视频返回 https
     theRequest.ts = `${~~(Date.now() / 1000)}`;
     // 所需参数数组
     let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
     // 生成 mobi api 参数字符串
     let mobi_api_params = '';
     for (let i = 0; i < param_wanted.length; i++) {
-        mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+        if (theRequest.hasOwnProperty(param_wanted[i])) {
+            mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+        }
     }
     // 准备明文
-    let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+    let plaintext = ''
+    if (thailand) {
+        plaintext = mobi_api_params.slice(0, -1) + `acd495b248ec528c2eed1e862d393126`;
+    } else {
+        plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+    }
     // 生成 sign
     let ciphertext = hex_md5(plaintext);
     return `${mobi_api_params}sign=${ciphertext}`;
@@ -94,6 +111,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
             minBufferTime: number
             min_buffer_time: number
             video: [{
+                backupUrl: string[]
                 baseUrl: string
                 codecs: string
                 sar: string
@@ -115,12 +133,17 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                 }
             }]
             audio: [{
+                backupUrl: string[]
                 baseUrl: string
                 codecs: string
                 startWithSAP: number
                 start_with_sap: number
                 mimeType: string
                 mime_type: string
+                frameRate: string
+                frame_rate: string
+                width: number
+                height: number
                 segment_base?: {
                     initialization: string
                     index_range: string
@@ -241,9 +264,17 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 异步构建 segmentBaseMap
     let taskList: Promise<any>[] = []
     result.dash.video.forEach((video) => {
+        if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
+            // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
+            video.baseUrl = video.backupUrl[0]
+        }
+
         taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)))
     })
     result.dash.audio.forEach((audio) => {
+        if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
+            audio.baseUrl = audio.backupUrl[0]
+        }
         taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)))
     })
     await Promise.all(taskList)
@@ -293,8 +324,119 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         audio.codecs = codecsMap[audio_id]
         audio.mimeType = 'audio/mp4'
         audio.mime_type = 'audio/mp4'
+        audio.frameRate = ''
+        audio.frame_rate = ''
+        audio.height = 0
+        audio.width = 0
     });
     return result
+}
+
+export async function fixThailandPlayUrlJson(originJson: object) {
+    interface OriginResult {  // 原始 Json 结构, ? 是原来没有需要填充的数据
+        code: number
+        message: string
+        data: {
+            video_info: {
+                dash_audio: [{
+                    bandwidth: number
+                    base_url: string
+                    id: number
+                    baseUrl?: string
+                    backupUrl?: string[]
+                    backup_url?: string[]
+                }]
+                quality: number
+                stream_list: [{
+                    stream_info: {
+                        description: string
+                        display_desc: string
+                        new_description: string
+                        quality: number
+                    }
+                    dash_video?: {
+                        audio_id: number
+                        bandwidth: number
+                        base_url: string
+                        codecid: number
+                        id?: number
+                        backupUrl?: string[]
+                        backup_url?: string[]
+                        baseUrl?: string
+                    }
+                }]
+                timelength: number
+            }
+        }
+    }
+
+    let origin: OriginResult = JSON.parse(JSON.stringify(originJson))
+    interface LooseObject {
+        [key: string]: any
+    }
+    let result: LooseObject = {  // 重建 Json 结构，对齐港澳台APP限定的结构
+        'format': 'flv720',
+        'type': 'DASH',
+        'result': 'suee',
+        'video_codecid': 7,
+        'no_rexcode': 0,
+        'code': origin.code,
+        'message': +origin.message,
+        'timelength': origin.data.video_info.timelength,
+        'quality': origin.data.video_info.quality,
+        'accept_format': 'hdflv2,flv,flv720,flv480,mp4',
+    }
+    let dash: LooseObject = {  // 上面三个数据会由 fixMobiPlayUrlJson 进一步处理
+        'duration': 0,
+        'minBufferTime': 0.0,
+        'min_buffer_time': 0.0,
+        'audio': <any>[]
+    }
+    // 填充音频流数据
+    origin.data.video_info.dash_audio.forEach((audio) => {
+        audio.backupUrl = []
+        audio.backup_url = []
+        audio.baseUrl = audio.base_url
+        dash.audio.push(audio)
+    })
+    // 填充视频流数据
+    let accept_quality = <any>[]
+    let accept_description = <any>[]
+    let support_formats = <any>[]
+    let dash_video = <any>[]
+    origin.data.video_info.stream_list.forEach((stream) => {
+        support_formats.push(stream.stream_info)
+        accept_quality.push(stream.stream_info.quality)
+        accept_description.push(stream.stream_info.new_description)
+        // 只加入有视频链接的数据
+        if (stream.dash_video && stream.dash_video.base_url) {
+            stream.dash_video.backupUrl = []
+            stream.dash_video.backup_url = []
+            stream.dash_video.baseUrl = stream.dash_video.base_url
+            stream.dash_video.id = stream.stream_info.quality
+            dash_video.push(stream.dash_video)
+        }
+    })
+    dash['video'] = dash_video
+
+    result['accept_quality'] = accept_quality
+    result['accept_description'] = accept_description
+    result['support_formats'] = support_formats
+    result['dash'] = dash
+    // 下面参数取自安达(ep359333)，总之一股脑塞进去（
+    result['fnval'] = 80
+    result['fnver'] = 0
+    result['status'] = 2
+    result['vip_status'] = 1
+    result['vip_type'] = 2
+    result['seek_param'] = 'start'
+    result['seek_type'] = 'offset'
+    result['bp'] = 0
+    result['from'] = 'local'
+    result['has_paid'] = false
+    result['is_preview'] = 0
+
+    return fixMobiPlayUrlJson(result)
 }
 
 export namespace BiliPlusApi {

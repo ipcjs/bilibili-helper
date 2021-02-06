@@ -810,11 +810,15 @@ function scriptSource(invokeBy) {
      *
      * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
      */
-    function getMobiPlayUrl(originUrl, host) {
+    function getMobiPlayUrl(originUrl, host, thailand = false) {
+        // 合成泰区 url
+        if (thailand) {
+            return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, true)}`;
+        }
         // 合成完整 mobi api url
         return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`;
     }
-    function generateMobiPlayUrlParams(originUrl) {
+    function generateMobiPlayUrlParams(originUrl, thailand = false) {
         // 提取参数为数组
         let a = originUrl.split('?')[1].split('&');
         // 参数数组转换为对象
@@ -827,26 +831,41 @@ function scriptSource(invokeBy) {
         }
         // 追加 mobi api 需要的参数
         theRequest.access_key = localStorage.access_key;
-        theRequest.appkey = '07da50c9a0bf829f';
-        theRequest.build = '5380700';
-        theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
-        theRequest.device = 'android';
-        theRequest.force_host = '2';
-        theRequest.mobi_app = 'android_b';
-        theRequest.platform = 'android_b';
-        theRequest.track_path = '0';
-        theRequest.device = 'android';
-        theRequest.fnval = '0'; // 强制 FLV
+        if (thailand) {
+            theRequest.appkey = '7d089525d3611b1c';
+            theRequest.build = '1001310';
+            theRequest.mobi_app = 'bstar_a';
+            theRequest.platform = 'android';
+        }
+        else {
+            theRequest.appkey = '07da50c9a0bf829f';
+            theRequest.build = '5380700';
+            theRequest.device = 'android';
+            theRequest.mobi_app = 'android_b';
+            theRequest.platform = 'android_b';
+            theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
+            theRequest.fnval = '0'; // 强制 FLV
+            theRequest.track_path = '0';
+        }
+        theRequest.force_host = '2'; // 强制音视频返回 https
         theRequest.ts = `${~~(Date.now() / 1000)}`;
         // 所需参数数组
         let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
         // 生成 mobi api 参数字符串
         let mobi_api_params = '';
         for (let i = 0; i < param_wanted.length; i++) {
-            mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+            if (theRequest.hasOwnProperty(param_wanted[i])) {
+                mobi_api_params += param_wanted[i] + `=` + theRequest[param_wanted[i]] + `&`;
+            }
         }
         // 准备明文
-        let plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+        let plaintext = '';
+        if (thailand) {
+            plaintext = mobi_api_params.slice(0, -1) + `acd495b248ec528c2eed1e862d393126`;
+        }
+        else {
+            plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
+        }
         // 生成 sign
         let ciphertext = hex_md5(plaintext);
         return `${mobi_api_params}sign=${ciphertext}`;
@@ -956,9 +975,16 @@ function scriptSource(invokeBy) {
             // 异步构建 segmentBaseMap
             let taskList = [];
             result.dash.video.forEach((video) => {
+                if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
+                    // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
+                    video.baseUrl = video.backupUrl[0];
+                }
                 taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)));
             });
             result.dash.audio.forEach((audio) => {
+                if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
+                    audio.baseUrl = audio.backupUrl[0];
+                }
                 taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)));
             });
             yield Promise.all(taskList);
@@ -1003,8 +1029,78 @@ function scriptSource(invokeBy) {
                 audio.codecs = codecsMap[audio_id];
                 audio.mimeType = 'audio/mp4';
                 audio.mime_type = 'audio/mp4';
+                audio.frameRate = '';
+                audio.frame_rate = '';
+                audio.height = 0;
+                audio.width = 0;
             });
             return result;
+        });
+    }
+    function fixThailandPlayUrlJson(originJson) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let origin = JSON.parse(JSON.stringify(originJson));
+            let result = {
+                'format': 'flv720',
+                'type': 'DASH',
+                'result': 'suee',
+                'video_codecid': 7,
+                'no_rexcode': 0,
+                'code': origin.code,
+                'message': +origin.message,
+                'timelength': origin.data.video_info.timelength,
+                'quality': origin.data.video_info.quality,
+                'accept_format': 'hdflv2,flv,flv720,flv480,mp4',
+            };
+            let dash = {
+                'duration': 0,
+                'minBufferTime': 0.0,
+                'min_buffer_time': 0.0,
+                'audio': []
+            };
+            // 填充音频流数据
+            origin.data.video_info.dash_audio.forEach((audio) => {
+                audio.backupUrl = [];
+                audio.backup_url = [];
+                audio.baseUrl = audio.base_url;
+                dash.audio.push(audio);
+            });
+            // 填充视频流数据
+            let accept_quality = [];
+            let accept_description = [];
+            let support_formats = [];
+            let dash_video = [];
+            origin.data.video_info.stream_list.forEach((stream) => {
+                support_formats.push(stream.stream_info);
+                accept_quality.push(stream.stream_info.quality);
+                accept_description.push(stream.stream_info.new_description);
+                // 只加入有视频链接的数据
+                if (stream.dash_video && stream.dash_video.base_url) {
+                    stream.dash_video.backupUrl = [];
+                    stream.dash_video.backup_url = [];
+                    stream.dash_video.baseUrl = stream.dash_video.base_url;
+                    stream.dash_video.id = stream.stream_info.quality;
+                    dash_video.push(stream.dash_video);
+                }
+            });
+            dash['video'] = dash_video;
+            result['accept_quality'] = accept_quality;
+            result['accept_description'] = accept_description;
+            result['support_formats'] = support_formats;
+            result['dash'] = dash;
+            // 下面参数取自安达(ep359333)，总之一股脑塞进去（
+            result['fnval'] = 80;
+            result['fnver'] = 0;
+            result['status'] = 2;
+            result['vip_status'] = 1;
+            result['vip_type'] = 2;
+            result['seek_param'] = 'start';
+            result['seek_type'] = 'offset';
+            result['bp'] = 0;
+            result['from'] = 'local';
+            result['has_paid'] = false;
+            result['is_preview'] = 0;
+            return fixMobiPlayUrlJson(result);
         });
     }
     var BiliPlusApi;
@@ -2507,7 +2603,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `泰国/东南亚: `),
                             createElement('input', {
-                                type: 'text', name: 'balh_server_custom_th', placeholder: '开发中……', disabled: 'true',
+                                type: 'text', name: 'balh_server_custom_th', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
                                         customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
@@ -2784,11 +2880,28 @@ function scriptSource(invokeBy) {
                                                     log('/x/player/v2', '404', target.responseText);
                                                     container.__block_response = true;
                                                     let url = container.__url.replace('player/v2', 'v2/dm/view').replace('cid', 'oid') + '&type=1'; //从APP接口拉取字幕信息
-                                                    Async.ajax(url).then(data => {
+                                                    Async.ajax(url).then(async data => {
                                                         if (!data.code && data.data.subtitle) {
                                                             // 使用APP接口获取的字幕信息重构返回数据，其它成员不明暂时无视
                                                             const subtitle = data.data.subtitle;
-                                                            subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
+                                                            if (subtitle.subtitles) {
+                                                                subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
+                                                            } else {
+                                                                // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
+                                                                let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
+                                                                let thailand_data = await Async.ajax(thailand_sub_url);
+                                                                subtitle.subtitles = [];
+                                                                thailand_data.data.subtitles.forEach((item) => {
+                                                                    let sub = {
+                                                                        'id': item.id,
+                                                                        'id_str': item.id.toString(),
+                                                                        'lan': item.key,
+                                                                        'lan_doc': item.title,
+                                                                        'subtitle_url': item.url.replace(/https?:\/\//, '//')
+                                                                    };
+                                                                    subtitle.subtitles.push(sub);
+                                                                });
+                                                            }
                                                             subtitle.allow_submit = false;
                                                             json.data = { subtitle };
                                                             json.code = 0;
@@ -3503,7 +3616,11 @@ function scriptSource(invokeBy) {
                             // 首选服务器上面试过了，不用再试
                             if (host && host != balh_config.server_custom) {
                                 ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`);
-                                result = await Async.ajax(this.transToProxyUrl(originUrl, host));
+                                if (host_name == '泰国（东南亚）') {
+                                    result = await Async.ajax(this.transToProxyUrl(originUrl, host, true));
+                                } else {
+                                    result = await Async.ajax(this.transToProxyUrl(originUrl, host));
+                                }
                                 if (!result.code) {
                                     return Promise$1.resolve(result)
                                 }
@@ -3511,8 +3628,12 @@ function scriptSource(invokeBy) {
                         }
                         return Promise$1.resolve(result)  // 都失败了，返回最后一次数据
                     },
-                    transToProxyUrl: function (originUrl, proxyHost) {
+                    transToProxyUrl: function (originUrl, proxyHost, thailand = false) {
                         if (r.regex.bilibili_api_proxy.test(proxyHost)) {
+                            if (thailand) {
+                                // 泰区番剧解析
+                                return getMobiPlayUrl(originUrl, proxyHost, true)
+                            }
                             if (window.__balh_app_only__) {
                                 // APP 限定用 mobi api
                                 return getMobiPlayUrl(originUrl, proxyHost)
@@ -3534,6 +3655,10 @@ function scriptSource(invokeBy) {
                         }
                         // 在APP限定情况启用 mobi api 解析
                         if (window.__balh_app_only__) {
+                            // 泰区番也是 APP 限定
+                            if (result.hasOwnProperty('data')) {
+                                return fixThailandPlayUrlJson(result)
+                            }
                             if (result['type'] == "DASH") {
                                 return fixMobiPlayUrlJson(result)
                             }
