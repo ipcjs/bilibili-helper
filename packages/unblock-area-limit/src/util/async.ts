@@ -80,7 +80,11 @@ namespace Async {
             req.onreadystatechange = (event) => {
                 if (req.readyState === 4) {
                     if (req.status === 200) {
-                        resolve(JSON.parse(req.responseText))
+                        try {
+                            resolve(JSON.parse(req.responseText))
+                        } catch (e) {
+                            reject(req)
+                        }
                     } else {
                         reject(req)
                     }
