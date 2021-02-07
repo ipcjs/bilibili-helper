@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.6
+// @version      8.1.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2493,6 +2493,15 @@ function scriptSource(invokeBy) {
             const target = e.target;
             var name = target.name;
             var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim();
+            // 自动/强制添加 https
+            if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+                value = `https://${value}`;
+                target.value = value;
+            }
+            if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
+                value = value.replace('http://', 'https://');
+                target.value = value;
+            }
             balh_config[name.replace('balh_', '')] = value;
             util_debug(name, ' => ', value);
         }
@@ -2556,11 +2565,11 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: 2 } }, [
                             createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义（首选服务器）`),
                             createElement('input', {
-                                type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com',
+                                type: 'text', name: 'balh_server_custom', placeholder: '一定要填,形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
+                                        customServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                     }
                                 }
                             }),
@@ -2576,8 +2585,8 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
+                                        customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                     }
                                 }
                             }),
@@ -2589,8 +2598,8 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
+                                        customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                     }
                                 }
                             }),
@@ -2602,8 +2611,8 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
+                                        customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                     }
                                 }
                             }),
@@ -2615,8 +2624,8 @@ function scriptSource(invokeBy) {
                                 type: 'text', name: 'balh_server_custom_th', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
-                                        customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                         onSettingsFormChange(event);
+                                        customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test(event.target.value.trim()) ? '✔️' : '🔗️';
                                     }
                                 }
                             }),
@@ -3605,9 +3614,31 @@ function scriptSource(invokeBy) {
                     },
                     selectServer: async function (originUrl) {
                         let result;
+                        let tried_server = [];
+
+                        // 标题有明确说明优先尝试
+                        if (document.title.indexOf('僅限台灣') > -1 && balh_config.server_custom_tw) {
+                            ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...');
+                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_tw));
+                            tried_server.push(balh_config.server_custom_tw);
+                            if (!result.code) {
+                                return Promise$1.resolve(result)
+                            }
+                        }
+                        if (document.title.indexOf('僅限港澳') > -1 && balh_config.server_custom_hk) {
+                            ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...');
+                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_hk));
+                            tried_server.push(balh_config.server_custom_hk);
+                            if (!result.code) {
+                                return Promise$1.resolve(result)
+                            }
+                        }
+
+
                         if (balh_config.server_custom) {
                             ui.playerMsg('使用首选代理服务器拉取视频地址...');
                             result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom));
+                            tried_server.push(balh_config.server_custom);
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3617,7 +3648,8 @@ function scriptSource(invokeBy) {
                         const server_list = [
                             [balh_config.server_custom_tw, '台湾'],
                             [balh_config.server_custom_hk, '香港'],
-                            [balh_config.server_custom_th, '泰国（东南亚）'],
+                            // 针对多合一解析服务器，可以免去填写泰区服务器也能尝试使用泰区 api
+                            [balh_config.server_custom_th ? balh_config.server_custom_th : balh_config.server_custom, '泰国（东南亚）'],
                             [balh_config.server_custom_cn, '大陆'],
                         ];
 
@@ -3625,7 +3657,8 @@ function scriptSource(invokeBy) {
                             const host = server_info[0];
                             const host_name = server_info[1];
                             // 首选服务器上面试过了，不用再试
-                            if (host && host != balh_config.server_custom) {
+                            // 除了泰区，泰区 api 不同
+                            if (host && (!tried_server.includes(host) || host_name == '泰国（东南亚）')) {
                                 ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`);
                                 if (host_name == '泰国（东南亚）') {
                                     result = await Async.ajax(this.transToProxyUrl(originUrl, host, true));

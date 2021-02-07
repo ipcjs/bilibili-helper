@@ -176,6 +176,15 @@ export function settings() {
         const target = e.target as HTMLInputElement
         var name = target.name;
         var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim()
+        // 自动/强制添加 https
+        if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+            value = `https://${value}`
+            target.value = value
+        }
+        if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
+            value = value.replace('http://', 'https://')
+            target.value = value
+        }
         balh_config[name.replace('balh_', '')] = value
         log(name, ' => ', value);
     }
@@ -247,10 +256,10 @@ export function settings() {
                     _('label', { style: { flex: 2 } }, [
                         _('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), _('text', `自定义（首选服务器）`),
                         _('input', {
-                            type: 'text', name: 'balh_server_custom', placeholder: '形如：https://hd.pilipili.com', event: {
+                            type: 'text', name: 'balh_server_custom', placeholder: '一定要填,形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
+                                    customServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                 }
                             }
                         }),
@@ -266,8 +275,8 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
+                                    customTWServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                 }
                             }
                         }),
@@ -279,8 +288,8 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
+                                    customHKServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                 }
                             }
                         }),
@@ -292,8 +301,8 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
+                                    customCNServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                 }
                             }
                         }),
@@ -305,8 +314,8 @@ export function settings() {
                         _('input', {
                             type: 'text', name: 'balh_server_custom_th', placeholder: '形如：https://hd.pilipili.com', event: {
                                 input: (event: Event) => {
-                                    customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                     onSettingsFormChange(event)
+                                    customTHServerCheckText.innerText = r.regex.bilibili_api_proxy.test((event.target as any).value.trim()) ? '✔️' : '🔗️'
                                 }
                             }
                         }),

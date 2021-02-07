@@ -866,9 +866,31 @@ function scriptContent() {
                 },
                 selectServer: async function (originUrl) {
                     let result
+                    let tried_server = []
+
+                    // 标题有明确说明优先尝试
+                    if (document.title.indexOf('僅限台灣') > -1 && balh_config.server_custom_tw) {
+                        ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
+                        result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_tw))
+                        tried_server.push(balh_config.server_custom_tw)
+                        if (!result.code) {
+                            return Promise.resolve(result)
+                        }
+                    }
+                    if (document.title.indexOf('僅限港澳') > -1 && balh_config.server_custom_hk) {
+                        ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...')
+                        result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_hk))
+                        tried_server.push(balh_config.server_custom_hk)
+                        if (!result.code) {
+                            return Promise.resolve(result)
+                        }
+                    }
+
+
                     if (balh_config.server_custom) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
                         result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
+                        tried_server.push(balh_config.server_custom)
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
@@ -878,7 +900,8 @@ function scriptContent() {
                     const server_list = [
                         [balh_config.server_custom_tw, '台湾'],
                         [balh_config.server_custom_hk, '香港'],
-                        [balh_config.server_custom_th, '泰国（东南亚）'],
+                        // 针对多合一解析服务器，可以免去填写泰区服务器也能尝试使用泰区 api
+                        [balh_config.server_custom_th ? balh_config.server_custom_th : balh_config.server_custom, '泰国（东南亚）'],
                         [balh_config.server_custom_cn, '大陆'],
                     ]
 
@@ -886,7 +909,8 @@ function scriptContent() {
                         const host = server_info[0]
                         const host_name = server_info[1]
                         // 首选服务器上面试过了，不用再试
-                        if (host && host != balh_config.server_custom) {
+                        // 除了泰区，泰区 api 不同
+                        if (host && (!tried_server.includes(host) || host_name == '泰国（东南亚）')) {
                             ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`)
                             if (host_name == '泰国（东南亚）') {
                                 result = await Async.ajax(this.transToProxyUrl(originUrl, host, true))
