@@ -186,7 +186,7 @@ function scriptSource(invokeBy) {
         },
         regex: {
             /** api.bilibili.com的全站代理 */
-            bilibili_api_proxy: /^https?:\/\/[\w-_.:]+$/,
+            bilibili_api_proxy: /^https?:\/\/[\p{Letter}_-]+(\.[\p{Letter}_-]+)+(:\d+)?$/u,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -2496,14 +2496,16 @@ function scriptSource(invokeBy) {
             const target = e.target;
             var name = target.name;
             var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim();
-            // 自动/强制添加 https
-            if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
-                value = `https://${value}`;
-                target.value = value;
-            }
-            if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
-                value = value.replace('http://', 'https://');
-                target.value = value;
+            if (name.startsWith('balh_server_custom')) {
+                // 自动/强制添加 https
+                if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+                    value = `https://${value}`;
+                    target.value = value;
+                }
+                if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
+                    value = value.replace('http://', 'https://');
+                    target.value = value;
+                }
             }
             balh_config[name.replace('balh_', '')] = value;
             util_debug(name, ' => ', value);

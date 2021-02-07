@@ -176,14 +176,16 @@ export function settings() {
         const target = e.target as HTMLInputElement
         var name = target.name;
         var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim()
-        // 自动/强制添加 https
-        if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
-            value = `https://${value}`
-            target.value = value
-        }
-        if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
-            value = value.replace('http://', 'https://')
-            target.value = value
+        if (name.startsWith('balh_server_custom')) {
+            // 自动/强制添加 https
+            if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+                value = `https://${value}`
+                target.value = value
+            }
+            if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
+                value = value.replace('http://', 'https://')
+                target.value = value
+            }
         }
         balh_config[name.replace('balh_', '')] = value
         log(name, ' => ', value);
