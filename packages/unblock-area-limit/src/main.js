@@ -868,7 +868,7 @@ function scriptContent() {
                     let result
                     let tried_server = []
 
-                    // 标题有明确说明优先尝试
+                    // 标题有明确说明优先尝试，通常准确率最高
                     if (document.title.indexOf('僅限台灣') > -1 && balh_config.server_custom_tw) {
                         ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
                         result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_tw))
@@ -886,7 +886,44 @@ function scriptContent() {
                         }
                     }
 
+                    // 服务器列表, 按顺序解析
+                    const server_list = [
+                        [balh_config.server_custom_tw, '台湾', 'tw'],
+                        [balh_config.server_custom_hk, '香港', 'hk'],
+                        // 针对多合一解析服务器，可以免去填写泰区服务器也能尝试使用泰区 api
+                        [balh_config.server_custom_th ? balh_config.server_custom_th : balh_config.server_custom, '泰国（东南亚）', 'th'],
+                        [balh_config.server_custom_cn, '大陆', 'cn'],
+                    ]
 
+                    // 尝试读取番剧区域缓存判断番剧区域进行解析
+                    let bangumi_area_cache = {}
+                    if (localStorage.getItem('balh_bangumi_area_cache')) {
+                        bangumi_area_cache = JSON.parse(localStorage.getItem('balh_bangumi_area_cache'))
+                        if (util_page.ssId && bangumi_area_cache.hasOwnProperty(util_page.ssId)) {
+                            // 缓存存在
+                            let server_list_map = {}
+                            server_list.forEach((item) => {
+                                server_list_map[item[2]] = item
+                            })
+                            let area_code = bangumi_area_cache[util_page.ssId]
+                            let cache_host = server_list_map[area_code][0]
+                            let cache_host_name = server_list_map[area_code][1]
+                            ui.playerMsg(`读取番剧地区缓存，使用${cache_host_name}代理服务器拉取视频地址...`)
+                            if (cache_host) {
+                                if (area_code == 'th') {
+                                    result = await Async.ajax(this.transToProxyUrl(originUrl, cache_host, true))
+                                } else {
+                                    result = await Async.ajax(this.transToProxyUrl(originUrl, cache_host))
+                                }
+                                tried_server.push(cache_host)
+                                if (!result.code) {
+                                    return Promise.resolve(result)
+                                }
+                            }
+                        }
+                    }
+
+                    // 首选服务器解析
                     if (balh_config.server_custom) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
                         result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom))
@@ -896,28 +933,27 @@ function scriptContent() {
                         }
                     }
 
-                    // 首选服务器失败后开始尝试服务器列表, 按顺序解析
-                    const server_list = [
-                        [balh_config.server_custom_tw, '台湾'],
-                        [balh_config.server_custom_hk, '香港'],
-                        // 针对多合一解析服务器，可以免去填写泰区服务器也能尝试使用泰区 api
-                        [balh_config.server_custom_th ? balh_config.server_custom_th : balh_config.server_custom, '泰国（东南亚）'],
-                        [balh_config.server_custom_cn, '大陆'],
-                    ]
 
+                    // 首选服务器失败后开始尝试服务器列表, 按顺序解析
                     for (let server_info of server_list) {
                         const host = server_info[0]
                         const host_name = server_info[1]
+                        const host_code = server_info[2]
                         // 首选服务器上面试过了，不用再试
                         // 除了泰区，泰区 api 不同
-                        if (host && (!tried_server.includes(host) || host_name == '泰国（东南亚）')) {
+                        if (host && (!tried_server.includes(host) || host_code == 'th')) {
                             ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`)
-                            if (host_name == '泰国（东南亚）') {
+                            if (host_code == 'th') {
                                 result = await Async.ajax(this.transToProxyUrl(originUrl, host, true))
                             } else {
                                 result = await Async.ajax(this.transToProxyUrl(originUrl, host))
                             }
                             if (!result.code) {
+                                // 解析成功，将结果存入番剧区域缓存
+                                if (util_page.ssId) {
+                                    bangumi_area_cache[util_page.ssId] = host_code
+                                    localStorage.setItem('balh_bangumi_area_cache', JSON.stringify(bangumi_area_cache))
+                                }
                                 return Promise.resolve(result)
                             }
                         }

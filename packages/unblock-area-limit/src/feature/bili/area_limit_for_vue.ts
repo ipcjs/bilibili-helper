@@ -104,6 +104,7 @@ interface TemplateArgs {
     mediaInfoId: any,
     evaluate: any,
     cover: any,
+    ssId: any,
     episodes?: any
 }
 
@@ -170,7 +171,8 @@ function fixBangumiPlayPage() {
                             mediaInfoTitle: result.result.title,
                             evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
                             cover: result.result.cover,
-                            episodes: eps
+                            episodes: eps,
+                            ssId: result.result.season_id
                         }
                     } catch (e) {
                         util_warn('通过bangumi接口获取ep信息失败', e)
@@ -206,7 +208,8 @@ function fixBangumiPlayPage() {
                                 mediaInfoTitle: result.result.season_title,
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
-                                episodes: eps
+                                episodes: eps,
+                                ssId: result.result.season_id
                             }
                         } catch (e) {
                             // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
@@ -267,7 +270,8 @@ function fixBangumiPlayPage() {
                             mediaInfoId: result.result.media?.media_id ?? 28229002,
                             evaluate: result.result.evaluate,
                             cover: result.result.cover,
-                            episodes: eps
+                            episodes: eps,
+                            ssId: season_id
                         }
                     }
                     const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)
