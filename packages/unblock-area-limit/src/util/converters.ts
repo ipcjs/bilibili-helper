@@ -1,3 +1,4 @@
+import { BOOL } from "../feature/r";
 import { util_error } from "./log";
 
 
@@ -112,9 +113,9 @@ export namespace Converters {
      * 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知
      * @param replaceAkamai 详见:`BalhConfig.upos_replace_akamai`
      */
-    export function replaceUpos<T>(data: T, host: string = uposMap.uptx, replaceAkamai: boolean = false) {
+    export function replaceUpos<T>(data: T, host: string = uposMap.uptx, replaceAkamai: BOOL) {
         var str = JSON.stringify(data);
-        if ((str.indexOf("akamaized.net") == -1) || (replaceAkamai == true)) {
+        if (!str.includes("akamaized.net") || replaceAkamai) {
             str = str.replace(/:\\?\/\\?\/[^\/]+\\?\//g, `://${host}/`);
         }
         return JSON.parse(str)

@@ -357,7 +357,7 @@ export function settings() {
                             ]),
                             _('span', { 'id': 'upos-server-message' })
                         ]),
-                        _('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [_('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? 'false' : 'true' }), _('text', '替换akamai'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [_('text', '(？)')])]),
+                        _('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [_('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? undefined : 'true' }), _('text', '替换akamai'), _('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [_('text', '(？)')])]),
                     ]),
                     _('br'),
                 ]),

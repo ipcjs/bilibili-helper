@@ -355,9 +355,9 @@ function scriptSource(invokeBy) {
          * 直接替换host大多数时候似乎不行, 即使可以视频的分辨率也很低, 原因未知
          * @param replaceAkamai 详见:`BalhConfig.upos_replace_akamai`
          */
-        function replaceUpos(data, host = uposMap.uptx, replaceAkamai = false) {
+        function replaceUpos(data, host = uposMap.uptx, replaceAkamai) {
             var str = JSON.stringify(data);
-            if ((str.indexOf("akamaized.net") == -1) || (replaceAkamai == true)) {
+            if (!str.includes("akamaized.net") || replaceAkamai) {
                 str = str.replace(/:\\?\/\\?\/[^\/]+\\?\//g, `://${host}/`);
             }
             return JSON.parse(str);
@@ -2672,7 +2672,7 @@ function scriptSource(invokeBy) {
                                 ]),
                                 createElement('span', { 'id': 'upos-server-message' })
                             ]),
-                            createElement('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [createElement('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? 'false' : 'true' }), createElement('text', '替换akamai'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [createElement('text', '(？)')])]),
+                            createElement('label', { style: { flex: 1 }, title: '开启upos替换时, 是否替换`akamaized.net`' }, [createElement('input', { id: 'balh-upos-replace-akamai', type: 'checkbox', name: 'balh_upos_replace_akamai', disabled: balh_config.upos_server ? undefined : 'true' }), createElement('text', '替换akamai'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/pull/762#discussion_r569911774' }, [createElement('text', '(？)')])]),
                         ]),
                         createElement('br'),
                     ]),
@@ -3624,21 +3624,25 @@ function scriptSource(invokeBy) {
                     },
                     selectServer: async function (originUrl) {
                         let result;
-                        let tried_server = [];
+                        // 对应this.transToProxyUrl的参数, 用逗号分隔, 形如: `${proxyHost}, ${thailand}`
+                        let tried_server_args = [];
+                        const isTriedServerArg = (proxyHost, thailand = false) => tried_server_args.includes(`${proxyHost}, ${thailand}`);
+                        const requestPlayUrl = (proxyHost, thailand = false) => {
+                            tried_server_args.push(`${proxyHost}, ${thailand}`);
+                            return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, thailand))
+                        };
 
                         // 标题有明确说明优先尝试，通常准确率最高
-                        if (document.title.indexOf('僅限台灣') > -1 && balh_config.server_custom_tw) {
+                        if (document.title.includes('僅限台灣') && balh_config.server_custom_tw) {
                             ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...');
-                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_tw));
-                            tried_server.push(balh_config.server_custom_tw);
+                            result = await requestPlayUrl(balh_config.server_custom_tw);
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
                         }
-                        if (document.title.indexOf('僅限港澳') > -1 && balh_config.server_custom_hk) {
+                        if (document.title.includes('僅限港澳') && balh_config.server_custom_hk) {
                             ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...');
-                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom_hk));
-                            tried_server.push(balh_config.server_custom_hk);
+                            result = await requestPlayUrl(balh_config.server_custom_hk);
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3648,8 +3652,7 @@ function scriptSource(invokeBy) {
                         const server_list = [
                             [balh_config.server_custom_tw, '台湾', 'tw'],
                             [balh_config.server_custom_hk, '香港', 'hk'],
-                            // 针对多合一解析服务器，可以免去填写泰区服务器也能尝试使用泰区 api
-                            [balh_config.server_custom_th ? balh_config.server_custom_th : balh_config.server_custom, '泰国（东南亚）', 'th'],
+                            [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
                             [balh_config.server_custom_cn, '大陆', 'cn'],
                         ];
 
@@ -3668,12 +3671,7 @@ function scriptSource(invokeBy) {
                                 let cache_host_name = server_list_map[area_code][1];
                                 ui.playerMsg(`读取番剧地区缓存，使用${cache_host_name}代理服务器拉取视频地址...`);
                                 if (cache_host) {
-                                    if (area_code == 'th') {
-                                        result = await Async.ajax(this.transToProxyUrl(originUrl, cache_host, true));
-                                    } else {
-                                        result = await Async.ajax(this.transToProxyUrl(originUrl, cache_host));
-                                    }
-                                    tried_server.push(cache_host);
+                                    result = await requestPlayUrl(cache_host, area_code === 'th');
                                     if (!result.code) {
                                         return Promise$1.resolve(result)
                                     }
@@ -3684,8 +3682,7 @@ function scriptSource(invokeBy) {
                         // 首选服务器解析
                         if (balh_config.server_custom) {
                             ui.playerMsg('使用首选代理服务器拉取视频地址...');
-                            result = await Async.ajax(this.transToProxyUrl(originUrl, balh_config.server_custom));
-                            tried_server.push(balh_config.server_custom);
+                            result = await requestPlayUrl(balh_config.server_custom);
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3697,15 +3694,10 @@ function scriptSource(invokeBy) {
                             const host = server_info[0];
                             const host_name = server_info[1];
                             const host_code = server_info[2];
-                            // 首选服务器上面试过了，不用再试
-                            // 除了泰区，泰区 api 不同
-                            if (host && (!tried_server.includes(host) || host_code == 'th')) {
+                            // 请求过的服务器, 不应该重复请求
+                            if (host && (!isTriedServerArg(host, host_code === 'th'))) {
                                 ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`);
-                                if (host_code == 'th') {
-                                    result = await Async.ajax(this.transToProxyUrl(originUrl, host, true));
-                                } else {
-                                    result = await Async.ajax(this.transToProxyUrl(originUrl, host));
-                                }
+                                result = await requestPlayUrl(host, host_code === 'th');
                                 if (!result.code) {
                                     // 解析成功，将结果存入番剧区域缓存
                                     if (util_page.ssId) {
