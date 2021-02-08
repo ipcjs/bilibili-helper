@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.6
+// @version      8.1.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2587,7 +2587,7 @@ function scriptSource(invokeBy) {
                         ]),
                     ]),
                     createElement('br'),
-                    createElement('text', '自定义服务器列表'),
+                    createElement('text', '自定义服务器列表'), createElement('a', { href: 'javascript:;', title: '脚本会缓存当前视频是否属于港/澳/台/泰；修改代理服务器地址后, 建议手动清除下这个缓存。', event: { click: () => localStorage.removeItem('balh_bangumi_area_cache') } }, [createElement('text', '（清除缓存）')]),
                     createElement('div', { style: { display: 'flex', 'flex-wrap': 'wrap' } }, [
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `台湾: `),
@@ -3630,6 +3630,8 @@ function scriptSource(invokeBy) {
                         const requestPlayUrl = (proxyHost, thailand = false) => {
                             tried_server_args.push(`${proxyHost}, ${thailand}`);
                             return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, thailand))
+                                // 捕获错误, 防止依次尝试各各服务器的流程中止
+                                .catch((e) => ({ code: -1, error: e }))
                         };
 
                         // 标题有明确说明优先尝试，通常准确率最高

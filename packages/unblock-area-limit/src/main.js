@@ -872,6 +872,8 @@ function scriptContent() {
                     const requestPlayUrl = (proxyHost, thailand = false) => {
                         tried_server_args.push(`${proxyHost}, ${thailand}`)
                         return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, thailand))
+                            // 捕获错误, 防止依次尝试各各服务器的流程中止
+                            .catch((e) => ({ code: -1, error: e }))
                     }
 
                     // 标题有明确说明优先尝试，通常准确率最高

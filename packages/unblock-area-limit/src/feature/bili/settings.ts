@@ -271,7 +271,7 @@ export function settings() {
                     ]),
                 ]), _('br'),
 
-                _('text', '自定义服务器列表'),
+                _('text', '自定义服务器列表'), _('a', { href: 'javascript:;', title: '脚本会缓存当前视频是否属于港/澳/台/泰；修改代理服务器地址后, 建议手动清除下这个缓存。', event: { click: () => localStorage.removeItem('balh_bangumi_area_cache') } }, [_('text', '（清除缓存）')]),
                 _('div', { style: { display: 'flex', 'flex-wrap': 'wrap' } }, [
 
                     _('label', { style: { flex: '1 1 50%' } }, [
