@@ -85,10 +85,24 @@
     display: none;
 }
 
-/* 个人主页的Header */
+/* 个人主页 */
 .ProfileHeader {
     width: 100%;
     padding: 0px;
+    &-buttons {
+        position: static;
+    }
+    &-content {
+        &Head {
+            padding-right: 0px;
+        }
+    }
+}
+.ProfileMain-tabs {
+    overflow: scroll;
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 /* 列表Item上的按钮 */
