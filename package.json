@@ -20,6 +20,7 @@
   "scripts": {
     "dev:balh": "rollup --config packages/unblock-area-limit/rollup.config.js -w",
     "dev:sms": "rollup --config packages/s3_mobile_style/rollup.config.js -w",
+    "dev:zmfs": "rollup --config packages/zhihu_mobile_style/rollup.config.js -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
