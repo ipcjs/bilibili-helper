@@ -6,6 +6,10 @@ import { readFileSync } from 'fs'
  */
 export default function ({ filePath, contentTag = 'template-content' } = {}) {
     return {
+        name: 'output-template',
+        buildStart() {
+            this.addWatchFile(filePath)
+        },
         renderChunk(code, renderedChunk, outputOptions) {
             const magicString = new MagicString(code)
             const template = readFileSync(filePath, { encoding: 'utf8' })
