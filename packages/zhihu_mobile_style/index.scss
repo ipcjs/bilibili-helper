@@ -1,40 +1,58 @@
 /* Header */
 .AppHeader {
     min-width: inherit;
+    .ZhihuLogoLink,
+    .SearchBar {
+        display: none;
+    }
+    &-inner {
+        width: 100%;
+        min-width: inherit;
+    }
+    &-Tabs {
+        margin-left: 0px;
+        margin-right: 4px;
+    }
+    &-Tab {
+        padding: 0 4px !important;
+    }
+
+    &-messages,
+    &-notifications {
+        margin-right: 16px;
+    }
+    &-userInfo {
+        margin-left: 0px !important;
+        margin-right: 32px;
+    }
+    &-navItem {
+        padding: 0 5px;
+    }
+    &-nav {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
 }
-.AppHeader-inner {
-    width: 100%;
-}
-.SearchBar {
-    display: none;
-}
-.AppHeader-messages, .AppHeader-notifications {
-    margin-right: 16px;
-}
-.AppHeader-userInfo {
-    margin-right: 32px;
-}
-.AppHeader-navItem {
-    padding: 0 5px;
-}
-.AppHeader-nav {
-    margin-left: 16px;
-    margin-right: 16px;
-}
+
 .TopstoryPageHeader-main {
     margin-left: 16px;
 }
 
 /* 通用列表 */
-.Topstory-container, .Question-main, .Profile-main {
+.Topstory-container,
+.Question-main,
+.Profile-main {
     display: block;
     width: 100%;
     padding: 0px;
 }
-.Topstory-mainColumn, .Question-mainColumn, .Profile-mainColumn {
+.Topstory-mainColumn,
+.Question-mainColumn,
+.Profile-mainColumn {
     width: 100%;
 }
-.Question-sideColumn, .Profile-sideColumn {
+.Question-sideColumn,
+.Profile-sideColumn {
     width: 100%;
 }
 
@@ -48,7 +66,7 @@
     width: 100%;
 }
 .QuestionHeader .QuestionHeader-side {
-    width: 100%; 
+    width: 100%;
 }
 .QuestionHeader .NumberBoard {
     margin: auto;
@@ -82,7 +100,8 @@
 }
 
 /* 专栏页面 */
-.Post-NormalMain .Post-Header, .Post-NormalMain>div {
+.Post-NormalMain .Post-Header,
+.Post-NormalMain > div {
     width: 100%;
 }
 .ColumnPageHeader-content {
