@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.8
+// @version      8.1.9
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -1007,6 +1007,11 @@ function scriptSource(invokeBy) {
             // 填充视频流数据
             result.dash.video.forEach((video) => {
                 let video_id = getId(video.baseUrl, '30280');
+                if (!codecsMap.hasOwnProperty(video_id)) {
+                    // https://github.com/ipcjs/bilibili-helper/issues/775
+                    // 泰区的视频URL不包含 id 了
+                    video_id = (30000 + video.id).toString();
+                }
                 video.codecs = codecsMap[video_id];
                 let segmentBaseId = getId(video.baseUrl, '30280', true);
                 video.segment_base = {
@@ -1031,6 +1036,12 @@ function scriptSource(invokeBy) {
             // 填充音频流数据
             result.dash.audio.forEach((audio) => {
                 let audio_id = getId(audio.baseUrl, '30280');
+                if (!codecsMap.hasOwnProperty(audio_id)) {
+                    // https://github.com/ipcjs/bilibili-helper/issues/775
+                    // 泰区的音频URL不包含 id 了
+                    audio_id = audio.id.toString();
+                }
+                console.log('fixMobiPlayUrlJson audio_id', audio_id);
                 let segmentBaseId = getId(audio.baseUrl, '30280', true);
                 audio.segment_base = {
                     initialization: segmentBaseMap[segmentBaseId][0],
