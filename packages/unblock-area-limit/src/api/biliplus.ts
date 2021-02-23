@@ -69,7 +69,7 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
         theRequest.mobi_app = 'android_b';
         theRequest.platform = 'android_b';
         theRequest.buvid = 'XY418E94B89774E201E22C5B709861B7712DD';
-        theRequest.fnval = '0'; // 强制 FLV
+        // theRequest.fnval = '0'; // 强制 FLV
         theRequest.track_path = '0';
     }
     theRequest.force_host = '2';  // 强制音视频返回 https
