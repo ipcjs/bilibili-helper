@@ -123,6 +123,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                 frame_rate: string
                 width: number
                 height: number
+                id: number
                 segment_base?: {
                     initialization: string
                     index_range: string
@@ -144,6 +145,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                 frame_rate: string
                 width: number
                 height: number
+                id: number
                 segment_base?: {
                     initialization: string
                     index_range: string
@@ -286,6 +288,12 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 填充视频流数据
     result.dash.video.forEach((video) => {
         let video_id = getId(video.baseUrl, '30280')
+        if (!codecsMap.hasOwnProperty(video_id)) {
+            // https://github.com/ipcjs/bilibili-helper/issues/775
+            // 泰区的视频URL不包含 id 了
+            video_id = (30000 + video.id).toString()
+        }
+
         video.codecs = codecsMap[video_id]
 
         let segmentBaseId = getId(video.baseUrl, '30280', true)
@@ -313,6 +321,12 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 填充音频流数据
     result.dash.audio.forEach((audio) => {
         let audio_id = getId(audio.baseUrl, '30280')
+        if (!codecsMap.hasOwnProperty(audio_id)) {
+            // https://github.com/ipcjs/bilibili-helper/issues/775
+            // 泰区的音频URL不包含 id 了
+            audio_id = audio.id.toString()
+        }
+        console.log('fixMobiPlayUrlJson audio_id', audio_id);
 
         let segmentBaseId = getId(audio.baseUrl, '30280', true)
         audio.segment_base = {
