@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.10
+// @version      8.1.11
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -1041,7 +1041,6 @@ function scriptSource(invokeBy) {
                     // 泰区的音频URL不包含 id 了
                     audio_id = audio.id.toString();
                 }
-                console.log('fixMobiPlayUrlJson audio_id', audio_id);
                 let segmentBaseId = getId(audio.baseUrl, '30280', true);
                 audio.segment_base = {
                     initialization: segmentBaseMap[segmentBaseId][0],
@@ -2917,7 +2916,9 @@ function scriptSource(invokeBy) {
                                             } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
                                                 // 上一个接口的新版本
                                                 let json = JSON.parse(target.responseText);
-                                                if (json.code == -404) {
+                                                // https://github.com/ipcjs/bilibili-helper/issues/775
+                                                // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
+                                                if (json.code == -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) {
                                                     log('/x/player/v2', '404', target.responseText);
                                                     container.__block_response = true;
                                                     let url = container.__url.replace('player/v2', 'v2/dm/view').replace('cid', 'oid') + '&type=1'; //从APP接口拉取字幕信息

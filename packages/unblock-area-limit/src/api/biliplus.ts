@@ -326,7 +326,6 @@ export async function fixMobiPlayUrlJson(originJson: object) {
             // 泰区的音频URL不包含 id 了
             audio_id = audio.id.toString()
         }
-        console.log('fixMobiPlayUrlJson audio_id', audio_id);
 
         let segmentBaseId = getId(audio.baseUrl, '30280', true)
         audio.segment_base = {
