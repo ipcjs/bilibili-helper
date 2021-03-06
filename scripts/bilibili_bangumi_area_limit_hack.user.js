@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.11
+// @version      8.1.12
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -812,6 +812,9 @@ function scriptSource(invokeBy) {
         }
         getSeasonInfoByEpIdOnBangumi(ep_id) {
             return Async.ajax(`//bangumi.bilibili.com/view/web_api/season?ep_id=${ep_id}`);
+        }
+        getSeasonInfoByEpIdOnThailand(ep_id) {
+            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?ep_id=${ep_id}&s_locale=zh_SG`);
         }
     }
 
@@ -1946,6 +1949,39 @@ function scriptSource(invokeBy) {
             }
         });
     }
+    function fixThailandSeason(ep_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
+            // 通过泰区 api 补全
+            // https://github.com/yujincheng08/BiliRoaming/issues/112
+            const thailandApi = new BiliBiliApi(balh_config.server_custom_th);
+            const origin = yield thailandApi.getSeasonInfoByEpIdOnThailand(ep_id);
+            const input_episodes = origin.result.modules[0].data.episodes;
+            origin.result.actors = origin.result.actor.info;
+            origin.result.is_paster_ads = 0;
+            origin.result.jp_title = origin.result.origin_name;
+            origin.result.newest_ep = origin.result.new_ep;
+            origin.result.season_status = origin.result.status;
+            origin.result.season_title = origin.result.title;
+            origin.result.total_ep = input_episodes.length;
+            origin.result.rights.watch_platform = 1;
+            origin.result.episodes = [];
+            input_episodes.forEach((ep) => {
+                var _a;
+                ep.episode_status = ep.status;
+                ep.ep_id = ep.id;
+                ep.index = ep.title;
+                ep.index_title = ep.long_title;
+                (_a = origin.result.episodes) === null || _a === void 0 ? void 0 : _a.push(ep);
+            });
+            origin.result.style = [];
+            origin.result.styles.forEach((it) => {
+                origin.result.style.push(it.name);
+            });
+            let result = JSON.parse(JSON.stringify(origin));
+            return result;
+        });
+    }
     function fixBangumiPlayPage() {
         util_init(() => __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e;
@@ -1965,7 +2001,10 @@ function scriptSource(invokeBy) {
                         // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                         // 如果该接口失效，自动尝试后面的方法
                         try {
-                            const result = yield bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id);
+                            let result = yield bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id);
+                            if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
+                                result = yield fixThailandSeason(ep_id);
+                            }
                             if (result.code) {
                                 throw result;
                             }
@@ -1975,7 +2014,7 @@ function scriptSource(invokeBy) {
                             }
                             const eps = JSON.stringify(result.result.episodes.map((item, index) => {
                                 // 返回的数据是有序的，不需要另外排序                                
-                                if (/^\d+$/.exec(item.index)) {
+                                if (/^\d+(\.\d+)?$/.exec(item.index)) {
                                     item.titleFormat = "第" + item.index + "话 " + item.index_title;
                                 }
                                 else {
