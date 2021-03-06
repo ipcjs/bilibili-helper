@@ -36,7 +36,7 @@ interface SeasonInfo {
     }
 }
 
-interface SeasonInfoOnBangumi {
+export interface SeasonInfoOnBangumi {
     code: number
     result: {
         season_id: number
@@ -63,6 +63,56 @@ interface SeasonInfoOnBangumi {
         evaluate: string  // 简介
         cover: string
         title: string  // 番剧名
+        total_ep: number
+    }
+}
+
+interface SeasonInfoOnThailand {
+    code: number
+    result: {
+        actor: {
+            info: string
+        }
+        actors?: string
+        origin_name: string
+        jp_title?: string
+        new_ep: {
+            id: number
+            title: string
+        }
+        newest_ep?: {
+            id: number
+            title: string
+        }
+        status: number
+        season_status?: number
+        title: string
+        season_title?: string
+        season_id: number
+        rights: {
+            watch_platform?: number
+        }
+        is_paster_ads: number
+        total_ep: number
+        modules: [{
+            data: {
+                episodes: [{
+                    status: number
+                    id: number
+                    title: string
+                    long_title: string
+                    episode_status?: number
+                    ep_id?: number
+                    index?: string
+                    index_title?: string
+                }]
+            }
+        }]
+        episodes?: any[]
+        styles: [{
+            name: string
+        }]
+        style: string[]
     }
 }
 
@@ -80,5 +130,8 @@ export class BiliBiliApi {
     }
     getSeasonInfoByEpIdOnBangumi(ep_id: string | number) {
         return Async.ajax<SeasonInfoOnBangumi>(`//bangumi.bilibili.com/view/web_api/season?ep_id=${ep_id}`)
+    }
+    getSeasonInfoByEpIdOnThailand(ep_id: string | number) {
+        return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?ep_id=${ep_id}&s_locale=zh_SG`)
     }
 }

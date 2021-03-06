@@ -273,7 +273,6 @@ export async function fixMobiPlayUrlJson(originJson: object) {
             // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
             video.baseUrl = video.backupUrl[0]
         }
-
         taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range))
     })
     result.dash.audio.forEach((audio) => {

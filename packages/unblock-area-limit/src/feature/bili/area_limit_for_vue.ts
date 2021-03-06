@@ -1,4 +1,5 @@
 import { BiliBiliApi } from "../../api/bilibili"
+import { SeasonInfoOnBangumi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
@@ -109,6 +110,42 @@ interface TemplateArgs {
 }
 
 
+async function fixThailandSeason(ep_id: string) {
+    // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
+    // 通过泰区 api 补全
+    // https://github.com/yujincheng08/BiliRoaming/issues/112
+    const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
+    const origin = await thailandApi.getSeasonInfoByEpIdOnThailand(ep_id)
+    const input_episodes = origin.result.modules[0].data.episodes
+
+    origin.result.actors = origin.result.actor.info
+    origin.result.is_paster_ads = 0
+    origin.result.jp_title = origin.result.origin_name
+    origin.result.newest_ep = origin.result.new_ep
+    origin.result.season_status = origin.result.status
+    origin.result.season_title = origin.result.title
+    origin.result.total_ep = input_episodes.length
+    origin.result.rights.watch_platform = 1
+
+    origin.result.episodes = []
+    input_episodes.forEach((ep) => {
+        ep.episode_status = ep.status
+        ep.ep_id = ep.id
+        ep.index = ep.title
+        ep.index_title = ep.long_title
+        origin.result.episodes?.push(ep)
+    })
+
+    origin.result.style = []
+    origin.result.styles.forEach((it) => {
+        origin.result.style.push(it.name)
+    })
+
+    let result: SeasonInfoOnBangumi = JSON.parse(JSON.stringify(origin))
+    return result
+}
+
+
 function fixBangumiPlayPage() {
     util_init(async () => {
         if (util_page.bangumi_md()) {
@@ -128,7 +165,10 @@ function fixBangumiPlayPage() {
                     // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                     // 如果该接口失效，自动尝试后面的方法
                     try {
-                        const result = await bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id)
+                        let result = await bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id)
+                        if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
+                            result = await fixThailandSeason(ep_id)
+                        }
                         if (result.code) {
                             throw result
                         }
@@ -138,7 +178,7 @@ function fixBangumiPlayPage() {
                         }
                         const eps = JSON.stringify(result.result.episodes.map((item, index) => {
                             // 返回的数据是有序的，不需要另外排序                                
-                            if (/^\d+$/.exec(item.index)) {
+                            if (/^\d+(\.\d+)?$/.exec(item.index)) {
                                 item.titleFormat = "第" + item.index + "话 " + item.index_title
                             } else {
                                 item.titleFormat = item.index
