@@ -227,6 +227,21 @@ function scriptContent() {
                                                 }
                                             }
                                             // 同上
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/pgc/view/web/freya/season'))) {
+                                            /* 一起看放映室用这个api来识别区域限制 */
+                                            let json = JSON.parse(target.response)
+                                            log('/pgc/view/web/freya/season', 'origin', `area_limit`, json.data.viewUserStatus.area_limit)
+                                            if (json.code == 0 && json.data.viewUserStatus.area_limit == 1) {
+                                                areaLimit(true)
+                                                json.data.viewUserStatus.area_limit = 0
+                                                container.__block_response = true
+
+                                                container.responseText = JSON.stringify(json);
+                                                container.response = container.responseText;
+                                                cb.apply(container.responseText ? receiver : this, arguments);
+                                            } else {
+                                                areaLimit(false)
+                                            }
                                         }
                                         if (container.__block_response) {
                                             // 屏蔽并保存response
@@ -572,6 +587,16 @@ function scriptContent() {
                     log(e);
                 }
             }
+            
+            // 若没取到, 则从search params获取（比如放映室）
+            if (!seasonId) {
+                try {
+                    seasonId = Strings.getSearchParam(window.location.href, 'seasonid');
+                } catch (e) {
+                    log(e);
+                }
+            }
+
             // 若没取到, 则去取av页面的av号
             if (!seasonId) {
                 try {
