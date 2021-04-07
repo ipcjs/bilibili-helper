@@ -71,7 +71,8 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content    var Strings;
+    // @template-content
+    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -713,6 +714,7 @@ function scriptSource(invokeBy) {
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
         new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+        watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
         get ssId() {
             var _a, _b;
             return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
@@ -2478,6 +2480,14 @@ function scriptSource(invokeBy) {
                                 height: 100%;
                             }
                         `));
+                }
+                else if (util_page.watchroom()) {
+                    /* 放映室页面 虽然没有那个float-nav 但是还是放在了和番剧视频页面一个位置 */
+                    const _indexNav = indexNav = document.body.appendChild(createElement('div', { style: { position: 'fixed', right: '6px', bottom: '45px', zIndex: '129', textAlign: 'center', display: 'none' } }));
+                    indexNav.appendChild(createBtnStyle('45px'));
+                    window.addEventListener('scroll', (event) => {
+                        _indexNav.style.display = window.scrollY < 600 ? 'none' : '';
+                    });
                 }
                 else {
                     // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
