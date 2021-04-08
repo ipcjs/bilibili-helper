@@ -811,11 +811,11 @@ function scriptSource(invokeBy) {
         getSeasonInfo(season_id) {
             return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
         }
-        getSeasonInfoByEpIdOnBangumi(ep_id) {
-            return Async.ajax(`//bangumi.bilibili.com/view/web_api/season?ep_id=${ep_id}`);
+        getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id) {
+            return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
         }
-        getSeasonInfoByEpIdOnThailand(ep_id) {
-            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?ep_id=${ep_id}&s_locale=zh_SG`);
+        getSeasonInfoByEpIdOnThailand(ep_id, season_id) {
+            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + '&s_locale=zh_SG');
         }
     }
 
@@ -847,6 +847,7 @@ function scriptSource(invokeBy) {
         // 追加 mobi api 需要的参数
         theRequest.access_key = localStorage.access_key;
         if (thailand) {
+            theRequest.area = 'th';
             theRequest.appkey = '7d089525d3611b1c';
             theRequest.build = '1001310';
             theRequest.mobi_app = 'bstar_a';
@@ -865,7 +866,7 @@ function scriptSource(invokeBy) {
         theRequest.force_host = '2'; // 强制音视频返回 https
         theRequest.ts = `${~~(Date.now() / 1000)}`;
         // 所需参数数组
-        let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+        let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
         // 生成 mobi api 参数字符串
         let mobi_api_params = '';
         for (let i = 0; i < param_wanted.length; i++) {
@@ -1090,6 +1091,7 @@ function scriptSource(invokeBy) {
             origin.data.video_info.dash_audio.forEach((audio) => {
                 audio.backupUrl = [];
                 audio.backup_url = [];
+                audio.base_url = audio.base_url.replace('http://', 'https://');
                 audio.baseUrl = audio.base_url;
                 dash.audio.push(audio);
             });
@@ -1106,6 +1108,7 @@ function scriptSource(invokeBy) {
                 if (stream.dash_video && stream.dash_video.base_url) {
                     stream.dash_video.backupUrl = [];
                     stream.dash_video.backup_url = [];
+                    stream.dash_video.base_url = stream.dash_video.base_url.replace('http://', 'https://');
                     stream.dash_video.baseUrl = stream.dash_video.base_url;
                     stream.dash_video.id = stream.stream_info.quality;
                     dash_video.push(stream.dash_video);
@@ -1950,13 +1953,13 @@ function scriptSource(invokeBy) {
             }
         });
     }
-    function fixThailandSeason(ep_id) {
+    function fixThailandSeason(ep_id, season_id) {
         return __awaiter(this, void 0, void 0, function* () {
             // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
             // 通过泰区 api 补全
             // https://github.com/yujincheng08/BiliRoaming/issues/112
             const thailandApi = new BiliBiliApi(balh_config.server_custom_th);
-            const origin = yield thailandApi.getSeasonInfoByEpIdOnThailand(ep_id);
+            const origin = yield thailandApi.getSeasonInfoByEpIdOnThailand(ep_id, season_id);
             const input_episodes = origin.result.modules[0].data.episodes;
             origin.result.actors = origin.result.actor.info;
             origin.result.is_paster_ads = 0;
@@ -1990,26 +1993,27 @@ function scriptSource(invokeBy) {
                 // 临时保存当前的season_id
                 cookieStorage.set('balh_curr_season_id', (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.season_id, '');
             }
-            if (util_page.anime_ep()) {
+            if (util_page.anime_ep() || util_page.anime_ss()) {
                 const $app = document.getElementById('app');
                 if (!$app) {
                     try {
                         // 读取保存的season_id
-                        const season_id = cookieStorage.get('balh_curr_season_id');
+                        // const season_id = cookieStorage.get('balh_curr_season_id')
+                        const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', ''])[1];
                         const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
                         const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
                         let templateArgs = null;
                         // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                         // 如果该接口失效，自动尝试后面的方法
                         try {
-                            let result = yield bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id);
+                            let result = yield bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id);
                             if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
-                                result = yield fixThailandSeason(ep_id);
+                                result = yield fixThailandSeason(ep_id, season_id);
                             }
                             if (result.code) {
                                 throw result;
                             }
-                            const ep = result.result.episodes.find(ep => ep.ep_id === +ep_id);
+                            const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0];
                             if (!ep) {
                                 throw `通过bangumi接口未找到${ep_id}对应的视频信息`;
                             }
