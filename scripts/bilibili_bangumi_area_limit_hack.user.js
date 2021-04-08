@@ -814,7 +814,7 @@ function scriptSource(invokeBy) {
         getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id) {
             return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
         }
-        getSeasonInfoByEpIdOnThailand(ep_id, season_id) {
+        getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
             return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + 'mobi_app=bstar_a&s_locale=zh_SG');
         }
     }
@@ -1959,7 +1959,7 @@ function scriptSource(invokeBy) {
             // 通过泰区 api 补全
             // https://github.com/yujincheng08/BiliRoaming/issues/112
             const thailandApi = new BiliBiliApi(balh_config.server_custom_th);
-            const origin = yield thailandApi.getSeasonInfoByEpIdOnThailand(ep_id, season_id);
+            const origin = yield thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id);
             const input_episodes = origin.result.modules[0].data.episodes;
             origin.result.actors = origin.result.actor.info;
             origin.result.is_paster_ads = 0;

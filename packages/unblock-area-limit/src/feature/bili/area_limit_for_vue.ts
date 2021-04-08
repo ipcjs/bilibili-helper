@@ -115,7 +115,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     // 通过泰区 api 补全
     // https://github.com/yujincheng08/BiliRoaming/issues/112
     const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
-    const origin = await thailandApi.getSeasonInfoByEpIdOnThailand(ep_id, season_id)
+    const origin = await thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id)
     const input_episodes = origin.result.modules[0].data.episodes
 
     origin.result.actors = origin.result.actor.info
