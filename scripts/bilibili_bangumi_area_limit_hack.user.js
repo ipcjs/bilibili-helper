@@ -1998,8 +1998,7 @@ function scriptSource(invokeBy) {
                 if (!$app) {
                     try {
                         // 读取保存的season_id
-                        // const season_id = cookieStorage.get('balh_curr_season_id')
-                        const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', ''])[1];
+                        const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1];
                         const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1];
                         const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy);
                         let templateArgs = null;
