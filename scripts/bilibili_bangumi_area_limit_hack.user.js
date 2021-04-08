@@ -815,7 +815,7 @@ function scriptSource(invokeBy) {
             return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
         }
         getSeasonInfoByEpIdOnThailand(ep_id, season_id) {
-            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + '&s_locale=zh_SG');
+            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + 'mobi_app=bstar_a&s_locale=zh_SG');
         }
     }
 
