@@ -101,6 +101,12 @@ export function settings() {
                             height: 100%;
                         }
                     `))
+            } else if (util_page.watchroom()) {
+                const _indexNav = indexNav = document.body.appendChild(_('div', { style: { position: 'fixed', right: '6px', bottom:  '45px', zIndex: '129', textAlign: 'center', display: 'none' } }))
+                indexNav.appendChild(createBtnStyle('45px'))
+                window.addEventListener('scroll', (event) => {
+                    _indexNav.style.display = window.scrollY < 600 ? 'none' : ''
+                })
             } else {
                 // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
                 let navTools = document.querySelector('.nav-tools, .float-nav')

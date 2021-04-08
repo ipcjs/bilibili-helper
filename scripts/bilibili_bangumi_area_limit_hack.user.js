@@ -19,6 +19,7 @@
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
+// @include      *://www.bilibili.com/watchroom/*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
@@ -70,7 +71,8 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content    var Strings;
+    // @template-content
+    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -712,6 +714,7 @@ function scriptSource(invokeBy) {
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
         new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+        watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
         get ssId() {
             var _a, _b;
             return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
@@ -2478,6 +2481,14 @@ function scriptSource(invokeBy) {
                             }
                         `));
                 }
+                else if (util_page.watchroom()) {
+                    /* 放映室页面 虽然没有那个float-nav 但是还是放在了和番剧视频页面一个位置 */
+                    const _indexNav = indexNav = document.body.appendChild(createElement('div', { style: { position: 'fixed', right: '6px', bottom: '45px', zIndex: '129', textAlign: 'center', display: 'none' } }));
+                    indexNav.appendChild(createBtnStyle('45px'));
+                    window.addEventListener('scroll', (event) => {
+                        _indexNav.style.display = window.scrollY < 600 ? 'none' : '';
+                    });
+                }
                 else {
                     // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
                     let navTools = document.querySelector('.nav-tools, .float-nav');
@@ -3043,6 +3054,21 @@ function scriptSource(invokeBy) {
                                                     }
                                                 }
                                                 // 同上
+                                            } else if (target.responseURL.match(RegExps.url('api.bilibili.com/pgc/view/web/freya/season'))) {
+                                                /* 一起看放映室用这个api来识别区域限制 */
+                                                let json = JSON.parse(target.response);
+                                                log('/pgc/view/web/freya/season', 'origin', `area_limit`, json.data.viewUserStatus.area_limit);
+                                                if (json.code == 0 && json.data.viewUserStatus.area_limit == 1) {
+                                                    areaLimit(true);
+                                                    json.data.viewUserStatus.area_limit = 0;
+                                                    container.__block_response = true;
+
+                                                    container.responseText = JSON.stringify(json);
+                                                    container.response = container.responseText;
+                                                    cb.apply(container.responseText ? receiver : this, arguments);
+                                                } else {
+                                                    areaLimit(false);
+                                                }
                                             }
                                             if (container.__block_response) {
                                                 // 屏蔽并保存response
@@ -3388,6 +3414,16 @@ function scriptSource(invokeBy) {
                         log(e);
                     }
                 }
+                
+                // 若没取到, 则从search params获取（比如放映室）
+                if (!seasonId) {
+                    try {
+                        seasonId = Strings.getSearchParam(window.location.href, 'seasonid');
+                    } catch (e) {
+                        log(e);
+                    }
+                }
+
                 // 若没取到, 则去取av页面的av号
                 if (!seasonId) {
                     try {
