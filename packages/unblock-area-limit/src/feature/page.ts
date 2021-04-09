@@ -17,6 +17,7 @@ export const util_page = {
     anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
     anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
     new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+    watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
     get ssId(): number | null | undefined {
         return window.__INITIAL_STATE__?.mediaInfo?.ssId
     },

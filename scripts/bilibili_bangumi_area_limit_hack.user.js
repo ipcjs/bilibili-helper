@@ -19,6 +19,7 @@
 // @include      *://bangumi.bilibili.com/movie/*
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
+// @include      *://www.bilibili.com/watchroom/*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
@@ -713,6 +714,7 @@ function scriptSource(invokeBy) {
         anime_ep_m: () => location.href.includes('m.bilibili.com/bangumi/play/ep'),
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
         new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
+        watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
         get ssId() {
             var _a, _b;
             return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
@@ -2482,6 +2484,13 @@ function scriptSource(invokeBy) {
                             }
                         `));
                 }
+                else if (util_page.watchroom()) {
+                    const _indexNav = indexNav = document.body.appendChild(createElement('div', { style: { position: 'fixed', right: '6px', bottom: '45px', zIndex: '129', textAlign: 'center', display: 'none' } }));
+                    indexNav.appendChild(createBtnStyle('45px'));
+                    window.addEventListener('scroll', (event) => {
+                        _indexNav.style.display = window.scrollY < 600 ? 'none' : '';
+                    });
+                }
                 else {
                     // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
                     let navTools = document.querySelector('.nav-tools, .float-nav');
@@ -3048,6 +3057,21 @@ function scriptSource(invokeBy) {
                                                     }
                                                 }
                                                 // 同上
+                                            } else if (target.responseURL.match(RegExps.url('api.bilibili.com/pgc/view/web/freya/season'))) {
+                                                /* 一起看放映室用这个api来识别区域限制 */
+                                                let json = JSON.parse(target.response);
+                                                log('/pgc/view/web/freya/season', 'origin', `area_limit`, json.data.viewUserStatus.area_limit);
+                                                if (json.code == 0 && json.data.viewUserStatus.area_limit == 1) {
+                                                    areaLimit(true);
+                                                    json.data.viewUserStatus.area_limit = 0;
+                                                    container.__block_response = true;
+
+                                                    container.responseText = JSON.stringify(json);
+                                                    container.response = container.responseText;
+                                                    cb.apply(container.responseText ? receiver : this, arguments);
+                                                } else {
+                                                    areaLimit(false);
+                                                }
                                             }
                                             if (container.__block_response) {
                                                 // 屏蔽并保存response
@@ -3393,6 +3417,16 @@ function scriptSource(invokeBy) {
                         log(e);
                     }
                 }
+                
+                // 若没取到, 则从search params获取（比如放映室）
+                if (!seasonId) {
+                    try {
+                        seasonId = Strings.getSearchParam(window.location.href, 'seasonid');
+                    } catch (e) {
+                        log(e);
+                    }
+                }
+
                 // 若没取到, 则去取av页面的av号
                 if (!seasonId) {
                     try {
@@ -3416,7 +3450,7 @@ function scriptSource(invokeBy) {
             }
 
             var bilibiliApis = (function () {
-                function AjaxException(message, code = 0 /*用0表示未知错误*/) {
+                function AjaxException(message, code = 0/*用0表示未知错误*/) {
                     this.name = 'AjaxException';
                     this.message = message;
                     this.code = code;
@@ -3424,7 +3458,6 @@ function scriptSource(invokeBy) {
                 AjaxException.prototype.toString = function () {
                     return `${this.name}: ${this.message}(${this.code})`
                 };
-
                 function BilibiliApi(props) {
                     Object.assign(this, props);
                 }
@@ -3747,6 +3780,7 @@ function scriptSource(invokeBy) {
                             }
                         }
 
+
                         // 首选服务器失败后开始尝试服务器列表, 按顺序解析
                         for (let server_info of server_list) {
                             const host = server_info[0];
@@ -3766,7 +3800,7 @@ function scriptSource(invokeBy) {
                                 }
                             }
                         }
-                        return Promise$1.resolve(result) // 都失败了，返回最后一次数据
+                        return Promise$1.resolve(result)  // 都失败了，返回最后一次数据
                     },
                     transToProxyUrl: function (originUrl, proxyHost, area = '') {
                         if (r.regex.bilibili_api_proxy.test(proxyHost)) {
@@ -3815,8 +3849,7 @@ function scriptSource(invokeBy) {
                                 if (e instanceof AjaxException) {
                                     ui.playerMsg(e);
                                     if (e.code === 1 // code: 1 表示非番剧视频, 不能使用番剧视频参数
-                                        ||
-                                        (Strings.getSearchParam(originUrl, 'module') === 'bangumi' && e.code === -404)) { // 某些番剧视频又不需要加module=bangumi, 详见: https://github.com/ipcjs/bilibili-helper/issues/494
+                                        || (Strings.getSearchParam(originUrl, 'module') === 'bangumi' && e.code === -404)) { // 某些番剧视频又不需要加module=bangumi, 详见: https://github.com/ipcjs/bilibili-helper/issues/494
                                         ui.playerMsg('尝试使用非番剧视频接口拉取视频地址...');
                                         return playurl_by_proxy._asyncAjax(originUrl, false)
                                             .catch(e2 => Promise$1.reject(e)) // 忽略e2, 返回原始错误e
@@ -3830,7 +3863,7 @@ function scriptSource(invokeBy) {
                             })))
                             .catch(e => {
                                 if ((typeof e === 'object' && e.statusText == 'error')
-                                    || (e instanceof AjaxException && (e.code === -502 || e.code === -412 /*请求被拦截*/ || e.code === -500 /*已爆炸*/))
+                                    || (e instanceof AjaxException && (e.code === -502 || e.code === -412/*请求被拦截*/ || e.code === -500/*已爆炸*/))
                                     || (typeof e === 'object' && e.code === -10403)
                                 ) {
                                     ui.playerMsg('尝试使用kghost的服务器拉取视频地址...');
