@@ -58,6 +58,7 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     // 追加 mobi api 需要的参数
     theRequest.access_key = localStorage.access_key;
     if (thailand) {
+        theRequest.area = 'th';
         theRequest.appkey = '7d089525d3611b1c';
         theRequest.build = '1001310';
         theRequest.mobi_app = 'bstar_a';
@@ -75,7 +76,7 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     theRequest.force_host = '2';  // 强制音视频返回 https
     theRequest.ts = `${~~(Date.now() / 1000)}`;
     // 所需参数数组
-    let param_wanted = ['access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+    let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
     // 生成 mobi api 参数字符串
     let mobi_api_params = '';
     for (let i = 0; i < param_wanted.length; i++) {
@@ -411,6 +412,7 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     origin.data.video_info.dash_audio.forEach((audio) => {
         audio.backupUrl = []
         audio.backup_url = []
+        audio.base_url = audio.base_url.replace('http://', 'https://')
         audio.baseUrl = audio.base_url
         dash.audio.push(audio)
     })
@@ -427,6 +429,7 @@ export async function fixThailandPlayUrlJson(originJson: object) {
         if (stream.dash_video && stream.dash_video.base_url) {
             stream.dash_video.backupUrl = []
             stream.dash_video.backup_url = []
+            stream.dash_video.base_url = stream.dash_video.base_url.replace('http://', 'https://')
             stream.dash_video.baseUrl = stream.dash_video.base_url
             stream.dash_video.id = stream.stream_info.quality
             dash_video.push(stream.dash_video)

@@ -895,10 +895,10 @@ function scriptContent() {
                     let result
                     // 对应this.transToProxyUrl的参数, 用逗号分隔, 形如: `${proxyHost}, ${thailand}`
                     let tried_server_args = []
-                    const isTriedServerArg = (proxyHost, thailand = false) => tried_server_args.includes(`${proxyHost}, ${thailand}`)
-                    const requestPlayUrl = (proxyHost, thailand = false) => {
-                        tried_server_args.push(`${proxyHost}, ${thailand}`)
-                        return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, thailand))
+                    const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}, ${area}`)
+                    const requestPlayUrl = (proxyHost, area = '') => {
+                        tried_server_args.push(`${proxyHost}, ${area}`)
+                        return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
                             // 捕获错误, 防止依次尝试各各服务器的流程中止
                             .catch((e) => ({ code: -1, error: e }))
                     }
@@ -906,14 +906,14 @@ function scriptContent() {
                     // 标题有明确说明优先尝试，通常准确率最高
                     if (document.title.includes('僅限台灣') && balh_config.server_custom_tw) {
                         ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(balh_config.server_custom_tw)
+                        result = await requestPlayUrl(balh_config.server_custom_tw, 'tw')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
                     }
                     if (document.title.includes('僅限港澳') && balh_config.server_custom_hk) {
                         ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(balh_config.server_custom_hk)
+                        result = await requestPlayUrl(balh_config.server_custom_hk, 'hk')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
@@ -966,9 +966,9 @@ function scriptContent() {
                         const host_name = server_info[1]
                         const host_code = server_info[2]
                         // 请求过的服务器, 不应该重复请求
-                        if (host && (!isTriedServerArg(host, host_code === 'th'))) {
+                        if (host && (!isTriedServerArg(host, host_code))) {
                             ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`)
-                            result = await requestPlayUrl(host, host_code === 'th')
+                            result = await requestPlayUrl(host, host_code)
                             if (!result.code) {
                                 // 解析成功，将结果存入番剧区域缓存
                                 if (util_page.ssId) {
@@ -981,9 +981,9 @@ function scriptContent() {
                     }
                     return Promise.resolve(result)  // 都失败了，返回最后一次数据
                 },
-                transToProxyUrl: function (originUrl, proxyHost, thailand = false) {
+                transToProxyUrl: function (originUrl, proxyHost, area = '') {
                     if (r.regex.bilibili_api_proxy.test(proxyHost)) {
-                        if (thailand) {
+                        if (area === 'th') {
                             // 泰区番剧解析
                             return getMobiPlayUrl(originUrl, proxyHost, true)
                         }
@@ -991,7 +991,7 @@ function scriptContent() {
                             // APP 限定用 mobi api
                             return getMobiPlayUrl(originUrl, proxyHost)
                         }
-                        return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + access_key_param_if_exist(true);
+                        return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + '&area=' + area + access_key_param_if_exist(true);
                     } else {
                         if (window.__balh_app_only__) {
                             return `${proxyHost}?${generateMobiPlayUrlParams(originUrl)}`

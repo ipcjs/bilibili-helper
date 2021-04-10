@@ -110,12 +110,12 @@ interface TemplateArgs {
 }
 
 
-async function fixThailandSeason(ep_id: string) {
+async function fixThailandSeason(ep_id: string, season_id: string) {
     // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
     // 通过泰区 api 补全
     // https://github.com/yujincheng08/BiliRoaming/issues/112
     const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
-    const origin = await thailandApi.getSeasonInfoByEpIdOnThailand(ep_id)
+    const origin = await thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id)
     const input_episodes = origin.result.modules[0].data.episodes
 
     origin.result.actors = origin.result.actor.info
@@ -152,12 +152,12 @@ function fixBangumiPlayPage() {
             // 临时保存当前的season_id
             cookieStorage.set('balh_curr_season_id', window?.__INITIAL_STATE__?.mediaInfo?.season_id, '')
         }
-        if (util_page.anime_ep()) {
+        if (util_page.anime_ep() || util_page.anime_ss()) {
             const $app = document.getElementById('app')
             if (!$app) {
                 try {
                     // 读取保存的season_id
-                    const season_id = cookieStorage.get('balh_curr_season_id')
+                    const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
                     const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
                     const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy)
                     let templateArgs: TemplateArgs | null = null
@@ -165,14 +165,14 @@ function fixBangumiPlayPage() {
                     // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                     // 如果该接口失效，自动尝试后面的方法
                     try {
-                        let result = await bilibiliApi.getSeasonInfoByEpIdOnBangumi(ep_id)
+                        let result = await bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id)
                         if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
-                            result = await fixThailandSeason(ep_id)
+                            result = await fixThailandSeason(ep_id, season_id)
                         }
                         if (result.code) {
                             throw result
                         }
-                        const ep = result.result.episodes.find(ep => ep.ep_id === +ep_id)
+                        const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
                         if (!ep) {
                             throw `通过bangumi接口未找到${ep_id}对应的视频信息`
                         }
