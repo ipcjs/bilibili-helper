@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.1.12
+// @version      8.2.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -71,8 +71,7 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content
-    var Strings;
+    // @template-content    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -922,7 +921,7 @@ function scriptSource(invokeBy) {
                 30032: [852, 480],
                 30033: [852, 480],
                 30011: [640, 360],
-                30016: [640, 360], // 360P
+                30016: [640, 360],
             };
             const frameRateMap = {
                 30112: '16000/672',
@@ -1570,7 +1569,7 @@ function scriptSource(invokeBy) {
                     }
                 }).observe(playerContent, {
                     childList: true,
-                    attributes: false, // 监听属性的变化
+                    attributes: false,
                 });
             }
         }
@@ -2750,7 +2749,6 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_enable_in_av' }), createElement('text', '在AV页面启用'), createElement('a', { href: 'https://github.com/ipcjs/bilibili-helper/issues/172', target: '_blank' }, [createElement('text', '(？)')])]),
                         createElement('div', { style: { flex: 1, display: 'flex' } }, [
                             createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_remove_pre_ad' }), createElement('text', '去前置广告')]),
-                            // _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_flv_prefer_ws' }), _('text', '优先使用ws')]),
                         ])
                     ]), createElement('br'),
                     createElement('div', { style: { display: 'flex' } }, [
@@ -2835,7 +2833,7 @@ function scriptSource(invokeBy) {
                                             "code": 0,
                                             "cid": `http://comment.bilibili.com/${cid}.xml`,
                                             "timelength": result.timelength,
-                                            "src": url || result.durl[0].url, // 只取第一个片段的url...
+                                            "src": url || result.durl[0].url,
                                         };
                                     });
                                 }
@@ -2876,7 +2874,7 @@ function scriptSource(invokeBy) {
 
         area_limit_for_vue();
 
-        ((function () {
+        const balh_feature_area_limit = (function () {
             if (isClosed()) return
             injectFetch();
             function injectXHR() {
@@ -3552,7 +3550,7 @@ function scriptSource(invokeBy) {
                         return returnVal;
                     }
                 });
-                new BilibiliApi({
+                var playurl_by_bilibili = new BilibiliApi({
                     dataType: 'xml',
                     transToProxyUrl: function (originUrl) {
                         const api_url = 'https://interface.bilibili.com/playurl?';
@@ -3567,8 +3565,8 @@ function scriptSource(invokeBy) {
                         if (localStorage.access_key) {
                             paramDict.access_key = localStorage.access_key;
                         }
-                        let { sign, params } = Converters.generateSign(paramDict, SEC_NORMAL);
-                        let url = api_url + params + '&sign=' + sign;
+                        let { sign, params } = Converters.generateSign(paramDict,  SEC_NORMAL);
+                        let url =  api_url + params + '&sign=' + sign;
                         return url
                     },
                     processProxySuccess: function (result, alertWhenError = true) {
@@ -3982,7 +3980,7 @@ function scriptSource(invokeBy) {
                     }
                 });
             }
-        })());
+        }());
 
         remove_pre_ad();
 
