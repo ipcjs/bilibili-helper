@@ -587,7 +587,7 @@ function scriptContent() {
                     log(e);
                 }
             }
-            
+
             // 若没取到, 则从search params获取（比如放映室）
             if (!seasonId) {
                 try {
@@ -942,7 +942,7 @@ function scriptContent() {
                             let cache_host_name = server_list_map[area_code][1]
                             ui.playerMsg(`读取番剧地区缓存，使用${cache_host_name}代理服务器拉取视频地址...`)
                             if (cache_host) {
-                                result = await requestPlayUrl(cache_host, area_code === 'th')
+                                result = await requestPlayUrl(cache_host, area_code)
                                 if (!result.code) {
                                     return Promise.resolve(result)
                                 }
