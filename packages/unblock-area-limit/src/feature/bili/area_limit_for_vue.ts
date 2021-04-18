@@ -209,7 +209,7 @@ function fixBangumiPlayPage() {
                             htmlTitle: result.result.title,
                             mediaInfoId: result.result.media_id,
                             mediaInfoTitle: result.result.title,
-                            evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
+                            evaluate: Strings.escapeSpecialChars(result.result.evaluate),
                             cover: result.result.cover,
                             episodes: eps,
                             ssId: result.result.season_id

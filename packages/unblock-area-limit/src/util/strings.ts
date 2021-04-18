@@ -19,4 +19,12 @@ export namespace Strings {
             return values[name]
         })
     }
+    export function escapeSpecialChars(str: string) {
+        return str.replace(/\n/g, '\\\n')
+            .replace(/"/g, '\\\"')
+            .replace(/\r/g, '\\\r')
+            .replace(/\t/g, '\\\t')
+            .replace(/\b/g, '\\\b')
+            .replace(/\f/g, '\\\f')
+    }
 }
