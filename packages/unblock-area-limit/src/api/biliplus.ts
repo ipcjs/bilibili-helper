@@ -76,7 +76,7 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     theRequest.force_host = '2';  // 强制音视频返回 https
     theRequest.ts = `${~~(Date.now() / 1000)}`;
     // 所需参数数组
-    let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+    let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 's_locale', 'season_id', 'track_path', 'ts'];
     // 生成 mobi api 参数字符串
     let mobi_api_params = '';
     for (let i = 0; i < param_wanted.length; i++) {
