@@ -71,7 +71,8 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content    var Strings;
+    // @template-content
+    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -187,7 +188,7 @@ function scriptSource(invokeBy) {
         },
         regex: {
             /** api.bilibili.com的全站代理 */
-            bilibili_api_proxy: /^https?:\/\/[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?$/u,
+            bilibili_api_proxy: /^https?:\/\/(?<user_pass>\S+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -489,7 +490,7 @@ function scriptSource(invokeBy) {
             };
         }
         Async.wrapper = wrapper;
-        function requestByXhr(url) {
+        function requestByXhr(url, username, password) {
             return new Promise$1((resolve, reject) => {
                 const req = new XMLHttpRequest();
                 req.onreadystatechange = (event) => {
@@ -508,13 +509,19 @@ function scriptSource(invokeBy) {
                     }
                 };
                 req.withCredentials = true;
+                if (username && password) {
+                    req.setRequestHeader("Authorization", "Basic " + btoa(`${username}:${password}`));
+                }
                 req.open('GET', url);
                 req.send();
             });
         }
-        function requestByJQuery(url) {
+        function requestByJQuery(url, username, password) {
             const creator = () => new Promise$1((resolve, reject) => {
                 let options = { url: url };
+                if (username && password) {
+                    options.headers = { 'Authorization': 'Basic ' + btoa(`${username}:${password}`) }
+                }
                 options.async === undefined && (options.async = true);
                 options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
                 options.success = function (data) {
@@ -532,9 +539,9 @@ function scriptSource(invokeBy) {
                 return window.$;
             }, creator, 30, 100);
         }
-        function ajax(url) {
+        function ajax({ url, username, password }) {
             // todo: 直接用fetch实现更简单?
-            return requestByJQuery(url)
+            return requestByJQuery(url, username, password)
                 .catch(e => {
                 if (e instanceof RetryUntilTimeoutException) {
                     return requestByXhr(url);
@@ -721,7 +728,24 @@ function scriptSource(invokeBy) {
     };
 
     const cookies = cookieStorage.all(); // 缓存的cookies
-    const balh_config = new Proxy({ /*保存config的对象*/}, {
+    const execServerInfo = v => {
+        if (!r.regex.bilibili_api_proxy.test(v)) return {};
+        let { user_pass, user_server } = r.regex.bilibili_api_proxy.exec(v).groups
+        let username = undefined
+        let password = undefined
+        if (user_pass) {
+            upsp = user_pass.substr(0, user_pass.length - 1).split(':')
+            password = upsp.pop()
+            username = upsp.join(':')
+            // 如果无法匹配用户名和密码，设置为空
+            if (!password || !username) {
+                password = undefined
+                username = undefined
+            }
+        }
+        return { server: `https://${user_server}`, username, password }
+    }
+    const balh_config = new Proxy({ /*保存config的对象*/ }, {
         get: function (target, prop) {
             if (typeof prop !== 'string')
                 throw new TypeError(`unsupported prop: ${String(prop)}`);
@@ -732,7 +756,19 @@ function scriptSource(invokeBy) {
                 return server;
             }
             else if (prop === 'server_bilibili_api_proxy') {
-                return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
+                return execServerInfo(balh_config.server_custom)
+            }
+            else if (prop === 'server_bilibili_api_proxy_tw') {
+                return execServerInfo(balh_config.server_custom_tw)
+            }
+            else if (prop === 'server_bilibili_api_proxy_hk') {
+                return execServerInfo(balh_config.server_custom_hk)
+            }
+            else if (prop === 'server_bilibili_api_proxy_cn') {
+                return execServerInfo(balh_config.server_custom_cn)
+            }
+            else if (prop === 'server_bilibili_api_proxy_th') {
+                return execServerInfo(balh_config.server_custom_th)
             }
             if (prop in target) {
                 return target[prop];
@@ -803,20 +839,22 @@ function scriptSource(invokeBy) {
         return window.__balh_app_only__ ? '&platform=android&fnval=0' : '';
     };
     class BiliBiliApi {
-        constructor(server = '//api.bilibili.com') {
-            this.server = server;
+        constructor({ server, password, username }) {
+            this.server = server || '//api.bilibili.com';
+            this.username = username;
+            this.password = password;
         }
         getSeasonInfoByEpId(ep_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`);
+            return Async.ajax({ url: `${this.server}/pgc/view/web/season?ep_id=${ep_id}`, username: this.username, password: this.password });
         }
         getSeasonInfo(season_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
+            return Async.ajax({ url: `${this.server}/pgc/view/web/season?season_id=${season_id}`, username: this.username, password: this.password });
         }
         getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id) {
             return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
         }
         getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
-            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + '&mobi_app=bstar_a&s_locale=zh_SG');
+            return Async.ajax({ url: `${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + '&mobi_app=bstar_a&s_locale=zh_SG', username: this.username, password: this.password });
         }
     }
 
@@ -1959,7 +1997,7 @@ function scriptSource(invokeBy) {
             // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
             // 通过泰区 api 补全
             // https://github.com/yujincheng08/BiliRoaming/issues/112
-            const thailandApi = new BiliBiliApi(balh_config.server_custom_th);
+            const thailandApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy_th);
             const origin = yield thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id);
             const input_episodes = origin.result.modules[0].data.episodes;
             origin.result.actors = origin.result.actor.info;
@@ -2007,7 +2045,7 @@ function scriptSource(invokeBy) {
                         // 如果该接口失效，自动尝试后面的方法
                         try {
                             let result = yield bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id);
-                            if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
+                            if (balh_config.server_bilibili_api_proxy_th.server && (result.code == -404 || result.result.total_ep == -1)) {
                                 result = yield fixThailandSeason(ep_id, season_id);
                             }
                             if (result.code) {
@@ -2403,8 +2441,8 @@ function scriptSource(invokeBy) {
         let isReused = false;
         let prevNow;
         let outputArr = [];
-        if (balh_config.server_custom) {
-            testUrl.push(balh_config.server_custom);
+        if (balh_config.server_bilibili_api_proxy.server) {
+            testUrl.push(balh_config.server_bilibili_api_proxy.server);
         }
         pingOutput.textContent = '正在进行服务器测速…';
         pingOutput.style.height = '100px';
@@ -2564,13 +2602,15 @@ function scriptSource(invokeBy) {
             var value = target.type === 'checkbox' ? (target.checked ? r.const.TRUE : r.const.FALSE) : target.value.trim();
             if (name.startsWith('balh_server_custom')) {
                 // 自动/强制添加 https
-                if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
-                    value = `https://${value}`;
-                    target.value = value;
-                }
-                if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
+                if (value.startsWith('https://') || value.startsWith('//')) { }
+                else if (value.startsWith('http://')) {
                     value = value.replace('http://', 'https://');
                     target.value = value;
+                } else {
+                    if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+                        value = `https://${value}`;
+                        target.value = value;
+                    }
                 }
             }
             balh_config[name.replace('balh_', '')] = value;
@@ -2636,6 +2676,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: 2 } }, [
                             createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义（首选服务器）`),
                             createElement('input', {
+                                style: { padding: '2px' },
                                 type: 'text', name: 'balh_server_custom', placeholder: '一定要填,形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
@@ -2653,6 +2694,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `台湾: `),
                             createElement('input', {
+                                style: { padding: '2px' },
                                 type: 'text', name: 'balh_server_custom_tw', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
@@ -2666,6 +2708,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `香港: `),
                             createElement('input', {
+                                style: { padding: '2px' },
                                 type: 'text', name: 'balh_server_custom_hk', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
@@ -2679,6 +2722,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `大陆: `),
                             createElement('input', {
+                                style: { padding: '2px' },
                                 type: 'text', name: 'balh_server_custom_cn', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
@@ -2692,6 +2736,7 @@ function scriptSource(invokeBy) {
                         createElement('label', { style: { flex: '1 1 50%' } }, [
                             createElement('text', `泰国/东南亚: `),
                             createElement('input', {
+                                style: { padding: '2px' },
                                 type: 'text', name: 'balh_server_custom_th', placeholder: '形如：https://hd.pilipili.com',
                                 event: {
                                     input: (event) => {
@@ -2981,8 +3026,12 @@ function scriptSource(invokeBy) {
                                                                 subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
                                                             } else {
                                                                 // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
-                                                                let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
-                                                                let thailand_data = await Async.ajax(thailand_sub_url);
+                                                                let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${balh_config.server_bilibili_api_proxy_th.server}/intl/gateway/v2/app/subtitle`);
+                                                                let thailand_data = await Async.ajax({
+                                                                    'url': thailand_sub_url,
+                                                                    'username': balh_config.server_bilibili_api_proxy_th.username,
+                                                                    'password': balh_config.server_bilibili_api_proxy_th.password
+                                                                });
                                                                 subtitle.subtitles = [];
                                                                 thailand_data.data.subtitles.forEach((item) => {
                                                                     let sub = {
@@ -3715,24 +3764,24 @@ function scriptSource(invokeBy) {
                         // 对应this.transToProxyUrl的参数, 用逗号分隔, 形如: `${proxyHost}, ${thailand}`
                         let tried_server_args = [];
                         const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}, ${area}`);
-                        const requestPlayUrl = (proxyHost, area = '') => {
-                            tried_server_args.push(`${proxyHost}, ${area}`);
-                            return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
+                        const requestPlayUrl = ({ server, username, password }, area = '') => {
+                            tried_server_args.push(`${server}, ${area}`);
+                            return Async.ajax({ url: this.transToProxyUrl(originUrl, server, area), username, password })
                                 // 捕获错误, 防止依次尝试各各服务器的流程中止
                                 .catch((e) => ({ code: -1, error: e }))
                         };
 
                         // 标题有明确说明优先尝试，通常准确率最高
-                        if (document.title.includes('僅限台灣') && balh_config.server_custom_tw) {
+                        if (document.title.includes('僅限台灣') && balh_config.server_bilibili_api_proxy_tw.server) {
                             ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...');
-                            result = await requestPlayUrl(balh_config.server_custom_tw, 'tw');
+                            result = await requestPlayUrl(balh_config.server_bilibili_api_proxy_tw, 'tw');
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
                         }
-                        if (document.title.includes('僅限港澳') && balh_config.server_custom_hk) {
+                        if (document.title.includes('僅限港澳') && balh_config.server_bilibili_api_proxy_hk.server) {
                             ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...');
-                            result = await requestPlayUrl(balh_config.server_custom_hk, 'hk');
+                            result = await requestPlayUrl(balh_config.server_bilibili_api_proxy_hk, 'hk');
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3740,10 +3789,10 @@ function scriptSource(invokeBy) {
 
                         // 服务器列表, 按顺序解析
                         const server_list = [
-                            [balh_config.server_custom_tw, '台湾', 'tw'],
-                            [balh_config.server_custom_hk, '香港', 'hk'],
-                            [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
-                            [balh_config.server_custom_cn, '大陆', 'cn'],
+                            [balh_config.server_bilibili_api_proxy_tw, '台湾', 'tw'],
+                            [balh_config.server_bilibili_api_proxy_hk, '香港', 'hk'],
+                            [balh_config.server_bilibili_api_proxy_th, '泰国（东南亚）', 'th'],
+                            [balh_config.server_bilibili_api_proxy_cn, '大陆', 'cn'],
                         ];
 
                         // 尝试读取番剧区域缓存判断番剧区域进行解析
@@ -3760,7 +3809,7 @@ function scriptSource(invokeBy) {
                                 let cache_host = server_list_map[area_code][0];
                                 let cache_host_name = server_list_map[area_code][1];
                                 ui.playerMsg(`读取番剧地区缓存，使用${cache_host_name}代理服务器拉取视频地址...`);
-                                if (cache_host) {
+                                if (cache_host.server) {
                                     result = await requestPlayUrl(cache_host, area_code === 'th');
                                     if (!result.code) {
                                         return Promise$1.resolve(result)
@@ -3770,9 +3819,9 @@ function scriptSource(invokeBy) {
                         }
 
                         // 首选服务器解析
-                        if (balh_config.server_custom) {
+                        if (balh_config.server_bilibili_api_proxy.server) {
                             ui.playerMsg('使用首选代理服务器拉取视频地址...');
-                            result = await requestPlayUrl(balh_config.server_custom);
+                            result = await requestPlayUrl(balh_config.server_bilibili_api_proxy);
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3785,7 +3834,7 @@ function scriptSource(invokeBy) {
                             const host_name = server_info[1];
                             const host_code = server_info[2];
                             // 请求过的服务器, 不应该重复请求
-                            if (host && (!isTriedServerArg(host, host_code))) {
+                            if (host.server && (!isTriedServerArg(host.server, host_code))) {
                                 ui.playerMsg(`使用${host_name}代理服务器拉取视频地址...`);
                                 result = await requestPlayUrl(host, host_code);
                                 if (!result.code) {
