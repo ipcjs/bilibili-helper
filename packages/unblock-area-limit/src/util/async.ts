@@ -91,6 +91,15 @@ namespace Async {
                 }
             }
             req.withCredentials = true
+            // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
+            const originUrl = new URL(url)
+            if (originUrl.username && originUrl.password) {
+                req.setRequestHeader("Authorization", "Basic " + btoa(`${originUrl.username}:${originUrl.password}`));
+                // 清除username&password
+                originUrl.username = ''
+                originUrl.password = ''
+                url = originUrl.href
+            }
             req.open('GET', url)
             req.send()
         });
@@ -100,6 +109,16 @@ namespace Async {
     function requestByJQuery<T>(url: string): Promise<T> {
         const creator = () => new Promise<T>((resolve, reject) => {
             let options: any = { url: url }
+
+            const originUrl = new URL(url)
+            // 同上
+            if (originUrl.username && originUrl.password) {
+                options.headers = { 'Authorization': 'Basic ' + btoa(`${originUrl.username}:${originUrl.password}`) }
+                originUrl.username = ''
+                originUrl.password = ''
+                options.url = originUrl.href
+            }
+
 
             options.async === undefined && (options.async = true);
             options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
