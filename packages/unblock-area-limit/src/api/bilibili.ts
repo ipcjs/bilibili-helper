@@ -1,4 +1,4 @@
-import { balh_config, ApiServer } from "../feature/config"
+import { balh_config } from "../feature/config"
 import { Async } from "../util/async"
 import { generateMobiPlayUrlParams } from "./biliplus"
 
@@ -119,19 +119,15 @@ interface SeasonInfoOnThailand {
 
 export class BiliBiliApi {
     private server: string
-    private username: string
-    private password: string
-    constructor(server: ApiServer) {
-        this.server = server.server
-        this.username = server.username
-        this.password = server.password
+    constructor(server: string = '//api.bilibili.com') {
+        this.server = server
     }
 
     getSeasonInfoByEpId(ep_id: string | number) {
-        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`, this.username, this.password)
+        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`)
     }
     getSeasonInfo(season_id: string | number) {
-        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?season_id=${season_id}`, this.username, this.password)
+        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?season_id=${season_id}`)
     }
     getSeasonInfoByEpSsIdOnBangumi(ep_id: string, season_id: string) {
         return Async.ajax<SeasonInfoOnBangumi>('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`))
@@ -139,6 +135,6 @@ export class BiliBiliApi {
     getSeasonInfoByEpSsIdOnThailand(ep_id: string, season_id: string) {
         const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
         const newParams = generateMobiPlayUrlParams(params, true)
-        return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams, this.username, this.password)
+        return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams)
     }
 }

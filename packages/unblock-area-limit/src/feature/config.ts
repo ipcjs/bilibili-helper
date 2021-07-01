@@ -15,7 +15,7 @@ interface BalhConfig {
     server_custom_cn: string
     server_custom_th: string
     /** api.bilibili.com的代理 */
-    server_bilibili_api_proxy: (k:string) => ApiServer,
+    server_bilibili_api_proxy?: string
     mode: string
     flv_prefer_ws: string
     upos_server?: string
@@ -28,36 +28,10 @@ interface BalhConfig {
     /** 同上 */
     remove_pre_ad?: boolean
     is_closed: BOOL
-    [k: string]: string | boolean | object | undefined
-}
-
-export interface ApiServer {
-    server: string,
-    username: string,
-    password: string,
+    [k: string]: string | boolean | undefined
 }
 
 const cookies = cookieStorage.all() // 缓存的cookies
-
-function execServerInfo(v:string) : ApiServer {
-    if (!r.regex.bilibili_api_proxy.test(v)) return undefined;
-    let { user_pass, user_server } = r.regex.bilibili_api_proxy.exec(v).groups
-    let username = undefined
-    let password = undefined
-    if (user_pass) {
-        let upsp = user_pass.substr(0, user_pass.length - 1).split(':')
-        password = upsp.pop()
-        username = upsp.join(':')
-        // 如果无法同时匹配用户名和密码，设置为空
-        if (!password || !username) {
-            password = undefined
-            username = undefined
-        }
-    }
-    let resp : ApiServer = {server:`https://${user_server}`, username, password}
-    return resp
-}
-
 export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } as BalhConfig, {
     get: function (target, prop) {
         if (typeof prop !== 'string') throw new TypeError(`unsupported prop: ${String(prop)}`)
@@ -66,6 +40,8 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
             // 保证balh_config.server一定指向biliplus
             const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner
             return server
+        } else if (prop === 'server_bilibili_api_proxy') {
+            return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined
         }
         if (prop in target) {
             return (target as any)[prop]
@@ -119,23 +95,6 @@ export const balh_config: BalhConfig = new Proxy({ /*保存config的对象*/ } a
         return true
     }
 })
-
-balh_config.server_bilibili_api_proxy = (k:string) => {
-    switch (k) {
-        case '':
-            return execServerInfo(balh_config.server_custom)
-        case 'tw':
-            return execServerInfo(balh_config.server_custom_tw)
-        case 'hk':
-            return execServerInfo(balh_config.server_custom_hk)
-        case 'cn':
-            return execServerInfo(balh_config.server_custom_cn)
-        case 'th':
-            return execServerInfo(balh_config.server_custom_th)
-        default:
-            return undefined
-    }
-}
 
 // 迁移到自定义代理服务器, 只会执行一次
 if (util_page.new_bangumi() && !localStorage.balh_migrate_to_2) {

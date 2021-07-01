@@ -74,7 +74,7 @@ namespace Async {
         return fetch(url).then(it => it.json())
     }
 
-    function requestByXhr<T>(url: string, username: string, password: string): Promise<T> {
+    function requestByXhr<T>(url: string): Promise<T> {
         return new Promise((resolve, reject) => {
             const req = new XMLHttpRequest()
             req.onreadystatechange = (event) => {
@@ -91,21 +91,16 @@ namespace Async {
                 }
             }
             req.withCredentials = true
-            if (username && password) {
-                req.setRequestHeader("Authorization", "Basic " + btoa(`${username}:${password}`));
-            }
             req.open('GET', url)
             req.send()
         });
     }
 
 
-    function requestByJQuery<T>(url: string, username: string, password: string): Promise<T> {
+    function requestByJQuery<T>(url: string): Promise<T> {
         const creator = () => new Promise<T>((resolve, reject) => {
             let options: any = { url: url }
-            if (username && password) {
-                options.headers = { 'Authorization': 'Basic ' + btoa(`${username}:${password}`) }
-            }
+
             options.async === undefined && (options.async = true);
             options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
             options.success = function (data: T) {
@@ -124,12 +119,12 @@ namespace Async {
         }, creator, 30, 100)
     }
 
-    export function ajax<T>(url: string, username: string = undefined, password: string = undefined): Promise<T> {
+    export function ajax<T>(url: string): Promise<T> {
         // todo: 直接用fetch实现更简单?
-        return requestByJQuery<T>(url, username, password)
+        return requestByJQuery<T>(url)
             .catch(e => {
                 if (e instanceof RetryUntilTimeoutException) {
-                    return requestByXhr<T>(url, username, password);
+                    return requestByXhr<T>(url);
                 } else {
                     return Promise.reject(e)
                 }

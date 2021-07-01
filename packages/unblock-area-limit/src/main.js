@@ -153,9 +153,8 @@ function scriptContent() {
                                                             subtitle.subtitles.forEach(item => (item.subtitle_url = item.subtitle_url.replace(/https?:\/\//, '//')));
                                                         } else {
                                                             // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
-                                                            let thailand_api_server = balh_config.server_bilibili_api_proxy('th')
-                                                            let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${thailand_api_server.server}/intl/gateway/v2/app/subtitle`);
-                                                            let thailand_data = await Async.ajax(thailand_sub_url, thailand_api_server.username, thailand_api_server.password);
+                                                            let thailand_sub_url = url.replace('https://api.bilibili.com/x/v2/dm/view', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
+                                                            let thailand_data = await Async.ajax(thailand_sub_url);
                                                             subtitle.subtitles = [];
                                                             thailand_data.data.subtitles.forEach((item) => {
                                                                 let sub = {
@@ -896,30 +895,25 @@ function scriptContent() {
                     let result
                     // 对应this.transToProxyUrl的参数, 用逗号分隔, 形如: `${proxyHost}, ${thailand}`
                     let tried_server_args = []
-                    const isTriedServerArg = (apiserver, area) => tried_server_args.includes(`${apiserver.server}, ${area}`)
-                    const requestPlayUrl = (apiserver, area = '') => {
-                        tried_server_args.push(`${apiserver.server}, ${area}`)
-                        return Async.ajax(this.transToProxyUrl(originUrl, apiserver.server, area), apiserver.username, apiserver.password)
+                    const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}, ${area}`)
+                    const requestPlayUrl = (proxyHost, area = '') => {
+                        tried_server_args.push(`${proxyHost}, ${area}`)
+                        return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
                             // 捕获错误, 防止依次尝试各各服务器的流程中止
                             .catch((e) => ({ code: -1, error: e }))
                     }
-                    const default_apiServer = balh_config.server_bilibili_api_proxy('')
-                    const tw_apiServer = balh_config.server_bilibili_api_proxy('tw')
-                    const hk_apiServer = balh_config.server_bilibili_api_proxy('hk')
-                    const th_apiServer = balh_config.server_bilibili_api_proxy('th')
-                    const ch_apiServer = balh_config.server_bilibili_api_proxy('cn')
 
                     // 标题有明确说明优先尝试，通常准确率最高
-                    if (document.title.includes('僅限台灣') && tw_apiServer) {
+                    if (document.title.includes('僅限台灣') && balh_config.server_custom_tw) {
                         ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(tw_apiServer, 'tw')
+                        result = await requestPlayUrl(balh_config.server_custom_tw, 'tw')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
                     }
-                    if (document.title.includes('僅限港澳') && hk_apiServer) {
+                    if (document.title.includes('僅限港澳') && balh_config.server_custom_hk) {
                         ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(hk_apiServer, 'hk')
+                        result = await requestPlayUrl(balh_config.server_custom_hk, 'hk')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
@@ -927,10 +921,10 @@ function scriptContent() {
 
                     // 服务器列表, 按顺序解析
                     const server_list = [
-                        [tw_apiServer, '台湾', 'tw'],
-                        [hk_apiServer, '香港', 'hk'],
-                        [th_apiServer, '泰国（东南亚）', 'th'],
-                        [ch_apiServer, '大陆', 'cn'],
+                        [balh_config.server_custom_tw, '台湾', 'tw'],
+                        [balh_config.server_custom_hk, '香港', 'hk'],
+                        [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
+                        [balh_config.server_custom_cn, '大陆', 'cn'],
                     ]
 
                     // 尝试读取番剧区域缓存判断番剧区域进行解析
@@ -957,9 +951,9 @@ function scriptContent() {
                     }
 
                     // 首选服务器解析
-                    if (default_apiServer) {
+                    if (balh_config.server_custom) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(default_apiServer)
+                        result = await requestPlayUrl(balh_config.server_custom)
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
