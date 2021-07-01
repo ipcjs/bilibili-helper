@@ -185,13 +185,15 @@ export function settings() {
 
         if (name.startsWith('balh_server_custom')) {
             // 自动/强制添加 https
-            if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
-                value = `https://${value}`
-                target.value = value
-            }
-            if (r.regex.bilibili_api_proxy.test(value.replace('http://', 'https://'))) {
-                value = value.replace('http://', 'https://')
-                target.value = value
+            if (value.startsWith('https://') || value.startsWith('//')) { }
+            else if (value.startsWith('http://')) {
+                value = value.replace('http://', 'https://');
+                target.value = value;
+            } else {
+                if (r.regex.bilibili_api_proxy.test(`https://${value}`)) {
+                    value = `https://${value}`;
+                    target.value = value;
+                }
             }
         }
 
