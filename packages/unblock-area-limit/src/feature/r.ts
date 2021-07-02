@@ -52,7 +52,7 @@ export const r = {
     },
     regex: {
         /** api.bilibili.com的全站代理 */
-        bilibili_api_proxy: /^https?:\/\/(?<user_pass>\S+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
+        bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
     },
     baipiao: [
         { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
