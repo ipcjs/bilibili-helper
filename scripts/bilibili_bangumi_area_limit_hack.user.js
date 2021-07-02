@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.0
+// @version      8.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -196,7 +196,7 @@ function scriptSource(invokeBy) {
         },
         regex: {
             /** api.bilibili.com的全站代理 */
-            bilibili_api_proxy: /^https?:\/\/(?<user_pass>\S+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
+            bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -517,16 +517,20 @@ function scriptSource(invokeBy) {
                     }
                 };
                 req.withCredentials = true;
+                let authorization = '';
                 // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
                 const originUrl = new URL(url);
                 if (originUrl.username && originUrl.password) {
-                    req.setRequestHeader("Authorization", "Basic " + btoa(`${originUrl.username}:${originUrl.password}`));
                     // 清除username&password
                     originUrl.username = '';
                     originUrl.password = '';
                     url = originUrl.href;
+                    authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`);
                 }
                 req.open('GET', url);
+                if (authorization) {
+                    req.setRequestHeader("Authorization", authorization);
+                }
                 req.send();
             });
         }
