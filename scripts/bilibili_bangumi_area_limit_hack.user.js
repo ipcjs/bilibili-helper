@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.0
+// @version      8.2.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -95,6 +95,15 @@ function scriptSource(invokeBy) {
             });
         }
         Strings.replaceTemplate = replaceTemplate;
+        function escapeSpecialChars(str) {
+            return str.replace(/\n/g, '\\\n')
+                .replace(/"/g, '\\\"')
+                .replace(/\r/g, '\\\r')
+                .replace(/\t/g, '\\\t')
+                .replace(/\b/g, '\\\b')
+                .replace(/\f/g, '\\\f');
+        }
+        Strings.escapeSpecialChars = escapeSpecialChars;
     })(Strings || (Strings = {}));
 
     var Objects;
@@ -187,7 +196,7 @@ function scriptSource(invokeBy) {
         },
         regex: {
             /** api.bilibili.com的全站代理 */
-            bilibili_api_proxy: /^https?:\/\/[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?$/u,
+            bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -508,13 +517,34 @@ function scriptSource(invokeBy) {
                     }
                 };
                 req.withCredentials = true;
+                let authorization = '';
+                // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
+                const originUrl = new URL(url);
+                if (originUrl.username && originUrl.password) {
+                    authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`);
+                    // 清除username&password
+                    originUrl.username = '';
+                    originUrl.password = '';
+                    url = originUrl.href;
+                }
                 req.open('GET', url);
+                if (authorization) {
+                    req.setRequestHeader("Authorization", authorization);
+                }
                 req.send();
             });
         }
         function requestByJQuery(url) {
             const creator = () => new Promise$1((resolve, reject) => {
                 let options = { url: url };
+                const originUrl = new URL(url);
+                // 同上
+                if (originUrl.username && originUrl.password) {
+                    options.headers = { 'Authorization': 'Basic ' + btoa(`${originUrl.username}:${originUrl.password}`) };
+                    originUrl.username = '';
+                    originUrl.password = '';
+                    options.url = originUrl.href;
+                }
                 options.async === undefined && (options.async = true);
                 options.xhrFields === undefined && (options.xhrFields = { withCredentials: true });
                 options.success = function (data) {
@@ -794,32 +824,6 @@ function scriptSource(invokeBy) {
         return balh_config.is_closed || !balh_config.server_custom;
     }
 
-    const access_key_param_if_exist = function (isKghost = false) {
-        // access_key是由B站验证的, B站帐号和BP帐号不同时, access_key无效
-        // kghost的服务器使用的B站帐号, access_key有效
-        return (localStorage.access_key && (!balh_config.blocked_vip || isKghost)) ? `&access_key=${localStorage.access_key}` : '';
-    };
-    const platform_android_param_if_app_only = function () {
-        return window.__balh_app_only__ ? '&platform=android&fnval=0' : '';
-    };
-    class BiliBiliApi {
-        constructor(server = '//api.bilibili.com') {
-            this.server = server;
-        }
-        getSeasonInfoByEpId(ep_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`);
-        }
-        getSeasonInfo(season_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
-        }
-        getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id) {
-            return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
-        }
-        getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
-            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + '&mobi_app=bstar_a&s_locale=zh_SG');
-        }
-    }
-
     /**
      * 构建 mobi api 解析链接
      * host 举例: 'https://example.com'
@@ -867,7 +871,7 @@ function scriptSource(invokeBy) {
         theRequest.force_host = '2'; // 强制音视频返回 https
         theRequest.ts = `${~~(Date.now() / 1000)}`;
         // 所需参数数组
-        let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 'track_path', 'ts'];
+        let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 's_locale', 'season_id', 'track_path', 'ts'];
         // 生成 mobi api 参数字符串
         let mobi_api_params = '';
         for (let i = 0; i < param_wanted.length; i++) {
@@ -1152,6 +1156,34 @@ function scriptSource(invokeBy) {
         BiliPlusApi.playurl_for_mp4 = (cid, bangumi = true) => Async.ajax(`${balh_config.server}/api/h5play.php?tid=33&cid=${cid}&type=vupload&vid=vupload_${cid}&bangumi=${bangumi ? 1 : 0}${access_key_param_if_exist()}`)
             .then(text => (text.match(/srcUrl=\{"mp4":"(https?.*)"\};/) || ['', ''])[1]); // 提取mp4的url
     })(BiliPlusApi || (BiliPlusApi = {}));
+
+    const access_key_param_if_exist = function (isKghost = false) {
+        // access_key是由B站验证的, B站帐号和BP帐号不同时, access_key无效
+        // kghost的服务器使用的B站帐号, access_key有效
+        return (localStorage.access_key && (!balh_config.blocked_vip || isKghost)) ? `&access_key=${localStorage.access_key}` : '';
+    };
+    const platform_android_param_if_app_only = function () {
+        return window.__balh_app_only__ ? '&platform=android&fnval=0' : '';
+    };
+    class BiliBiliApi {
+        constructor(server = '//api.bilibili.com') {
+            this.server = server;
+        }
+        getSeasonInfoByEpId(ep_id) {
+            return Async.ajax(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`);
+        }
+        getSeasonInfo(season_id) {
+            return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
+        }
+        getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id) {
+            return Async.ajax('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`));
+        }
+        getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
+            const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`;
+            const newParams = generateMobiPlayUrlParams(params, true);
+            return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams);
+        }
+    }
 
     var ui;
     (function (ui) {
@@ -2052,7 +2084,7 @@ function scriptSource(invokeBy) {
                                 htmlTitle: result.result.title,
                                 mediaInfoId: result.result.media_id,
                                 mediaInfoTitle: result.result.title,
-                                evaluate: result.result.evaluate.replace(/\r\n/g, '').replace(/\n/g, ''),
+                                evaluate: Strings.escapeSpecialChars(result.result.evaluate),
                                 cover: result.result.cover,
                                 episodes: eps,
                                 ssId: result.result.season_id
@@ -3415,7 +3447,7 @@ function scriptSource(invokeBy) {
                         log(e);
                     }
                 }
-                
+
                 // 若没取到, 则从search params获取（比如放映室）
                 if (!seasonId) {
                     try {
@@ -3761,7 +3793,7 @@ function scriptSource(invokeBy) {
                                 let cache_host_name = server_list_map[area_code][1];
                                 ui.playerMsg(`读取番剧地区缓存，使用${cache_host_name}代理服务器拉取视频地址...`);
                                 if (cache_host) {
-                                    result = await requestPlayUrl(cache_host, area_code === 'th');
+                                    result = await requestPlayUrl(cache_host, area_code);
                                     if (!result.code) {
                                         return Promise$1.resolve(result)
                                     }
