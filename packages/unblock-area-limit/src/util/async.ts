@@ -95,11 +95,11 @@ namespace Async {
             // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
             const originUrl = new URL(url)
             if (originUrl.username && originUrl.password) {
+                authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`)
                 // 清除username&password
                 originUrl.username = ''
                 originUrl.password = ''
                 url = originUrl.href
-                authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`)
             }
             req.open('GET', url)
             if (authorization) {
