@@ -93,7 +93,7 @@ namespace Async {
             req.withCredentials = true
             let authorization = ''
             // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
-            const originUrl = new URL(url)
+            const originUrl = new URL(url, document.location.href)
             if (originUrl.username && originUrl.password) {
                 authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`)
                 // 清除username&password
@@ -114,7 +114,7 @@ namespace Async {
         const creator = () => new Promise<T>((resolve, reject) => {
             let options: any = { url: url }
 
-            const originUrl = new URL(url)
+            const originUrl = new URL(url, document.location.href)
             // 同上
             if (originUrl.username && originUrl.password) {
                 options.headers = { 'Authorization': 'Basic ' + btoa(`${originUrl.username}:${originUrl.password}`) }
