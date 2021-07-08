@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.1
+// @version      8.2.2
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -519,7 +519,7 @@ function scriptSource(invokeBy) {
                 req.withCredentials = true;
                 let authorization = '';
                 // 理论上来说网页中的请求不应该带username&password, 这里直接将它们替换成authorization header...
-                const originUrl = new URL(url);
+                const originUrl = new URL(url, document.location.href);
                 if (originUrl.username && originUrl.password) {
                     authorization = "Basic " + btoa(`${originUrl.username}:${originUrl.password}`);
                     // 清除username&password
@@ -537,7 +537,7 @@ function scriptSource(invokeBy) {
         function requestByJQuery(url) {
             const creator = () => new Promise$1((resolve, reject) => {
                 let options = { url: url };
-                const originUrl = new URL(url);
+                const originUrl = new URL(url, document.location.href);
                 // 同上
                 if (originUrl.username && originUrl.password) {
                     options.headers = { 'Authorization': 'Basic ' + btoa(`${originUrl.username}:${originUrl.password}`) };
