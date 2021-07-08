@@ -130,7 +130,7 @@ export class BiliBiliApi {
         return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?season_id=${season_id}`)
     }
     getSeasonInfoByEpSsIdOnBangumi(ep_id: string, season_id: string) {
-        return Async.ajax<SeasonInfoOnBangumi>('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`))
+        return Async.ajax<SeasonInfoOnBangumi>('https://bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`))
     }
     getSeasonInfoByEpSsIdOnThailand(ep_id: string, season_id: string) {
         const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
