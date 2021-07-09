@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.2
+// @version      8.2.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2920,6 +2920,7 @@ function scriptSource(invokeBy) {
                                 .then(r => {
                                     container.readyState = 4;
                                     container.response = r;
+                                    container.responseText = typeof r === 'string' ? r : JSON.stringify(r);
                                     container.__onreadystatechange(event); // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
                                 })
                                 .catch(e => {
@@ -3065,7 +3066,7 @@ function scriptSource(invokeBy) {
                                                 && !Strings.getSearchParam(target.responseURL, 'balh_ajax')) {
                                                 log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response);
                                                 if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
-                                                    let json = target.response;
+                                                    let json = typeof target.response === 'object' ? target.response : JSON.parse(target.responseText);
                                                     if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
                                                         areaLimit(true);
                                                         container.__block_response = true;

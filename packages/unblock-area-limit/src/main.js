@@ -60,6 +60,7 @@ function scriptContent() {
                             .then(r => {
                                 container.readyState = 4
                                 container.response = r
+                                container.responseText = typeof r === 'string' ? r : JSON.stringify(r)
                                 container.__onreadystatechange(event) // 直接调用会不会存在this指向错误的问题? => 目前没看到, 先这样(;¬_¬)
                             })
                             .catch(e => {
@@ -205,7 +206,7 @@ function scriptContent() {
                                             && !Strings.getSearchParam(target.responseURL, 'balh_ajax')) {
                                             log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, target.response)
                                             if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
-                                                let json = target.response
+                                                let json = typeof target.response === 'object' ? target.response : JSON.parse(target.responseText)
                                                 if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
                                                     areaLimit(true)
                                                     container.__block_response = true
