@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.3
+// @version      8.2.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -3745,14 +3745,18 @@ function scriptSource(invokeBy) {
                     },
                     selectServer: async function (originUrl) {
                         let result;
-                        // 对应this.transToProxyUrl的参数, 用逗号分隔, 形如: `${proxyHost}, ${thailand}`
+                        // 对应this.transToProxyUrl的参数, 用`/`分隔, 形如: `${proxyHost}/${area}`
                         let tried_server_args = [];
-                        const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}, ${area}`);
+                        const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}/*`) || tried_server_args.includes(`${proxyHost}/${area}`);
                         const requestPlayUrl = (proxyHost, area = '') => {
-                            tried_server_args.push(`${proxyHost}, ${area}`);
+                            tried_server_args.push(`${proxyHost}/${area}`);
                             return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
                                 // 捕获错误, 防止依次尝试各各服务器的流程中止
-                                .catch((e) => ({ code: -1, error: e }))
+                                .catch((e) => {
+                                    // proxyHost临时不可用, 将它添加到tried_server_args中, 防止重复请求
+                                    tried_server_args.push(`${proxyHost}/*`);
+                                    return ({ code: -1, error: e });
+                                })
                         };
 
                         // 标题有明确说明优先尝试，通常准确率最高
