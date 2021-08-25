@@ -401,7 +401,8 @@ export function area_limit_for_vue() {
     function replaceInitialState() {
         modifyGlobalValue('__INITIAL_STATE__', {
             onWrite: (value) => {
-                if (value?.epInfo?.id === -1) {
+                debugger
+                if (value?.epInfo?.id === -1 && value?.epList?.length === 0) {
                     invalidInitialState = value
                     return undefined
                 }

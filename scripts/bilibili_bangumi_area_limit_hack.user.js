@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.5
+// @version      8.2.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2275,8 +2275,9 @@ function scriptSource(invokeBy) {
         function replaceInitialState() {
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
-                    var _a, _b, _c, _d, _e;
-                    if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1) {
+                    var _a, _b, _c, _d, _e, _f;
+                    debugger;
+                    if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1 && ((_b = value === null || value === void 0 ? void 0 : value.epList) === null || _b === void 0 ? void 0 : _b.length) === 0) {
                         invalidInitialState = value;
                         return undefined;
                     }
@@ -2289,12 +2290,12 @@ function scriptSource(invokeBy) {
                             }
                         }
                     }
-                    if (((_c = (_b = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _b === void 0 ? void 0 : _b.rights) === null || _c === void 0 ? void 0 : _c.appOnly) === true) {
+                    if (((_d = (_c = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) === true) {
                         value.mediaInfo.rights.appOnly = false;
                         window.__balh_app_only__ = true;
                     }
-                    ifNotNull((_d = value === null || value === void 0 ? void 0 : value.epInfo) === null || _d === void 0 ? void 0 : _d.rights, (it) => it.area_limit = 0);
-                    (_e = value === null || value === void 0 ? void 0 : value.epList) === null || _e === void 0 ? void 0 : _e.forEach((it) => ifNotNull(it === null || it === void 0 ? void 0 : it.rights, (it) => it.area_limit = 0));
+                    ifNotNull((_e = value === null || value === void 0 ? void 0 : value.epInfo) === null || _e === void 0 ? void 0 : _e.rights, (it) => it.area_limit = 0);
+                    (_f = value === null || value === void 0 ? void 0 : value.epList) === null || _f === void 0 ? void 0 : _f.forEach((it) => ifNotNull(it === null || it === void 0 ? void 0 : it.rights, (it) => it.area_limit = 0));
                     return value;
                 }
             });
