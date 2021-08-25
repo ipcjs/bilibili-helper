@@ -137,11 +137,9 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     })
 
     origin.result.style = []
-    if (origin.result.styles) {
-        origin.result.styles.forEach((it) => {
-            origin.result.style.push(it.name)
-        })
-    }
+    origin.result.styles?.forEach((it) => {
+        origin.result.style.push(it.name)
+    })
 
     let result: SeasonInfoOnBangumi = JSON.parse(JSON.stringify(origin))
     return result
