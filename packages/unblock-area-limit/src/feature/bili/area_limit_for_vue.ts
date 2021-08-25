@@ -137,7 +137,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     })
 
     origin.result.style = []
-    origin.result.styles.forEach((it) => {
+    origin.result.styles?.forEach((it) => {
         origin.result.style.push(it.name)
     })
 

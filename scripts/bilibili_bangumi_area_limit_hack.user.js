@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.4
+// @version      8.2.5
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -1987,6 +1987,7 @@ function scriptSource(invokeBy) {
         });
     }
     function fixThailandSeason(ep_id, season_id) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
             // 通过泰区 api 补全
@@ -2012,7 +2013,7 @@ function scriptSource(invokeBy) {
                 (_a = origin.result.episodes) === null || _a === void 0 ? void 0 : _a.push(ep);
             });
             origin.result.style = [];
-            origin.result.styles.forEach((it) => {
+            (_a = origin.result.styles) === null || _a === void 0 ? void 0 : _a.forEach((it) => {
                 origin.result.style.push(it.name);
             });
             let result = JSON.parse(JSON.stringify(origin));
