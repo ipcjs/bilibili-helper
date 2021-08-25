@@ -106,7 +106,8 @@ interface TemplateArgs {
     evaluate: any,
     cover: any,
     ssId: any,
-    episodes?: any
+    episodes?: any,
+    appOnly: boolean,
 }
 
 
@@ -145,6 +146,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     return result
 }
 
+let invalidInitialState: StringAnyObject | undefined
 
 function fixBangumiPlayPage() {
     util_init(async () => {
@@ -154,7 +156,7 @@ function fixBangumiPlayPage() {
         }
         if (util_page.anime_ep() || util_page.anime_ss()) {
             const $app = document.getElementById('app')
-            if (!$app) {
+            if (!$app || invalidInitialState) {
                 try {
                     // 读取保存的season_id
                     const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
@@ -212,7 +214,8 @@ function fixBangumiPlayPage() {
                             evaluate: Strings.escapeSpecialChars(result.result.evaluate),
                             cover: result.result.cover,
                             episodes: eps,
-                            ssId: result.result.season_id
+                            ssId: result.result.season_id,
+                            appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
                         }
                     } catch (e) {
                         util_warn('通过bangumi接口获取ep信息失败', e)
@@ -249,7 +252,8 @@ function fixBangumiPlayPage() {
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
                                 episodes: eps,
-                                ssId: result.result.season_id
+                                ssId: result.result.season_id,
+                                appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
                             }
                         } catch (e) {
                             // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
@@ -311,7 +315,8 @@ function fixBangumiPlayPage() {
                             evaluate: result.result.evaluate,
                             cover: result.result.cover,
                             episodes: eps,
-                            ssId: season_id
+                            ssId: season_id,
+                            appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
                         }
                     }
                     const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)
@@ -396,6 +401,10 @@ export function area_limit_for_vue() {
     function replaceInitialState() {
         modifyGlobalValue('__INITIAL_STATE__', {
             onWrite: (value) => {
+                if (value?.epInfo?.id === -1) {
+                    invalidInitialState = value
+                    return undefined
+                }
                 if (value && value.epInfo && value.epList && balh_config.blocked_vip) {
                     for (let ep of [value.epInfo, ...value.epList]) {
                         // 13貌似表示会员视频, 2为普通视频
