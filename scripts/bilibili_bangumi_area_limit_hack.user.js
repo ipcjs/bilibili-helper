@@ -2276,7 +2276,6 @@ function scriptSource(invokeBy) {
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
                     var _a, _b, _c, _d, _e, _f;
-                    debugger;
                     if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1 && ((_b = value === null || value === void 0 ? void 0 : value.epList) === null || _b === void 0 ? void 0 : _b.length) === 0) {
                         invalidInitialState = value;
                         return undefined;
