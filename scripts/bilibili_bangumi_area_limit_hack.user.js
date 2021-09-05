@@ -20,9 +20,10 @@
 // @include      *://www.bilibili.com/bangumi/media/md*
 // @include      *://www.bilibili.com/blackboard/html5player.html*
 // @include      *://www.bilibili.com/watchroom/*
+// @include      *://space.bilibili.com/11783021*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
-// @grant        none
+// @grant        unsafeWindow
 // ==/UserScript==
 
 const log = console.log.bind(console, 'injector:')
@@ -2840,6 +2841,166 @@ function scriptSource(invokeBy) {
         }
     }
 
+    const bussJson = {
+        "code": 0,
+        "message": "0",
+        "ttl": 1,
+        "data": {
+            "mid": 11783021,
+            "name": "哔哩哔哩番剧出差",
+            "sex": "保密",
+            "face": "http://i2.hdslb.com/bfs/face/9f10323503739e676857f06f5e4f5eb323e9f3f2.jpg",
+            "sign": "",
+            "rank": 10000,
+            "level": 6,
+            "jointime": 0,
+            "moral": 0,
+            "silence": 0,
+            "coins": 0,
+            "fans_badge": false,
+            "fans_medal": {
+                "show": false,
+                "wear": false,
+                "medal": null
+            },
+            "official": {
+                "role": 3,
+                "title": "哔哩哔哩番剧出差 官方账号",
+                "desc": "",
+                "type": 1
+            },
+            "vip": {
+                "type": 0,
+                "status": 0,
+                "due_date": 0,
+                "vip_pay_type": 0,
+                "theme_type": 0,
+                "label": {
+                    "path": "",
+                    "text": "",
+                    "label_theme": "",
+                    "text_color": "",
+                    "bg_style": 0,
+                    "bg_color": "",
+                    "border_color": ""
+                },
+                "avatar_subscript": 0,
+                "nickname_color": "",
+                "role": 0,
+                "avatar_subscript_url": ""
+            },
+            "pendant": {
+                "pid": 0,
+                "name": "",
+                "image": "",
+                "expire": 0,
+                "image_enhance": "",
+                "image_enhance_frame": ""
+            },
+            "nameplate": {
+                "nid": 0,
+                "name": "",
+                "image": "",
+                "image_small": "",
+                "level": "",
+                "condition": ""
+            },
+            "user_honour_info": {
+                "mid": 0,
+                "colour": null,
+                "tags": null
+            },
+            "is_followed": false,
+            "top_photo": "http://i0.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png",
+            "theme": {},
+            "sys_notice": {},
+            "live_room": {
+                "roomStatus": 1,
+                "liveStatus": 0,
+                "url": "https://live.bilibili.com/931774",
+                "title": "「梦之祭！部」 社团活动最终回",
+                "cover": "http://i0.hdslb.com/bfs/live/c89c499096fa6527765de1fcaa021c9e2db7fbf8.jpg",
+                "online": 0,
+                "roomid": 931774,
+                "roundStatus": 0,
+                "broadcast_type": 0
+            },
+            "birthday": "",
+            "school": {
+                "name": ""
+            },
+            "profession": {
+                "name": ""
+            },
+            "tags": null,
+            "series": {
+                "user_upgrade_status": 3,
+                "show_upgrade_window": false
+            }
+        }
+    };
+
+    var buss = () => {
+
+
+        const modifyResponse = function (response)  {
+
+
+            if (this.readyState === 4) {
+                //修改请求结果
+                if(this.requestURL.indexOf('api.bilibili.com/x/space/acc/info?mid=11783021') !== -1){
+
+                    const original_response = response.target.responseText;
+                    if(original_response){
+                        const origin = JSON.parse(original_response);
+
+                        if(origin.code === -404){
+
+                            Object.defineProperty(this, "responseText", {writable: true});
+
+                            this.responseText = JSON.stringify(bussJson);
+                        }
+                    }
+
+                }
+            }
+
+
+
+        };
+
+        //修改原生XMLRequest对象中的一些方法
+
+        const openPyBass = (original) => {
+
+            return function (method, url, async) {
+                // 保存请求相关参数
+                this.requestMethod = method;
+                this.requestURL = url;
+
+                this.addEventListener("readystatechange", modifyResponse);
+
+                return original.apply(this, arguments);
+
+            }
+
+        };
+
+        const sendBypass = (original) => {
+            return function (data) {
+                this.requestData = data;
+                return original.apply(this, arguments);
+            }
+        };
+
+        (function (window){
+            window.XMLHttpRequest.prototype.open = openPyBass(window.XMLHttpRequest.prototype.open);
+            window.XMLHttpRequest.prototype.send = sendBypass(window.XMLHttpRequest.prototype.send);
+        })(unsafeWindow);
+
+
+    };
+
     function injectFetch() {
         // 当前未替换任何内容...
         const originFetch = window.fetch;
@@ -2904,6 +3065,12 @@ function scriptSource(invokeBy) {
         if (document.readyState === 'uninitialized') { // Firefox上, 对于iframe中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
             log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态');
             setTimeout(() => scriptSource(invokeBy + '.timeout'), 0); // 这里会暴力执行多次, 直到状态不为uninitialized...
+            return
+        }
+
+        if(unsafeWindow.location.href.indexOf('space.bilibili.com/11783021') !== -1){
+            //获取番剧出差页面，单独处理
+            buss();
             return
         }
 
