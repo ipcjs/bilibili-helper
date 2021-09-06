@@ -23,6 +23,7 @@
 // @include      *://space.bilibili.com/11783021*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
+// @grant        none
 // ==/UserScript==
 
 const log = console.log.bind(console, 'injector:')
