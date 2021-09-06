@@ -23,7 +23,6 @@
 // @include      *://space.bilibili.com/11783021*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
-// @grant        unsafeWindow
 // ==/UserScript==
 
 const log = console.log.bind(console, 'injector:')
@@ -71,6 +70,7 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
+
 function scriptSource(invokeBy) {
     // @template-content
 }

@@ -33,7 +33,7 @@ function scriptContent() {
         return
     }
 
-    if(unsafeWindow.location.href.indexOf('space.bilibili.com/11783021') !== -1){
+    if(location.href.indexOf('space.bilibili.com/11783021') !== -1){
         //获取番剧出差页面，单独处理
         buss()
         return

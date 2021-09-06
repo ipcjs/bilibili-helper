@@ -23,7 +23,6 @@
 // @include      *://space.bilibili.com/11783021*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
-// @grant        unsafeWindow
 // ==/UserScript==
 
 const log = console.log.bind(console, 'injector:')
@@ -71,6 +70,7 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
+
 function scriptSource(invokeBy) {
     // @template-content    var Strings;
     (function (Strings) {
@@ -2942,6 +2942,8 @@ function scriptSource(invokeBy) {
 
     var buss = () => {
 
+        console.log('el psy congroo');
+
 
         const modifyResponse = function (response)  {
 
@@ -2957,6 +2959,8 @@ function scriptSource(invokeBy) {
                         if(origin.code === -404){
 
                             Object.defineProperty(this, "responseText", {writable: true});
+
+                            console.log('检测到 哔哩哔哩番剧出差API，已经替换，do misaka如此说到',bussJson);
 
                             this.responseText = JSON.stringify(bussJson);
                         }
@@ -2996,7 +3000,7 @@ function scriptSource(invokeBy) {
         (function (window){
             window.XMLHttpRequest.prototype.open = openPyBass(window.XMLHttpRequest.prototype.open);
             window.XMLHttpRequest.prototype.send = sendBypass(window.XMLHttpRequest.prototype.send);
-        })(unsafeWindow);
+        })(window);
 
 
     };
@@ -3068,7 +3072,7 @@ function scriptSource(invokeBy) {
             return
         }
 
-        if(unsafeWindow.location.href.indexOf('space.bilibili.com/11783021') !== -1){
+        if(location.href.indexOf('space.bilibili.com/11783021') !== -1){
             //获取番剧出差页面，单独处理
             buss();
             return

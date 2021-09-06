@@ -2,6 +2,8 @@ import {bussJson} from './bussData'
 
 export default () => {
 
+    console.log('el psy congroo')
+
 
     const modifyResponse = function (response)  {
 
@@ -17,6 +19,8 @@ export default () => {
                     if(origin.code === -404){
 
                         Object.defineProperty(this, "responseText", {writable: true});
+
+                        console.log('检测到 哔哩哔哩番剧出差API，已经替换，do misaka如此说到',bussJson)
 
                         this.responseText = JSON.stringify(bussJson);
                     }
@@ -56,7 +60,7 @@ export default () => {
     (function (window){
         window.XMLHttpRequest.prototype.open = openPyBass(window.XMLHttpRequest.prototype.open);
         window.XMLHttpRequest.prototype.send = sendBypass(window.XMLHttpRequest.prototype.send);
-    })(unsafeWindow)
+    })(window)
 
 
 }
