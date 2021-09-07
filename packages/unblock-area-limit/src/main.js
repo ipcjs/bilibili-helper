@@ -16,6 +16,7 @@ import { util_init } from './util/initiator'
 import { util_ui_msg } from './util/message'
 import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
+import space_info_template from './feature/bili/space_info_template'
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
 function scriptContent() {
     'use strict';
@@ -242,6 +243,11 @@ function scriptContent() {
                                                 cb.apply(container.responseText ? receiver : this, arguments);
                                             } else {
                                                 areaLimit(false)
+                                            }
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=11783021'))) {
+                                            const json = JSON.parse(target.responseText)
+                                            if (json.code === -404) {
+                                                container.responseText = JSON.stringify(space_info_template)
                                             }
                                         }
                                         if (container.__block_response) {
