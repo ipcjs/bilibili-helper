@@ -16,7 +16,7 @@ import { util_init } from './util/initiator'
 import { util_ui_msg } from './util/message'
 import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
-import buss from "./feature/buss";
+import space_info_template from './feature/bili/space_info_template'
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
 function scriptContent() {
     'use strict';
@@ -30,12 +30,6 @@ function scriptContent() {
     if (document.readyState === 'uninitialized') { // Firefox上, 对于iframe中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
         log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态')
         setTimeout(() => scriptSource(invokeBy + '.timeout'), 0) // 这里会暴力执行多次, 直到状态不为uninitialized...
-        return
-    }
-
-    if(location.href.indexOf('space.bilibili.com/11783021') !== -1){
-        //获取番剧出差页面，单独处理
-        buss()
         return
     }
 
@@ -249,6 +243,11 @@ function scriptContent() {
                                                 cb.apply(container.responseText ? receiver : this, arguments);
                                             } else {
                                                 areaLimit(false)
+                                            }
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=11783021'))) {
+                                            const json = JSON.parse(target.responseText)
+                                            if (json.code === -404) {
+                                                container.responseText = JSON.stringify(space_info_template)
                                             }
                                         }
                                         if (container.__block_response) {

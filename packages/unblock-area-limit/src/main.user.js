@@ -71,7 +71,6 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
-
 function scriptSource(invokeBy) {
     // @template-content
 }

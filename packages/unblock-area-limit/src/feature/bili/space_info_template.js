@@ -1,4 +1,4 @@
-export const bussJson = {
+export default {
     "code": 0,
     "message": "0",
     "ttl": 1,

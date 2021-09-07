@@ -71,7 +71,6 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 }
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
-
 function scriptSource(invokeBy) {
     // @template-content    var Strings;
     (function (Strings) {
@@ -2842,7 +2841,7 @@ function scriptSource(invokeBy) {
         }
     }
 
-    const bussJson = {
+    var space_info_template = {
         "code": 0,
         "message": "0",
         "ttl": 1,
@@ -2941,71 +2940,6 @@ function scriptSource(invokeBy) {
         }
     };
 
-    var buss = () => {
-
-        console.log('el psy congroo');
-
-
-        const modifyResponse = function (response)  {
-
-
-            if (this.readyState === 4) {
-                //修改请求结果
-                if(this.requestURL.indexOf('api.bilibili.com/x/space/acc/info?mid=11783021') !== -1){
-
-                    const original_response = response.target.responseText;
-                    if(original_response){
-                        const origin = JSON.parse(original_response);
-
-                        if(origin.code === -404){
-
-                            Object.defineProperty(this, "responseText", {writable: true});
-
-                            console.log('检测到 哔哩哔哩番剧出差API，已经替换，do misaka如此说到',bussJson);
-
-                            this.responseText = JSON.stringify(bussJson);
-                        }
-                    }
-
-                }
-            }
-
-
-
-        };
-
-        //修改原生XMLRequest对象中的一些方法
-
-        const openPyBass = (original) => {
-
-            return function (method, url, async) {
-                // 保存请求相关参数
-                this.requestMethod = method;
-                this.requestURL = url;
-
-                this.addEventListener("readystatechange", modifyResponse);
-
-                return original.apply(this, arguments);
-
-            }
-
-        };
-
-        const sendBypass = (original) => {
-            return function (data) {
-                this.requestData = data;
-                return original.apply(this, arguments);
-            }
-        };
-
-        (function (window){
-            window.XMLHttpRequest.prototype.open = openPyBass(window.XMLHttpRequest.prototype.open);
-            window.XMLHttpRequest.prototype.send = sendBypass(window.XMLHttpRequest.prototype.send);
-        })(window);
-
-
-    };
-
     function injectFetch() {
         // 当前未替换任何内容...
         const originFetch = window.fetch;
@@ -3070,12 +3004,6 @@ function scriptSource(invokeBy) {
         if (document.readyState === 'uninitialized') { // Firefox上, 对于iframe中执行的脚本, 会出现这样的状态且获取到的href为about:blank...
             log('invokeBy:', invokeBy, 'readState:', document.readyState, 'href:', location.href, '需要等待进入loading状态');
             setTimeout(() => scriptSource(invokeBy + '.timeout'), 0); // 这里会暴力执行多次, 直到状态不为uninitialized...
-            return
-        }
-
-        if(location.href.indexOf('space.bilibili.com/11783021') !== -1){
-            //获取番剧出差页面，单独处理
-            buss();
             return
         }
 
@@ -3283,6 +3211,11 @@ function scriptSource(invokeBy) {
                                                     cb.apply(container.responseText ? receiver : this, arguments);
                                                 } else {
                                                     areaLimit(false);
+                                                }
+                                            } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=11783021'))) {
+                                                const json = JSON.parse(target.responseText);
+                                                if (json.code === -404) {
+                                                    container.responseText = JSON.stringify(space_info_template);
                                                 }
                                             }
                                             if (container.__block_response) {
