@@ -157,6 +157,7 @@ function fixBangumiPlayPage() {
         if (util_page.anime_ep() || util_page.anime_ss()) {
             const $app = document.getElementById('app')
             if (!$app || invalidInitialState) {
+                const appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? true
                 try {
                     // 读取保存的season_id
                     const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
@@ -215,7 +216,7 @@ function fixBangumiPlayPage() {
                             cover: result.result.cover,
                             episodes: eps,
                             ssId: result.result.season_id,
-                            appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
+                            appOnly: appOnly,
                         }
                     } catch (e) {
                         util_warn('通过bangumi接口获取ep信息失败', e)
@@ -253,7 +254,7 @@ function fixBangumiPlayPage() {
                                 cover: result.result.cover,
                                 episodes: eps,
                                 ssId: result.result.season_id,
-                                appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
+                                appOnly: appOnly,
                             }
                         } catch (e) {
                             // 很多balh_config.server_bilibili_api_proxy并不支持代理所有Api
@@ -316,7 +317,7 @@ function fixBangumiPlayPage() {
                             cover: result.result.cover,
                             episodes: eps,
                             ssId: season_id,
-                            appOnly: invalidInitialState?.mediaInfo?.rights?.appOnly ?? true,
+                            appOnly: appOnly,
                         }
                     }
                     const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs)
@@ -401,7 +402,7 @@ export function area_limit_for_vue() {
     function replaceInitialState() {
         modifyGlobalValue('__INITIAL_STATE__', {
             onWrite: (value) => {
-                if (value?.epInfo?.id === -1 && value?.epList?.length === 0) {
+                if (value?.epInfo?.id === -1 && value?.epList?.length === 0 && value?.mediaInfo?.rights?.limitNotFound === true) {
                     invalidInitialState = value
                     return undefined
                 }

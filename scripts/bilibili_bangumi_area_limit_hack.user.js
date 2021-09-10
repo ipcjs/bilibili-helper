@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.7
+// @version      8.2.8
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2024,7 +2024,7 @@ function scriptSource(invokeBy) {
     let invalidInitialState;
     function fixBangumiPlayPage() {
         util_init(() => __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             if (util_page.bangumi_md()) {
                 // 临时保存当前的season_id
                 cookieStorage.set('balh_curr_season_id', (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.season_id, '');
@@ -2032,6 +2032,7 @@ function scriptSource(invokeBy) {
             if (util_page.anime_ep() || util_page.anime_ss()) {
                 const $app = document.getElementById('app');
                 if (!$app || invalidInitialState) {
+                    const appOnly = (_e = (_d = (_c = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) !== null && _e !== void 0 ? _e : true;
                     try {
                         // 读取保存的season_id
                         const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1];
@@ -2091,7 +2092,7 @@ function scriptSource(invokeBy) {
                                 cover: result.result.cover,
                                 episodes: eps,
                                 ssId: result.result.season_id,
-                                appOnly: (_e = (_d = (_c = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) !== null && _e !== void 0 ? _e : true,
+                                appOnly: appOnly,
                             };
                         }
                         catch (e) {
@@ -2129,7 +2130,7 @@ function scriptSource(invokeBy) {
                                     cover: result.result.cover,
                                     episodes: eps,
                                     ssId: result.result.season_id,
-                                    appOnly: (_h = (_g = (_f = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _f === void 0 ? void 0 : _f.rights) === null || _g === void 0 ? void 0 : _g.appOnly) !== null && _h !== void 0 ? _h : true,
+                                    appOnly: appOnly,
                                 };
                             }
                             catch (e) {
@@ -2189,12 +2190,12 @@ function scriptSource(invokeBy) {
                                 titleFormat: ep.index_title,
                                 htmlTitle: result.result.title,
                                 mediaInfoTitle: result.result.title,
-                                mediaInfoId: (_k = (_j = result.result.media) === null || _j === void 0 ? void 0 : _j.media_id) !== null && _k !== void 0 ? _k : 28229002,
+                                mediaInfoId: (_g = (_f = result.result.media) === null || _f === void 0 ? void 0 : _f.media_id) !== null && _g !== void 0 ? _g : 28229002,
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
                                 episodes: eps,
                                 ssId: season_id,
-                                appOnly: (_o = (_m = (_l = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _l === void 0 ? void 0 : _l.rights) === null || _m === void 0 ? void 0 : _m.appOnly) !== null && _o !== void 0 ? _o : true,
+                                appOnly: appOnly,
                             };
                         }
                         const pageTemplateString = Strings.replaceTemplate(pageTemplate, templateArgs);
@@ -2219,7 +2220,7 @@ function scriptSource(invokeBy) {
                     // 插入eplist_module的位置和内容一定要是这样... 不能改...
                     // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
                     const $template = createElement('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim());
-                    (_p = $danmukuBox.parentElement) === null || _p === void 0 ? void 0 : _p.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
+                    (_h = $danmukuBox.parentElement) === null || _h === void 0 ? void 0 : _h.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
                 }
             }
         }));
@@ -2276,8 +2277,8 @@ function scriptSource(invokeBy) {
         function replaceInitialState() {
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
-                    var _a, _b, _c, _d, _e, _f;
-                    if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1 && ((_b = value === null || value === void 0 ? void 0 : value.epList) === null || _b === void 0 ? void 0 : _b.length) === 0) {
+                    var _a, _b, _c, _d, _e, _f, _g, _h;
+                    if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1 && ((_b = value === null || value === void 0 ? void 0 : value.epList) === null || _b === void 0 ? void 0 : _b.length) === 0 && ((_d = (_c = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.limitNotFound) === true) {
                         invalidInitialState = value;
                         return undefined;
                     }
@@ -2290,12 +2291,12 @@ function scriptSource(invokeBy) {
                             }
                         }
                     }
-                    if (((_d = (_c = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) === true) {
+                    if (((_f = (_e = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _e === void 0 ? void 0 : _e.rights) === null || _f === void 0 ? void 0 : _f.appOnly) === true) {
                         value.mediaInfo.rights.appOnly = false;
                         window.__balh_app_only__ = true;
                     }
-                    ifNotNull((_e = value === null || value === void 0 ? void 0 : value.epInfo) === null || _e === void 0 ? void 0 : _e.rights, (it) => it.area_limit = 0);
-                    (_f = value === null || value === void 0 ? void 0 : value.epList) === null || _f === void 0 ? void 0 : _f.forEach((it) => ifNotNull(it === null || it === void 0 ? void 0 : it.rights, (it) => it.area_limit = 0));
+                    ifNotNull((_g = value === null || value === void 0 ? void 0 : value.epInfo) === null || _g === void 0 ? void 0 : _g.rights, (it) => it.area_limit = 0);
+                    (_h = value === null || value === void 0 ? void 0 : value.epList) === null || _h === void 0 ? void 0 : _h.forEach((it) => ifNotNull(it === null || it === void 0 ? void 0 : it.rights, (it) => it.area_limit = 0));
                     return value;
                 }
             });
