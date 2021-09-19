@@ -1,9 +1,4 @@
-import css from './index.scss'
-
-GM.addStyle(css)
-
-ipcjs.installInto(({ log, html, $ }) => {
-    log = GM_info.script.name.endsWith('.dev') ? log : () => { }
+export default function ({ log }) {
     removeThankButton(document)
     new MutationObserver((mutations, observer) => {
         // log(mutations)
@@ -42,4 +37,4 @@ ipcjs.installInto(({ log, html, $ }) => {
             log(`modify: ${count}`)
         }
     }
-})
+}
