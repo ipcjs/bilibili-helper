@@ -3,7 +3,7 @@
  * npx rollup --config rollup.config.js -w
  */
 import path from 'path'
-import scssToString from 'rollup-plugin-scss-string'
+import scss from 'rollup-plugin-scss'
 
 const userscriptHead = `
 // ==UserScript==
@@ -28,8 +28,8 @@ export default {
         format: 'esm',
     },
     plugins: [
-        scssToString({
-            include: '**/*.scss'
+        scss({
+            output: false
         })
     ]
 }

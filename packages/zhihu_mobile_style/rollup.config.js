@@ -1,5 +1,5 @@
 import path from 'path'
-import scssToString from 'rollup-plugin-scss-string'
+import scss from 'rollup-plugin-scss'
 import template from '../rollup-plugin-output-template/index'
 
 export default {
@@ -9,8 +9,8 @@ export default {
         format: 'es',
     },
     plugins: [
-        scssToString({
-            include: '**/*.scss'
+        scss({
+            output: false,
         }),
         template({
             filePath: path.resolve(__dirname, 'index.user.js'),

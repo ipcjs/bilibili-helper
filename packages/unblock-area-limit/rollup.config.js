@@ -1,5 +1,5 @@
 import path from 'path'
-import scssToString from 'rollup-plugin-scss-string'
+import scss from 'rollup-plugin-scss'
 import typescript from '@rollup/plugin-typescript'
 import template from '../rollup-plugin-output-template/index'
 import html from 'rollup-plugin-html'
@@ -11,8 +11,8 @@ export default {
         format: 'es',
     },
     plugins: [
-        scssToString({
-            include: '**/*.scss'
+        scss({
+            output: false
         }),
         typescript({
             // 这个版本会"编译"async函数
