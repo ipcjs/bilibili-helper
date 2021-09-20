@@ -27,7 +27,7 @@ function main ({ log }) {
                 }
             }
         }
-    }).observe(document.body, {
+    }).observe(document.documentElement, {
         childList: true,
         subtree: true
     });

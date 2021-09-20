@@ -9,7 +9,7 @@ export default function ({ log }) {
                 }
             }
         }
-    }).observe(document.body, {
+    }).observe(document.documentElement, {
         childList: true,
         subtree: true
     })
