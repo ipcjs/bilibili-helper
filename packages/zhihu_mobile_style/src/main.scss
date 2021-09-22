@@ -5,11 +5,11 @@
     .SearchBar {
         display: none;
     }
-    &-inner {
+    & &-inner {
         width: 100%;
         min-width: inherit;
     }
-    &-Tabs {
+    & &-Tabs {
         margin-left: 0px;
         margin-right: 4px;
     }
@@ -34,12 +34,37 @@
     }
 }
 
-.TopstoryPageHeader-main {
-    margin-left: 16px;
+/* 往下滚动后显示的顶栏 */
+.TopstoryPageHeader {
+    min-width: inherit !important;
+    width: 100% !important;
+
+    & > div {
+        flex: none;
+    }
+    & > &-main {
+        flex: 0 0 64px;
+    }
+    & > &-aside {
+        margin: 0 30px 0 12px;
+        flex: auto;
+    }
+
+    &-main &-tabs {
+        display: none;
+    }
+}
+
+.Topstory {
+    // 顶部广告
+    .css-11h6utu {
+        width: 100%;
+    }
 }
 
 /* 通用列表 */
 .Topstory-container,
+.Search-container,
 .Question-main,
 .Profile-main {
     display: block;
@@ -47,6 +72,7 @@
     padding: 0px;
 }
 .Topstory-mainColumn,
+.SearchMain,
 .Question-mainColumn,
 .Profile-mainColumn {
     width: 100%;
@@ -102,6 +128,12 @@
         }
     }
 }
+
+.SearchTabs-inner {
+    width: 100%;
+}
+
+.SearchTabs-inner,
 .ProfileMain-tabs {
     overflow: scroll;
     &::-webkit-scrollbar {
