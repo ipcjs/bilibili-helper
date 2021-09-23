@@ -11,7 +11,7 @@
 
 ### 东立电子书
 
-1. [解除东立电子书区域限制](https://github.com/ipcjs/tongli-ebook-tw-unblock)
+1. [解除东立电子书区域限制](https://github.com/ipcjs/tongli-ebook-tw-unblock)：已失效
 
 ### Bangumi
 
@@ -25,6 +25,7 @@
 ### 知乎
 
 1. [Fuck ZhiHu Mobile Style](https://greasyfork.org/zh-CN/scripts/374771-zhihu-mobile-style): 日他娘的逼乎手机网页版 样式ver, 适配知乎电脑版到手机上, 要配合[Yandex浏览器](https://browser.yandex.com/mobile)和[User-Agent Switcher](https://chrome.google.com/webstore/detail/user-agent-switcher-for-c/djflhoibgkdhkhhcedjiklpkjnoahfmg)使用
+2. [ipcjs/make-do-with-zhihu-2](https://github.com/ipcjs/make-do-with-zhihu-2)：Fuck ZhiHu Mobile Style的扩展版，用起来更方便
 
 ### Others
 
