@@ -18,6 +18,7 @@ import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
 import space_info_template from './feature/bili/space_info_template'
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
+import space_info_drama_template from './feature/bili/space_info_drama_template';
 function scriptContent() {
     'use strict';
     let log = console.log.bind(console, 'injector:')
@@ -248,6 +249,11 @@ function scriptContent() {
                                             const json = JSON.parse(target.responseText)
                                             if (json.code === -404) {
                                                 container.responseText = JSON.stringify(space_info_template)
+                                            }
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=1988098633'))) {
+                                            const json = JSON.parse(target.responseText)
+                                            if (json.code === -404) {
+                                                container.responseText = JSON.stringify(space_info_drama_template)
                                             }
                                         }
                                         if (container.__block_response) {
