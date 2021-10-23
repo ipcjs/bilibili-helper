@@ -1086,9 +1086,32 @@ function scriptContent() {
                             return Promise.reject(e)
                         })
                         .then(data => {
+                            function sanitizemcdn(obj, url1, url2) {
+                                const regex = /mcdn\.bilivideo\.cn:4483\//;
+                                for (let vid = 0; vid < obj.length; vid++) {
+                                    if (regex.exec(obj[vid][url1])) {
+                                        let backups = obj[vid].backup_url;
+                                        for (let i = 0; i < backups.length; i++) {
+                                            if (regex.exec(backups[i]) == null) {
+                                                obj[vid][url1] = backups[i];
+                                                obj[vid][url2] = backups[i];
+                                                obj[vid].backup_url = [backups[i]];
+                                                obj[vid].backupUrl = [backups[i]];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                return obj;
+                            }
                             if (data.dash) {
+                                data.dash.video = sanitizemcdn(data.dash.video, "base_url", "baseUrl")
+                                data.dash.audio = sanitizemcdn(data.dash.audio, "base_url", "baseUrl")
                                 // dash中的字段全部变成了类似C语言的下划线风格...
                                 Objects.convertKeyToSnakeCase(data.dash)
+                            }
+                            if (data.durl) {
+                                data.durl = sanitizemcdn(data.durl, "url", "url")
                             }
                             // 替换后大多数bangumi下的视频都会报CROS错误
                             if (!window.__balh_app_only__ && balh_config.upos_server) {
