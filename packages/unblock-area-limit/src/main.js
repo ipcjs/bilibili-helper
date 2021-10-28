@@ -8,8 +8,8 @@ import { cookieStorage } from './util/cookie'
 import { balh_config, isClosed } from './feature/config'
 import { Func } from './util/utils';
 import { util_page } from './feature/page'
-import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili';
-import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from './api/biliplus';
+import { access_key_param_if_exist, platform_android_param_if_app_only } from './api/bilibili'
+import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from './api/biliplus'
 import { ui } from './util/ui'
 import { Strings } from './util/strings'
 import { util_init } from './util/initiator'
@@ -17,9 +17,7 @@ import { util_ui_msg } from './util/message'
 import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
-import space_info_template from './feature/bili/space_info_template'
-import space_info_drama_template from './feature/bili/space_info_drama_template';
-import space_info_entertainment_template from './feature/bili/space_info_entertainment_template';
+import space_account_info_map from './feature/bili/space_account_info_map'
 
 function scriptContent() {
     'use strict';
@@ -247,20 +245,13 @@ function scriptContent() {
                                             } else {
                                                 areaLimit(false)
                                             }
-                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=11783021'))) {
+                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?'))) {
                                             const json = JSON.parse(target.responseText)
                                             if (json.code === -404) {
-                                                container.responseText = JSON.stringify(space_info_template)
-                                            }
-                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=1988098633'))) {
-                                            const json = JSON.parse(target.responseText)
-                                            if (json.code === -404) {
-                                                container.responseText = JSON.stringify(space_info_drama_template)
-                                            }
-                                        } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/space/acc/info?mid=2042149112'))) {
-                                            const json = JSON.parse(target.responseText)
-                                            if (json.code === -404) {
-                                                container.responseText = JSON.stringify(space_info_entertainment_template)
+                                                const mid = new URL(target.responseURL).searchParams.get('mid')
+                                                if (space_account_info_map[mid]) {
+                                                    container.responseText = JSON.stringify(space_account_info_map[mid])
+                                                }
                                             }
                                         }
                                         if (container.__block_response) {
