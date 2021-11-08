@@ -65,6 +65,9 @@ export interface SeasonInfoOnBangumi {
         cover: string
         title: string  // 番剧名
         total_ep: number
+        up_info: {
+            mid: number
+        }
     }
 }
 
