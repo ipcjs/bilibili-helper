@@ -169,7 +169,7 @@ function fixBangumiPlayPage() {
                     // 如果该接口失效，自动尝试后面的方法
                     try {
                         let result = await bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id)
-                        if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
+                        if (balh_config.server_custom_th && result.code == -404) {
                             result = await fixThailandSeason(ep_id, season_id)
                         }
                         if (result.code) {

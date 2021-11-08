@@ -907,7 +907,7 @@ function scriptContent() {
                     // 对应this.transToProxyUrl的参数, 用`/`分隔, 形如: `${proxyHost}/${area}`
                     let tried_server_args = []
                     const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}/*`) || tried_server_args.includes(`${proxyHost}/${area}`)
-                    const requestPlayUrl = (proxyHost, area = '') => {
+                    const requestPlayUrl = (proxyHost, area) => {
                         tried_server_args.push(`${proxyHost}/${area}`)
                         return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
                             // 捕获错误, 防止依次尝试各各服务器的流程中止
@@ -996,15 +996,15 @@ function scriptContent() {
                     }
                     return Promise.resolve(result)  // 都失败了，返回最后一次数据
                 },
-                transToProxyUrl: function (originUrl, proxyHost, area = '') {
+                transToProxyUrl: function (originUrl, proxyHost, area) {
                     if (r.regex.bilibili_api_proxy.test(proxyHost)) {
                         if (area === 'th') {
                             // 泰区番剧解析
-                            return getMobiPlayUrl(originUrl, proxyHost, true)
+                            return getMobiPlayUrl(originUrl, proxyHost, area)
                         }
                         if (window.__balh_app_only__) {
                             // APP 限定用 mobi api
-                            return getMobiPlayUrl(originUrl, proxyHost)
+                            return getMobiPlayUrl(originUrl, proxyHost, area)
                         }
                         return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + '&area=' + area + access_key_param_if_exist(true);
                     } else {

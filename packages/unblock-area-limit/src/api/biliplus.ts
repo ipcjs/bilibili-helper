@@ -35,16 +35,16 @@ function convertPlayUrl(originUrl: string) {
  * 
  * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
  */
-export function getMobiPlayUrl(originUrl: String, host: String, thailand = false) {
+export function getMobiPlayUrl(originUrl: String, host: String, area: string) {
     // 合成泰区 url
-    if (thailand) {
-        return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, true)}`
+    if (area == 'th') {
+        return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, area)}`
     }
     // 合成完整 mobi api url
-    return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`
+    return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl, area)}`
 }
 
-export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
+export function generateMobiPlayUrlParams(originUrl: String, area: string) {
     // 提取参数为数组
     let a = originUrl.split('?')[1].split('&');
     // 参数数组转换为对象
@@ -57,13 +57,14 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     }
     // 追加 mobi api 需要的参数
     theRequest.access_key = localStorage.access_key;
-    if (thailand) {
+    if (area === 'th') {
         theRequest.area = 'th';
         theRequest.appkey = '7d089525d3611b1c';
         theRequest.build = '1001310';
         theRequest.mobi_app = 'bstar_a';
         theRequest.platform = 'android';
     } else {
+        theRequest.area = area;
         theRequest.appkey = '07da50c9a0bf829f';
         theRequest.build = '5380700';
         theRequest.device = 'android';
@@ -86,7 +87,7 @@ export function generateMobiPlayUrlParams(originUrl: String, thailand = false) {
     }
     // 准备明文
     let plaintext = ''
-    if (thailand) {
+    if (area === 'th') {
         plaintext = mobi_api_params.slice(0, -1) + `acd495b248ec528c2eed1e862d393126`;
     } else {
         plaintext = mobi_api_params.slice(0, -1) + `25bdede4e1581c836cab73a48790ca6e`;
