@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.10
+// @version      8.2.11
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -831,15 +831,15 @@ function scriptSource(invokeBy) {
      *
      * 参考：https://github.com/kghost/bilibili-area-limit/issues/16
      */
-    function getMobiPlayUrl(originUrl, host, thailand = false) {
+    function getMobiPlayUrl(originUrl, host, area) {
         // 合成泰区 url
-        if (thailand) {
-            return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, true)}`;
+        if (area == 'th') {
+            return `${host}/intl/gateway/v2/ogv/playurl?${generateMobiPlayUrlParams(originUrl, area)}`;
         }
         // 合成完整 mobi api url
-        return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl)}`;
+        return `${host}/pgc/player/api/playurl?${generateMobiPlayUrlParams(originUrl, area)}`;
     }
-    function generateMobiPlayUrlParams(originUrl, thailand = false) {
+    function generateMobiPlayUrlParams(originUrl, area) {
         // 提取参数为数组
         let a = originUrl.split('?')[1].split('&');
         // 参数数组转换为对象
@@ -852,7 +852,7 @@ function scriptSource(invokeBy) {
         }
         // 追加 mobi api 需要的参数
         theRequest.access_key = localStorage.access_key;
-        if (thailand) {
+        if (area === 'th') {
             theRequest.area = 'th';
             theRequest.appkey = '7d089525d3611b1c';
             theRequest.build = '1001310';
@@ -860,6 +860,7 @@ function scriptSource(invokeBy) {
             theRequest.platform = 'android';
         }
         else {
+            theRequest.area = area;
             theRequest.appkey = '07da50c9a0bf829f';
             theRequest.build = '5380700';
             theRequest.device = 'android';
@@ -882,7 +883,7 @@ function scriptSource(invokeBy) {
         }
         // 准备明文
         let plaintext = '';
-        if (thailand) {
+        if (area === 'th') {
             plaintext = mobi_api_params.slice(0, -1) + `acd495b248ec528c2eed1e862d393126`;
         }
         else {
@@ -1181,7 +1182,7 @@ function scriptSource(invokeBy) {
         }
         getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
             const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`;
-            const newParams = generateMobiPlayUrlParams(params, true);
+            const newParams = generateMobiPlayUrlParams(params, 'th');
             return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams);
         }
     }
@@ -2032,7 +2033,10 @@ function scriptSource(invokeBy) {
             if (util_page.anime_ep() || util_page.anime_ss()) {
                 const $app = document.getElementById('app');
                 if (!$app || invalidInitialState) {
-                    const appOnly = (_e = (_d = (_c = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) !== null && _e !== void 0 ? _e : true;
+                    // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
+                    // 如：https://www.bilibili.com/bangumi/media/md28235576
+                    // 故当前默认值改为false🤔
+                    let appOnly = (_e = (_d = (_c = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) !== null && _e !== void 0 ? _e : false;
                     try {
                         // 读取保存的season_id
                         const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1];
@@ -2043,8 +2047,9 @@ function scriptSource(invokeBy) {
                         // 如果该接口失效，自动尝试后面的方法
                         try {
                             let result = yield bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id);
-                            if (balh_config.server_custom_th && (result.code == -404 || result.result.total_ep == -1)) {
+                            if (balh_config.server_custom_th && (result.code == -404 || result.result.up_info.mid == 677043260 /* 主站残留泰区数据，部分不完整 */)) {
                                 result = yield fixThailandSeason(ep_id, season_id);
+                                appOnly = true;
                             }
                             if (result.code) {
                                 throw result;
@@ -2896,9 +2901,9 @@ function scriptSource(invokeBy) {
     }
 
     var space_account_info_map = {
-        "11783021": { "code": 0, "message": "0", "ttl": 1, "data": { "mid": 11783021, "name": "哔哩哔哩番剧出差", "sex": "保密", "face": "http://i2.hdslb.com/bfs/face/9f10323503739e676857f06f5e4f5eb323e9f3f2.jpg", "sign": "", "rank": 10000, "level": 6, "jointime": 0, "moral": 0, "silence": 0, "coins": 0, "fans_badge": false, "fans_medal": { "show": false, "wear": false, "medal": null }, "official": { "role": 3, "title": "哔哩哔哩番剧出差 官方账号", "desc": "", "type": 1 }, "vip": { "type": 0, "status": 0, "due_date": 0, "vip_pay_type": 0, "theme_type": 0, "label": { "path": "", "text": "", "label_theme": "", "text_color": "", "bg_style": 0, "bg_color": "", "border_color": "" }, "avatar_subscript": 0, "nickname_color": "", "role": 0, "avatar_subscript_url": "" }, "pendant": { "pid": 0, "name": "", "image": "", "expire": 0, "image_enhance": "", "image_enhance_frame": "" }, "nameplate": { "nid": 0, "name": "", "image": "", "image_small": "", "level": "", "condition": "" }, "user_honour_info": { "mid": 0, "colour": null, "tags": null }, "is_followed": false, "top_photo": "http://i0.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", "theme": {}, "sys_notice": {}, "live_room": { "roomStatus": 1, "liveStatus": 0, "url": "https://live.bilibili.com/931774", "title": "「梦之祭！部」 社团活动最终回", "cover": "http://i0.hdslb.com/bfs/live/c89c499096fa6527765de1fcaa021c9e2db7fbf8.jpg", "online": 0, "roomid": 931774, "roundStatus": 0, "broadcast_type": 0 }, "birthday": "", "school": { "name": "" }, "profession": { "name": "" }, "tags": null, "series": { "user_upgrade_status": 3, "show_upgrade_window": false } } },
-        "1988098633": { code: 0, message: "0", ttl: 1, data: { mid: 1988098633, name: "b站_DM組", sex: "保密", face: "http://i0.hdslb.com/bfs/face/member/noface.jpg", sign: "", rank: 10000, level: 2, jointime: 0, moral: 0, silence: 0, coins: 0, fans_badge: false, fans_medal: { show: false, wear: false, medal: null }, official: { role: 0, title: "", desc: "", type: -1 }, vip: { type: 0, status: 0, due_date: 0, vip_pay_type: 0, theme_type: 0, label: { path: "", text: "", label_theme: "", text_color: "", bg_style: 0, bg_color: "", border_color: "", }, avatar_subscript: 0, nickname_color: "", role: 0, avatar_subscript_url: "", }, pendant: { pid: 0, name: "", image: "", expire: 0, image_enhance: "", image_enhance_frame: "", }, nameplate: { nid: 0, name: "", image: "", image_small: "", level: "", condition: "", }, user_honour_info: { mid: 0, colour: null, tags: [] }, is_followed: true, top_photo: "http://i1.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", theme: {}, sys_notice: {}, live_room: { roomStatus: 0, liveStatus: 0, url: "", title: "", cover: "", online: 0, roomid: 0, roundStatus: 0, broadcast_type: 0, }, birthday: "01-01", school: { name: "" }, profession: { name: "" }, tags: null, series: { user_upgrade_status: 3, show_upgrade_window: false }, }, },
-        "2042149112": { code: 0, message: "0", ttl: 1, data: { mid: 2042149112, name: "b站_EN組", sex: "保密", face: "http://i0.hdslb.com/bfs/face/member/noface.jpg", sign: "", rank: 10000, level: 3, jointime: 0, moral: 0, silence: 0, coins: 0, fans_badge: false, fans_medal: { show: false, wear: false, medal: null }, official: { role: 0, title: "", desc: "", type: -1 }, vip: { type: 0, status: 0, due_date: 0, vip_pay_type: 0, theme_type: 0, label: { path: "", text: "", label_theme: "", text_color: "", bg_style: 0, bg_color: "", border_color: "", }, avatar_subscript: 0, nickname_color: "", role: 0, avatar_subscript_url: "", }, pendant: { pid: 0, name: "", image: "", expire: 0, image_enhance: "", image_enhance_frame: "", }, nameplate: { nid: 0, name: "", image: "", image_small: "", level: "", condition: "", }, user_honour_info: { mid: 0, colour: null, tags: [] }, is_followed: false, top_photo: "http://i1.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", theme: {}, sys_notice: {}, live_room: { roomStatus: 0, liveStatus: 0, url: "", title: "", cover: "", online: 0, roomid: 0, roundStatus: 0, broadcast_type: 0, }, birthday: "", school: { name: "" }, profession: { name: "" }, tags: null, series: { user_upgrade_status: 3, show_upgrade_window: false }, }, },
+        "11783021": { "code": 0, "message": "0", "ttl": 1, "data": { "mid": 11783021, "name": "哔哩哔哩番剧出差", "sex": "保密", "face": "http://i0.hdslb.com/bfs/face/9f10323503739e676857f06f5e4f5eb323e9f3f2.jpg", "sign": "", "rank": 10000, "level": 6, "jointime": 0, "moral": 0, "silence": 0, "coins": 0, "fans_badge": false, "fans_medal": { "show": false, "wear": false, "medal": null }, "official": { "role": 3, "title": "哔哩哔哩番剧出差 官方账号", "desc": "", "type": 1 }, "vip": { "type": 0, "status": 0, "due_date": 0, "vip_pay_type": 0, "theme_type": 0, "label": { "path": "", "text": "", "label_theme": "", "text_color": "", "bg_style": 0, "bg_color": "", "border_color": "" }, "avatar_subscript": 0, "nickname_color": "", "role": 0, "avatar_subscript_url": "" }, "pendant": { "pid": 0, "name": "", "image": "", "expire": 0, "image_enhance": "", "image_enhance_frame": "" }, "nameplate": { "nid": 0, "name": "", "image": "", "image_small": "", "level": "", "condition": "" }, "user_honour_info": { "mid": 0, "colour": null, "tags": [] }, "is_followed": true, "top_photo": "http://i2.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", "theme": {}, "sys_notice": {}, "live_room": { "roomStatus": 1, "liveStatus": 0, "url": "https://live.bilibili.com/931774", "title": "「梦之祭！部」 社团活动最终回", "cover": "http://i0.hdslb.com/bfs/live/c89c499096fa6527765de1fcaa021c9e2db7fbf8.jpg", "online": 0, "roomid": 931774, "roundStatus": 0, "broadcast_type": 0 }, "birthday": "", "school": { "name": "" }, "profession": { "name": "" }, "tags": null, "series": { "user_upgrade_status": 3, "show_upgrade_window": false } } },
+        "1988098633": { "code": 0, "message": "0", "ttl": 1, "data": { "mid": 1988098633, "name": "b站_戲劇咖", "sex": "保密", "face": "http://i0.hdslb.com/bfs/face/member/noface.jpg", "sign": "提供bilibili港澳台地區專屬戲劇節目。", "rank": 10000, "level": 2, "jointime": 0, "moral": 0, "silence": 0, "coins": 0, "fans_badge": false, "fans_medal": { "show": false, "wear": false, "medal": null }, "official": { "role": 0, "title": "", "desc": "", "type": -1 }, "vip": { "type": 0, "status": 0, "due_date": 0, "vip_pay_type": 0, "theme_type": 0, "label": { "path": "", "text": "", "label_theme": "", "text_color": "", "bg_style": 0, "bg_color": "", "border_color": "" }, "avatar_subscript": 0, "nickname_color": "", "role": 0, "avatar_subscript_url": "" }, "pendant": { "pid": 0, "name": "", "image": "", "expire": 0, "image_enhance": "", "image_enhance_frame": "" }, "nameplate": { "nid": 0, "name": "", "image": "", "image_small": "", "level": "", "condition": "" }, "user_honour_info": { "mid": 0, "colour": null, "tags": [] }, "is_followed": true, "top_photo": "http://i0.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", "theme": {}, "sys_notice": {}, "live_room": { "roomStatus": 0, "liveStatus": 0, "url": "", "title": "", "cover": "", "online": 0, "roomid": 0, "roundStatus": 0, "broadcast_type": 0 }, "birthday": "01-01", "school": { "name": "" }, "profession": { "name": "" }, "tags": null, "series": { "user_upgrade_status": 3, "show_upgrade_window": false } } },
+        "2042149112": { "code": 0, "message": "0", "ttl": 1, "data": { "mid": 2042149112, "name": "b站_綜藝咖", "sex": "保密", "face": "http://i0.hdslb.com/bfs/face/member/noface.jpg", "sign": "提供bilibili港澳台地區專屬綜藝節目。", "rank": 10000, "level": 3, "jointime": 0, "moral": 0, "silence": 0, "coins": 0, "fans_badge": false, "fans_medal": { "show": false, "wear": false, "medal": null }, "official": { "role": 0, "title": "", "desc": "", "type": -1 }, "vip": { "type": 0, "status": 0, "due_date": 0, "vip_pay_type": 0, "theme_type": 0, "label": { "path": "", "text": "", "label_theme": "", "text_color": "", "bg_style": 0, "bg_color": "", "border_color": "" }, "avatar_subscript": 0, "nickname_color": "", "role": 0, "avatar_subscript_url": "" }, "pendant": { "pid": 0, "name": "", "image": "", "expire": 0, "image_enhance": "", "image_enhance_frame": "" }, "nameplate": { "nid": 0, "name": "", "image": "", "image_small": "", "level": "", "condition": "" }, "user_honour_info": { "mid": 0, "colour": null, "tags": [] }, "is_followed": true, "top_photo": "http://i0.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", "theme": {}, "sys_notice": {}, "live_room": { "roomStatus": 0, "liveStatus": 0, "url": "", "title": "", "cover": "", "online": 0, "roomid": 0, "roundStatus": 0, "broadcast_type": 0 }, "birthday": "", "school": { "name": "" }, "profession": { "name": "" }, "tags": null, "series": { "user_upgrade_status": 3, "show_upgrade_window": false } } },
     };
 
     function scriptContent() {
@@ -3773,7 +3778,11 @@ function scriptSource(invokeBy) {
                         // 对应this.transToProxyUrl的参数, 用`/`分隔, 形如: `${proxyHost}/${area}`
                         let tried_server_args = [];
                         const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}/*`) || tried_server_args.includes(`${proxyHost}/${area}`);
-                        const requestPlayUrl = (proxyHost, area = '') => {
+                        /**
+                         * @param {string} proxyHost 代理地址
+                         * @param {"cn"|"hk"|"th"|"cn"|""} area 区域
+                         */
+                        const requestPlayUrl = (proxyHost, area) => {
                             tried_server_args.push(`${proxyHost}/${area}`);
                             return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
                                 // 捕获错误, 防止依次尝试各各服务器的流程中止
@@ -3834,7 +3843,8 @@ function scriptSource(invokeBy) {
                         // 首选服务器解析
                         if (balh_config.server_custom) {
                             ui.playerMsg('使用首选代理服务器拉取视频地址...');
-                            result = await requestPlayUrl(balh_config.server_custom);
+                            // 首选代理服务器的area参数需要为空
+                            result = await requestPlayUrl(balh_config.server_custom, '');
                             if (!result.code) {
                                 return Promise$1.resolve(result)
                             }
@@ -3862,15 +3872,15 @@ function scriptSource(invokeBy) {
                         }
                         return Promise$1.resolve(result)  // 都失败了，返回最后一次数据
                     },
-                    transToProxyUrl: function (originUrl, proxyHost, area = '') {
+                    transToProxyUrl: function (originUrl, proxyHost, area) {
                         if (r.regex.bilibili_api_proxy.test(proxyHost)) {
                             if (area === 'th') {
                                 // 泰区番剧解析
-                                return getMobiPlayUrl(originUrl, proxyHost, true)
+                                return getMobiPlayUrl(originUrl, proxyHost, area)
                             }
                             if (window.__balh_app_only__) {
                                 // APP 限定用 mobi api
-                                return getMobiPlayUrl(originUrl, proxyHost)
+                                return getMobiPlayUrl(originUrl, proxyHost, area)
                             }
                             return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + '&area=' + area + access_key_param_if_exist(true);
                         } else {

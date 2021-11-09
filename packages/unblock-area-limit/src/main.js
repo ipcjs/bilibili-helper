@@ -907,6 +907,10 @@ function scriptContent() {
                     // 对应this.transToProxyUrl的参数, 用`/`分隔, 形如: `${proxyHost}/${area}`
                     let tried_server_args = []
                     const isTriedServerArg = (proxyHost, area) => tried_server_args.includes(`${proxyHost}/*`) || tried_server_args.includes(`${proxyHost}/${area}`)
+                    /**
+                     * @param {string} proxyHost 代理地址
+                     * @param {"cn"|"hk"|"th"|"cn"|""} area 区域
+                     */
                     const requestPlayUrl = (proxyHost, area) => {
                         tried_server_args.push(`${proxyHost}/${area}`)
                         return Async.ajax(this.transToProxyUrl(originUrl, proxyHost, area))
@@ -968,7 +972,8 @@ function scriptContent() {
                     // 首选服务器解析
                     if (balh_config.server_custom) {
                         ui.playerMsg('使用首选代理服务器拉取视频地址...')
-                        result = await requestPlayUrl(balh_config.server_custom)
+                        // 首选代理服务器的area参数需要为空
+                        result = await requestPlayUrl(balh_config.server_custom, '')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }

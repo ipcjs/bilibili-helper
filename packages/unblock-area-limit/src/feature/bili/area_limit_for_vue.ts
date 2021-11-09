@@ -157,7 +157,10 @@ function fixBangumiPlayPage() {
         if (util_page.anime_ep() || util_page.anime_ss()) {
             const $app = document.getElementById('app')
             if (!$app || invalidInitialState) {
-                var appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? true
+                // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
+                // 如：https://www.bilibili.com/bangumi/media/md28235576
+                // 故当前默认值改为false🤔
+                let appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? false
                 try {
                     // 读取保存的season_id
                     const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
@@ -169,11 +172,9 @@ function fixBangumiPlayPage() {
                     // 如果该接口失效，自动尝试后面的方法
                     try {
                         let result = await bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id)
-                        if (balh_config.server_custom_th && (result.code == -404 || result.result.up_info.mid == 677043260 /* 主站残留泰区数据，部分不完整 */ )) {
+                        if (balh_config.server_custom_th && (result.code == -404 || result.result.up_info.mid == 677043260 /* 主站残留泰区数据，部分不完整 */)) {
                             result = await fixThailandSeason(ep_id, season_id)
-                        } else {
-                            // web 锁区别用 app api
-                            appOnly = false
+                            appOnly = true
                         }
                         if (result.code) {
                             throw result
