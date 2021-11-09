@@ -65,6 +65,9 @@ export interface SeasonInfoOnBangumi {
         cover: string
         title: string  // 番剧名
         total_ep: number
+        up_info: {
+            mid: number
+        }
     }
 }
 
@@ -134,7 +137,7 @@ export class BiliBiliApi {
     }
     getSeasonInfoByEpSsIdOnThailand(ep_id: string, season_id: string) {
         const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
-        const newParams = generateMobiPlayUrlParams(params, true)
+        const newParams = generateMobiPlayUrlParams(params, 'th')
         return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams)
     }
 }
