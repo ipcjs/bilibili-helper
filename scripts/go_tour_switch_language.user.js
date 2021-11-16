@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Switch language button for tour.golang.org
 // @namespace    https://github.com/ipcjs/
-// @version      0.1
+// @version      0.2
 // @description  给页面添加一个切换中/英文的按钮
 // @author       ipcjs
+// @icon         https://www.google.com/s2/favicons?domain=golang.org
 // @match        https://tour.golang.org/*
 // @match        https://tour.go-zh.org/*
 // @grant        none
