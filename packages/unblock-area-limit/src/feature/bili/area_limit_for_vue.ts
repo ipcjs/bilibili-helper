@@ -71,7 +71,8 @@ function appendScript(
             type: props.type || undefined,
             src: props.src || undefined,
             crossOrigin: props.crossOrigin || undefined,
-            event: { load: onLoad },
+            // 无论成功失败, 都需要让异步方法继续执行下去
+            event: { load: onLoad, error: onLoad },
         }, innerHTML))
     })
 }
