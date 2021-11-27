@@ -144,6 +144,7 @@ function scriptContent() {
                                             let json = JSON.parse(target.responseText);
                                             // https://github.com/ipcjs/bilibili-helper/issues/775
                                             // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
+                                            /*
                                             if (json.code == -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) {
                                                 log('/x/player/v2', '404', target.responseText);
                                                 container.__block_response = true;
@@ -199,6 +200,30 @@ function scriptContent() {
                                                     container.responseText = JSON.stringify(json);
                                                     container.response = container.responseText;
                                                 }
+                                            }
+                                            */
+                                            if (json.code === -400 || json.code === -404) {
+                                                // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
+                                                container.__block_response = true;
+                                                let thailand_sub_url = container.__url.replace('https://api.bilibili.com/x/player/v2', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
+                                                Async.ajax(thailand_sub_url).then(async thailand_data => {
+                                                    let subtitle = { subtitles: [] };
+                                                    thailand_data.data.subtitles.forEach((item) => {
+                                                        let sub = {
+                                                            'id': item.id,
+                                                            'id_str': item.id.toString(),
+                                                            'lan': item.key,
+                                                            'lan_doc': item.title,
+                                                            'subtitle_url': item.url.replace(/https?:\/\//, '//')
+                                                        }
+                                                        subtitle.subtitles.push(sub);
+                                                    })
+                                                    let json = { code: 0, data: { subtitle: [] } };
+                                                    json.data.subtitle = subtitle;
+                                                    container.responseText = JSON.stringify(json);
+                                                    container.response = container.responseText;
+                                                    cb.apply(container.responseText ? receiver : this, arguments);
+                                                })
                                             }
                                         } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/playurl'))) {
                                             log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, target.response)
