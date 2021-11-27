@@ -269,19 +269,20 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 异步构建 segmentBaseMap
     let taskList: Promise<any>[] = []
     // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
-    let range = Math.round(result.dash.duration * 3.5).toString()
+    // let range = Math.round(result.dash.duration * 3.5).toString()
+    // 乱猜 range 导致泡面番播不出
     result.dash.video.forEach((video) => {
         if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
             // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
             video.baseUrl = video.backupUrl[0]
         }
-        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range))
+        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)))
     })
     result.dash.audio.forEach((audio) => {
         if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
             audio.baseUrl = audio.backupUrl[0]
         }
-        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range))
+        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)))
     })
     await Promise.all(taskList)
     if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
