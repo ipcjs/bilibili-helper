@@ -5,8 +5,8 @@ import { Strings } from "./strings"
 const tag = GM_info.script.name + '.msg'
 
 // 计算"楼层", 若当前window就是顶层的window, 则floor为0, 以此类推
-function computeFloor(w: Window = window, floor = 0): number {
-    if (w === window.top) {
+function computeFloor(w: Window = unsafeWindow, floor = 0): number {
+    if (w === unsafeWindow.top) {
         return floor
     } else {
         return computeFloor(w.parent, floor + 1)
@@ -16,7 +16,7 @@ function computeFloor(w: Window = window, floor = 0): number {
 let floor = computeFloor()
 let msgList: string[] = []
 if (floor === 0) { // 只有顶层的Window才需要收集日志
-    window.addEventListener('message', (event) => {
+    unsafeWindow.addEventListener('message', (event) => {
         if (event.data instanceof Array && event.data[0] === tag) {
             let [/*tag*/, fromFloor, msg] = event.data
             msgList.push(Strings.multiply('    ', fromFloor) + msg)
@@ -26,7 +26,7 @@ if (floor === 0) { // 只有顶层的Window才需要收集日志
 
 const logHub = {
     msg: function (msg: string) {
-        window.top.postMessage([tag, floor, msg], '*')
+        unsafeWindow.top.postMessage([tag, floor, msg], '*')
     },
     getAllMsg: function () {
         return msgList.join('\n')
@@ -36,12 +36,12 @@ const logHub = {
 function logImpl(type: keyof Console): (...args: any) => void {
     if (r.script.is_dev) {
         // 直接打印, 会显示行数
-        return window.console[type].bind(window.console, type + ':');
+        return unsafeWindow.console[type].bind(unsafeWindow.console, type + ':');
     } else {
         // 将log收集到util_log_hub中, 显示的行数是错误的...
         return function (...args: any) {
             args.unshift(type + ':')
-            window.console[type].apply(window.console, args)
+            unsafeWindow.console[type].apply(unsafeWindow.console, args)
             logHub.msg(Objects.stringifyArray(args))
         }
     }

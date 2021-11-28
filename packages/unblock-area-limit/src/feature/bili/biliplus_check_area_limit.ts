@@ -10,7 +10,7 @@ export function biliplus_check_area_limit() {
     // 服务器需要通过这个接口判断是否有区域限制
     // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
     util_init(() => {
-        const season_id = window?.__INITIAL_STATE__?.mediaInfo?.param?.season_id
+        const season_id = unsafeWindow?.__INITIAL_STATE__?.mediaInfo?.param?.season_id
         if (season_id) {
             BiliPlusApi.season(season_id)
                 .then(r => log(`season${season_id}`, r))

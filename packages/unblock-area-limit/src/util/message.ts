@@ -36,8 +36,8 @@ let alertPopMessage: BiliMessageBox = {
 }
 
 util_init(() => {
-    if (!popMessage && window.MessageBox) {
-        popMessage = new window.MessageBox()
+    if (!popMessage && unsafeWindow.MessageBox) {
+        popMessage = new unsafeWindow.MessageBox()
         let orignShow = popMessage.show
         popMessage.show = function (referenceElement, message, closeTime, boxType, buttonTypeConfirmCallback) {
             // 这个窗，有一定机率弹不出来。。。不知道为什么
@@ -45,7 +45,7 @@ util_init(() => {
         }
         popMessage.close = function () {
             // 若没调用过show, 就调用close, msgbox会为null, 导致报错
-            this.msgbox != null && window.MessageBox!.prototype.close.apply(this, [])
+            this.msgbox != null && unsafeWindow.MessageBox!.prototype.close.apply(this, [])
         }
     }
 }, util_init.PRIORITY.FIRST, util_init.RUN_AT.DOM_LOADED_AFTER)
@@ -71,7 +71,7 @@ export const util_ui_msg: BiliMessageBox = {
     },
     showOnNetError: function (e: any) {
         if (e.readyState === 0) {
-            this.show(window.$('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', window.bangumi_area_limit_hack.showSettings);
+            this.show(unsafeWindow.$('.balh_settings'), '哎呀，服务器连不上了，进入设置窗口，换个服务器试试？', 0, 'button', unsafeWindow.bangumi_area_limit_hack.showSettings);
         }
     },
     showOnNetErrorInPromise: function () {

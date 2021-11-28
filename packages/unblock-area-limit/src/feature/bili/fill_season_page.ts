@@ -10,7 +10,7 @@ export function fill_season_page() {
         if (!error_container) {
             return;
         }
-        let season_id = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)?.[1]
+        let season_id = unsafeWindow.location.pathname.match(/^\/anime\/(\d+)\/?$/)?.[1]
         if (!season_id) {
             return;
         }
@@ -19,7 +19,7 @@ export function fill_season_page() {
         /*
         会造成变量丢失，等待官方重写doctype
         try{
-        window.stop();
+        unsafeWindow.stop();
             var xhr = new XMLHttpRequest();
         xhr.open('GET',location.href,false);
         xhr.send();
@@ -58,7 +58,7 @@ export function fill_season_page() {
 
                 function generateSeasonList(seasons: [{ season_id: string, title: string }]) {
                     function onSeasonClick(event: Event) {
-                        window.location.href = '//bangumi.bilibili.com/anime/' + (event.target as any)?.attributes['data-season-id'].value;
+                        unsafeWindow.location.href = '//bangumi.bilibili.com/anime/' + (event.target as any)?.attributes['data-season-id'].value;
                     }
 
                     return seasons.map(function (season) {

@@ -41,7 +41,7 @@ function showWarn() {
     util_warn(`${GM_info.script.name} ${window.document.readyState} 加载时机不太对, 不能保证正常工作\n\n1. 尝试刷新页面, 重载脚本\n2. 若依然出现该提示, 请尝试'硬性重新加载'(快捷键一般为ctrl+f5)\n3. 若还是出现该提示, 请尝试关闭再重新打开该页面\n4. 若反复出现该提示, 那也没其他办法了_(:3」∠)_\n`)
 }
 let atRun: ValueOf<typeof RUN_AT> // 用来表示当前运行到什么状态
-switch (window.document.readyState) {
+switch (unsafeWindow.document.readyState) {
     case 'loading':
         atRun = RUN_AT.LOADING
         break;
@@ -71,9 +71,9 @@ const dclCreator = function (runAt: ValueOf<typeof RUN_AT>) {
     return dcl
 }
 
-window.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
-window.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED_AFTER))
-window.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
+unsafeWindow.document.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED))
+unsafeWindow.addEventListener('DOMContentLoaded', dclCreator(RUN_AT.DOM_LOADED_AFTER))
+unsafeWindow.addEventListener('load', dclCreator(RUN_AT.COMPLETE))
 
 
 const util_init = function (

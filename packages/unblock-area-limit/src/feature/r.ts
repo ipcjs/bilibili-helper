@@ -55,7 +55,7 @@ export const r = {
         bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
     },
     baipiao: [
-        { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
-        { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.mediaInfo?.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
+        { key: 'zomble_land_saga', match: () => (unsafeWindow.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+        { key: 'zomble_land_saga', match: () => (unsafeWindow.__INITIAL_STATE__?.mediaInfo?.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
     ]
 }

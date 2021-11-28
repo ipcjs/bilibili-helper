@@ -224,11 +224,11 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
     function getSegmentBase(url: string, id: string, range: string = '5000') {
         return new Promise((resolve, reject) => {
-            // 从 window 中读取已有的值
-            if (window.__segment_base_map__) {
-                if (window.__segment_base_map__.hasOwnProperty(id)) {
-                    // console.log('SegmentBase read from cache ', window.__segment_base_map__[id], 'id=', id)
-                    return resolve(window.__segment_base_map__[id]);
+            // 从 unsafeWindow 中读取已有的值
+            if (unsafeWindow.__segment_base_map__) {
+                if (unsafeWindow.__segment_base_map__.hasOwnProperty(id)) {
+                    // console.log('SegmentBase read from cache ', unsafeWindow.__segment_base_map__[id], 'id=', id)
+                    return resolve(unsafeWindow.__segment_base_map__[id]);
                 }
             }
 
@@ -245,12 +245,12 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                 let indexRagneEnd = hex_data.indexOf('6d6f6f66') / 2 - 5  // 6d6f6f66 是 'moof' 的 hex，前面还有 4 个字节才是 moof 的开始，-1为sidx结束位置
                 let result: [string, string] = ['0-' + String(indexRangeStart - 1), String(indexRangeStart) + '-' + String(indexRagneEnd)]
 
-                // 储存在 window，切换清晰度不用重新解析
-                if (window.__segment_base_map__) {
-                    window.__segment_base_map__[id] = result
+                // 储存在 unsafeWindow，切换清晰度不用重新解析
+                if (unsafeWindow.__segment_base_map__) {
+                    unsafeWindow.__segment_base_map__[id] = result
                 } else {
-                    window.__segment_base_map__ = {}
-                    window.__segment_base_map__[id] = result
+                    unsafeWindow.__segment_base_map__ = {}
+                    unsafeWindow.__segment_base_map__[id] = result
                 }
 
                 // console.log('get SegmentBase ', result, 'id=', id);
@@ -284,7 +284,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range))
     })
     await Promise.all(taskList)
-    if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
+    if (unsafeWindow.__segment_base_map__) segmentBaseMap = unsafeWindow.__segment_base_map__
 
     // 填充视频流数据
     result.dash.video.forEach((video) => {

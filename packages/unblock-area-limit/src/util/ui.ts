@@ -8,7 +8,7 @@ export namespace ui {
     export const alert = function (message: string, resolve?: Function, reject?: Function) {
         setTimeout(() => {
             if (resolve) {
-                if (window.confirm(message)) {
+                if (unsafeWindow.confirm(message)) {
                     resolve()
                 } else {
                     if (reject) {
@@ -16,14 +16,14 @@ export namespace ui {
                     }
                 }
             } else {
-                window.alert(message)
+                unsafeWindow.alert(message)
             }
         }, 500)
     }
 
     export async function prompt(message?: string, defaultValue?: string) {
         await Async.timeout(500)
-        return window.prompt(message, defaultValue)
+        return unsafeWindow.prompt(message, defaultValue)
     }
 
     export const copy = function (text: string, textarea: HTMLTextAreaElement) {

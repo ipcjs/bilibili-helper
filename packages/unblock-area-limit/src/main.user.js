@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.12
+// @version      8.2.13
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -23,16 +23,17 @@
 // @include      *://space.bilibili.com/*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
 // ==/UserScript==
 
 const log = console.log.bind(console, 'injector:')
 
 if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/special_photo_bg\.png/) != null) {
-    if (location.href.match('access_key') != null && window.opener != null) {
-        window.stop();
+    if (location.href.match('access_key') != null && unsafeWindow.opener != null) {
+        unsafeWindow.stop();
         document.children[0].innerHTML = '<title>BALH - 授权</title><meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-        window.opener.postMessage('balh-login-credentials: ' + location.href, '*');
+        unsafeWindow.opener.postMessage('balh-login-credentials: ' + location.href, '*');
     }
     return
 }
@@ -64,7 +65,7 @@ function injector() {
     log('注入完成')
 }
 
-if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
+if (!Object.getOwnPropertyDescriptor(unsafeWindow, 'XMLHttpRequest').writable) {
     log('XHR对象不可修改, 需要把脚本注入到页面中', GM_info.script.name, location.href, document.readyState)
     injector()
     return

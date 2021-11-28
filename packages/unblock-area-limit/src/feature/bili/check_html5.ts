@@ -8,12 +8,12 @@ export function isHtml5Player() {
 export function check_html5() {
     function checkHtml5() {
         var playerContent = document.querySelector('.player-content');
-        if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
+        if (!localStorage.balh_h5_not_first && !isHtml5Player() && unsafeWindow.GrayManager && playerContent) {
             new MutationObserver(function (mutations, observer) {
                 observer.disconnect();
                 localStorage.balh_h5_not_first = r.const.TRUE;
-                if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
-                    window.GrayManager?.clickMenu('change_h5');// change_flash, change_h5
+                if (unsafeWindow.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
+                    unsafeWindow.GrayManager?.clickMenu('change_h5');// change_flash, change_h5
                 }
             }).observe(playerContent, {
                 childList: true, // 监听child的增减

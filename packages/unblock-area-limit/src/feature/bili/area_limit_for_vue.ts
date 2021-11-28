@@ -23,7 +23,7 @@ export function modifyGlobalValue<T = any>(
         onRead?: (value: T | undefined) => void
     },
 ) {
-    const _window = window as StringAnyObject
+    const _window = unsafeWindow as StringAnyObject
     const name_origin = `${name}_origin`
     _window[name_origin] = _window[name]
     let value: T | undefined = undefined
@@ -59,13 +59,14 @@ function appendScript(
         if (props.src) {
             onLoad = resolve
         } else if (!props.type || props.type === 'text/javascript') {
-            const anyWindow = window as any
+            const anyWindow = unsafeWindow as any
             const key: string = `balh_appendScript_${callbackCount++}`
             anyWindow[key] = resolve
             innerHTML = `try { ${innerHTML} } finally { window['${key}'](); } `
         } else {
             setTimeout(resolve, 0)
         }
+
         node.appendChild(_('script', {
             // 所有属性为null/''时都替换成undefined
             type: props.type || undefined,
@@ -153,7 +154,7 @@ function fixBangumiPlayPage() {
     util_init(async () => {
         if (util_page.bangumi_md()) {
             // 临时保存当前的season_id
-            cookieStorage.set('balh_curr_season_id', window?.__INITIAL_STATE__?.mediaInfo?.season_id, '')
+            cookieStorage.set('balh_curr_season_id', unsafeWindow?.__INITIAL_STATE__?.mediaInfo?.season_id, '')
         }
         if (util_page.anime_ep() || util_page.anime_ss()) {
             const $app = document.getElementById('app')
@@ -164,8 +165,8 @@ function fixBangumiPlayPage() {
                 let appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? false
                 try {
                     // 读取保存的season_id
-                    const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
-                    const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
+                    const season_id = (unsafeWindow.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
+                    const ep_id = (unsafeWindow.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
                     const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy)
                     let templateArgs: TemplateArgs | null = null
 
@@ -361,11 +362,11 @@ export function area_limit_for_vue() {
         return
     }
     function replacePlayInfo() {
-        log("window.__playinfo__", window.__playinfo__)
-        window.__playinfo__origin = window.__playinfo__
+        log("window.__playinfo__", unsafeWindow.__playinfo__)
+        unsafeWindow.__playinfo__origin = unsafeWindow.__playinfo__
         let playinfo: any = undefined
         // 将__playinfo__置空, 让播放器去重新加载它...
-        Object.defineProperty(window, '__playinfo__', {
+        Object.defineProperty(unsafeWindow, '__playinfo__', {
             configurable: true,
             enumerable: true,
             get: () => {
@@ -376,9 +377,9 @@ export function area_limit_for_vue() {
                 // debugger
                 log('__playinfo__', 'set')
                 // 原始的playinfo为空, 且页面在loading状态, 说明这是html中对playinfo进行的赋值, 这个值可能是有区域限制的, 不能要
-                if (!window.__playinfo__origin && window.document.readyState === 'loading') {
+                if (!window.__playinfo__origin && unsafeWindow.document.readyState === 'loading') {
                     log('__playinfo__', 'init in html', value)
-                    window.__playinfo__origin = value
+                    unsafeWindow.__playinfo__origin = value
                     return
                 }
                 playinfo = value
@@ -422,7 +423,7 @@ export function area_limit_for_vue() {
                 }
                 if (value?.mediaInfo?.rights?.appOnly === true) {
                     value.mediaInfo.rights.appOnly = false
-                    window.__balh_app_only__ = true
+                    unsafeWindow.__balh_app_only__ = true
                 }
                 ifNotNull(value?.epInfo?.rights, (it) => it.area_limit = 0)
                 value?.epList?.forEach((it: any) => ifNotNull(it?.rights, (it) => it.area_limit = 0))

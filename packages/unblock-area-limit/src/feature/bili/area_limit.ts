@@ -6,8 +6,8 @@ import { Strings } from "../../util/strings"
 
 export function injectFetch() {
     // 当前未替换任何内容...
-    const originFetch = window.fetch;
-    window.fetch = function (input: RequestInfo, init?: RequestInit): Promise<Response> {
+    const originFetch = unsafeWindow.fetch;
+    unsafeWindow.fetch = function (input: RequestInfo, init?: RequestInit): Promise<Response> {
         log('fetch', input, init)
         return originFetch(input, init)
             .then(r => {
@@ -18,7 +18,7 @@ export function injectFetch() {
 }
 export function injectFetch4Mobile() {
     util_debug('injectFetch4Mobile')
-    window.fetch = Async.wrapper(window.fetch,
+    unsafeWindow.fetch = Async.wrapper(unsafeWindow.fetch,
         resp => new Proxy(resp, {
             get: function (target, prop, receiver) {
                 if (prop === 'json') {

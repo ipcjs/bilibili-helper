@@ -104,8 +104,8 @@ export function settings() {
             } else if (util_page.watchroom()) {
                 const _indexNav = indexNav = document.body.appendChild(_('div', { style: { position: 'fixed', right: '6px', bottom:  '45px', zIndex: '129', textAlign: 'center', display: 'none' } }))
                 indexNav.appendChild(createBtnStyle('45px'))
-                window.addEventListener('scroll', (event) => {
-                    _indexNav.style.display = window.scrollY < 600 ? 'none' : ''
+                unsafeWindow.addEventListener('scroll', (event) => {
+                    _indexNav.style.display = unsafeWindow.scrollY < 600 ? 'none' : ''
                 })
             } else {
                 // 新版视频页面的“返回页面顶部”按钮, 由Vue控制, 对内部html的修改会被重置, 故只能重新创建新的indexNav
@@ -114,8 +114,8 @@ export function settings() {
                     let bottom = navTools.className.includes('float-nav') ? '53px' : '45px'
                     const _indexNav = indexNav = document.body.appendChild(_('div', { style: { position: 'fixed', right: '6px', bottom: bottom, zIndex: '129', textAlign: 'center', display: 'none' } }))
                     indexNav.appendChild(createBtnStyle('45px'))
-                    window.addEventListener('scroll', (event) => {
-                        _indexNav.style.display = window.scrollY < 600 ? 'none' : ''
+                    unsafeWindow.addEventListener('scroll', (event) => {
+                        _indexNav.style.display = unsafeWindow.scrollY < 600 ? 'none' : ''
                     })
                 }
             }
@@ -124,7 +124,7 @@ export function settings() {
             }
         } else {
             // 视频页添加到回顶部下方
-            window.dispatchEvent(new Event('resize'));
+            unsafeWindow.dispatchEvent(new Event('resize'));
             indexNav.style.display = 'block';
             indexNav.appendChild(createBtnStyle('46px'))
             settingBtnSvgContainer = indexNav.appendChild(_('div', { id: 'balh-settings-btn', title: GM_info.script.name + ' 设置', event: { click: showSettings } }, [_('div', { className: 'btn-gotop' })])).firstChild as HTMLElement;
@@ -152,15 +152,15 @@ export function settings() {
 
     // 往顶层窗口发显示设置的请求
     function showSettings() {
-        window.top.postMessage('balh-show-setting', '*')
+        unsafeWindow.top.postMessage('balh-show-setting', '*')
     }
 
     // 只有顶层窗口才接收请求
-    if (window === window.top) {
-        window.addEventListener('message', (event) => {
+    if (unsafeWindow === unsafeWindow.top) {
+        unsafeWindow.addEventListener('message', (event) => {
             if (event.data === 'balh-show-setting') {
                 _showSettings();
-                window.$('#upos-server')[0].value = balh_config.upos_server || '';
+                unsafeWindow.$('#upos-server')[0].value = balh_config.upos_server || '';
             }
         })
     }
@@ -220,19 +220,19 @@ export function settings() {
         textarea.style.display = 'inline-block'
         if (ui.copy(logHub.getAllMsg(), textarea)) {
             textarea.style.display = 'none'
-            util_ui_msg.show(window.$(this),
+            util_ui_msg.show(unsafeWindow.$(this),
                 continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',
                 continueToIssue ? 0 : 3e3,
                 continueToIssue ? 'button' : undefined,
                 continueToIssue ? openIssuePage : undefined)
         } else {
-            util_ui_msg.show(window.$(this), '复制失败, 请从下面的文本框手动复制', 5e3)
+            util_ui_msg.show(unsafeWindow.$(this), '复制失败, 请从下面的文本框手动复制', 5e3)
         }
     }
 
     function openIssuePage() {
-        // window.open(r.url.issue)
-        window.open(r.url.readme)
+        // unsafeWindow.open(r.url.issue)
+        unsafeWindow.open(r.url.readme)
     }
 
     let printSystemInfoOk = false
@@ -345,7 +345,7 @@ export function settings() {
                                 event: {
                                     change: function (this: HTMLSelectElement) {
                                         let server = this.value;
-                                        let message = window.$('#upos-server-message');
+                                        let message = unsafeWindow.$('#upos-server-message');
 
                                         balh_config.upos_server = server;
                                         (document.getElementById('balh-upos-replace-akamai') as HTMLInputElement).disabled = !server;
@@ -389,7 +389,7 @@ export function settings() {
                 _('text', '　'),
                 _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
                 _('text', '　　'),
-                _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show(window.$(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
+                _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show(unsafeWindow.$(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
                 _('br'), _('br'),
                 _('div', { style: { whiteSpace: 'pre-wrap' }, event: { mouseenter: onMouseEnterSettingBottom } }, [
                     _('a', { href: 'https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6', target: '_blank' }, [_('text', '脚本主页')]),

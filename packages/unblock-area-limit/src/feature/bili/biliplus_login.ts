@@ -59,11 +59,11 @@ function checkLoginState() {
 }
 
 function showLogin() {
-    const balh_auth_window = window.open('about:blank')!;
+    const balh_auth_window = unsafeWindow.open('about:blank')!;
     balh_auth_window.document.title = 'BALH - 授权';
     balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
-    window.balh_auth_window = balh_auth_window;
-    window.$.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
+    unsafeWindow.balh_auth_window = balh_auth_window;
+    unsafeWindow.$.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
         xhrFields: { withCredentials: true },
         type: 'GET',
         dataType: 'json',
@@ -90,7 +90,7 @@ function showLoginByPassword() {
         content: `B站当前关闭了第三方登录的接口<br>目前只能使用帐号密码的方式<a href="${loginUrl}">登录代理服务器</a><br><br>登录完成后, 请手动刷新当前页面`,
         confirmBtn: '前往登录页面',
         onConfirm: () => {
-            window.open(loginUrl)
+            unsafeWindow.open(loginUrl)
         }
     })
 }
@@ -100,7 +100,7 @@ function showLogout() {
 }
 
 // 监听登录message
-window.addEventListener('message', function (e) {
+unsafeWindow.addEventListener('message', function (e) {
     if (typeof e.data !== 'string') return // 只处理e.data为string的情况
     switch (e.data.split(':')[0]) {
         case 'BiliPlus-Login-Success': {
@@ -119,7 +119,7 @@ window.addEventListener('message', function (e) {
             break;
         }
         case 'balh-login-credentials': {
-            window.balh_auth_window?.close();
+            unsafeWindow.balh_auth_window?.close();
             let url = e.data.split(': ')[1];
             const access_key = new URL(url).searchParams.get('access_key');
             localStorage.access_key = access_key

@@ -46,9 +46,9 @@ function scriptContent() {
         if (isClosed()) return
         injectFetch()
         function injectXHR() {
-            util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
+            util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(unsafeWindow, 'XMLHttpRequest'))
             let firstCreateXHR = true
-            window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
+            unsafeWindow.XMLHttpRequest = new Proxy(unsafeWindow.XMLHttpRequest, {
                 construct: function (target, args) {
                     // 第一次创建XHR时, 打上断点...
                     if (firstCreateXHR && r.script.is_dev) {
@@ -144,7 +144,7 @@ function scriptContent() {
                                             let json = JSON.parse(target.responseText);
                                             // https://github.com/ipcjs/bilibili-helper/issues/775
                                             // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
-                                            if (json.code == -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) {
+                                            if (json.code == -404 || (json.code == 0 && unsafeWindow.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) {
                                                 log('/x/player/v2', '404', target.responseText);
                                                 container.__block_response = true;
                                                 let url = container.__url.replace('player/v2', 'v2/dm/view').replace('cid', 'oid') + '&type=1'; //从APP接口拉取字幕信息
@@ -335,7 +335,7 @@ function scriptContent() {
         }
 
         function injectAjax() {
-            log('injectAjax at:', window.jQuery)
+            log('injectAjax at:', unsafeWindow.jQuery)
             let originalAjax = $.ajax;
             $.ajax = function (arg0, arg1) {
                 let param;
@@ -430,7 +430,7 @@ function scriptContent() {
                                 r.accept_description = ['未知 3P']
                                 // r.timelength = r.durl.map(it => it.length).reduce((a, b) => a + b, 0)
                                 if (r.durl && r.durl[0] && r.durl[0].url.includes('video-sg.biliplus.com')) {
-                                    const aid = window.__INITIAL_STATE__ && window.__INITIAL_STATE__.aid || window.__INITIAL_STATE__.epInfo && window.__INITIAL_STATE__.epInfo.aid || 'fuck'
+                                    const aid = unsafeWindow.__INITIAL_STATE__ && unsafeWindow.__INITIAL_STATE__.aid || unsafeWindow.__INITIAL_STATE__.epInfo && unsafeWindow.__INITIAL_STATE__.epInfo.aid || 'fuck'
                                     ui.pop({
                                         content: `原视频已被删除, 当前播放的是<a href="https://video-sg.biliplus.com/">转存服务器</a>中的视频, 速度较慢<br>被删的原因可能是:<br>1. 视频违规<br>2. 视频被归类到番剧页面 => 试下<a href="https://search.bilibili.com/bangumi?keyword=${aid}">搜索av${aid}</a>`
                                     })
@@ -450,7 +450,7 @@ function scriptContent() {
                     if (balh_config.blocked_vip) {
                         mySuccess = function (data) {
                             try {
-                                let xml = new window.DOMParser().parseFromString(`<userstatus>${data.replace(/\&/g, '&amp;')}</userstatus>`, 'text/xml');
+                                let xml = new unsafeWindow.DOMParser().parseFromString(`<userstatus>${data.replace(/\&/g, '&amp;')}</userstatus>`, 'text/xml');
                                 let vipTag = xml.querySelector('vip');
                                 if (vipTag) {
                                     let vip = JSON.parse(vipTag.innerHTML);
@@ -558,7 +558,7 @@ function scriptContent() {
         }
 
         function isBangumiPage() {
-            return isBangumi(Func.safeGet('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))
+            return isBangumi(Func.safeGet('window.__INITIAL_STATE__.mediaInfo.season_type || unsafeWindow.__INITIAL_STATE__.mediaInfo.ssType'))
         }
 
         function getSeasonId() {
@@ -566,13 +566,13 @@ function scriptContent() {
             // 取anime页面的seasonId
             try {
                 // 若w, 是其frame的window, 则有可能没有权限, 而抛异常
-                seasonId = window.season_id || window.top.season_id;
+                seasonId = unsafeWindow.season_id || unsafeWindow.top.season_id;
             } catch (e) {
                 log(e);
             }
             if (!seasonId) {
                 try {
-                    seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
+                    seasonId = (unsafeWindow.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
                 } catch (e) {
                     log(e);
                 }
@@ -581,7 +581,7 @@ function scriptContent() {
             // 若没取到, 则取movie页面的seasonId, 以m开头
             if (!seasonId) {
                 try {
-                    seasonId = (window.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
+                    seasonId = (unsafeWindow.top.location.pathname.match(/\/movie\/(\d+)/) || ['', ''])[1];
                     if (seasonId) {
                         seasonId = 'm' + seasonId;
                     }
@@ -593,7 +593,7 @@ function scriptContent() {
             // 若没取到, 则去新的番剧播放页面的ep或ss
             if (!seasonId) {
                 try {
-                    seasonId = (window.top.location.pathname.match(/\/bangumi\/play\/((ep|ss)\d+)/) || ['', ''])[1];
+                    seasonId = (unsafeWindow.top.location.pathname.match(/\/bangumi\/play\/((ep|ss)\d+)/) || ['', ''])[1];
                 } catch (e) {
                     log(e);
                 }
@@ -602,7 +602,7 @@ function scriptContent() {
             // 若没取到, 则从search params获取（比如放映室）
             if (!seasonId) {
                 try {
-                    seasonId = Strings.getSearchParam(window.location.href, 'seasonid');
+                    seasonId = Strings.getSearchParam(unsafeWindow.location.href, 'seasonid');
                 } catch (e) {
                     log(e);
                 }
@@ -611,14 +611,14 @@ function scriptContent() {
             // 若没取到, 则去取av页面的av号
             if (!seasonId) {
                 try {
-                    seasonId = (window.top.location.pathname.match(/\/video\/((av|BV)\w+)/) || ['', ''])[1]
+                    seasonId = (unsafeWindow.top.location.pathname.match(/\/video\/((av|BV)\w+)/) || ['', ''])[1]
                 } catch (e) {
                     log(e);
                 }
             }
             // 最后, 若没取到, 则试图取出当前页面url中的aid
             if (!seasonId) {
-                seasonId = Strings.getSearchParam(window.location.href, 'aid');
+                seasonId = Strings.getSearchParam(unsafeWindow.location.href, 'aid');
                 if (seasonId) {
                     seasonId = 'aid' + seasonId;
                 }
@@ -667,7 +667,7 @@ function scriptContent() {
             }
             var get_source_by_aid = new BilibiliApi({
                 transToProxyUrl: function (url) {
-                    return balh_config.server + '/api/view?id=' + window.aid + `&update=true${access_key_param_if_exist()}`;
+                    return balh_config.server + '/api/view?id=' + unsafeWindow.aid + `&update=true${access_key_param_if_exist()}`;
                 },
                 processProxySuccess: function (data) {
                     if (data && data.list && data.list[0] && data.movie) {
@@ -699,18 +699,18 @@ function scriptContent() {
             });
             var get_source_by_season_id = new BilibiliApi({
                 transToProxyUrl: function (url) {
-                    return balh_config.server + '/api/bangumi?season=' + window.season_id + access_key_param_if_exist();
+                    return balh_config.server + '/api/bangumi?season=' + unsafeWindow.season_id + access_key_param_if_exist();
                 },
                 processProxySuccess: function (data) {
                     var found = null;
                     if (!data.code) {
                         for (var i = 0; i < data.result.episodes.length; i++) {
-                            if (data.result.episodes[i].episode_id == window.episode_id) {
+                            if (data.result.episodes[i].episode_id == unsafeWindow.episode_id) {
                                 found = data.result.episodes[i];
                             }
                         }
                     } else {
-                        ui.alert('代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', window.location.reload.bind(window.location));
+                        ui.alert('代理服务器错误:' + JSON.stringify(data) + '\n点击刷新界面.', unsafeWindow.location.reload.bind(unsafeWindow.location));
                     }
                     var returnVal = found !== null
                         ? {
@@ -829,7 +829,7 @@ function scriptContent() {
                     } else if (data === null || data.code) {
                         util_error(data);
                         if (alertWhenError) {
-                            ui.alert(`突破黑洞失败\n${JSON.stringify(data)}\n点击确定刷新界面`, window.location.reload.bind(window.location));
+                            ui.alert(`突破黑洞失败\n${JSON.stringify(data)}\n点击确定刷新界面`, unsafeWindow.location.reload.bind(unsafeWindow.location));
                         } else {
                             return Promise.reject(new AjaxException(`服务器错误: ${JSON.stringify(data)}`, data ? data.code : 0))
                         }
@@ -1007,13 +1007,13 @@ function scriptContent() {
                             // 泰区番剧解析
                             return getMobiPlayUrl(originUrl, proxyHost, area)
                         }
-                        if (window.__balh_app_only__) {
+                        if (unsafeWindow.__balh_app_only__) {
                             // APP 限定用 mobi api
                             return getMobiPlayUrl(originUrl, proxyHost, area)
                         }
                         return originUrl.replace(/^(https:)?(\/\/api\.bilibili\.com\/)/, `$1${proxyHost}/`) + '&area=' + area + access_key_param_if_exist(true);
                     } else {
-                        if (window.__balh_app_only__) {
+                        if (unsafeWindow.__balh_app_only__) {
                             return `${proxyHost}?${generateMobiPlayUrlParams(originUrl)}`
                         }
                         // 将proxyHost当成接口的完整路径进行拼接
@@ -1027,7 +1027,7 @@ function scriptContent() {
                         return Promise.reject(result)
                     }
                     // 在APP限定情况启用 mobi api 解析
-                    if (window.__balh_app_only__) {
+                    if (unsafeWindow.__balh_app_only__) {
                         // 泰区番也是 APP 限定
                         if (result.hasOwnProperty('data')) {
                             return fixThailandPlayUrlJson(result)
@@ -1083,7 +1083,7 @@ function scriptContent() {
                             }
                             ui.pop({
                                 content: `## 拉取视频地址失败\n原因: ${msg}\n\n可以考虑进行如下尝试:\n1. 多<a href="">刷新</a>几下页面\n2. 进入<a href="javascript:bangumi_area_limit_hack.showSettings();">设置页面</a>更换代理服务器\n3. 耐心等待代理服务器端修复问题`,
-                                onConfirm: window.location.reload.bind(window.location),
+                                onConfirm: unsafeWindow.location.reload.bind(unsafeWindow.location),
                                 confirmBtn: '刷新页面'
                             })
                             return Promise.reject(e)
@@ -1134,12 +1134,12 @@ function scriptContent() {
         }
         injectXHR();
         if (true) {
-            let jQuery = window.jQuery;
+            let jQuery = unsafeWindow.jQuery;
             if (jQuery) { // 若已加载jQuery, 则注入
                 injectAjax()
             }
             // 需要监听jQuery变化, 因为有时会被设置多次...
-            Object.defineProperty(window, 'jQuery', {
+            Object.defineProperty(unsafeWindow, 'jQuery', {
                 configurable: true, enumerable: true, set: function (v) {
                     // debugger
                     log('set jQuery', jQuery, '->', v)
@@ -1210,7 +1210,7 @@ function scriptContent() {
             'isLoginBiliBili:', bili.biliplus_login.isLoginBiliBili()
         )
         // 暴露接口
-        window.bangumi_area_limit_hack = {
+        unsafeWindow.bangumi_area_limit_hack = {
             setCookie: cookieStorage.set,
             getCookie: cookieStorage.get,
             login: bili.biliplus_login.showLogin,

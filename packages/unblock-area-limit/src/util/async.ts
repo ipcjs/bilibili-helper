@@ -3,9 +3,9 @@ import { util_debug } from "./log";
 import { _ } from "./react";
 
 // 在某些情况下, 页面中会修改window.Promise... 故我们要备份一下原始的Promise
-const Promise = window.Promise
+const Promise = unsafeWindow.Promise
 // 页面中倒是不会修改fetch, 但我们会修改(, 故也还是备份下
-const fetch = window.fetch
+const fetch = unsafeWindow.fetch
 /**
 * 模仿RxJava中的compose操作符
 * @param transformer 转换函数, 传入Promise, 返回Promise; 若为空, 则啥也不做
@@ -133,12 +133,12 @@ namespace Async {
                 reject(err);
             };
             util_debug(`ajax: ${options.url}`)
-            window.$.ajax(options);
+            unsafeWindow.$.ajax(options);
         })
         // 重试 30 * 100 = 3s
         return retryUntil(() => {
             util_debug(`retryUntil.ajaxBy$: ${window.$}`)
-            return window.$;
+            return unsafeWindow.$;
         }, creator, 30, 100)
     }
 
