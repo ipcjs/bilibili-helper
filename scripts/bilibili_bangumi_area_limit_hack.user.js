@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.12
+// @version      8.2.13
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -999,19 +999,20 @@ function scriptSource(invokeBy) {
             // 异步构建 segmentBaseMap
             let taskList = [];
             // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
-            let range = Math.round(result.dash.duration * 3.5).toString();
+            // let range = Math.round(result.dash.duration * 3.5).toString()
+            // 乱猜 range 导致泡面番播不出
             result.dash.video.forEach((video) => {
                 if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
                     // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
                     video.baseUrl = video.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range));
+                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)));
             });
             result.dash.audio.forEach((audio) => {
                 if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
                     audio.baseUrl = audio.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range));
+                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)));
             });
             yield Promise.all(taskList);
             if (window.__segment_base_map__)
@@ -2956,6 +2957,10 @@ function scriptSource(invokeBy) {
                                     }
                                 })
                         };
+                        const dispatchResultTransformerCreator = () => {
+                            container.__block_response = true;
+                            return dispatchResultTransformer
+                        };
                         return new Proxy(new target(...args), {
                             set: function (target, prop, value, receiver) {
                                 if (prop === 'onreadystatechange') {
@@ -3025,6 +3030,7 @@ function scriptSource(invokeBy) {
                                                 let json = JSON.parse(target.responseText);
                                                 // https://github.com/ipcjs/bilibili-helper/issues/775
                                                 // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
+                                                /*
                                                 if (json.code == -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) {
                                                     log('/x/player/v2', '404', target.responseText);
                                                     container.__block_response = true;
@@ -3047,9 +3053,9 @@ function scriptSource(invokeBy) {
                                                                         'lan': item.key,
                                                                         'lan_doc': item.title,
                                                                         'subtitle_url': item.url.replace(/https?:\/\//, '//')
-                                                                    };
+                                                                    }
                                                                     subtitle.subtitles.push(sub);
-                                                                });
+                                                                })
                                                             }
                                                             subtitle.allow_submit = false;
                                                             json.data = { subtitle };
@@ -3069,7 +3075,37 @@ function scriptSource(invokeBy) {
                                                     }).catch(e => {
                                                         util_error('/x/player/v2', e);
                                                         cb.apply(this, arguments);
-                                                    });
+                                                    })
+                                                }
+                                                */
+                                                if ((json.code === -400 || json.code === -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) && balh_config.server_custom_th) {
+                                                    // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
+                                                    // https://www.bilibili.com/bangumi/play/ep10649765
+                                                    let thailand_sub_url = container.__url.replace('https://api.bilibili.com/x/player/v2', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
+                                                    Async.ajax(thailand_sub_url)
+                                                        .then(async thailand_data => {
+                                                            let subtitle = { subtitles: [] };
+                                                            thailand_data.data.subtitles.forEach((item) => {
+                                                                let sub = {
+                                                                    'id': item.id,
+                                                                    'id_str': item.id.toString(),
+                                                                    'lan': item.key,
+                                                                    'lan_doc': item.title,
+                                                                    'subtitle_url': item.url.replace(/https?:\/\//, '//')
+                                                                };
+                                                                subtitle.subtitles.push(sub);
+                                                            });
+                                                            let json = { code: 0, data: { subtitle: subtitle } };
+                                                            // todo: json.data中有许多字段, 需要想办法填充
+                                                            if (balh_config.blocked_vip) {
+                                                                json.data.vip = {
+                                                                    type: 2, //年费大会员
+                                                                    status: 1 //启用
+                                                                };
+                                                            }
+                                                            return json
+                                                        })
+                                                        .compose(dispatchResultTransformerCreator());
                                                 }
                                                 else if (!json.code && json.data && balh_config.blocked_vip) {
                                                     log('/x/player/v2', 'vip');
@@ -3159,10 +3195,6 @@ function scriptSource(invokeBy) {
                                             container.__method = arguments[0];
                                             container.__url = arguments[1];
                                         } else if (prop === 'send') {
-                                            let dispatchResultTransformerCreator = () => {
-                                                container.__block_response = true;
-                                                return dispatchResultTransformer
-                                            };
                                             if (container.__url.match(RegExps.url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
                                                 log('/x/player/playurl');
                                                 // debugger
@@ -3812,10 +3844,13 @@ function scriptSource(invokeBy) {
 
                         // 服务器列表, 按顺序解析
                         const server_list = [
-                            [balh_config.server_custom_tw, '台湾', 'tw'],
-                            [balh_config.server_custom_hk, '香港', 'hk'],
-                            [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
+                            // 大陆, 通过标题没法区分
                             [balh_config.server_custom_cn, '大陆', 'cn'],
+                            // 泰, 通过标题没法区分
+                            [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
+                            // 港台, 一般能够从标题中匹配到, 因而优先级可以低一点
+                            [balh_config.server_custom_hk, '香港', 'hk'],
+                            [balh_config.server_custom_tw, '台湾', 'tw'],
                         ];
 
                         // 尝试读取番剧区域缓存判断番剧区域进行解析
