@@ -196,7 +196,7 @@ function scriptContent() {
                                                 })
                                             }
                                             */
-                                            if ((json.code === -400 || json.code === -404) && balh_config.server_custom_th) {
+                                            if ((json.code === -400 || json.code === -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) && balh_config.server_custom_th) {
                                                 // 泰区番剧返回的字幕为 null，需要使用泰区服务器字幕接口填充数据
                                                 // https://www.bilibili.com/bangumi/play/ep10649765
                                                 let thailand_sub_url = container.__url.replace('https://api.bilibili.com/x/player/v2', `${balh_config.server_custom_th}/intl/gateway/v2/app/subtitle`);
