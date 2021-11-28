@@ -23,7 +23,7 @@
 // @include      *://space.bilibili.com/*
 // @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
-// @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
 
