@@ -971,10 +971,13 @@ function scriptContent() {
 
                     // 服务器列表, 按顺序解析
                     const server_list = [
-                        [balh_config.server_custom_tw, '台湾', 'tw'],
-                        [balh_config.server_custom_hk, '香港', 'hk'],
-                        [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
+                        // 大陆, 通过标题没法区分
                         [balh_config.server_custom_cn, '大陆', 'cn'],
+                        // 泰, 通过标题没法区分
+                        [balh_config.server_custom_th, '泰国（东南亚）', 'th'],
+                        // 港台, 一般能够从标题中匹配到, 因而优先级可以低一点
+                        [balh_config.server_custom_hk, '香港', 'hk'],
+                        [balh_config.server_custom_tw, '台湾', 'tw'],
                     ]
 
                     // 尝试读取番剧区域缓存判断番剧区域进行解析
