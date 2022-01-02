@@ -153,6 +153,7 @@ if (!(group = /thread-(\d+)-(\d+)-(\d+)/.exec(location.pathname))
 }
 
 const POST_PAGE_MAX_COUNT = 1000; // 一次最多拉取多少条
+const CONCURRENT_COUNT_MAX = 10; // 一次最多拉取多少页
 const TID = group[1];
 let table;
 
@@ -205,22 +206,32 @@ function loadAllPost() {
     }
     const load = async function () {
         let page = 1;
+        let concurrentCount = 1;
         while (true) {
-            table.showMsg(`加载第${page}页中...`)
-            const resp = await retry(async (i) => {
-                return await ajaxPromise({
-                    url: `http://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page}&version=1`,
+            table.showMsg(`加载第${page}->${page + concurrentCount - 1}页中...`)
+            const results = await Promise.all(Array.from({ length: concurrentCount }, (v, index) => retry(async (i) => {
+                const resp = await ajaxPromise({
+                    url: `https://bbs.saraba1st.com/2b/api/mobile/index.php?module=viewthread&ppp=${POST_PAGE_MAX_COUNT}&tid=${TID}&page=${page + index}&version=1`,
                     timeout: 1000 * 15 * (i + 1),
                 })
-            }, 3)
-            const json = JSON.parse(resp.responseText)
-            if (page === 1) {
-                table.setTitle(json.Variables.thread.subject)
+                return [index, resp]
+            }, 3)))
+
+            let json
+            for (const [index, resp] of results) {
+                const currentPage = page + index
+                json = JSON.parse(resp.responseText)
+                if (currentPage === 1) {
+                    table.setTitle(json.Variables.thread.subject)
+                }
+                table.appendPostList(json.Variables.postlist.filter(filter))
+                log('>>', currentPage, table.listSize, json.Variables.thread);
             }
-            table.appendPostList(json.Variables.postlist.filter(filter))
-            log('>>', page, table.listSize, json.Variables.thread);
-            if (table.listSize <= +json.Variables.thread.replies) { // 总post条数为replies + 1
-                page++;
+            // 总post条数为replies + 1
+            const postCount = +json.Variables.thread.replies + 1
+            if (table.listSize < postCount) {
+                page += concurrentCount;
+                concurrentCount = Math.min(concurrentCount + 3, Math.ceil((postCount - table.listSize) / POST_PAGE_MAX_COUNT), CONCURRENT_COUNT_MAX)
             } else {
                 break;
             }
