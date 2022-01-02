@@ -100,7 +100,7 @@ class Table {
 
     appendPostList(list) {
         this.append(list, [
-            { name: 'number', func: item => `<a href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>` },
+            { name: 'number', func: item => `<a target="_blank" href='forum.php?mod=redirect&goto=findpost&ptid=${item.ptid}&pid=${item.pid}'>${item.number}</a>` },
             'username',
             'dateline',
             'message'
