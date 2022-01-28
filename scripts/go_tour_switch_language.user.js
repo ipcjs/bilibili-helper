@@ -1,24 +1,30 @@
 // ==UserScript==
 // @name         Switch language button for tour.golang.org
 // @namespace    https://github.com/ipcjs/
-// @version      0.2
+// @version      0.3
 // @description  给页面添加一个切换中/英文的按钮
 // @author       ipcjs
 // @icon         https://www.google.com/s2/favicons?domain=golang.org
-// @match        https://tour.golang.org/*
 // @match        https://tour.go-zh.org/*
+// @match        https://go.dev/tour/*
 // @grant        none
 // ==/UserScript==
 
 const hosts = [
-    "tour.golang.org",
+    "go.dev/tour",
     "tour.go-zh.org",
 ]
 
 
-function getNextHost() {
-    const index = hosts.indexOf(location.host)
-    return hosts[(index + 1) % hosts.length]
+function getNextUrl() {
+    const url = location.href
+    for (const [index, host] of hosts.entries()) {
+        if (url.match(host)) {
+            const nextHost = hosts[(index + 1) % hosts.length]
+            return url.replace(host, nextHost)
+        }
+    }
+    throw new Error('current url not match any host')
 }
 
 
@@ -31,12 +37,10 @@ $div.innerHTML = `<span class="nav" title="左键当前页面打开, 右键新�
     </svg>
 </span>`
 $div.addEventListener('click', () => {
-    location.host = getNextHost()
+    location.href = getNextUrl()
 })
 $div.addEventListener('contextmenu', () => {
-    const url = new URL(location.href)
-    url.host = getNextHost()
-    window.open(url)
+    window.open(getNextUrl())
 })
 const $topBar = document.querySelector('.top-bar')
 $topBar.appendChild($div)
