@@ -383,6 +383,9 @@ export function settings() {
                     ])
                 ]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_generate_chs_sub' }), _('text', '生成简中字幕')]),
+                ]), _('br'),
+                _('div', { style: { display: 'flex' } }, [
                     _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_is_closed' }), _('text', '关闭脚本（脚本当前还有挺多问题, 若影响正常使用, 可以临时关闭它）'),]),
                 ]), _('br'),
                 _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
