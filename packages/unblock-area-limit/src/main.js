@@ -146,25 +146,31 @@ function scriptContent() {
                                         } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
                                             // 上一个接口的新版本
                                             let json = JSON.parse(target.responseText);
-                                            // 添加简中字幕
-                                            if (balh_config.generate_chs_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
+                                            // 生成字幕
+                                            if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
                                                 let subtitles = json.data.subtitle.subtitles;
                                                 let lans = subtitles.map((item) => item.lan);
-                                                if (lans.includes('zh-Hant') && !lans.includes('zh-CN')) {
-                                                    let zhHant = subtitles.find((item) => item.lan == 'zh-Hant');
-                                                    let zhHantUrl = 'http:' + zhHant.subtitle_url;
-                                                    let zhHantId = zhHant.id;
-                                                    let zhHantRealId = BigInt(zhHant.id_str);
-                                                    let zhCN = {
-                                                        lan: 'zh-CN',
-                                                        lan_doc: '中文（中国）生成',
+                                                let genCN = lans.includes('zh-Hant') && !lans.includes('zh-CN');
+                                                let genHant = lans.includes('zh-CN') && !lans.includes('zh-Hant');
+                                                let origin = genCN ? 'zh-Hant' : genHant ? 'zh-CN' : null;
+                                                let target = genCN ? 'zh-CN' : genHant ? 'zh-Hant' : null;
+                                                let converter = genCN ? 't2cn' : genHant ? 'cn2t' : null;
+                                                let targetDoc = genCN ? '中文（中国）生成' : genHant ? '中文（繁体）生成' : null;
+                                                if (origin && target && converter && targetDoc) {
+                                                    let origSub = subtitles.find((item) => item.lan == origin);
+                                                    let origSubUrl = 'http:' + origSub.subtitle_url;
+                                                    let origSubId = origSub.id;
+                                                    let origSubRealId = BigInt(origSub.id_str);
+                                                    let targetSub = {
+                                                        lan: target,
+                                                        lan_doc: targetDoc,
                                                         is_lock: false,
-                                                        subtitle_url: `//www.kofua.top/bsub/t2s?sub_url=${encodeURIComponent(zhHantUrl)}`,
+                                                        subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encodeURIComponent(origSubUrl)}`,
                                                         type: 0,
-                                                        id: zhHantId + 1,
-                                                        id_str: (zhHantRealId + 1n).toString(),
+                                                        id: origSubId + 1,
+                                                        id_str: (origSubRealId + 1n).toString(),
                                                     };
-                                                    json.data.subtitle.subtitles.push(zhCN);
+                                                    json.data.subtitle.subtitles.push(targetSub);
                                                     container.responseText = JSON.stringify(json);
                                                 }
                                             }
@@ -1260,7 +1266,7 @@ function scriptContent() {
             'upos_server:', balh_config.upos_server,
             'flv_prefer_ws:', balh_config.flv_prefer_ws,
             'remove_pre_ad:', balh_config.remove_pre_ad,
-            'generate_chs_sub:', balh_config.generate_chs_sub,
+            'generate_sub:', balh_config.generate_sub,
             'enable_in_av:', balh_config.enable_in_av,
             'readyState:', document.readyState,
             'isLogin:', bili.biliplus_login.isLogin(),
