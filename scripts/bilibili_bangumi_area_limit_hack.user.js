@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.13
+// @version      8.2.14
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2802,6 +2802,9 @@ function scriptSource(invokeBy) {
                         ])
                     ]), createElement('br'),
                     createElement('div', { style: { display: 'flex' } }, [
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_generate_sub' }), createElement('text', '为简繁字幕生成相应的繁简字幕')]),
+                    ]), createElement('br'),
+                    createElement('div', { style: { display: 'flex' } }, [
                         createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'checkbox', name: 'balh_is_closed' }), createElement('text', '关闭脚本（脚本当前还有挺多问题, 若影响正常使用, 可以临时关闭它）'),]),
                     ]), createElement('br'),
                     createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
@@ -3028,6 +3031,34 @@ function scriptSource(invokeBy) {
                                             } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
                                                 // 上一个接口的新版本
                                                 let json = JSON.parse(target.responseText);
+                                                // 生成字幕
+                                                if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
+                                                    let subtitles = json.data.subtitle.subtitles;
+                                                    let lans = subtitles.map((item) => item.lan);
+                                                    let genCN = lans.includes('zh-Hant') && !lans.includes('zh-CN');
+                                                    let genHant = lans.includes('zh-CN') && !lans.includes('zh-Hant');
+                                                    let origin = genCN ? 'zh-Hant' : genHant ? 'zh-CN' : null;
+                                                    let target = genCN ? 'zh-CN' : genHant ? 'zh-Hant' : null;
+                                                    let converter = genCN ? 't2cn' : genHant ? 'cn2t' : null;
+                                                    let targetDoc = genCN ? '中文（中国）生成' : genHant ? '中文（繁体）生成' : null;
+                                                    if (origin && target && converter && targetDoc) {
+                                                        let origSub = subtitles.find((item) => item.lan == origin);
+                                                        let origSubUrl = 'http:' + origSub.subtitle_url;
+                                                        let origSubId = origSub.id;
+                                                        let origSubRealId = BigInt(origSub.id_str);
+                                                        let targetSub = {
+                                                            lan: target,
+                                                            lan_doc: targetDoc,
+                                                            is_lock: false,
+                                                            subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encodeURIComponent(origSubUrl)}`,
+                                                            type: 0,
+                                                            id: origSubId + 1,
+                                                            id_str: (origSubRealId + 1n).toString(),
+                                                        };
+                                                        json.data.subtitle.subtitles.push(targetSub);
+                                                        container.responseText = JSON.stringify(json);
+                                                    }
+                                                }
                                                 // https://github.com/ipcjs/bilibili-helper/issues/775
                                                 // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
                                                 /*
@@ -4111,6 +4142,7 @@ function scriptSource(invokeBy) {
                 'upos_server:', balh_config.upos_server,
                 'flv_prefer_ws:', balh_config.flv_prefer_ws,
                 'remove_pre_ad:', balh_config.remove_pre_ad,
+                'generate_sub:', balh_config.generate_sub,
                 'enable_in_av:', balh_config.enable_in_av,
                 'readyState:', document.readyState,
                 'isLogin:', biliplus_login.isLogin(),
