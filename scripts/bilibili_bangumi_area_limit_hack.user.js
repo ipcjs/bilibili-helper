@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.14
+// @version      8.2.15
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -3046,11 +3046,13 @@ function scriptSource(invokeBy) {
                                                         let origSubUrl = 'http:' + origSub.subtitle_url;
                                                         let origSubId = origSub.id;
                                                         let origSubRealId = BigInt(origSub.id_str);
+                                                        let encSubUrl = encodeURIComponent(origSubUrl);
+                                                        let encSubId = encodeURIComponent(origSub.id_str);
                                                         let targetSub = {
                                                             lan: target,
                                                             lan_doc: targetDoc,
                                                             is_lock: false,
-                                                            subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encodeURIComponent(origSubUrl)}`,
+                                                            subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encSubUrl}&sub_id=${encSubId}`,
                                                             type: 0,
                                                             id: origSubId + 1,
                                                             id_str: (origSubRealId + 1n).toString(),
