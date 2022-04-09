@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.15
+// @version      8.2.16
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -229,8 +229,12 @@ function scriptSource(invokeBy) {
         msg: function (msg) {
             window.top.postMessage([tag, floor, msg], '*');
         },
-        getAllMsg: function () {
-            return msgList.join('\n');
+        getAllMsg: function (replaces = {}) {
+            let allMsg = msgList.join('\n');
+            for (const k of Object.keys(replaces)) {
+                allMsg = allMsg.replace(k, replaces[k]);
+            }
+            return allMsg;
         }
     };
     function logImpl(type) {
@@ -2209,6 +2213,7 @@ function scriptSource(invokeBy) {
                         const template = new DOMParser().parseFromString(pageTemplateString, 'text/html');
                         yield cloneChildNodes(template.getElementsByTagName('head')[0], document.head);
                         yield cloneChildNodes(template.getElementsByTagName('body')[0], document.body);
+                        window.bangumi_area_limit_hack._setupSettings();
                     }
                     catch (e) {
                         util_warn('重建ep页面失败', e);
@@ -2644,7 +2649,7 @@ function scriptSource(invokeBy) {
             }
             let textarea = document.getElementById('balh-textarea-copy');
             textarea.style.display = 'inline-block';
-            if (ui.copy(logHub.getAllMsg(), textarea)) {
+            if (ui.copy(logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' }), textarea)) {
                 textarea.style.display = 'none';
                 util_ui_msg.show(window.$(this), continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功', continueToIssue ? 0 : 3e3, continueToIssue ? 'button' : undefined, continueToIssue ? openIssuePage : undefined);
             }
@@ -2839,6 +2844,7 @@ function scriptSource(invokeBy) {
         return {
             dom: settingsDOM,
             show: showSettings,
+            setup: addSettingsButton,
         };
     }
 
@@ -4156,8 +4162,14 @@ function scriptSource(invokeBy) {
                 getCookie: cookieStorage.get,
                 login: biliplus_login.showLogin,
                 logout: biliplus_login.showLogout,
-                getLog: logHub.getAllMsg,
+                getLog: (...args) => {
+                    setTimeout(() => {
+                        util_warn('日志包含access_key等敏感数据, 请不要发给不信任的人!');
+                    }, 0);
+                    return logHub.getAllMsg.apply(null, args)
+                },
                 showSettings: settings$1.show,
+                _setupSettings: settings$1.setup,
                 set1080P: function () {
                     const settings = JSON.parse(localStorage.bilibili_player_settings);
                     const oldQuality = settings.setting_config.defquality;
