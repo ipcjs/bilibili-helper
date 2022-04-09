@@ -28,8 +28,12 @@ const logHub = {
     msg: function (msg: string) {
         window.top.postMessage([tag, floor, msg], '*')
     },
-    getAllMsg: function () {
-        return msgList.join('\n')
+    getAllMsg: function (replaces: StringStringObject = {}): string {
+        let allMsg = msgList.join('\n')
+        for (const k of Object.keys(replaces)) {
+            allMsg = allMsg.replace(k, replaces[k])
+        }
+        return allMsg
     }
 }
 

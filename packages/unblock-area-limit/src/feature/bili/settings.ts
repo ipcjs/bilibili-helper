@@ -102,7 +102,7 @@ export function settings() {
                         }
                     `))
             } else if (util_page.watchroom()) {
-                const _indexNav = indexNav = document.body.appendChild(_('div', { style: { position: 'fixed', right: '6px', bottom:  '45px', zIndex: '129', textAlign: 'center', display: 'none' } }))
+                const _indexNav = indexNav = document.body.appendChild(_('div', { style: { position: 'fixed', right: '6px', bottom: '45px', zIndex: '129', textAlign: 'center', display: 'none' } }))
                 indexNav.appendChild(createBtnStyle('45px'))
                 window.addEventListener('scroll', (event) => {
                     _indexNav.style.display = window.scrollY < 600 ? 'none' : ''
@@ -218,7 +218,7 @@ export function settings() {
 
         let textarea = document.getElementById('balh-textarea-copy') as HTMLTextAreaElement
         textarea.style.display = 'inline-block'
-        if (ui.copy(logHub.getAllMsg(), textarea)) {
+        if (ui.copy(logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' }), textarea)) {
             textarea.style.display = 'none'
             util_ui_msg.show(window.$(this),
                 continueToIssue ? '复制日志成功; 点击确定, 继续提交问题(需要GitHub帐号)\n请把日志粘贴到问题描述中' : '复制成功',

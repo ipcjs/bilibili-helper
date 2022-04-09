@@ -1280,7 +1280,12 @@ function scriptContent() {
             getCookie: cookieStorage.get,
             login: bili.biliplus_login.showLogin,
             logout: bili.biliplus_login.showLogout,
-            getLog: logHub.getAllMsg,
+            getLog: (...args) => {
+                setTimeout(() => {
+                    util_warn('日志包含access_key等敏感数据, 请不要发给不信任的人!')
+                }, 0)
+                return logHub.getAllMsg.apply(null, args)
+            },
             showSettings: settings.show,
             set1080P: function () {
                 const settings = JSON.parse(localStorage.bilibili_player_settings)
