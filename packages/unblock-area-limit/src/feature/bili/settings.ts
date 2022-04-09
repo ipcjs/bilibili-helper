@@ -421,5 +421,6 @@ export function settings() {
     return {
         dom: settingsDOM,
         show: showSettings,
+        setup: addSettingsButton,
     }
 }

@@ -1287,6 +1287,7 @@ function scriptContent() {
                 return logHub.getAllMsg.apply(null, args)
             },
             showSettings: settings.show,
+            _setupSettings: settings.setup,
             set1080P: function () {
                 const settings = JSON.parse(localStorage.bilibili_player_settings)
                 const oldQuality = settings.setting_config.defquality

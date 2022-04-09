@@ -1,5 +1,7 @@
 interface BalhInterface {
     showSettings: () => void
+    /** 安装设置按钮 */
+    _setupSettings: () => void
 }
 
 declare global {

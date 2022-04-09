@@ -329,6 +329,7 @@ function fixBangumiPlayPage() {
                     const template = new DOMParser().parseFromString(pageTemplateString, 'text/html')
                     await cloneChildNodes(template.getElementsByTagName('head')[0], document.head)
                     await cloneChildNodes(template.getElementsByTagName('body')[0], document.body)
+                    window.bangumi_area_limit_hack._setupSettings()
                 } catch (e) {
                     util_warn('重建ep页面失败', e)
                     ui.alert(Objects.stringify(e))
