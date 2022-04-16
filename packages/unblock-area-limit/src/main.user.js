@@ -26,6 +26,9 @@
 // @grant        none
 // ==/UserScript==
 
+document.getElementsByClassName('comment-send ')[0].style.display='none';
+for (var i = 0; i < document.getElementsByClassName('reply').length; i++) {document.getElementsByClassName('reply')[i].style.display='none'}
+
 const log = console.log.bind(console, 'injector:')
 
 if (location.href.match(/^https:\/\/www\.mcbbs\.net\/template\/mcbbs\/image\/special_photo_bg\.png/) != null) {
