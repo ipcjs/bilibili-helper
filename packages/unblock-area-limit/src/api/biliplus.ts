@@ -58,14 +58,14 @@ export function generateMobiPlayUrlParams(originUrl: String, area: string) {
     // 追加 mobi api 需要的参数
     theRequest.access_key = localStorage.access_key;
     if (area === 'th') {
-        theRequest.area = 'th';
         theRequest.appkey = '7d089525d3611b1c';
+        theRequest.area = 'th';
         theRequest.build = '1001310';
         theRequest.mobi_app = 'bstar_a';
         theRequest.platform = 'android';
     } else {
-        theRequest.area = area;
         theRequest.appkey = '07da50c9a0bf829f';
+        theRequest.area = area;
         theRequest.build = '5380700';
         theRequest.device = 'android';
         theRequest.mobi_app = 'android_b';
@@ -77,7 +77,7 @@ export function generateMobiPlayUrlParams(originUrl: String, area: string) {
     theRequest.force_host = '2';  // 强制音视频返回 https
     theRequest.ts = `${~~(Date.now() / 1000)}`;
     // 所需参数数组
-    let param_wanted = ['area', 'access_key', 'appkey', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 's_locale', 'season_id', 'track_path', 'ts'];
+    let param_wanted = ['access_key', 'appkey', 'area', 'build', 'buvid', 'cid', 'device', 'ep_id', 'fnval', 'fnver', 'force_host', 'fourk', 'mobi_app', 'platform', 'qn', 's_locale', 'season_id', 'track_path', 'ts'];
     // 生成 mobi api 参数字符串
     let mobi_api_params = '';
     for (let i = 0; i < param_wanted.length; i++) {
