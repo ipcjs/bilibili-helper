@@ -13,12 +13,14 @@ export default function ({ filePath, contentTag = 'template-content' } = {}) {
         renderChunk(code, renderedChunk, outputOptions) {
             const magicString = new MagicString(code)
             const template = readFileSync(filePath, { encoding: 'utf8' })
-            // 匹配出内容标签所在行(某些情况下group[0]可能以\n\r\n开头...(╯°口°)╯(┴—┴)
-            const group = template.match(new RegExp(`^[\r\n]*(\\s*)\\/\\/.*@${contentTag}.*$`, 'm'))
+            // 坑点: \s在多行模式下可能会匹配到\n (╯°口°)╯(┴—┴) 
+            // 匹配出内容标签所在行
+            const group = template.match(new RegExp(`[\\r\\n]+(\\s*)\\/\\/.*@${contentTag}.*([\\r\\n]+)`))
             if (group) {
                 const lastIndex = group.index + group[0].length
                 magicString.indent(group[1]) // group[1], 是标签所在行的缩进部分
-                    .prepend(template.substring(0, lastIndex + 1)) // +1, 用来包括\n
+                    .prepend(template.substring(0, lastIndex))
+                    .append(group[2]) // group[2], 当前平台的换行符
                     .append(template.substring(lastIndex))
             } else {
                 magicString.prepend(template)
