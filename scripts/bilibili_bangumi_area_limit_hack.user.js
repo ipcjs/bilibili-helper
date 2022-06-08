@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.18
+// @version      8.2.19
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -1003,20 +1003,27 @@ function scriptSource(invokeBy) {
             // 异步构建 segmentBaseMap
             let taskList = [];
             // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
-            // let range = Math.round(result.dash.duration * 3.5).toString()
+            let range = Math.round(result.dash.duration * 3.5);
+            // 避免 太高或太低 导致 泡面番 和 剧场版 加载不了
+            if (range < 1500) {
+                range = 1500;
+            }
+            if (range > 20000) {
+                range = 20000;
+            }
             // 乱猜 range 导致泡面番播不出
             result.dash.video.forEach((video) => {
                 if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
                     // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
                     video.baseUrl = video.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)));
+                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range.toString()));
             });
             result.dash.audio.forEach((audio) => {
                 if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
                     audio.baseUrl = audio.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)));
+                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range.toString()));
             });
             yield Promise.all(taskList);
             if (window.__segment_base_map__)
@@ -1113,6 +1120,10 @@ function scriptSource(invokeBy) {
             let support_formats = [];
             let dash_video = [];
             origin.data.video_info.stream_list.forEach((stream) => {
+                // 目前 4K 加载有问题
+                if (stream.stream_info.quality > 112) {
+                    return;
+                }
                 support_formats.push(stream.stream_info);
                 accept_quality.push(stream.stream_info.quality);
                 accept_description.push(stream.stream_info.new_description);
