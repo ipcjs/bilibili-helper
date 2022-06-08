@@ -27,5 +27,6 @@ jobs:
 
     - name: Commit
       uses: stefanzweifel/git-auto-commit-action@v4
+      continue-on-error: true
       with:
         commit_message: "chore: build"
