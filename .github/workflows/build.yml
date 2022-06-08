@@ -3,8 +3,8 @@ name: Build
 on:
   push:
     branches: [ "user.js" ]
-  pull_request:
-    branches: [ "user.js" ]
+  # pull_request:
+    # branches: [ "user.js" ]
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
         npx rollup --config packages/zhihu_mobile_style/rollup.config.js
 
     - name: Commit
-      uses: stefanzweifel/git-auto-commit-action@v4
       continue-on-error: true
+      uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: "chore: build"
