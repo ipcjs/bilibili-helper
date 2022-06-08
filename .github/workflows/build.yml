@@ -24,8 +24,8 @@ jobs:
         npx rollup --config packages/unblock-area-limit/rollup.config.js
         npx rollup --config packages/s3_mobile_style/rollup.config.js
         npx rollup --config packages/zhihu_mobile_style/rollup.config.js
+
     - name: Commit
       uses: stefanzweifel/git-auto-commit-action@v4
-      
-
-    
+      with:
+        commit_message: "chore: build"
