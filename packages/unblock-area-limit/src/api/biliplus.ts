@@ -431,8 +431,8 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     let support_formats = <any>[]
     let dash_video = <any>[]
     origin.data.video_info.stream_list.forEach((stream) => {
-        // 目前 4K 加载有问题
-        if (stream.stream_info.quality > 112) {
+        // 目前 4K, 240p 加载有问题
+        if (stream.stream_info.quality > 112 || stream.stream_info.quality < 16) {
             return;
         }
         support_formats.push(stream.stream_info)
