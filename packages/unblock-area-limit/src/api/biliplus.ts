@@ -160,6 +160,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         }
     }
     const codecsMap: StringStringObject = {
+        30120: 'avc1.64003C',  // 4K
+        30121: 'hev1.1.6.L156.90',  // HEVC 4K
         30112: 'avc1.640028',  // 1080P+
         30102: 'hev1.1.6.L120.90',  // HEVC 1080P+
         30080: 'avc1.640028',  // 1080P
@@ -170,6 +172,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30033: 'hev1.1.6.L120.90',  // HEVC 480P
         30011: 'hev1.1.6.L120.90',  // HEVC 360P
         30016: 'avc1.64001E',  // 360P
+        30006: 'avc1.64001E',  // 240P
         30280: 'mp4a.40.2',  // 高码音频
         30232: 'mp4a.40.2',  // 中码音频
         30216: 'mp4a.40.2',  // 低码音频
@@ -182,6 +185,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         'nb2-1-30280': 'mp4a.40.2'  // APP源 高码音频
     }
     const resolutionMap: ResolutionMapObject = {
+        30120: [3840, 2160],  // 4K
+        30121: [3840, 2160],  // HEVC 4K
         30112: [1920, 1080],  // 1080P+
         30102: [1920, 1080],  // HEVC 1080P+
         30080: [1920, 1080],  // 1080P
@@ -192,8 +197,11 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30033: [852, 480],  // HEVC 480P
         30011: [640, 360],  // HEVC 360P
         30016: [640, 360],  // 360P
+        30006: [426, 240],  // 240P
     }
     const frameRateMap: StringStringObject = {
+        30120: '16000/672',
+        30121: '16000/672',
         30112: '16000/672',
         30102: '16000/672',
         30080: '16000/672',
@@ -203,7 +211,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30032: '16000/672',
         30033: '16000/656',
         30011: '16000/656',
-        30016: '16000/672'
+        30016: '16000/672',
+        30006: '16000/672',
     }
     let segmentBaseMap: SegmentBaseMapObject = {}
 
@@ -431,10 +440,6 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     let support_formats = <any>[]
     let dash_video = <any>[]
     origin.data.video_info.stream_list.forEach((stream) => {
-        // 目前 4K 加载有问题
-        if (stream.stream_info.quality > 112) {
-            return;
-        }
         support_formats.push(stream.stream_info)
         accept_quality.push(stream.stream_info.quality)
         accept_description.push(stream.stream_info.new_description)
