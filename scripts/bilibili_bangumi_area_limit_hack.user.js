@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.22
+// @version      8.2.23
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -901,6 +901,8 @@ function scriptSource(invokeBy) {
     function fixMobiPlayUrlJson(originJson) {
         return __awaiter(this, void 0, void 0, function* () {
             const codecsMap = {
+                30120: 'avc1.64003C',
+                30121: 'hev1.1.6.L156.90',
                 30112: 'avc1.640028',
                 30102: 'hev1.1.6.L120.90',
                 30080: 'avc1.640028',
@@ -911,6 +913,7 @@ function scriptSource(invokeBy) {
                 30033: 'hev1.1.6.L120.90',
                 30011: 'hev1.1.6.L120.90',
                 30016: 'avc1.64001E',
+                30006: 'avc1.64001E',
                 30280: 'mp4a.40.2',
                 30232: 'mp4a.40.2',
                 30216: 'mp4a.40.2',
@@ -923,6 +926,8 @@ function scriptSource(invokeBy) {
                 'nb2-1-30280': 'mp4a.40.2' // APP源 高码音频
             };
             const resolutionMap = {
+                30120: [3840, 2160],
+                30121: [3840, 2160],
                 30112: [1920, 1080],
                 30102: [1920, 1080],
                 30080: [1920, 1080],
@@ -933,8 +938,11 @@ function scriptSource(invokeBy) {
                 30033: [852, 480],
                 30011: [640, 360],
                 30016: [640, 360],
+                30006: [426, 240],
             };
             const frameRateMap = {
+                30120: '16000/672',
+                30121: '16000/672',
                 30112: '16000/672',
                 30102: '16000/672',
                 30080: '16000/672',
@@ -944,7 +952,8 @@ function scriptSource(invokeBy) {
                 30032: '16000/672',
                 30033: '16000/656',
                 30011: '16000/656',
-                30016: '16000/672'
+                30016: '16000/672',
+                30006: '16000/672',
             };
             let segmentBaseMap = {};
             function getId(url, default_value, get_filename = false) {
@@ -1121,10 +1130,6 @@ function scriptSource(invokeBy) {
             let support_formats = [];
             let dash_video = [];
             origin.data.video_info.stream_list.forEach((stream) => {
-                // 目前 4K 加载有问题
-                if (stream.stream_info.quality > 112) {
-                    return;
-                }
                 support_formats.push(stream.stream_info);
                 accept_quality.push(stream.stream_info.quality);
                 accept_description.push(stream.stream_info.new_description);
