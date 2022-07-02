@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.24
+// @version      8.2.25
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -914,6 +914,7 @@ function scriptSource(invokeBy) {
                 30011: 'hev1.1.6.L120.90',
                 30016: 'avc1.64001E',
                 30006: 'avc1.64001E',
+                30005: 'avc1.64001E',
                 30280: 'mp4a.40.2',
                 30232: 'mp4a.40.2',
                 30216: 'mp4a.40.2',
@@ -939,6 +940,7 @@ function scriptSource(invokeBy) {
                 30011: [640, 360],
                 30016: [640, 360],
                 30006: [426, 240],
+                30005: [256, 144],
             };
             const frameRateMap = {
                 30120: '16000/672',
@@ -954,6 +956,7 @@ function scriptSource(invokeBy) {
                 30011: '16000/656',
                 30016: '16000/672',
                 30006: '16000/672',
+                30005: '16000/672',
             };
             let segmentBaseMap = {};
             function getId(url, default_value, get_filename = false) {
