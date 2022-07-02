@@ -16,7 +16,9 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-        # cache: 'npm'
+        # 缓存, 临时禁用可以解决又是出现的执行错误...
+        # https://github.com/actions/setup-node#caching-global-packages-data
+        cache: 'npm'
     - run: npm ci
 
     - name: Build
