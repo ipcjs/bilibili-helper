@@ -173,6 +173,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30011: 'hev1.1.6.L120.90',  // HEVC 360P
         30016: 'avc1.64001E',  // 360P
         30006: 'avc1.64001E',  // 240P
+        30005: 'avc1.64001E',  // 144P
         30280: 'mp4a.40.2',  // 高码音频
         30232: 'mp4a.40.2',  // 中码音频
         30216: 'mp4a.40.2',  // 低码音频
@@ -198,6 +199,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30011: [640, 360],  // HEVC 360P
         30016: [640, 360],  // 360P
         30006: [426, 240],  // 240P
+        30005: [256, 144],  // 144P
     }
     const frameRateMap: StringStringObject = {
         30120: '16000/672',
@@ -213,6 +215,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30011: '16000/656',
         30016: '16000/672',
         30006: '16000/672',
+        30005: '16000/672',
     }
     let segmentBaseMap: SegmentBaseMapObject = {}
 
