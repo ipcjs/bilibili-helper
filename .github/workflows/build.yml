@@ -19,7 +19,7 @@ jobs:
         # 缓存, 若报缓存错误, 需要手动删除缓存...
         # https://docs.github.com/en/rest/actions/cache#list-github-actions-caches-for-a-repository
         # https://github.com/actions/setup-node#caching-global-packages-data
-        cache: 'npm'
+        # cache: 'npm'
     - run: npm ci
 
     - name: Build
