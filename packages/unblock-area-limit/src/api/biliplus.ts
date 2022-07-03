@@ -160,6 +160,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         }
     }
     const codecsMap: StringStringObject = {
+        30120: 'avc1.64003C',  // 4K
+        30121: 'hev1.1.6.L156.90',  // HEVC 4K
         30112: 'avc1.640028',  // 1080P+
         30102: 'hev1.1.6.L120.90',  // HEVC 1080P+
         30080: 'avc1.640028',  // 1080P
@@ -170,6 +172,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30033: 'hev1.1.6.L120.90',  // HEVC 480P
         30011: 'hev1.1.6.L120.90',  // HEVC 360P
         30016: 'avc1.64001E',  // 360P
+        30006: 'avc1.64001E',  // 240P
+        30005: 'avc1.64001E',  // 144P
         30280: 'mp4a.40.2',  // 高码音频
         30232: 'mp4a.40.2',  // 中码音频
         30216: 'mp4a.40.2',  // 低码音频
@@ -182,6 +186,8 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         'nb2-1-30280': 'mp4a.40.2'  // APP源 高码音频
     }
     const resolutionMap: ResolutionMapObject = {
+        30120: [3840, 2160],  // 4K
+        30121: [3840, 2160],  // HEVC 4K
         30112: [1920, 1080],  // 1080P+
         30102: [1920, 1080],  // HEVC 1080P+
         30080: [1920, 1080],  // 1080P
@@ -192,8 +198,12 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30033: [852, 480],  // HEVC 480P
         30011: [640, 360],  // HEVC 360P
         30016: [640, 360],  // 360P
+        30006: [426, 240],  // 240P
+        30005: [256, 144],  // 144P
     }
     const frameRateMap: StringStringObject = {
+        30120: '16000/672',
+        30121: '16000/672',
         30112: '16000/672',
         30102: '16000/672',
         30080: '16000/672',
@@ -203,7 +213,9 @@ export async function fixMobiPlayUrlJson(originJson: object) {
         30032: '16000/672',
         30033: '16000/656',
         30011: '16000/656',
-        30016: '16000/672'
+        30016: '16000/672',
+        30006: '16000/672',
+        30005: '16000/672',
     }
     let segmentBaseMap: SegmentBaseMapObject = {}
 
@@ -269,20 +281,27 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     // 异步构建 segmentBaseMap
     let taskList: Promise<any>[] = []
     // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
-    // let range = Math.round(result.dash.duration * 3.5).toString()
+    let range = Math.round(result.dash.duration * 3.5);
+    // 避免 太高或太低 导致 泡面番 和 剧场版 加载不了
+    if (range < 1500) {
+        range = 1500;
+    }
+    if (range > 20000) {
+        range = 20000;
+    }
     // 乱猜 range 导致泡面番播不出
     result.dash.video.forEach((video) => {
         if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
             // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
             video.baseUrl = video.backupUrl[0]
         }
-        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)))
+        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range.toString()))
     })
     result.dash.audio.forEach((audio) => {
         if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
             audio.baseUrl = audio.backupUrl[0]
         }
-        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)))
+        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range.toString()))
     })
     await Promise.all(taskList)
     if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__

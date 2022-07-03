@@ -9,7 +9,14 @@ export function redirect_to_bangumi_or_insert_player() {
     // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
     function tryRedirectToBangumiOrInsertPlayer() {
         let $errorPanel;
-        if (!($errorPanel = document.querySelector('.error-container > .error-panel'))) {
+        $errorPanel = document.querySelector('.error-container > .error-panel')
+        if (!$errorPanel && !window.__INITIAL_STATE__) {
+            // 新版视频不见了页面, 错误面板也是用Vue写的, 只能通过是否存在__INITIAL_STATE__来判断是不是错误页面
+            // eg: https://www.bilibili.com/video/BV1ja411X7Ba
+            $errorPanel = _('div', { style: { position: 'fixed', top: '100px', left: '100px' } });
+            document.body.appendChild($errorPanel);
+        }
+        if (!$errorPanel) {
             return;
         }
         let msg = document.createElement('a');

@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [ "user.js" ]
+  # pull_request:
+    # branches: [ "user.js" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        # 缓存, 若报缓存错误, 需要手动删除缓存...
+        # https://docs.github.com/en/rest/actions/cache#list-github-actions-caches-for-a-repository
+        # https://github.com/actions/setup-node#caching-global-packages-data
+        # cache: 'npm'
+    - run: npm ci
+
+    - name: Build
+      run: |
+        npx rollup --config packages/unblock-area-limit/rollup.config.js
+        npx rollup --config packages/s3_mobile_style/rollup.config.js
+        npx rollup --config packages/zhihu_mobile_style/rollup.config.js
+
+    - name: Commit
+      continue-on-error: true
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "chore: build"

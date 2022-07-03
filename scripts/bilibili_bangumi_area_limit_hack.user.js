@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.18
+// @version      8.2.26
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -72,7 +72,8 @@ if (!Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest').writable) {
 
 /** 脚本的主体部分, 在GM4中, 需要把这个函数转换成字符串, 注入到页面中, 故不要引用外部的变量 */
 function scriptSource(invokeBy) {
-    // @template-content    var Strings;
+    // @template-content
+    var Strings;
     (function (Strings) {
         function multiply(str, multiplier) {
             let result = '';
@@ -900,6 +901,8 @@ function scriptSource(invokeBy) {
     function fixMobiPlayUrlJson(originJson) {
         return __awaiter(this, void 0, void 0, function* () {
             const codecsMap = {
+                30120: 'avc1.64003C',
+                30121: 'hev1.1.6.L156.90',
                 30112: 'avc1.640028',
                 30102: 'hev1.1.6.L120.90',
                 30080: 'avc1.640028',
@@ -910,6 +913,8 @@ function scriptSource(invokeBy) {
                 30033: 'hev1.1.6.L120.90',
                 30011: 'hev1.1.6.L120.90',
                 30016: 'avc1.64001E',
+                30006: 'avc1.64001E',
+                30005: 'avc1.64001E',
                 30280: 'mp4a.40.2',
                 30232: 'mp4a.40.2',
                 30216: 'mp4a.40.2',
@@ -922,6 +927,8 @@ function scriptSource(invokeBy) {
                 'nb2-1-30280': 'mp4a.40.2' // APP源 高码音频
             };
             const resolutionMap = {
+                30120: [3840, 2160],
+                30121: [3840, 2160],
                 30112: [1920, 1080],
                 30102: [1920, 1080],
                 30080: [1920, 1080],
@@ -932,8 +939,12 @@ function scriptSource(invokeBy) {
                 30033: [852, 480],
                 30011: [640, 360],
                 30016: [640, 360],
+                30006: [426, 240],
+                30005: [256, 144],
             };
             const frameRateMap = {
+                30120: '16000/672',
+                30121: '16000/672',
                 30112: '16000/672',
                 30102: '16000/672',
                 30080: '16000/672',
@@ -943,7 +954,9 @@ function scriptSource(invokeBy) {
                 30032: '16000/672',
                 30033: '16000/656',
                 30011: '16000/656',
-                30016: '16000/672'
+                30016: '16000/672',
+                30006: '16000/672',
+                30005: '16000/672',
             };
             let segmentBaseMap = {};
             function getId(url, default_value, get_filename = false) {
@@ -1003,20 +1016,27 @@ function scriptSource(invokeBy) {
             // 异步构建 segmentBaseMap
             let taskList = [];
             // SegmentBase 最大 range 和 duration 的比值大概在 2.5~3.2，保险这里取 3.5
-            // let range = Math.round(result.dash.duration * 3.5).toString()
+            let range = Math.round(result.dash.duration * 3.5);
+            // 避免 太高或太低 导致 泡面番 和 剧场版 加载不了
+            if (range < 1500) {
+                range = 1500;
+            }
+            if (range > 20000) {
+                range = 20000;
+            }
             // 乱猜 range 导致泡面番播不出
             result.dash.video.forEach((video) => {
                 if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
                     // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
                     video.baseUrl = video.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true)));
+                taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range.toString()));
             });
             result.dash.audio.forEach((audio) => {
                 if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
                     audio.baseUrl = audio.backupUrl[0];
                 }
-                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true)));
+                taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range.toString()));
             });
             yield Promise.all(taskList);
             if (window.__segment_base_map__)
@@ -1775,7 +1795,14 @@ function scriptSource(invokeBy) {
         // 重定向到Bangumi页面， 或者在当前页面直接插入播放页面
         function tryRedirectToBangumiOrInsertPlayer() {
             let $errorPanel;
-            if (!($errorPanel = document.querySelector('.error-container > .error-panel'))) {
+            $errorPanel = document.querySelector('.error-container > .error-panel');
+            if (!$errorPanel && !window.__INITIAL_STATE__) {
+                // 新版视频不见了页面, 错误面板也是用Vue写的, 只能通过是否存在__INITIAL_STATE__来判断是不是错误页面
+                // eg: https://www.bilibili.com/video/BV1ja411X7Ba
+                $errorPanel = createElement('div', { style: { position: 'fixed', top: '100px', left: '100px' } });
+                document.body.appendChild($errorPanel);
+            }
+            if (!$errorPanel) {
                 return;
             }
             let msg = document.createElement('a');
@@ -2095,7 +2122,7 @@ function scriptSource(invokeBy) {
                                 cid: ep.cid,
                                 bvid: ep.bvid,
                                 title: ep.index,
-                                titleFormat: titleForma,
+                                titleFormat: Strings.escapeSpecialChars(titleForma),
                                 htmlTitle: result.result.title,
                                 mediaInfoId: result.result.media_id,
                                 mediaInfoTitle: result.result.title,

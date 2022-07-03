@@ -213,7 +213,7 @@ function fixBangumiPlayPage() {
                             cid: ep.cid,
                             bvid: ep.bvid,
                             title: ep.index,
-                            titleFormat: titleForma,
+                            titleFormat: Strings.escapeSpecialChars(titleForma),
                             htmlTitle: result.result.title,
                             mediaInfoId: result.result.media_id,
                             mediaInfoTitle: result.result.title,
