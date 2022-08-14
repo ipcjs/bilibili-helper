@@ -21,6 +21,7 @@ new MutationObserver((mutations, observer) => {
                         // console.log('seeked', ev, this.currentTime)
                         // Twitter的自动循环播放功能, seek的位置一般在0.02以下
                         if (this.currentTime < 0.02) {
+                            console.debug('prevent looping', this)
                             this.pause()
                         }
                     })
