@@ -354,6 +354,7 @@ export function settings() {
                                 }
                             }, [
                                 _('option', { value: "" }, [_('text', '不替换')]),
+                                _('option', { value: "ali" }, [_('text', 'ali（阿里）')]),
                                 _('option', { value: "ks3" }, [_('text', 'ks3（金山）')]),
                                 _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
                                 _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
