@@ -4,6 +4,8 @@ import { util_error } from "./log";
 
 /** @see https://github.com/yujincheng08/BiliRoaming/blob/f689b138da7ac45d2591d375f19698c969844324/app/src/main/res/values/strings.xml#L112-L131 */
 export const uposMap = {
+    ali: 'upos-sz-mirrorali.bilivideo.com',
+    alib: 'upos-sz-mirroralib.bilivideo.com',
     ks3: 'upos-sz-mirrorks3.bilivideo.com',
     ks3b: 'upos-sz-mirrorks3b.bilivideo.com',
     ks3c: 'upos-sz-mirrorks3c.bilivideo.com',
