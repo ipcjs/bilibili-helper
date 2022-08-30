@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.2.26
+// @version      8.2.27
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -260,6 +260,8 @@ function scriptSource(invokeBy) {
 
     /** @see https://github.com/yujincheng08/BiliRoaming/blob/f689b138da7ac45d2591d375f19698c969844324/app/src/main/res/values/strings.xml#L112-L131 */
     const uposMap = {
+        ali: 'upos-sz-mirrorali.bilivideo.com',
+        alib: 'upos-sz-mirroralib.bilivideo.com',
         ks3: 'upos-sz-mirrorks3.bilivideo.com',
         ks3b: 'upos-sz-mirrorks3b.bilivideo.com',
         ks3c: 'upos-sz-mirrorks3c.bilivideo.com',
@@ -2806,6 +2808,7 @@ function scriptSource(invokeBy) {
                                     }
                                 }, [
                                     createElement('option', { value: "" }, [createElement('text', '不替换')]),
+                                    createElement('option', { value: "ali" }, [createElement('text', 'ali（阿里）')]),
                                     createElement('option', { value: "ks3" }, [createElement('text', 'ks3（金山）')]),
                                     createElement('option', { value: "kodo" }, [createElement('text', 'kodo（七牛）')]),
                                     createElement('option', { value: "cos" }, [createElement('text', 'cos（腾讯）')]),
