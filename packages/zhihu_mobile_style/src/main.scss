@@ -168,3 +168,8 @@ div.css-1bkecgh,
 .Modal {
     width: 100%;
 }
+/* https://twitter.com/undef_i/status/1566315374765031424 */
+
+#root > div > div[class^=css-] {
+    display: none;
+}
