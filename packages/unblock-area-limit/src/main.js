@@ -146,28 +146,6 @@ function scriptContent() {
                                         } else if (target.responseURL.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
                                             // 上一个接口的新版本
                                             let json = JSON.parse(target.responseText);
-                                            // 添加简中字幕
-                                            if (balh_config.generate_chs_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
-                                                let subtitles = json.data.subtitle.subtitles;
-                                                let lans = subtitles.map((item) => item.lan);
-                                                if (lans.includes('zh-Hant') && !lans.includes('zh-CN')) {
-                                                    let zhHant = subtitles.find((item) => item.lan == 'zh-Hant');
-                                                    let zhHantUrl = 'http:' + zhHant.subtitle_url;
-                                                    let zhHantId = zhHant.id;
-                                                    let zhHantRealId = BigInt(zhHant.id_str);
-                                                    let zhCN = {
-                                                        lan: 'zh-CN',
-                                                        lan_doc: '中文（中国）生成',
-                                                        is_lock: false,
-                                                        subtitle_url: `//www.kofua.top/bsub/t2s?sub_url=${encodeURIComponent(zhHantUrl)}`,
-                                                        type: 0,
-                                                        id: zhHantId + 1,
-                                                        id_str: (zhHantRealId + 1n).toString(),
-                                                    };
-                                                    json.data.subtitle.subtitles.push(zhCN);
-                                                    container.responseText = JSON.stringify(json);
-                                                }
-                                            }
                                             // https://github.com/ipcjs/bilibili-helper/issues/775
                                             // 适配有些泰区番剧有返回数据，但字幕为空的问题（ep372478）
                                             /*
@@ -1260,7 +1238,6 @@ function scriptContent() {
             'upos_server:', balh_config.upos_server,
             'flv_prefer_ws:', balh_config.flv_prefer_ws,
             'remove_pre_ad:', balh_config.remove_pre_ad,
-            'generate_chs_sub:', balh_config.generate_chs_sub,
             'enable_in_av:', balh_config.enable_in_av,
             'readyState:', document.readyState,
             'isLogin:', bili.biliplus_login.isLogin(),

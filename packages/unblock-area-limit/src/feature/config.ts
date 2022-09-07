@@ -27,8 +27,6 @@ interface BalhConfig {
     enable_in_av?: boolean
     /** 同上 */
     remove_pre_ad?: boolean
-    /** 同上 */
-    generate_chs_sub?: boolean
     is_closed: BOOL
     [k: string]: string | boolean | undefined
 }
