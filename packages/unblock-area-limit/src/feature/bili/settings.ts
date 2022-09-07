@@ -359,7 +359,6 @@ export function settings() {
                                 _('option', { value: "kodo" }, [_('text', 'kodo（七牛）')]),
                                 _('option', { value: "cos" }, [_('text', 'cos（腾讯）')]),
                                 _('option', { value: "bos" }, [_('text', 'bos（百度）')]),
-                                _('option', { value: "wcs" }, [_('text', 'wcs（网宿）')]),
                                 _('option', { value: "hw" }, [_('text', 'hw（251）')]),
                             ]),
                             _('span', { 'id': 'upos-server-message' })
