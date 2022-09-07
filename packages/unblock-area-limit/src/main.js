@@ -161,13 +161,11 @@ function scriptContent() {
                                                     let origSubUrl = 'http:' + origSub.subtitle_url;
                                                     let origSubId = origSub.id;
                                                     let origSubRealId = BigInt(origSub.id_str);
-                                                    let encSubUrl = encodeURIComponent(origSubUrl);
-                                                    let encSubId = encodeURIComponent(origSub.id_str);
                                                     let targetSub = {
                                                         lan: target,
                                                         lan_doc: targetDoc,
                                                         is_lock: false,
-                                                        subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encSubUrl}&sub_id=${encSubId}`,
+                                                        subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encodeURIComponent(origSubUrl)}`,
                                                         type: 0,
                                                         id: origSubId + 1,
                                                         id_str: (origSubRealId + 1n).toString(),
