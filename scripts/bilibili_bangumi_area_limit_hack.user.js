@@ -3088,7 +3088,7 @@ function scriptSource(invokeBy) {
                                                             lan: target,
                                                             lan_doc: targetDoc,
                                                             is_lock: false,
-                                                            subtitle_url: `//www.kofua.top/bsub/${converter}?sub_url=${encSubUrl}&sub_id=${encSubId}`,
+                                                            subtitle_url: `//video1.beijcloud.com/sub/t2cn/?sub_url=${origSubUrl}&sub_id=${encSubId}`,
                                                             type: 0,
                                                             id: origSubId + 1,
                                                             id_str: (origSubRealId + 1n).toString(),
