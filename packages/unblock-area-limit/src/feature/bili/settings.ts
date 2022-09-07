@@ -384,7 +384,7 @@ export function settings() {
                     ])
                 ]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
-                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_generate_sub' }), _('text', '为简繁字幕生成相应的繁简字幕')]),
+                    _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_generate_chs_sub' }), _('text', '生成简中字幕')]),
                 ]), _('br'),
                 _('div', { style: { display: 'flex' } }, [
                     _('label', { style: { flex: 1 } }, [_('input', { type: 'checkbox', name: 'balh_is_closed' }), _('text', '关闭脚本（脚本当前还有挺多问题, 若影响正常使用, 可以临时关闭它）'),]),
