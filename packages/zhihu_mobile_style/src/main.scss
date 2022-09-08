@@ -142,12 +142,16 @@
 }
 
 /* 列表Item上的按钮 */
-.ShareMenu {
-    display: none;
-}
 .ContentItem-action {
     margin-left: 8px;
 }
+/*
+// 测试按钮的选择器
+.ContentItem-actions button.Button--withLabel,
+button.ContentItem-action {
+    color: red;
+}
+*/
 
 /* 专栏页面 */
 .Post-NormalMain .Post-Header,
@@ -170,6 +174,6 @@ div.css-1bkecgh,
 }
 
 /* https://twitter.com/undef_i/status/1566315374765031424 */
-#root > div > div[class^=css-] {
+#root > div > div[class^="css-"] {
     display: none;
 }
