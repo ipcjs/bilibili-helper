@@ -15,8 +15,6 @@ export const uposMap = {
     cos: 'upos-sz-mirrorcos.bilivideo.com',
     cosb: 'upos-sz-mirrorcosb.bilivideo.com',
     bos: 'upos-sz-mirrorbos.bilivideo.com',
-    wcs: 'upos-sz-mirrorwcs.bilivideo.com',
-    wcsb: 'upos-sz-mirrorwcsb.bilivideo.com',
     /** 不限CROS, 限制UA */
     hw: 'upos-sz-mirrorhw.bilivideo.com',
     hwb: 'upos-sz-mirrorhwb.bilivideo.com',
