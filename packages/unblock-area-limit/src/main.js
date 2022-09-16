@@ -101,7 +101,6 @@ function scriptContent() {
                                             container,
                                         })
                                         if (response != null) {
-                                            debugger
                                             if (typeof response === 'object' && response instanceof Promise) {
                                                 // 异步转换
                                                 response.compose(dispatchResultTransformerCreator())
