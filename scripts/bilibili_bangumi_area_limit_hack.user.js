@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.0
+// @version      8.3.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -3014,7 +3014,7 @@ function scriptSource(invokeBy) {
                                             /// {@macro xhr_transform_response}
                                             const response = transformResponse({
                                                 url: target.responseURL,
-                                                responseText: target.responseText,
+                                                response: target.response,
                                                 xhr: target,
                                                 container,
                                             });
@@ -3076,7 +3076,7 @@ function scriptSource(invokeBy) {
                     /// {@template xhr_transform_response}
                     /// 转换响应数据, 处理简单的情况
                     /// - url: 响应的url
-                    /// - responseText: 响应的文本
+                    /// - response: 响应内容
                     /// - xhr: xhr对象
                     /// - container, 一个xhr对象, 对应一个container, 可以用来复写xhr对象本身的属性, 或者设置一些临时的属性, 方便其他地方访问
                     /// 
@@ -3085,11 +3085,11 @@ function scriptSource(invokeBy) {
                     /// - Promise, 异步转换
                     /// - object|string, 同步转换
                     /// {@endtemplate}
-                    transformResponse: ({ url, responseText, xhr, container }) => {
+                    transformResponse: ({ url, response, xhr, container }) => {
                         if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
                             || url.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
-                            log('/season/user/status:', responseText);
-                            let json = JSON.parse(responseText);
+                            log('/season/user/status:', xhr.responseText);
+                            let json = JSON.parse(xhr.responseText);
                             let rewriteResult = false;
                             if (json.code === 0 && json.result) {
                                 areaLimit(json.result.area_limit !== 0);
@@ -3107,7 +3107,7 @@ function scriptSource(invokeBy) {
                             }
                         } else if (url.match(RegExps.url('bangumi.bilibili.com/web_api/season_area'))) {
                             log('/season_area', url);
-                            let json = JSON.parse(responseText);
+                            let json = JSON.parse(xhr.responseText);
                             if (json.code === 0 && json.result) {
                                 areaLimit(json.result.play === 0);
                                 if (json.result.play === 0) {
@@ -3117,10 +3117,10 @@ function scriptSource(invokeBy) {
                             }
                         } else if (url.match(RegExps.url('api.bilibili.com/x/web-interface/nav'))) {
                             const isFromReport = Strings.getSearchParam(url, 'from') === 'report';
-                            let json = JSON.parse(responseText);
+                            let json = JSON.parse(xhr.responseText);
                             log('/x/web-interface/nav', (json.data && json.data.isLogin)
                                 ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus, isFromReport: isFromReport }
-                                : responseText);
+                                : xhr.responseText);
                             if (json.code === 0 && json.data && balh_config.blocked_vip
                                 && !isFromReport // report时, 还是不伪装了...
                             ) {
@@ -3132,7 +3132,7 @@ function scriptSource(invokeBy) {
                             // 这个接口的返回数据貌似并不会影响界面...
                             if (balh_config.blocked_vip) {
                                 log('/x/player.so');
-                                const xml = new DOMParser().parseFromString(`<root>${responseText.replace(/\&/g, "&amp;")}</root>`, 'text/xml');
+                                const xml = new DOMParser().parseFromString(`<root>${xhr.responseText.replace(/\&/g, "&amp;")}</root>`, 'text/xml');
                                 const vipXml = xml.querySelector('vip');
                                 if (vipXml) {
                                     const vip = JSON.parse(vipXml.innerHTML);
@@ -3144,7 +3144,7 @@ function scriptSource(invokeBy) {
                             }
                         } else if (url.match(RegExps.url('api.bilibili.com/x/player/v2'))) {
                             // 上一个接口的新版本
-                            let json = JSON.parse(responseText);
+                            let json = JSON.parse(xhr.responseText);
                             // 生成简体字幕
                             if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
                                 let subtitles = json.data.subtitle.subtitles;
@@ -3253,7 +3253,7 @@ function scriptSource(invokeBy) {
                                 areaLimit(false);
                             }
                         } else if (url.match(RegExps.url('api.bilibili.com/x/space/acc/info?'))) {
-                            const json = JSON.parse(responseText);
+                            const json = JSON.parse(xhr.responseText);
                             if (json.code === -404) {
                                 const mid = new URL(url).searchParams.get('mid');
                                 if (space_account_info_map[mid]) {
