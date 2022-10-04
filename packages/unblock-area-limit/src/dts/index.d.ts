@@ -25,3 +25,9 @@ type ResolutionMapObject = { [k: string]: [w: number, h: number] }
 
 /** T的所有value的联合类型 */
 type ValueOf<T> = T[keyof T]
+
+/** rollup-plugin-html插件导入的html文件 */
+declare module '*.html' {
+    const str: string
+    export default str
+}

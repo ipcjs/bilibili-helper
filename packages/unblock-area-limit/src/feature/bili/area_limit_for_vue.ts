@@ -12,7 +12,7 @@ import { ui } from "../../util/ui"
 import { ifNotNull } from "../../util/utils"
 import { balh_config, isClosed } from "../config"
 import { util_page } from "../page"
-import pageTemplate from './bangumi-play-page-template.html' // 不用管这个报错
+import pageTemplate from './bangumi-play-page-template.html'
 
 export function modifyGlobalValue<T = any>(
     name: string,
