@@ -2713,6 +2713,8 @@ function scriptSource(invokeBy) {
                     createElement('text', '代理服务器：'), createElement('a', { href: 'javascript:', event: { click: balh_feature_runPing } }, [createElement('text', '测速')]), createElement('br'),
                     createElement('div', { style: { display: 'flex' } }, [
                         // _('label', { style: { flex: 1 } }, [_('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.S0 }), _('text', '土豆服')]),
+                        createElement('label', { style: { flex: 1 } }, [createElement('input', { type: 'radio', disabled: 'true', name: 'balh_server_inner', value: r.const.server.S1 }), createElement('text', 'BiliPlus'), createElement('a', { href: 'https://www.biliplus.com/?about' }, [createElement('text', '（捐赠）')]),
+                        ]),
                         createElement('label', { style: { flex: 2 } }, [
                             createElement('input', { type: 'radio', name: 'balh_server_inner', value: r.const.server.CUSTOM }), createElement('text', `自定义（首选服务器）`),
                             createElement('input', {
