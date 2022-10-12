@@ -7,5 +7,3 @@ build/
 temp/
 # /.vscode/settings.json
 /*.user.js
-
-scripts/duolingo_international.user.js
