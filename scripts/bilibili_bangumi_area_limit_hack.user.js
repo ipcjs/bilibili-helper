@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.3
+// @version      8.3.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -4191,9 +4191,12 @@ function scriptSource(invokeBy) {
                 getCookie: cookieStorage.get,
                 login: biliplus_login.showLogin,
                 logout: biliplus_login.showLogout,
-                getLog: (...args) => {
+                getLog: () => {
+                    return logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' })
+                },
+                getAllLog: (...args) => {
                     setTimeout(() => {
-                        ui.alert('⚠️️日志包含access_key等敏感数据, 请不要发布到公开的网络上!!!⚠️️');
+                        ui.alert('⚠️️全部日志包含access_key等敏感数据, 请不要发布到公开的网络上!!!⚠️️');
                     }, 0);
                     return logHub.getAllMsg.apply(null, args)
                 },

@@ -1286,9 +1286,12 @@ function scriptContent() {
             getCookie: cookieStorage.get,
             login: bili.biliplus_login.showLogin,
             logout: bili.biliplus_login.showLogout,
-            getLog: (...args) => {
+            getLog: () => {
+                return logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' })
+            },
+            getAllLog: (...args) => {
                 setTimeout(() => {
-                    ui.alert('⚠️️日志包含access_key等敏感数据, 请不要发布到公开的网络上!!!⚠️️')
+                    ui.alert('⚠️️全部日志包含access_key等敏感数据, 请不要发布到公开的网络上!!!⚠️️')
                 }, 0)
                 return logHub.getAllMsg.apply(null, args)
             },
