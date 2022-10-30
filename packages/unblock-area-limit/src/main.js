@@ -1288,7 +1288,7 @@ function scriptContent() {
             logout: bili.biliplus_login.showLogout,
             getLog: (...args) => {
                 setTimeout(() => {
-                    util_warn('日志包含access_key等敏感数据, 请不要发给不信任的人!')
+                    ui.alert('⚠️️日志包含access_key等敏感数据, 请不要发布到公开的网络上!!!⚠️️')
                 }, 0)
                 return logHub.getAllMsg.apply(null, args)
             },
