@@ -27,7 +27,6 @@ export default function ({ log }) {
                         btn.style.display = 'none'
                     } else if (text === ' 举报' || text === '分享' || text === '收藏' || text === '喜欢') {
                         $text.textContent = ''
-                        debugger
                     } else if ((group = text.match(/(\d+) 条评论/))) {
                         $text.textContent = `${group[1]}`
                     } else {

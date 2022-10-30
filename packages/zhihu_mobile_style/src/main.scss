@@ -154,13 +154,33 @@ button.ContentItem-action {
 */
 
 /* 专栏页面 */
-.Post-NormalMain .Post-Header,
-.Post-NormalMain > div {
-    width: 100%;
+.Post {
+    &-content {
+        min-width: unset;
+    }
+    &-Main {
+        padding: 0px 16px;
+    }
+    &-NormalSub > div,
+    &-NormalMain > .Post-Header,
+    &-NormalMain > div {
+        width: 100%;
+    }
 }
-.ColumnPageHeader-content {
-    width: 100%;
+/* 专栏主页的Header */
+.ColumnPageHeader {
+    &-content {
+        width: calc(100% - 32px);
+        padding: 0px 16px;
+    }
+    &-profile {
+        display: none;
+    }
+    &-WriteButton {
+        font-size: 0px;
+    }
 }
+
 /* 弹窗 */
 button.Button.css-1x9te0t,
 .Modal-closeButton {
@@ -173,7 +193,7 @@ div.css-1bkecgh,
     width: 100%;
 }
 
-/* https://twitter.com/undef_i/status/1566315374765031424 */
+/* 追踪水印, https://twitter.com/undef_i/status/1566315374765031424 */
 #root > div > div[class^="css-"] {
     display: none;
 }
