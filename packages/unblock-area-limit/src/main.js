@@ -990,14 +990,14 @@ function scriptContent() {
                     }
 
                     // 标题有明确说明优先尝试，通常准确率最高
-                    if ((document.title.includes('僅限台灣') || document.title.includes('僅限台湾')) && balh_config.server_custom_tw) {
+                    if (/(僅|仅)限?(臺|台)(灣|湾)/.test(document.title) && balh_config.server_custom_tw) {
                         ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
                         result = await requestPlayUrl(balh_config.server_custom_tw, 'tw')
                         if (!result.code) {
                             return Promise.resolve(result)
                         }
                     }
-                    if (document.title.includes('僅限港澳') && balh_config.server_custom_hk) {
+                    if (/(僅|仅)限?港澳/.test(document.title) && balh_config.server_custom_hk) {
                         ui.playerMsg('捕获标题提示，使用香港代理服务器拉取视频地址...')
                         result = await requestPlayUrl(balh_config.server_custom_hk, 'hk')
                         if (!result.code) {
