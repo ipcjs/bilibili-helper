@@ -990,7 +990,7 @@ function scriptContent() {
                     }
 
                     // 标题有明确说明优先尝试，通常准确率最高
-                    if (document.title.includes('僅限台灣') && balh_config.server_custom_tw) {
+                    if ((document.title.includes('僅限台灣') || document.title.includes('僅限台湾')) && balh_config.server_custom_tw) {
                         ui.playerMsg('捕获标题提示，使用台湾代理服务器拉取视频地址...')
                         result = await requestPlayUrl(balh_config.server_custom_tw, 'tw')
                         if (!result.code) {
