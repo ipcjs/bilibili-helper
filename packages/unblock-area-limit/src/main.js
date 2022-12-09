@@ -336,7 +336,7 @@ function scriptContent() {
                         } else {
                             areaLimit(false)
                         }
-                    } else if (url.match(RegExps.url('api.bilibili.com/x/space/acc/info?'))) {
+                    } else if (url.match(RegExps.url('api.bilibili.com/x/space/acc/info?')) || url.match(RegExps.url('api.bilibili.com/x/space/wbi/acc/info?'))) {
                         const json = JSON.parse(xhr.responseText)
                         if (json.code === -404) {
                             const mid = new URL(url).searchParams.get('mid')
