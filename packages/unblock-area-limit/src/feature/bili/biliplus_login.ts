@@ -63,7 +63,7 @@ function showLogin() {
     balh_auth_window.document.title = 'BALH - 授权';
     balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
     window.balh_auth_window = balh_auth_window;
-    window.$.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
+    window.$.ajax('https://passport.bilibili.com/login/app/third?appkey=1d8b6e7d45233436&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=f412b3685ad85b532100dcdf093c0a1f', {
         xhrFields: { withCredentials: true },
         type: 'GET',
         dataType: 'json',
