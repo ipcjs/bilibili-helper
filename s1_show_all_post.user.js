@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     1.3.0
+// @version     1.3.1
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
@@ -313,15 +313,17 @@ function feature_show_all() {
 }
 
 function feature_voters() {
+    const SEPARATOR = '\t'
+
     async function copyVoters() {
         const $button = this
         const $content = document.getElementById('fwin_content_viewvote')
         /** @type {HTMLSelectElement}  */
         const $select = $content.querySelector('select.ps')
-        let result = '投票结果:'
-        for (const [index, option] of [...$select.options].entries()) {
+        let result = '# 投票结果'
+        for (const [index, option] of Array.from($select.options).entries()) {
             $button.textContent = `[复制中(${index}/${$select.options.length})...]`
-            result += `\n${option.text}: `
+            result += `\n\n## ${option.text}`
             log(option.value, option.text)
             let page = 0
             let $next
@@ -329,9 +331,10 @@ function feature_voters() {
                 page++
                 const resp = await ajaxPromise({ url: `https://bbs.saraba1st.com/2b/forum.php?mod=misc&action=viewvote&tid=${TID}&polloptionid=${option.value}&infloat=yes&handlekey=viewvote&page=${page}&inajax=1&ajaxtarget=fwin_content_viewvote` })
                 const $xml = new DOMParser().parseFromString(resp.responseXML.documentElement.firstChild.textContent, 'text/html')
-                const $voters = [...$xml.querySelectorAll('li > p > a')]
+                const $voters = Array.from($xml.querySelectorAll('li > p > a'))
 
-                result += $voters.map(it => it.textContent).join(', ')
+                result += page > 1 ? SEPARATOR : '\n\n'
+                result += $voters.map(it => it.textContent).join(SEPARATOR)
 
                 $next = $xml.querySelector('.pg > .nxt')
             } while ($next)
