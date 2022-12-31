@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name        列出S1一条帖子的所有内容
 // @namespace   https://github.com/ipcjs
-// @version     1.3.1
+// @version     1.3.2
 // @description 在帖子的导航栏添加[显示全部]按钮, 列出帖子的所有内容
 // @author       ipcjs
 // @include     *://bbs.saraba1st.com/2b/thread-*-*-*.html
 // @include     *://bbs.saraba1st.com/2b/forum.php*
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
+// @grant       GM.setClipboard
+// @grant       GM_setClipboard
 // @grant       GM_addStyle
 // @grant       GM.addStyle
 // @grant       unsafeWindow
@@ -284,30 +286,6 @@ function f_all() {
     return true;
 }
 
-/**
- * @param text {string}
- */
-function ui_copy(text) {
-    let textarea = document.getElementById('ssap_copy_textarea')
-    if (textarea == null) {
-        textarea = _('textarea', { id: 'ssap_copy_textarea', style: { display: 'none' } })
-        document.body.appendChild(textarea)
-    }
-    textarea.style.display = 'inline-block'
-    textarea.value = text
-    textarea.select()
-    try {
-        const result = document.execCommand('copy')
-        if (result) {
-            textarea.style.display = 'none'
-        }
-        return result;
-    } catch (e) {
-        log('复制文本出错', e)
-    }
-    return false
-}
-
 function feature_show_all() {
     document.querySelector('#pt > div.z').appendChild(_('a', { id: 'load-all-post', href: 'javascript:;', event: { click: () => loadAllPost() } }, '[显示全部]'));
 }
@@ -341,7 +319,7 @@ function feature_voters() {
 
         }
         log(result)
-        ui_copy(result)
+        GM.setClipboard(result)
         $button.textContent = '[复制完成!]'
     }
     new MutationObserver((mutations, observer) => {
