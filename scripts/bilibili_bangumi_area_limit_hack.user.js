@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.5
+// @version      8.3.6
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -3151,7 +3151,7 @@ function scriptSource(invokeBy) {
                                 let genHant = lans.includes('zh-CN') && !lans.includes('zh-Hant');
                                 let origin = genCN ? 'zh-Hant' : genHant ? 'zh-CN' : null;
                                 let target = genCN ? 'zh-CN' : genHant ? 'zh-Hant' : null;
-                                let converter = genCN ? 't2cn' : genHant ? 'cn2t' : null;
+                                let converter = genCN ? 't2s' : genHant ? 's2t' : null;
                                 let targetDoc = genCN ? '中文（中国）生成' : genHant ? '中文（繁体）生成' : null;
                                 if (origin && target && converter && targetDoc) {
                                     let origSub = subtitles.find((item) => item.lan == origin);
@@ -3163,7 +3163,7 @@ function scriptSource(invokeBy) {
                                         lan: target,
                                         lan_doc: targetDoc,
                                         is_lock: false,
-                                        subtitle_url: `//video1.beijcloud.com/sub/t2cn/?sub_url=${origSubUrl}&sub_id=${encSubId}`,
+                                        subtitle_url: `//m3.moedot.net/bilisub/?sub_cnv=${converter}&sub_url=${origSubUrl}&sub_id=${encSubId}`,
                                         type: 0,
                                         id: origSubId + 1,
                                         id_str: (origSubRealId + 1n).toString(),
