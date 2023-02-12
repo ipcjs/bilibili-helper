@@ -230,26 +230,32 @@ function scriptContent() {
                         let json = JSON.parse(xhr.responseText);
                         // 生成简体字幕
                         if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
-                            let subtitles = json.data.subtitle.subtitles;
-                            let lans = subtitles.map((item) => item.lan);
-                            let genCN = lans.includes('zh-Hant') && !lans.includes('zh-CN');
-                            let genHant = lans.includes('zh-CN') && !lans.includes('zh-Hant');
-                            let origin = genCN ? 'zh-Hant' : genHant ? 'zh-CN' : null;
-                            let target = genCN ? 'zh-CN' : genHant ? 'zh-Hant' : null;
-                            let converter = genCN ? 't2s' : genHant ? 's2t' : null;
-                            let targetDoc = genCN ? '中文（中国）生成' : genHant ? '中文（繁体）生成' : null;
-                            if (origin && target && converter && targetDoc) {
-                                let origSub = subtitles.find((item) => item.lan == origin);
-                                let origSubUrl = 'http:' + origSub.subtitle_url;
-                                let origSubId = origSub.id;
-                                let origSubRealId = BigInt(origSub.id_str);
-                                let encSubUrl = encodeURIComponent(origSubUrl);
-                                let encSubId = encodeURIComponent(origSub.id_str);
-                                let targetSub = {
+                            const subtitles = json.data.subtitle.subtitles;
+                            const lans = subtitles.map((item) => item.lan);
+                            const genHans = lans.includes('zh-Hant') && !lans.includes('zh-Hans');
+                            const genHant = lans.includes('zh-Hans') && !lans.includes('zh-Hant');
+                            if (!genHans && !genHant) {
+                                return null;
+                            }
+                            const origin = genHans ? 'zh-Hant' : 'zh-Hans';
+                            const target = genHans ? 'zh-Hans' : 'zh-Hant';
+                            const targetDoc = genHans ? '中文（简体）生成' : '中文（繁体）生成'
+                            if (origin && target && targetDoc) {
+                                const from = origin == 'zh-Hant' ? 'tw' : 'cn';
+                                const to = target == 'zh-Hans' ? 'cn' : 'tw';
+                                const origSub = subtitles.find((item) => item.lan == origin);
+                                const origSubUrl = 'http:' + origSub.subtitle_url;
+                                const origSubId = origSub.id;
+                                const origSubRealId = BigInt(origSub.id_str);
+                                const translateUrl = new URL(origSubUrl);
+                                translateUrl.searchParams.set('translate', '1');
+                                translateUrl.searchParams.set('from', from);
+                                translateUrl.searchParams.set('to', to);
+                                const targetSub = {
                                     lan: target,
                                     lan_doc: targetDoc,
                                     is_lock: false,
-                                    subtitle_url: `//m3.moedot.net/bilisub/?sub_cnv=${converter}&sub_url=${origSubUrl}&sub_id=${encSubId}`,
+                                    subtitle_url: translateUrl.href,
                                     type: 0,
                                     id: origSubId + 1,
                                     id_str: (origSubRealId + 1n).toString(),
@@ -296,6 +302,27 @@ function scriptContent() {
                                 return json
                             }
                         }
+                    } else if (url.match(RegExps.url('i0.hdslb.com/bfs/subtitle'))) {
+                        log('/bfs/subtitle', url);
+                        const parsedUrl = new URL(url);
+                        const translate = parsedUrl.searchParams.get('translate') == '1';
+                        if (!translate) {
+                            return null;
+                        }
+                        const from = parsedUrl.searchParams.get('from');
+                        const to = parsedUrl.searchParams.get('to');
+                        const translator = OpenCC.Converter({from: from, to: to});
+                        const json = JSON.parse(xhr.responseText);
+
+                        // 参考 https://github.com/Kr328/bilibili-subtitle-tweaks
+                        json.body.forEach((value) => {
+                            const original = value.content;
+
+                            let result = original.replace(/\s[-—－]/, s => `\n${s.substring(1)}`);
+                            result = translator(result);
+                            value.content = result;
+                        });
+                        return json;
                     } else if (url.match(RegExps.url('api.bilibili.com/x/player/playurl'))) {
                         log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, xhr.response)
                         // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式

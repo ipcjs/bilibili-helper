@@ -9,6 +9,7 @@
 // @compatible   firefox
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
+// @require      https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/video/BV*
 // @include      *://www.bilibili.com/bangumi/play/ep*
@@ -43,6 +44,7 @@ function injector() {
         return
     }
     // @require      https://static.hdslb.com/js/md5.js
+    // @require      https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js
     GM_info.scriptMetaStr.replace(new RegExp('// @require\\s+https?:(//.*)'), (match, /*p1:*/url) => {
         log('@require:', url)
         let $script = document.createElement('script')
