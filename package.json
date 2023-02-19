@@ -10,6 +10,7 @@
     "rollup-plugin-html": "^0.2.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-typescript": "^6.1.0",
     "@types/greasemonkey": "^4.0.2",
     "magic-string": "^0.25.7",

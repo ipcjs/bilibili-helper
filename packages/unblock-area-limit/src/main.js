@@ -245,7 +245,7 @@ function scriptContent() {
                                 const from = origin == 'zh-Hant' ? 'tw' : 'cn';
                                 const to = target == 'zh-Hans' ? 'cn' : 'tw';
                                 const origSub = subtitles.find((item) => item.lan == origin);
-                                const origSubUrl = 'http:' + origSub.subtitle_url;
+                                const origSubUrl = 'https:' + origSub.subtitle_url;
                                 const origSubId = origSub.id;
                                 const origSubRealId = BigInt(origSub.id_str);
                                 const translateUrl = new URL(origSubUrl);
