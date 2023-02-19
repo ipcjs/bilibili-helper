@@ -9,6 +9,7 @@
 // @compatible   firefox
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
+// @require      https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/bangumi/play/ep*
 // @include      *://www.bilibili.com/bangumi/play/ss*

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.6
+// @version      8.3.7
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -9,6 +9,7 @@
 // @compatible   firefox
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
+// @require      https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js
 // @include      *://www.bilibili.com/video/av*
 // @include      *://www.bilibili.com/video/BV*
 // @include      *://www.bilibili.com/bangumi/play/ep*
@@ -43,6 +44,7 @@ function injector() {
         return
     }
     // @require      https://static.hdslb.com/js/md5.js
+    // @require      https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js
     GM_info.scriptMetaStr.replace(new RegExp('// @require\\s+https?:(//.*)'), (match, /*p1:*/url) => {
         log('@require:', url)
         let $script = document.createElement('script')
