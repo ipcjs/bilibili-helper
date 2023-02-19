@@ -2,9 +2,6 @@
 /** https://static.hdslb.com/js/md5.js */
 declare var hex_md5: (hex: string) => string
 
-/** https://unpkg.com/opencc-js@1.0.5/dist/umd/full.js */
-declare var OpenCC: any
-
 /** {@link NonNullable} 的反义词 */
 type Nullable<T> = T | null | undefined
 

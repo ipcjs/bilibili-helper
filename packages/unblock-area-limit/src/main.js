@@ -18,6 +18,7 @@ import { RegExps } from './util/regexps'
 import * as bili from './feature/bili';
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
 import space_account_info_map from './feature/bili/space_account_info_map'
+import * as OpenCC from 'opencc-js'
 
 function scriptContent() {
     'use strict';
@@ -311,7 +312,7 @@ function scriptContent() {
                         }
                         const from = parsedUrl.searchParams.get('from');
                         const to = parsedUrl.searchParams.get('to');
-                        const translator = OpenCC.Converter({from: from, to: to});
+                        const translator = OpenCC.Converter({ from: from, to: to });
                         const json = JSON.parse(xhr.responseText);
 
                         // 参考 https://github.com/Kr328/bilibili-subtitle-tweaks
