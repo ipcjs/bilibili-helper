@@ -11,5 +11,6 @@
     "include": [
         "packages/**/*.ts",
         "types/**/*.ts",
+        "scripts/vuejs_switch_lang.user.js"
     ],
 }

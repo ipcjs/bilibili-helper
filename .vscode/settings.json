@@ -5,15 +5,16 @@
     },
     "cSpell.enabled": true,
     "cSpell.words": [
+        "acfun",
+        "akamaized",
         "balh",
-        "ipcjs",
         "bangumi",
+        "bili",
         "bilibili",
         "biliplus",
-        "bili",
-        "acfun",
+        "ipcjs",
         "upos",
-        "akamaized",
+        "vuejs"
     ],
     "typescript.tsdk": "node_modules\\typescript\\lib",
 }
