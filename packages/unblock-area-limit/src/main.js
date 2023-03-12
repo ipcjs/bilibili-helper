@@ -19,6 +19,7 @@ import * as bili from './feature/bili';
 import { injectFetch, injectFetch4Mobile } from './feature/bili/area_limit'
 import space_account_info_map from './feature/bili/space_account_info_map'
 import * as OpenCC from 'opencc-js'
+import { removeEpAreaLimit } from './feature/bili/area_limit_for_vue'
 
 function scriptContent() {
     'use strict';
@@ -88,6 +89,13 @@ function scriptContent() {
                         return dispatchResultTransformer
                     }
                     return new Proxy(new target(...args), {
+                        has: function (target, prop) {
+                            if (prop === 'onloadend') {
+                                // 没有onloadend时, 会回退到使用onreadystatechange处理响应, 这样就不要改已有的代码了_(:3」∠)_
+                                return false
+                            }
+                            return prop in target
+                        },
                         set: function (target, prop, value, receiver) {
                             if (prop === 'onreadystatechange') {
                                 container.__onreadystatechange = value
@@ -170,7 +178,16 @@ function scriptContent() {
                 /// - object|string, 同步转换
                 /// {@endtemplate}
                 transformResponse: ({ url, response, xhr, container }) => {
-                    if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
+                    if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/season?'))) {
+                        log('/pgc/view/web/season:', xhr.responseText)
+                        let json = JSON.parse(xhr.responseText)
+                        if (json.code === 0 && json.result) {
+                            // processSeasonInfo(json.result)
+                            json.result.episodes.forEach(removeEpAreaLimit)
+                            json.result.rights.area_limit = false
+                            return json
+                        }
+                    } else if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
                         || url.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
                         log('/season/user/status:', xhr.responseText)
                         let json = JSON.parse(xhr.responseText)

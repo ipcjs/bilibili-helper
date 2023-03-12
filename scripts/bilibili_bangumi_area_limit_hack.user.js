@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.10
+// @version      8.4.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2265,6 +2265,21 @@ function scriptSource(invokeBy) {
             }
         }));
     }
+    function removeEpAreaLimit(ep) {
+        if (ep.epRights) {
+            ep.epRights.area_limit = false;
+            ep.epRights.allow_dm = 1;
+        }
+        if (ep.rights) {
+            ep.rights.area_limit = false;
+            ep.rights.allow_dm = 1;
+        }
+        if (ep.badge === '受限') {
+            ep.badge = '';
+            ep.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" };
+            ep.badge_type = 0;
+        }
+    }
     function area_limit_for_vue() {
         if (isClosed())
             return;
@@ -2296,29 +2311,52 @@ function scriptSource(invokeBy) {
                 },
             });
         }
+        function processUserStatus(value) {
+            if (value) {
+                // 区域限制
+                // todo      : 调用areaLimit(limit), 保存区域限制状态
+                // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+                value.area_limit = 0;
+                // 会员状态
+                if (balh_config.blocked_vip && value.vip_info) {
+                    value.vip_info.status = 1;
+                    value.vip_info.type = 2;
+                }
+            }
+        }
         function replaceUserState() {
             modifyGlobalValue('__PGC_USERSTATE__', {
                 onWrite: (value) => {
-                    if (value) {
-                        // 区域限制
-                        // todo      : 调用areaLimit(limit), 保存区域限制状态
-                        // 2019-08-17: 之前的接口还有用, 这里先不保存~~
-                        value.area_limit = 0;
-                        // 会员状态
-                        if (balh_config.blocked_vip && value.vip_info) {
-                            value.vip_info.status = 1;
-                            value.vip_info.type = 2;
-                        }
-                    }
+                    processUserStatus(value);
                     return value;
                 }
             });
         }
-        function replaceInitialState() {
-            // TODO: 2023/03/12 ipcjs 拦截处理新页面的初始数据
+        /** 拦截处理新页面的初始数据 */
+        function replaceNextData() {
             modifyGlobalValue('__NEXT_DATA__', {
                 onWrite: (value) => {
-                    // debugger
+                    const queries = value.props.pageProps.dehydratedState.queries;
+                    if (!queries)
+                        return value;
+                    for (const query of queries) {
+                        const data = query.state.data;
+                        switch (query.queryKey[0]) {
+                            case 'pgc/view/web/season':
+                                // 最重要的一项数据, 直接决定页面是否可播放
+                                Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]));
+                                data.mediaInfo.episodes.forEach(removeEpAreaLimit);
+                                // 其他字段对结果似乎没有影响, 故注释掉(
+                                // data.mediaInfo.hasPlayableEp = true
+                                // data.initEpList.forEach(removeEpAreaLimit)
+                                // data.rights.area_limit = false
+                                // data.rights.allow_dm = 1
+                                break;
+                            case 'season/user/status':
+                                processUserStatus(data);
+                                break;
+                        }
+                    }
                     return value;
                 },
                 onRead: (value) => {
@@ -2326,7 +2364,9 @@ function scriptSource(invokeBy) {
                     return value;
                 }
             });
-            // 拦截处理老页面的数据
+        }
+        /** 拦截处理老页面的数据 */
+        function replaceInitialState() {
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
                     var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -2353,6 +2393,7 @@ function scriptSource(invokeBy) {
                 }
             });
         }
+        replaceNextData();
         replaceInitialState();
         replaceUserState();
         replacePlayInfo();
@@ -3412,6 +3453,13 @@ function scriptSource(invokeBy) {
                             return dispatchResultTransformer
                         };
                         return new Proxy(new target(...args), {
+                            has: function (target, prop) {
+                                if (prop === 'onloadend') {
+                                    // 没有onloadend时, 会回退到使用onreadystatechange处理响应, 这样就不要改已有的代码了_(:3」∠)_
+                                    return false
+                                }
+                                return prop in target
+                            },
                             set: function (target, prop, value, receiver) {
                                 if (prop === 'onreadystatechange') {
                                     container.__onreadystatechange = value;
@@ -3492,7 +3540,16 @@ function scriptSource(invokeBy) {
                     /// - object|string, 同步转换
                     /// {@endtemplate}
                     transformResponse: ({ url, response, xhr, container }) => {
-                        if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
+                        if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/season?'))) {
+                            log('/pgc/view/web/season:', xhr.responseText);
+                            let json = JSON.parse(xhr.responseText);
+                            if (json.code === 0 && json.result) {
+                                // processSeasonInfo(json.result)
+                                json.result.episodes.forEach(removeEpAreaLimit);
+                                json.result.rights.area_limit = false;
+                                return json
+                            }
+                        } else if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
                             || url.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
                             log('/season/user/status:', xhr.responseText);
                             let json = JSON.parse(xhr.responseText);

@@ -4,7 +4,7 @@ import { BiliPlusApi } from "../../api/biliplus"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
-import { log, util_warn } from "../../util/log"
+import { log, util_debug, util_warn } from "../../util/log"
 import { Objects } from "../../util/objects"
 import { _ } from "../../util/react"
 import { Strings } from "../../util/strings"
@@ -353,6 +353,22 @@ function fixBangumiPlayPage() {
     })
 }
 
+export function removeEpAreaLimit(ep: StringAnyObject) {
+    if (ep.epRights) {
+        ep.epRights.area_limit = false
+        ep.epRights.allow_dm = 1
+    }
+    if (ep.rights) {
+        ep.rights.area_limit = false
+        ep.rights.allow_dm = 1
+    }
+    if (ep.badge === '受限') {
+        ep.badge = ''
+        ep.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" }
+        ep.badge_type = 0
+    }
+}
+
 export function area_limit_for_vue() {
     if (isClosed()) return
 
@@ -387,29 +403,53 @@ export function area_limit_for_vue() {
         })
     }
 
+    function processUserStatus(value: StringAnyObject | undefined) {
+        if (value) {
+            // 区域限制
+            // todo      : 调用areaLimit(limit), 保存区域限制状态
+            // 2019-08-17: 之前的接口还有用, 这里先不保存~~
+            value.area_limit = 0
+            // 会员状态
+            if (balh_config.blocked_vip && value.vip_info) {
+                value.vip_info.status = 1
+                value.vip_info.type = 2
+            }
+        }
+    }
+
     function replaceUserState() {
         modifyGlobalValue('__PGC_USERSTATE__', {
             onWrite: (value) => {
-                if (value) {
-                    // 区域限制
-                    // todo      : 调用areaLimit(limit), 保存区域限制状态
-                    // 2019-08-17: 之前的接口还有用, 这里先不保存~~
-                    value.area_limit = 0
-                    // 会员状态
-                    if (balh_config.blocked_vip && value.vip_info) {
-                        value.vip_info.status = 1
-                        value.vip_info.type = 2
-                    }
-                }
+                processUserStatus(value)
                 return value
             }
         })
     }
-    function replaceInitialState() {
-        // TODO: 2023/03/12 ipcjs 拦截处理新页面的初始数据
+
+    /** 拦截处理新页面的初始数据 */
+    function replaceNextData() {
         modifyGlobalValue('__NEXT_DATA__', {
             onWrite: (value) => {
-                // debugger
+                const queries = value.props.pageProps.dehydratedState.queries
+                if (!queries) return value
+                for (const query of queries) {
+                    const data = query.state.data
+                    switch (query.queryKey[0]) {
+                        case 'pgc/view/web/season':
+                            // 最重要的一项数据, 直接决定页面是否可播放
+                            Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]))
+                            data.mediaInfo.episodes.forEach(removeEpAreaLimit)
+                            // 其他字段对结果似乎没有影响, 故注释掉(
+                            // data.mediaInfo.hasPlayableEp = true
+                            // data.initEpList.forEach(removeEpAreaLimit)
+                            // data.rights.area_limit = false
+                            // data.rights.allow_dm = 1
+                            break;
+                        case 'season/user/status':
+                            processUserStatus(data)
+                            break;
+                    }
+                }
                 return value
             },
             onRead: (value) => {
@@ -417,7 +457,10 @@ export function area_limit_for_vue() {
                 return value
             }
         })
-        // 拦截处理老页面的数据
+    }
+
+    /** 拦截处理老页面的数据 */
+    function replaceInitialState() {
         modifyGlobalValue('__INITIAL_STATE__', {
             onWrite: (value) => {
                 if (value?.epInfo?.id === -1 && value?.epList?.length === 0 && value?.mediaInfo?.rights?.limitNotFound === true) {
@@ -443,6 +486,8 @@ export function area_limit_for_vue() {
             }
         })
     }
+    replaceNextData()
+
     replaceInitialState()
     replaceUserState()
     replacePlayInfo()
