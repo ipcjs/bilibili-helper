@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.3.9
+// @version      8.3.10
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -2066,7 +2066,7 @@ function scriptSource(invokeBy) {
             }
             if (util_page.anime_ep() || util_page.anime_ss()) {
                 const $app = document.getElementById('app');
-                if (!$app || invalidInitialState) {
+                if ((!$app || invalidInitialState) && !window.__NEXT_DATA__) {
                     // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
                     // 如：https://www.bilibili.com/bangumi/media/md28235576
                     // 故当前默认值改为false🤔
@@ -2315,6 +2315,18 @@ function scriptSource(invokeBy) {
             });
         }
         function replaceInitialState() {
+            // TODO: 2023/03/12 ipcjs 拦截处理新页面的初始数据
+            modifyGlobalValue('__NEXT_DATA__', {
+                onWrite: (value) => {
+                    // debugger
+                    return value;
+                },
+                onRead: (value) => {
+                    // debugger
+                    return value;
+                }
+            });
+            // 拦截处理老页面的数据
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
                     var _a, _b, _c, _d, _e, _f, _g, _h;
