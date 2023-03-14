@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Language Switch for vuejs.org
 // @namespace    https://github.com/ipcjs
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       ipcjs
 // @match        https://*.vuejs.org/*
@@ -11,10 +11,13 @@
 // @ts-check
 
 /** @param {string} selector */
-function generateMenuFromLink(selector) {
-    return /**@type {HTMLLinkElement[]} */(Array.from(document.querySelectorAll(selector))).map(it => ({
+function generateMenuFromHrefAttribute(selector) {
+    return Array.from(document.querySelectorAll(selector)).map(it => ({
         title: it.textContent,
-        host: new URL(it.href).host,
+        host: new URL(
+            /**@type {any}*/(it).href
+            ?? /**@type {any}*/(it.attributes).href.value
+        ).host,
     }))
 }
 
@@ -28,7 +31,7 @@ function generateMenuFromLink(selector) {
 
 /** @type {Object.<string, (()=>MenuItem[]) | null>} */
 const hosts = {
-    '^v2(\\.\\w+)?\\.vuejs\\.org$': () => generateMenuFromLink('.nav-dropdown-container.language > ul > li > a'),
+    '^v2(\\.\\w+)?\\.vuejs\\.org$': () => generateMenuFromHrefAttribute('.nav-dropdown-container.language > ul > li > a'),
     'v3-migration.vuejs.org': () => {
         const items = /**@type {HTMLLinkElement[]} */(Array.from(document.querySelectorAll('.VPNavBarExtra a.VPLink'))).map((it) => ({
             title: it.textContent,
@@ -54,13 +57,10 @@ const hosts = {
             },
         }))
     },
-    'vuejs.org': () => Array.from(document.querySelectorAll('div.vt-locales-menu-item-text[href]')).map((it) => ({
-        title: it.textContent,
-        host: new URL(/**@type {any}*/(it.attributes).href.value).host,
-    })),
+    'vuejs.org': () => generateMenuFromHrefAttribute('.vt-locales-menu-item-text[href]'),
     'vitejs.dev': null, // 使用默认策略
     // 默认策略
-    '': () => generateMenuFromLink('.VPNavBarExtra a.VPLink')
+    '': () => generateMenuFromHrefAttribute('.VPNavBarExtra a.VPLink')
 }
 for (const host in hosts) {
     const currentHost = document.location.host
