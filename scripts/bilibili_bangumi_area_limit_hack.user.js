@@ -199,7 +199,7 @@ function scriptSource(invokeBy) {
         },
         regex: {
             /** api.bilibili.com的全站代理 */
-            bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
+            bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?(\/[\p{L}\d_-]+)*)$/u,
         },
         baipiao: [
             { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
@@ -1405,8 +1405,8 @@ function scriptSource(invokeBy) {
 
     // @ts-check-off
     /**
-     * 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/ 
-     * 
+     * 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/
+     *
      * 由于目前基本上没用上, 故懒得标注类型(-_-#)
      * */
 
@@ -2093,7 +2093,7 @@ function scriptSource(invokeBy) {
                                 throw `通过bangumi接口未找到${ep_id}对应的视频信息`;
                             }
                             const eps = JSON.stringify(result.result.episodes.map((item, index) => {
-                                // 返回的数据是有序的，不需要另外排序                                
+                                // 返回的数据是有序的，不需要另外排序
                                 if (/^\d+(\.\d+)?$/.exec(item.index)) {
                                     item.titleFormat = "第" + item.index + "话 " + item.index_title;
                                 }
@@ -3533,7 +3533,7 @@ function scriptSource(invokeBy) {
                     /// - response: 响应内容
                     /// - xhr: xhr对象
                     /// - container, 一个xhr对象, 对应一个container, 可以用来复写xhr对象本身的属性, 或者设置一些临时的属性, 方便其他地方访问
-                    /// 
+                    ///
                     /// 返回值可以是如下值:
                     /// - null, 表示不转换
                     /// - Promise, 异步转换
@@ -3758,7 +3758,7 @@ function scriptSource(invokeBy) {
                     /// 转换请求
                     /// - url, 请求链接
                     /// - container, 一个xhr对象, 对应一个container, 可以用来复写xhr对象本身的属性, 或者设置一些临时的属性, 方便其他地方访问
-                    /// 
+                    ///
                     /// 返回值可以是如下值:
                     /// - null, 表示不处理
                     /// - Promise, 表示需要替换成异步请求, Promise的结果会替换xhr.response
