@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    http://tampermonkey.net/
-// @version      8.4.0
+// @version      8.4.1
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -3682,7 +3682,7 @@ function scriptSource(invokeBy) {
                                     return json
                                 }
                             }
-                        } else if (url.match(RegExps.url('i0.hdslb.com/bfs/subtitle'))) {
+                        } else if (url.match(RegExps.urlPath('/bfs/subtitle/'))) {
                             log('/bfs/subtitle', url);
                             const parsedUrl = new URL(url);
                             const translate = parsedUrl.searchParams.get('translate') == '1';
