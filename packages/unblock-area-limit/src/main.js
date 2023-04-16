@@ -320,7 +320,7 @@ function scriptContent() {
                                 return json
                             }
                         }
-                    } else if (url.match(RegExps.url('i0.hdslb.com/bfs/subtitle'))) {
+                    } else if (url.match(RegExps.urlPath('/bfs/subtitle/'))) {
                         log('/bfs/subtitle', url);
                         const parsedUrl = new URL(url);
                         const translate = parsedUrl.searchParams.get('translate') == '1';
