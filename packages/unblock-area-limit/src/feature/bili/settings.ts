@@ -7,6 +7,7 @@ import { util_page } from "../page"
 import { r } from "../r"
 import { util_ui_msg } from '../../util/message'
 import { biliplus_login } from "./biliplus_login"
+import css from './settings.scss'
 
 const balh_feature_runPing = function () {
     const pingOutput = document.getElementById('balh_server_ping');
@@ -251,7 +252,7 @@ export function settings() {
     let customCNServerCheckText: HTMLElement
     let customTHServerCheckText: HTMLElement
     var settingsDOM = _('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e: any) { if (e.target === this) util_ui_msg.close(), document.body.style.overflow = '', (this as any).remove(); } } }, [
-        _('style', {}, [_('text', r.css.settings)]),
+        _('style', {}, [_('text', css)]),
         _('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
             _('h1', {}, [_('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
             _('br'),
