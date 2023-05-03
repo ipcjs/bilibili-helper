@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
-// @namespace    http://tampermonkey.net/
-// @version      8.4.2
+// @namespace    https://github.com/ipcjs
+// @version      8.4.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -9,19 +9,21 @@
 // @compatible   firefox
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
-// @include      *://www.bilibili.com/video/av*
-// @include      *://www.bilibili.com/video/BV*
-// @include      *://www.bilibili.com/bangumi/play/ep*
-// @include      *://www.bilibili.com/bangumi/play/ss*
-// @include      *://m.bilibili.com/bangumi/play/ep*
-// @include      *://m.bilibili.com/bangumi/play/ss*
-// @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/movie/*
-// @include      *://www.bilibili.com/bangumi/media/md*
-// @include      *://www.bilibili.com/blackboard/html5player.html*
-// @include      *://www.bilibili.com/watchroom/*
-// @include      *://space.bilibili.com/*
-// @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
+// @match        *://www.bilibili.com/video/av*
+// @match        *://www.bilibili.com/video/BV*
+// @match        *://www.bilibili.com/bangumi/play/ep*
+// @match        *://www.bilibili.com/bangumi/play/ss*
+// @match        *://m.bilibili.com/bangumi/play/ep*
+// @match        *://m.bilibili.com/bangumi/play/ss*
+// @match        *://bangumi.bilibili.com/anime/*
+// @match        *://bangumi.bilibili.com/movie/*
+// @match        *://www.bilibili.com/bangumi/media/md*
+// @match        *://www.bilibili.com/blackboard/html5player.html*
+// @match        *://www.bilibili.com/watchroom/*
+// @match        *://space.bilibili.com/*
+// @match        https://www.bilibili.com/
+// @match        https://www.bilibili.com/?*
+// @match        https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==

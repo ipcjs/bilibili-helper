@@ -44,6 +44,8 @@ function scriptContent() {
 
     bili.area_limit_for_vue()
 
+    bili.hide_adblock_tips()
+
     const balh_feature_area_limit = (function () {
         if (isClosed()) return
         injectFetch()

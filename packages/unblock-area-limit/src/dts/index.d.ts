@@ -31,3 +31,9 @@ declare module '*.html' {
     const str: string
     export default str
 }
+
+/** rollup-plugin-scss插件导入的scss文件 */
+declare module '*.scss' {
+    const str: string
+    export default str
+}
