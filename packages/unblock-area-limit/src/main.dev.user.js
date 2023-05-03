@@ -2,7 +2,7 @@
 // @name         解除B站区域限制.dev
 // @namespace    https://github.com/ipcjs
 // @version      8.4.3
-// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
+// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
 // @compatible   chrome

@@ -1,7 +1,5 @@
 # 解除B站区域限制
 
-**脚本最近收到自称[“上海宽娱数码科技有限公司”的举报](https://greasyfork.org/en/reports/17014)，其实上脚本只是做了转发页面请求的功能，并不涉及会员破解等领域，完全没有损害B站的利益。如果还是要下架脚本的话，请直接通过邮件联系我(gipcjs@gmail.com)，核实身份后我会下架脚本。**
-
 反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明  
 反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明  
 反馈问题前，先看这篇文档！！！大多数常见的问题，这里都有说明  
@@ -48,7 +46,6 @@ CDN本质也是反向代理（
 | [@znAaron](https://github.com/znAaron)        | 阿里云函数 | 大陆 | `https://1985592077837091.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/bili/bili_prox/` |
 | [@AisukaYuki](https://github.com/AisukaYuki/) | 反向代理   | 台湾 | `https://bili.tuturu.top`                                                               |
 | [@silicer](https://github.com/silicer)        | 腾讯云函数 | 香港 | `https://service-fi0gz11m-1252917345.hk.apigw.tencentcs.com`                            |
-| [@MK39](https://t.me/M_K_39)                  | 反向代理   | 台湾 | `https://app.bili.link`                                                                 |
 
 ## 开发
 
@@ -71,7 +68,6 @@ CDN本质也是反向代理（
     * <del>傲游浏览器：[Violentmonkey](https://extension.maxthon.com/detail/index.php?view_id=1680)</del>（实测即使是最新版，也不兼容该脚本）
     * Edge：基于Chromium的新版Edge，理论上来说是支持的，老版不支持
 3. Safari：不支持
-
 
 ### 脚本无效？
 
