@@ -1,27 +1,29 @@
 // ==UserScript==
 // @name         解除B站区域限制
-// @namespace    http://tampermonkey.net/
-// @version      8.4.2
-// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制; 只对HTML5播放器生效;
+// @namespace    https://github.com/ipcjs
+// @version      8.4.3
+// @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
 // @compatible   chrome
 // @compatible   firefox
 // @license      MIT
 // @require      https://static.hdslb.com/js/md5.js
-// @include      *://www.bilibili.com/video/av*
-// @include      *://www.bilibili.com/video/BV*
-// @include      *://www.bilibili.com/bangumi/play/ep*
-// @include      *://www.bilibili.com/bangumi/play/ss*
-// @include      *://m.bilibili.com/bangumi/play/ep*
-// @include      *://m.bilibili.com/bangumi/play/ss*
-// @include      *://bangumi.bilibili.com/anime/*
-// @include      *://bangumi.bilibili.com/movie/*
-// @include      *://www.bilibili.com/bangumi/media/md*
-// @include      *://www.bilibili.com/blackboard/html5player.html*
-// @include      *://www.bilibili.com/watchroom/*
-// @include      *://space.bilibili.com/*
-// @include      https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
+// @match        *://www.bilibili.com/video/av*
+// @match        *://www.bilibili.com/video/BV*
+// @match        *://www.bilibili.com/bangumi/play/ep*
+// @match        *://www.bilibili.com/bangumi/play/ss*
+// @match        *://m.bilibili.com/bangumi/play/ep*
+// @match        *://m.bilibili.com/bangumi/play/ss*
+// @match        *://bangumi.bilibili.com/anime/*
+// @match        *://bangumi.bilibili.com/movie/*
+// @match        *://www.bilibili.com/bangumi/media/md*
+// @match        *://www.bilibili.com/blackboard/html5player.html*
+// @match        *://www.bilibili.com/watchroom/*
+// @match        *://space.bilibili.com/*
+// @match        https://www.bilibili.com/
+// @match        https://www.bilibili.com/?*
+// @match        https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
@@ -165,9 +167,6 @@ function scriptSource(invokeBy) {
     const FALSE = '';
     const r = {
         html: {},
-        css: {
-            settings: '#balh-settings {font-size: 12px;color: #6d757a;}  #balh-settings h1 {color: #161a1e}  #balh-settings a {color: #00a1d6;}  #balh-settings a:hover {color: #f25d8e}  #balh-settings input {margin-left: 3px;margin-right: 3px;}  @keyframes balh-settings-bg { from {background: rgba(0, 0, 0, 0)} to {background: rgba(0, 0, 0, .7)} }  #balh-settings label {width: 100%;display: inline-block;cursor: pointer}  #balh-settings label:after {content: "";width: 0;height: 1px;background: #4285f4;transition: width .3s;display: block}  #balh-settings label:hover:after {width: 100%}  form {margin: 0}  #balh-settings input[type="radio"] {-webkit-appearance: radio;-moz-appearance: radio;appearance: radio;}  #balh-settings input[type="checkbox"] {-webkit-appearance: checkbox;-moz-appearance: checkbox;appearance: checkbox;} ',
-        },
         attr: {},
         url: {
             issue: 'https://github.com/ipcjs/bilibili-helper/issues',
@@ -751,6 +750,7 @@ function scriptSource(invokeBy) {
         anime_ss_m: () => location.href.includes('m.bilibili.com/bangumi/play/ss'),
         new_bangumi: () => location.href.includes('www.bilibili.com/bangumi'),
         watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
+        home: () => location.hostname === 'www.bilibili.com' && location.pathname === '/',
         get ssId() {
             var _a, _b;
             return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
@@ -2528,6 +2528,8 @@ function scriptSource(invokeBy) {
         isLoginBiliBili,
     };
 
+    var css$1 = "#balh-settings {\n  font-size: 12px;\n  color: #6d757a; }\n  #balh-settings h1 {\n    color: #161a1e; }\n  #balh-settings a {\n    color: #00a1d6; }\n  #balh-settings a:hover {\n    color: #f25d8e; }\n  #balh-settings input {\n    margin-left: 3px;\n    margin-right: 3px; }\n  #balh-settings label {\n    width: 100%;\n    display: inline-block;\n    cursor: pointer; }\n  #balh-settings label:after {\n    content: \"\";\n    width: 0;\n    height: 1px;\n    background: #4285f4;\n    transition: width .3s;\n    display: block; }\n  #balh-settings label:hover:after {\n    width: 100%; }\n  #balh-settings form {\n    margin: 0; }\n  #balh-settings input[type=\"radio\"] {\n    appearance: radio; }\n  #balh-settings input[type=\"checkbox\"] {\n    appearance: checkbox; }\n\n@keyframes balh-settings-bg {\n  from {\n    background: rgba(0, 0, 0, 0); }\n  to {\n    background: rgba(0, 0, 0, 0.7); } }\n";
+
     const balh_feature_runPing = function () {
         const pingOutput = document.getElementById('balh_server_ping');
         if (!pingOutput) {
@@ -2757,7 +2759,7 @@ function scriptSource(invokeBy) {
         let customTHServerCheckText;
         var settingsDOM = createElement('div', { id: 'balh-settings', style: { position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.7)', animationName: 'balh-settings-bg', animationDuration: '.5s', zIndex: 10000, cursor: 'pointer' }, event: { click: function (e) { if (e.target === this)
                     util_ui_msg.close(), document.body.style.overflow = '', this.remove(); } } }, [
-            createElement('style', {}, [createElement('text', r.css.settings)]),
+            createElement('style', {}, [createElement('text', css$1)]),
             createElement('div', { style: { position: 'absolute', background: '#FFF', borderRadius: '10px', padding: '20px', top: '50%', left: '50%', width: '600px', transform: 'translate(-50%,-50%)', cursor: 'default' } }, [
                 createElement('h1', {}, [createElement('text', `${GM_info.script.name} v${GM_info.script.version} 参数设置`)]),
                 createElement('br'),
@@ -2935,6 +2937,14 @@ function scriptSource(invokeBy) {
                 util_debug('需要跳转到不含广告的url');
                 location.href = location.href.replace(/&?pre_ad=1/, '');
             }
+        }
+    }
+
+    var css = ".adblock-tips {\n  display: none !important; }\n";
+
+    function hide_adblock_tips() {
+        if (util_page.home()) {
+            document.head.appendChild(createElement('style', { id: 'balh-hide_adblock_tips' }, [createElement('text', css)]));
         }
     }
 
@@ -3413,6 +3423,8 @@ function scriptSource(invokeBy) {
         switch_to_old_player();
 
         area_limit_for_vue();
+
+        hide_adblock_tips();
 
         ((function () {
             if (isClosed()) return
