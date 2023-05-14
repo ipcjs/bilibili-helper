@@ -155,7 +155,7 @@ namespace Async {
     }
 
     export function jsonp(url: string) {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             document.head.appendChild(_('script', {
                 src: url,
                 event: {

@@ -3,7 +3,7 @@ import { Func } from '../util/utils'
 export const util_page = {
     player: () => location.href.includes('www.bilibili.com/blackboard/html5player'),
     // 在av页面中的iframe标签形式的player
-    player_in_av: Func.runCatching(() => util_page.player() && window.top.location.href.includes('www.bilibili.com/video/av'), (e) => log(e)),
+    player_in_av: Func.runCatching(() => util_page.player() && window.top?.location.href.includes('www.bilibili.com/video/av'), (e) => log(e)),
     av: () => location.href.includes('www.bilibili.com/video/av') || location.href.includes('www.bilibili.com/video/BV'),
     av_new: function () { return this.av() && (window.__playinfo__ || window.__playinfo__origin) },
     bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),

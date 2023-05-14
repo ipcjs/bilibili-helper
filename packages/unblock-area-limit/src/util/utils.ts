@@ -11,7 +11,7 @@ export namespace Func {
         let ret = function (this: any) {
             try {
                 return func.apply(this, arguments)
-            } catch (e) {
+            } catch (e: any) {
                 if (onError) return onError(e) // onError可以处理报错时的返回值
                 // 否则打印log, 并返回undefined
                 util_error('Exception while run %o: %o\n%o', func, e, e.stack)

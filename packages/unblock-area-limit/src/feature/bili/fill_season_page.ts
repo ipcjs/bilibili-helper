@@ -42,7 +42,7 @@ export function fill_season_page() {
                     return Promise.reject(data);
                 }
 
-                function generateEpisodeList(episodes: [{ episode_id: string, index: number, index_title: string, cover: string }]) {
+                function generateEpisodeList(episodes: [{ episode_id: string, index: string, index_title: string, cover: string }]) {
                     const children: HTMLElement[] = [];
                     episodes.reverse().forEach(function (i) {
                         children.push(_('li', { className: 'v1-bangumi-list-part-child', 'data-episode-id': i.episode_id }, [_('a', { className: 'v1-complete-text', href: '//bangumi.bilibili.com/anime/' + season_id + '/play#' + i.episode_id, title: i.index + ' ' + i.index_title, target: '_blank', style: { height: '60px' } }, [

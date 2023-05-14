@@ -7,7 +7,7 @@ import { Strings } from "../../util/strings"
 export function injectFetch() {
     // 当前未替换任何内容...
     const originFetch = window.fetch;
-    window.fetch = function (input: RequestInfo, init?: RequestInit): Promise<Response> {
+    window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
         log('fetch', input, init)
         return originFetch(input, init)
             .then(r => {

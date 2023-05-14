@@ -153,7 +153,7 @@ export function settings() {
 
     // 往顶层窗口发显示设置的请求
     function showSettings() {
-        window.top.postMessage('balh-show-setting', '*')
+        window.top?.postMessage('balh-show-setting', '*')
     }
 
     // 只有顶层窗口才接收请求
