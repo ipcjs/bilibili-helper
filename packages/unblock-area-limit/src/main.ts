@@ -33,7 +33,7 @@ function scriptContent() {
 
     bili.hide_adblock_tips()
 
-    bili.area_limit()
+    bili.area_limit_xhr()
 
     bili.remove_pre_ad()
 

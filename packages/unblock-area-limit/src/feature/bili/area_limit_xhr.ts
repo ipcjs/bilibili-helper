@@ -16,13 +16,13 @@ import { Strings } from '../../util/strings'
 import { util_init } from '../../util/initiator'
 import { util_ui_msg } from '../../util/message'
 import { RegExps } from '../../util/regexps'
-import * as bili from '../../feature/bili/index';
-import { injectFetch, injectFetch4Mobile } from '../../feature/bili/area_limit'
+import { biliplus_login } from './biliplus_login';
+import { injectFetch, injectFetch4Mobile } from '../../feature/bili/area_limit_fetch'
 import space_account_info_map from '../../feature/bili/space_account_info_map'
 import * as OpenCC from 'opencc-js'
 import { removeEpAreaLimit } from '../../feature/bili/area_limit_for_vue'
 
-export const area_limit = (() => {
+export const area_limit_xhr = (() => {
     return function () {
         if (isClosed()) return
         injectFetch()
@@ -649,7 +649,8 @@ export const area_limit = (() => {
         }
 
         function isBangumiPage() {
-            return isBangumi(Func.safeGet('window.__INITIAL_STATE__.mediaInfo.season_type || window.__INITIAL_STATE__.mediaInfo.ssType'))
+            const mediaInfo = window.__INITIAL_STATE__?.mediaInfo
+            return isBangumi(mediaInfo?.season_type || mediaInfo?.ssType)
         }
 
         function getSeasonId() {
@@ -928,7 +929,7 @@ export const area_limit = (() => {
                         util_error('>>area limit');
                         ui.pop({
                             content: `突破黑洞失败\n需要登录\n点此确定进行登录`,
-                            onConfirm: bili.biliplus_login.showLogin
+                            onConfirm: biliplus_login.showLogin
                         })
                     } else {
                         if (balh_config.flv_prefer_ws) {

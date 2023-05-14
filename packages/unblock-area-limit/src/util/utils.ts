@@ -28,19 +28,6 @@ export namespace Func {
         Object.defineProperty(ret, 'name', funcNameDescriptor)
         return ret
     }
-
-    export const safeGet = (code: string) => {
-        return eval(`
-        (()=>{
-            try{
-                return ${code}
-            }catch(e){
-                console.warn(e.toString())
-                return null
-            }
-        })()
-        `)
-    }
 }
 
 /**
