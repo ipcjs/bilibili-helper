@@ -35,6 +35,7 @@ declare var GM_info: {
     };
     scriptMetaStr: string;
     scriptWillUpdate: boolean;
+    scriptHandler: string;
     version: string;
 };
 
