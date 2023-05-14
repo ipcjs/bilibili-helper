@@ -6,7 +6,7 @@ import html from 'rollup-plugin-html'
 import commonjs from '@rollup/plugin-commonjs';
 
 export default {
-    input: path.resolve(__dirname, 'src/main.js'),
+    input: path.resolve(__dirname, 'src/main.ts'),
     output: {
         file: path.resolve(__dirname, '../../scripts/bilibili_bangumi_area_limit_hack.user.js'),
         format: 'es',
