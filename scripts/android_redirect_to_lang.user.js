@@ -1,21 +1,21 @@
 // ==UserScript==
 // @name         developer.android.com redirect to lang
 // @namespace    https://github.com/ipcjs/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Android开发者官网重定向到特定语言
 // @author       ipcjs
-// @include      https://developer.android.com/*
-// @include      https://developer.android.google.cn/*
-// @include      http://localhost:8880/*
-// @include      https://firebase.google.com/*
+// @match        https://developer.android.com/*
+// @match        https://developer.android.google.cn/*
+// @match        http://localhost:8880/*
+// @match        https://firebase.google.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @run-at       document-start
 // ==/UserScript==
-
-'use strict';
+const URL_ANDROID = 'developer.android.com'
+const URL_ANDROID_CN = 'developer.android.google.cn'
 const OptionEnum = Object.freeze({
     DISABLE: {
         value: 0, name: 'disable: 禁用脚本',
@@ -79,35 +79,45 @@ let option = OptionEnum.valueOf(GM_getValue('key_option', OptionEnum.DEFAULT.val
 
 console.log(`option: ${JSON.stringify(option)}`)
 
-OptionEnum.values().forEach(it => {
-    GM_registerMenuCommand((it === option ? '=>' : '　') + it.name, () => {
-        // debugger
-        GM_setValue('key_option', it.value)
-        if (!it.onMenuClicked) {
-            location.reload() // 默认直接刷新
-        } else {
-            it.onMenuClicked()
-        }
+main()
+
+function main() {
+    // https://developer.android.com/reference/ 里面的页面不支持多语言
+    const isReferencePage = (location.host === URL_ANDROID || location.host === URL_ANDROID_CN) && location.pathname.startsWith('/reference')
+
+    OptionEnum.values().forEach(it => {
+        GM_registerMenuCommand((it === option ? '=>' : '　') + it.name + (isReferencePage ? '(无效)' : ''), () => {
+            // debugger
+            GM_setValue('key_option', it.value)
+            if (!it.onMenuClicked) {
+                location.reload() // 默认直接刷新
+            } else {
+                it.onMenuClicked()
+            }
+        })
     })
-})
 
-replaceUrlForCacheServer()
+    if (isReferencePage) {
+        return
+    }
 
-if (!option.processUrl) {
-    return
+    replaceUrlForCacheServer()
+
+    if (option.processUrl) {
+        ensureHrefEndWithLang(location)
+        window.addEventListener('DOMContentLoaded', (event) => {
+            for (let $a of document.querySelectorAll('a')) {
+                ensureHrefEndWithLang($a)
+            }
+        })
+    }
 }
 
-const ensureHrefEndWithLang = (item) => {
+function ensureHrefEndWithLang(item) {
     if (!item.href) return
     const url = new URL(item.href)
     option.processUrl(item, url)
 }
-ensureHrefEndWithLang(location)
-window.addEventListener('DOMContentLoaded', (event) => {
-    for (let $a of document.querySelectorAll('a')) {
-        ensureHrefEndWithLang($a)
-    }
-})
 
 function createGotoLang(lang) {
     return () => {
@@ -123,14 +133,12 @@ function createGotoLang(lang) {
 
 function replaceUrlForCacheServer() {
     const CACHE_SERVER_HOST = 'localhost:8880'
-    const ORIGIN_SERVER_HOST = 'developer.android.com'
-    const ORIGIN_SERVER_HOST_2 = 'developer.android.google.cn'
     const CACHE_SERVER_PROTOCOL = 'http:'
     const isCacheServer = location.host === CACHE_SERVER_HOST
     if (isCacheServer) {
         window.addEventListener('DOMContentLoaded', (event) => {
             for (let $a of document.querySelectorAll('a')) {
-                if ($a.host === ORIGIN_SERVER_HOST || $a.host === ORIGIN_SERVER_HOST_2) {
+                if ($a.host === URL_ANDROID || $a.host === URL_ANDROID_CN) {
                     $a.protocol = CACHE_SERVER_PROTOCOL
                     $a.host = CACHE_SERVER_HOST
                 }
