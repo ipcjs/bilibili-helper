@@ -82,8 +82,10 @@ console.log(`option: ${JSON.stringify(option)}`)
 main()
 
 function main() {
-    // https://developer.android.com/reference/ 里面的页面不支持多语言
-    const isReferencePage = (location.host === URL_ANDROID || location.host === URL_ANDROID_CN) && location.pathname.startsWith('/reference')
+    // 引用页面不支持切换多语言, 例如:
+    // https://developer.android.com/reference/ 
+    // https://firebase.google.com/docs/reference/
+    const isReferencePage = location.pathname.startsWith('/reference') || location.pathname.startsWith('/docs/reference')
     if (isReferencePage) {
         GM_registerMenuCommand('(切换语言在当前页面无效)', () => { })
     }
