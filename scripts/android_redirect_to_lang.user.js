@@ -84,9 +84,11 @@ main()
 function main() {
     // https://developer.android.com/reference/ 里面的页面不支持多语言
     const isReferencePage = (location.host === URL_ANDROID || location.host === URL_ANDROID_CN) && location.pathname.startsWith('/reference')
-
+    if (isReferencePage) {
+        GM_registerMenuCommand('(切换语言在当前页面无效)', () => { })
+    }
     OptionEnum.values().forEach(it => {
-        GM_registerMenuCommand((it === option ? '=>' : '　') + it.name + (isReferencePage ? '(无效)' : ''), () => {
+        GM_registerMenuCommand((it === option ? '=>' : '　') + it.name, () => {
             // debugger
             GM_setValue('key_option', it.value)
             if (!it.onMenuClicked) {
