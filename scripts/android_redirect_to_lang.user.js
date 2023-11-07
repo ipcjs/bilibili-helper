@@ -6,7 +6,7 @@
 // @author       ipcjs
 // @match        https://developer.android.com/*
 // @match        https://developer.android.google.cn/*
-// @match        http://localhost:8880/*
+// @include      http://localhost:8880/*
 // @match        https://firebase.google.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
