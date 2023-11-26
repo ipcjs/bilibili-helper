@@ -19,6 +19,8 @@ export function redirect_to_bangumi_or_insert_player() {
         if (!$errorPanel) {
             return;
         }
+        let $goHomeBtn = document.querySelector(".big-btn.go-home");
+        $goHomeBtn && $goHomeBtn.click();
         let msg = document.createElement('a');
         $errorPanel.insertBefore(msg, $errorPanel.firstChild);
         msg.innerText = '获取番剧页Url中...';
