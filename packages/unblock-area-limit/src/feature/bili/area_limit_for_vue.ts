@@ -156,7 +156,8 @@ function fixBangumiPlayPage() {
             cookieStorage.set('balh_curr_season_id', window?.__INITIAL_STATE__?.mediaInfo?.season_id, '')
         }
         if (util_page.anime_ep() || util_page.anime_ss()) {
-            const $app = document.getElementById('app')
+            // 旧版偶尔会出现client-app，why？
+            const $app = document.getElementById('app') || document.getElementById('client-app');
             if ((!$app || invalidInitialState) && !window.__NEXT_DATA__) {
                 // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
                 // 如：https://www.bilibili.com/bangumi/media/md28235576
@@ -429,9 +430,12 @@ export function area_limit_for_vue() {
     /** 拦截处理新页面的初始数据 */
     function replaceNextData() {
         modifyGlobalValue('__NEXT_DATA__', {
-            onWrite: (value) => {
+            onWrite: (_value) => {
+                let value = _value;
                 // 结构变了很多，新版是SSR可能一开始会取不到或者是个dom，无论如何先try一下
                 try {
+                    // 一开始是个dom，放里面一起try了
+                    (value instanceof Element) && (value = JSON.parse(value.innerHTML));
                     const queries = value.props.pageProps.dehydratedState.queries;
                     if (!queries)
                         return value;
