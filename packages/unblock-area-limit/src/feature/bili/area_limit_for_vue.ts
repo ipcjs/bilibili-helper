@@ -466,7 +466,7 @@ export function area_limit_for_vue() {
                     }
                     return value;
                 } catch {
-                    return value;
+                    return;
                 }
             },
             onRead: (value) => {
