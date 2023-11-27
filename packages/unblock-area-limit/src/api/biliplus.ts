@@ -483,7 +483,7 @@ export namespace BiliPlusApi {
         code?: number
         title: string
         list: [{ page: string, cid: string, part: string }]
-        bangumi?: { season_id: string }
+        bangumi?: { season_id: string, ogv_play_url?: string }
     }
     export const view = function (aid: string, update = true) {
         return Async.ajax<ViewResult>(`${balh_config.server}/api/view?id=${aid}&update=${update}${access_key_param_if_exist()}`);

@@ -55,8 +55,14 @@ export function redirect_to_bangumi_or_insert_player() {
                     // return Promise.reject('该AV号不属于任何番剧页');//No bangumi in api response
                 } else {
                     // 当前av属于番剧页面, 继续处理
-                    season_id = data.bangumi.season_id;
-                    return BiliPlusApi.season(season_id);
+                    if (data.bangumi.ogv_play_url) {
+                        // 有url直接跳转，不再请求一次了，顺带解决集数定位不对的问题
+                        msg.innerText = '即将跳转到：' + data.bangumi.ogv_play_url
+                        location.href = data.bangumi.ogv_play_url
+                    } else {
+                        season_id = data.bangumi.season_id;
+                        return BiliPlusApi.season(season_id);
+                    }
                 }
             })
             .then(function (result) {
@@ -92,6 +98,7 @@ export function redirect_to_bangumi_or_insert_player() {
                     episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid
                 }
                 if (episode_id) {
+                    // FIXME: 这种地址有可能不能定位到正确的集数
                     let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`
                     log('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, 'season_id:', season_id, 'ep_id:', episode_id)
                     msg.innerText = '即将跳转到：' + bangumi_url
