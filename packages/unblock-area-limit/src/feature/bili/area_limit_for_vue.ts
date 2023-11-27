@@ -333,7 +333,7 @@ function fixBangumiPlayPage() {
                     window.bangumi_area_limit_hack._setupSettings()
                 } catch (e) {
                     util_warn('重建ep页面失败', e)
-                    ui.alert(Objects.stringify(e))
+                    ui.alert(Objects.stringify(e as any))
                 }
             }
         }
@@ -430,23 +430,23 @@ export function area_limit_for_vue() {
     /** 拦截处理新页面的初始数据 */
     function replaceNextData() {
         modifyGlobalValue('__NEXT_DATA__', {
-            onWrite: (_value) => {
-                let value = _value;
+            onWrite: (value) => {
                 // 结构变了很多，新版是SSR可能一开始会取不到或者是个dom，无论如何先try一下
                 try {
                     // 一开始是个dom，放里面一起try了
-                    (value instanceof Element) && (value = JSON.parse(value.innerHTML));
-                    const queries = value.props.pageProps.dehydratedState.queries;
-                    if (!queries)
-                        return value;
+                    if (value instanceof Element) {
+                        value = JSON.parse(value.innerHTML)
+                    }
+                    const queries = value.props.pageProps.dehydratedState.queries
+                    if (!queries) return value
                     for (const query of queries) {
-                        const data = query.state.data;
+                        const data = query.state.data
                         switch (query.queryKey[0]) {
                             case 'pgc/view/web/season':
                                 if (data.epMap) {
                                     // 最重要的一项数据, 直接决定页面是否可播放
-                                    Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]));
-                                    data.mediaInfo.episodes.forEach(removeEpAreaLimit);
+                                    Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]))
+                                    data.mediaInfo.episodes.forEach(removeEpAreaLimit)
                                     // 其他字段对结果似乎没有影响, 故注释掉(
                                     // data.mediaInfo.hasPlayableEp = true
                                     // data.initEpList.forEach(removeEpAreaLimit)
@@ -455,22 +455,16 @@ export function area_limit_for_vue() {
                                 } else if (data.seasonInfo && !data.seasonInfo.mediaInfo.hasPlayableEp) {
                                     // 新版全都没用了，干脆没有Playable的直接就替换掉
                                     return;
-
-                                    // data.userInfo.userInfo.area_limit = false;
-                                    // removeEpAreaLimit(data.seasonInfo);
-                                    // removeEpAreaLimit(data.seasonInfo.mediaInfo);
-                                    // data.seasonInfo.mediaInfo.episodes.forEach(removeEpAreaLimit);
-                                    // Object.values(data.seasonInfo.sectionsMap).forEach(({epList}) => epList.forEach(removeEpAreaLimit));
                                 }
                                 break;
                             case 'season/user/status':
-                                processUserStatus(data);
+                                processUserStatus(data)
                                 break;
                         }
                     }
-                    return value;
+                    return value
                 } catch {
-                    return;
+                    return
                 }
             },
             onRead: (value) => {
