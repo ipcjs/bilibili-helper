@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    https://github.com/ipcjs
-// @version      8.4.3
+// @version      8.4.4
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -1839,8 +1839,15 @@ function scriptSource(invokeBy) {
                 }
                 else {
                     // 当前av属于番剧页面, 继续处理
-                    season_id = data.bangumi.season_id;
-                    return BiliPlusApi.season(season_id);
+                    if (data.bangumi.ogv_play_url) {
+                        // 有url直接跳转，不再请求一次了，顺带解决集数定位不对的问题
+                        msg.innerText = '即将跳转到：' + data.bangumi.ogv_play_url;
+                        location.href = data.bangumi.ogv_play_url;
+                    }
+                    else {
+                        season_id = data.bangumi.season_id;
+                        return BiliPlusApi.season(season_id);
+                    }
                 }
             })
                 .then(function (result) {
@@ -1878,6 +1885,7 @@ function scriptSource(invokeBy) {
                     episode_id = ep_id_by_cid || ep_id_by_aid_page || ep_id_by_aid;
                 }
                 if (episode_id) {
+                    // FIXME: 这种地址有可能不能定位到正确的集数
                     let bangumi_url = `//www.bilibili.com/bangumi/play/ss${season_id}#${episode_id}`;
                     util_debug('Redirect', 'aid:', aid, 'page:', page, 'cid:', cid, '==>', bangumi_url, 'season_id:', season_id, 'ep_id:', episode_id);
                     msg.innerText = '即将跳转到：' + bangumi_url;
@@ -2068,7 +2076,8 @@ function scriptSource(invokeBy) {
                 cookieStorage.set('balh_curr_season_id', (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.season_id, '');
             }
             if (util_page.anime_ep() || util_page.anime_ss()) {
-                const $app = document.getElementById('app');
+                // 旧版偶尔会出现client-app，why？
+                const $app = document.getElementById('app') || document.getElementById('client-app');
                 if ((!$app || invalidInitialState) && !window.__NEXT_DATA__) {
                     // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
                     // 如：https://www.bilibili.com/bangumi/media/md28235576
@@ -2339,28 +2348,44 @@ function scriptSource(invokeBy) {
         function replaceNextData() {
             modifyGlobalValue('__NEXT_DATA__', {
                 onWrite: (value) => {
-                    const queries = value.props.pageProps.dehydratedState.queries;
-                    if (!queries)
-                        return value;
-                    for (const query of queries) {
-                        const data = query.state.data;
-                        switch (query.queryKey[0]) {
-                            case 'pgc/view/web/season':
-                                // 最重要的一项数据, 直接决定页面是否可播放
-                                Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]));
-                                data.mediaInfo.episodes.forEach(removeEpAreaLimit);
-                                // 其他字段对结果似乎没有影响, 故注释掉(
-                                // data.mediaInfo.hasPlayableEp = true
-                                // data.initEpList.forEach(removeEpAreaLimit)
-                                // data.rights.area_limit = false
-                                // data.rights.allow_dm = 1
-                                break;
-                            case 'season/user/status':
-                                processUserStatus(data);
-                                break;
+                    // 结构变了很多，新版是SSR可能一开始会取不到或者是个dom，无论如何先try一下
+                    try {
+                        // 一开始是个dom，放里面一起try了
+                        if (value instanceof Element) {
+                            value = JSON.parse(value.innerHTML);
                         }
+                        const queries = value.props.pageProps.dehydratedState.queries;
+                        if (!queries)
+                            return value;
+                        for (const query of queries) {
+                            const data = query.state.data;
+                            switch (query.queryKey[0]) {
+                                case 'pgc/view/web/season':
+                                    if (data.epMap) {
+                                        // 最重要的一项数据, 直接决定页面是否可播放
+                                        Object.keys(data.epMap).forEach(epId => removeEpAreaLimit(data.epMap[epId]));
+                                        data.mediaInfo.episodes.forEach(removeEpAreaLimit);
+                                        // 其他字段对结果似乎没有影响, 故注释掉(
+                                        // data.mediaInfo.hasPlayableEp = true
+                                        // data.initEpList.forEach(removeEpAreaLimit)
+                                        // data.rights.area_limit = false
+                                        // data.rights.allow_dm = 1
+                                    }
+                                    else if (data.seasonInfo && !data.seasonInfo.mediaInfo.hasPlayableEp) {
+                                        // 新版全都没用了，干脆没有Playable的直接就替换掉
+                                        return;
+                                    }
+                                    break;
+                                case 'season/user/status':
+                                    processUserStatus(data);
+                                    break;
+                            }
+                        }
+                        return value;
                     }
-                    return value;
+                    catch (_a) {
+                        return;
+                    }
                 },
                 onRead: (value) => {
                     // debugger
