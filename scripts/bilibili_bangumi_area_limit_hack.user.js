@@ -1806,6 +1806,9 @@ function scriptSource(invokeBy) {
             if (!$errorPanel) {
                 return;
             }
+            // 自动点击"取消跳转按钮"
+            let $goHomeBtn = document.querySelector(".big-btn.go-home");
+            $goHomeBtn === null || $goHomeBtn === void 0 ? void 0 : $goHomeBtn.click();
             let msg = document.createElement('a');
             $errorPanel.insertBefore(msg, $errorPanel.firstChild);
             msg.innerText = '获取番剧页Url中...';
