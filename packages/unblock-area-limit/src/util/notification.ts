@@ -1,4 +1,4 @@
-// @ts-check-off
+// @ts-nocheck
 /**
  * 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/ 
  * 

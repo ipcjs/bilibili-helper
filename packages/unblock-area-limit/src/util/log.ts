@@ -26,7 +26,7 @@ if (floor === 0) { // 只有顶层的Window才需要收集日志
 
 const logHub = {
     msg: function (msg: string) {
-        window.top.postMessage([tag, floor, msg], '*')
+        window.top?.postMessage([tag, floor, msg], '*')
     },
     getAllMsg: function (replaces: StringStringObject = {}): string {
         let allMsg = msgList.join('\n')
@@ -37,7 +37,11 @@ const logHub = {
     }
 }
 
-function logImpl(type: keyof Console): (...args: any) => void {
+type ConsoleLogFunctions = {
+    [P in keyof Console as /*由各种值组成的数组, 基本上只有any[]才能接收它*/[1, '2', {}] extends Parameters<Console[P]> ? P : never]: Console[P]
+}
+
+function logImpl(type: keyof ConsoleLogFunctions): (...args: any) => void {
     if (r.script.is_dev) {
         // 直接打印, 会显示行数
         return window.console[type].bind(window.console, type + ':');

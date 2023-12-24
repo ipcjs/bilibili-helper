@@ -1,4 +1,5 @@
 interface BalhInterface {
+    [k: string]: any
     showSettings: () => void
     /** 安装设置按钮 */
     _setupSettings: () => void
