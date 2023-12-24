@@ -1,7 +1,7 @@
 import { balh_config } from "../feature/config";
 import { Async } from "../util/async";
 import { Converters } from "../util/converters";
-import { access_key_param_if_exist } from "./bilibili";
+import { access_key_param_if_exist } from "./bilibili-utils";
 
 function convertPlayUrl(originUrl: string) {
     let params = new URLSearchParams(originUrl.split('?')[1])

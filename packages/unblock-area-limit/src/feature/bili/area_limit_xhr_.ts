@@ -9,7 +9,7 @@ import { cookieStorage } from '../../util/cookie'
 import { balh_config, isClosed } from '../../feature/config'
 import { Func } from '../../util/utils';
 import { util_page } from '../../feature/page'
-import { access_key_param_if_exist, platform_android_param_if_app_only } from '../../api/bilibili'
+import { access_key_param_if_exist, platform_android_param_if_app_only } from '../../api/bilibili-utils'
 import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from '../../api/biliplus'
 import { ui } from '../../util/ui'
 import { Strings } from '../../util/strings'
