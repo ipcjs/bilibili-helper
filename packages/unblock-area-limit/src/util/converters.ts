@@ -95,7 +95,8 @@ export namespace Converters {
     export function generateSign(params: StringStringObject, key: string) {
         let s_keys = [];
         for (let i in params) {
-            s_keys.push(i);
+            if (i != '')
+                s_keys.push(i);
         }
         s_keys.sort();
         let data = "";
