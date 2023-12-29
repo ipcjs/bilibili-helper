@@ -1,10 +1,9 @@
-import { BiliBiliApi } from "../../api/bilibili"
-import { SeasonInfoOnBangumi } from "../../api/bilibili"
+import { AppSeasonInfo, BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
-import { log, util_debug, util_warn } from "../../util/log"
+import { log, util_warn } from "../../util/log"
 import { Objects } from "../../util/objects"
 import { _ } from "../../util/react"
 import { Strings } from "../../util/strings"
@@ -143,7 +142,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
         origin.result.style.push(it.name)
     })
 
-    let result: SeasonInfoOnBangumi = JSON.parse(JSON.stringify(origin))
+    let result: AppSeasonInfo = JSON.parse(JSON.stringify(origin))
     return result
 }
 
@@ -165,7 +164,7 @@ function fixBangumiPlayPage() {
                 let appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? false
                 try {
                     // 读取保存的season_id
-                    const season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
+                    let season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1]
                     const ep_id = (window.location.pathname.match(/\/bangumi\/play\/ep(\d+)/) || ['', ''])[1]
                     const bilibiliApi = new BiliBiliApi(balh_config.server_bilibili_api_proxy)
                     let templateArgs: TemplateArgs | null = null
@@ -173,33 +172,70 @@ function fixBangumiPlayPage() {
                     // 不限制地区的接口，可以查询泰区番剧，该方法前置给代理服务器和BP节省点请求
                     // 如果该接口失效，自动尝试后面的方法
                     try {
-                        let result = await bilibiliApi.getSeasonInfoByEpSsIdOnBangumi(ep_id, season_id)
-                        if (balh_config.server_custom_th && (result.code == -404 || result.result.up_info.mid == 677043260 /* 主站残留泰区数据，部分不完整 */)) {
+                        let result = await bilibiliApi.getSeasonInfoById(season_id, ep_id)
+                        if (balh_config.server_custom_th && (result.code == -404)) {
                             result = await fixThailandSeason(ep_id, season_id)
                             appOnly = true
                         }
-                        if (result.code) {
+                        if (result.code != 0) {
                             throw result
                         }
+                        if (ep_id != '') season_id = result.data.season_id.toString()
+                        result.result = result.data
+                        result.result.modules.forEach((module: { data: { [x: string]: any }; id: any }, mid: number) => {
+                            if (module.data) {
+                                let sid = module.id ? module.id : mid + 1
+                                module.data['id'] = sid
+                            }
+                        })
+                        let seasons: any[] = []
+                        result.result.modules.forEach((module: { data: { seasons: any[] } }) => {
+                            module.data.seasons.forEach(season => {
+                                seasons.push(season)
+                            })
+                        })
+                        result.result['seasons'] = seasons
+                        let section = await bilibiliApi.getSeasonSectionBySsId(season_id)
+                        result.result['episodes'] = section.result.main_section.episodes
+                        result.result['section'] = section.result.section
+                        result.result['positive'] = { id: section.result.main_section.id, title: section.result.main_section.title }
+                        let episodeInfo = await bilibiliApi.getEpisodeInfoByEpId(result.result.episodes[0].id)
+                        result.result['up_info'] = episodeInfo.data.related_up[0]
+                        result.result.episodes.forEach((ep: { [x: string]: any; id: any }) => {
+                            ep['bvid'] = Converters.aid2bv(ep.aid)
+                            ep['ep_id'] = ep.id
+                            ep['link'] = `https://www.bilibili.com/bangumi/play/ep${ep.id}`
+                            ep['rights'] = { allow_download: 1, area_limit: 0, allow_dm: 1 }
+                            ep['short_link'] = `https://b23.tv/ep${ep.id}`
+                        })
+                        result.result.section.forEach(section => {
+                            section.episodes.forEach((ep: { [x: string]: any; id: any }) => {
+                                ep['bvid'] = Converters.aid2bv(ep.aid)
+                                ep['ep_id'] = ep.id
+                                ep['link'] = `https://www.bilibili.com/bangumi/play/ep${ep.id}`
+                                ep['rights'] = { allow_download: 1, area_limit: 0, allow_dm: 1 }
+                                ep['short_link'] = `https://b23.tv/ep${ep.id}`
+                            })
+                        })
                         const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
                         if (!ep) {
                             throw `通过bangumi接口未找到${ep_id}对应的视频信息`
                         }
                         const eps = JSON.stringify(result.result.episodes.map((item, index) => {
                             // 返回的数据是有序的，不需要另外排序                                
-                            if (/^\d+(\.\d+)?$/.exec(item.index)) {
-                                item.titleFormat = "第" + item.index + "话 " + item.index_title
+                            if (/^\d+(\.\d+)?$/.exec(item.title)) {
+                                item.titleFormat = "第" + item.title + "话 " + item.long_title
                             } else {
-                                item.titleFormat = item.index
-                                item.index_title = item.index
+                                item.titleFormat = item.long_title
                             }
+                            item.index_title = item.long_title
                             item.loaded = true
-                            item.epStatus = item.episode_status
+                            item.epStatus = item.status
                             item.sectionType = 0
                             item.id = +item.ep_id
                             item.i = index
                             item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.ep_id
-                            item.title = item.index
+                            item.title = item.titleFormat
                             return item
                         }))
                         let titleForma

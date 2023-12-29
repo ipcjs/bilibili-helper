@@ -1,5 +1,6 @@
 import { Async } from "../util/async"
 import { generateMobiPlayUrlParams } from "./biliplus"
+import { Converters } from "../util/converters"
 
 interface SeasonInfo {
     code: number
@@ -27,38 +28,468 @@ interface SeasonInfo {
     }
 }
 
-export interface SeasonInfoOnBangumi {
-    code: number
-    result: {
-        season_id: number
-        season_title: string   // 季度标题，如 “TV” “第一季”
-        media_id: number
-        episodes: [{
-            aid: number
-            bvid: string
-            cid: number
-            ep_id: number
-            index: string  // 集数/简短名，显示在缩略集数
-            index_title: string  // 分集标题，泰区番剧通常为空
-            episode_status: number
-            episode_type: number
-            titleFormat?: string
-            loaded?: boolean
-            epStatus?: number
-            sectionType?: number
-            i?: number
-            id?: number
-            link?: string
-            title?: string
+export interface AppSeasonInfo {
+    result?: {
+        actor: {
+            info: string
+            title: string
+        }
+        alias: string
+        all_buttons: {
+            watch_fornal: string
+        }
+        all_up_infos: any
+        areas: [{
+            id: number
+            name: string
         }]
-        evaluate: string  // 简介
+        badge: string
+        badge_info: {
+            bg_color: string
+            bg_color_night: string
+            text: string
+        }
         cover: string
-        title: string  // 番剧名
-        total_ep: number
-        up_info: {
+        detail: string
+        dialog: {
+            code: number
+            config: any
+            image: {
+                url: string
+            }
+            msg: string
+            style_type: string
+            title: {
+                text: string
+                text_color: string
+            }
+            type: string
+        }
+        dynamic_subtitle: string
+        earphone_conf: {
+            sp_phones: any[]
+        }
+        enable_vt: boolean
+        evaluate: string
+        icon_font: {
+            name: string
+            text: string
+        }
+        link: string
+        media_badge_info: any
+        media_id: number
+        mode: number
+        modules: any[]
+        new_ep: {
+            desc: string
+            id: number
+            is_new: number
+            more: string
+            title: string
+        }
+        new_keep_activity_material: {
+            activityId: number
+        }
+        origin_name: string
+        payment?: {
+            dialog: any
+            pay_type: {
+                allow_ticket: number
+            }
+            price: string
+            report_type: number
+            tv_price: string
+            vip_discount_price: string
+            vip_promotion: string
+        } | undefined
+        play_strategy: {
+            auto_play_toast: string
+            recommend_show_strategy: number
+            strategies: any[]
+        }
+        premieres: any[]
+        publish: {
+            is_finish: number
+            is_started: number
+            pub_time: string
+            pub_time_show: string
+            release_date_show: string
+            time_length_show: string
+            unknow_pub_date: number
+            update_info_desc: string
+            weekday: number
+        }
+        record: string
+        refine_cover: string
+        reserve: {
+            episodes: any[]
+            tip: string
+        }
+        rights: {
+            allow_bp: number
+            allow_bp_rank: number
+            allow_download: number
+            allow_review: number
+            area_limit: number
+            ban_area_show: number
+            can_watch: number
+            copyright: string
+            forbid_pre: number
+            freya_white: number
+            is_cover_show: number
+            is_preview: number
+            only_vip_download: number
+            resource: string
+            watch_platform: number
+        }
+        season_id: number
+        season_title: string
+        series: {
+            display_type: number
+            series_id: number
+            series_title: string
+        }
+        share_copy: string
+        share_url: string
+        short_link: string
+        show_season_type: number
+        square_cover: string
+        staff: {
+            info: string
+            title: string
+        }
+        stat: {
+            coins: number
+            danmakus: number
+            favorite: number
+            favorites: number
+            followers: string
+            likes: number
+            play: string
+            reply: number
+            share: number
+            views: number
+            vt: number
+        }
+        status: number
+        jp_title?: string | undefined
+        styles: [{
+            name: string
+        }]
+        subtitle: string
+        test_switch: {
+            channel_entrance_exp_action: number
+            enable_ep_vt: boolean
+            hide_ep_vv_vt_dm: number
+            is_merge_preview_section: boolean
+            is_ogv_fav_exp: boolean
+            mergeSeasonEpUpperExp: number
+            movie_mark_action: number
+            optimize_display_info_exp: number
+            player_ip_community_exp: number
+            short_space_title_exp: number
+            was_freya_double: number
+            was_hit_four_crowd: number
+            was_ios_pip_exp: boolean
+            was_merge_exp: boolean
+            was_pugv_style_optimize: boolean
+        }
+        title: string
+        total: number
+        type: number
+        type_desc: string
+        type_name: string
+        user_status: {
+            follow: number
+            follow_bubble: number
+            follow_status: number
+            pay: number
+            pay_for: number
+            progress: {
+                last_ep_id: number
+                last_ep_index: string
+                last_time: number
+            }
+            review: {
+                article_url: string
+                is_open: number
+                score: number
+            }
+            sponsor: number
+            vip: number
+            vip_frozen: number
+        }
+        season_status?: number | undefined
+        is_paster_ads: number
+        user_thumbup: {
+            url_image_ani: string
+            url_image_ani_cut: string
+            url_image_bright: string
+            url_image_dim: string
+        }
+        seasons?: any[]
+        episodes?: any[]
+        section?: any[]
+        positive?: any
+        up_info?: {
+            attribute: number
+            avatar: string
+            is_follow: number
             mid: number
+            uname: number
         }
     }
+    code: number
+    data: {
+        actor: {
+            info: string
+            title: string
+        }
+        alias: string
+        all_buttons: { watch_fornal: string }
+        all_up_infos: any
+        areas: [{ id: number, name: string }]
+        badge: string
+        badge_info: {
+            bg_color: string
+            bg_color_night: string
+            text: string
+        }
+        cover: string
+        detail: string
+        dialog: {
+            code: number
+            config: any
+            image: {
+                url: string
+            }
+            msg: string
+            style_type: string
+            title: {
+                text: string
+                text_color: string
+            }
+            type: string
+        }
+        dynamic_subtitle: string
+        earphone_conf: { sp_phones: any[] }
+        enable_vt: boolean
+        evaluate: string
+        icon_font: {
+            name: string
+            text: string
+        }
+        link: string
+        media_badge_info: any
+        media_id: number
+        mode: number
+        modules: any[]
+        new_ep: {
+            desc: string
+            id: number
+            is_new: number
+            more: string
+            title: string
+        }
+        new_keep_activity_material: { activityId: number }
+        origin_name: string
+        payment?: {
+            dialog: any
+            pay_type: { allow_ticket: number }
+            price: string
+            report_type: number
+            tv_price: string
+            vip_discount_price: string
+            vip_promotion: string
+        }
+        play_strategy: {
+            auto_play_toast: string
+            recommend_show_strategy: number
+            strategies: any[]
+        }
+        premieres: any[]
+        publish: {
+            is_finish: number
+            is_started: number
+            pub_time: string
+            pub_time_show: string
+            release_date_show: string
+            time_length_show: string
+            unknow_pub_date: number
+            update_info_desc: string
+            weekday: number
+        }
+        record: string
+        refine_cover: string
+        reserve: {
+            episodes: any[]
+            tip: string
+        }
+        rights: {
+            allow_bp: number
+            allow_bp_rank: number
+            allow_download: number
+            allow_review: number
+            area_limit: number
+            ban_area_show: number
+            can_watch: number
+            copyright: string
+            forbid_pre: number
+            freya_white: number
+            is_cover_show: number
+            is_preview: number
+            only_vip_download: number
+            resource: string
+            watch_platform: number
+        }
+        season_id: number
+        season_title: string
+        series: {
+            display_type: number
+            series_id: number
+            series_title: string
+        }
+        share_copy: string
+        share_url: string
+        short_link: string
+        show_season_type: number
+        square_cover: string
+        staff: {
+            info: string
+            title: string
+        }
+        stat: {
+            coins: number
+            danmakus: number
+            favorite: number
+            favorites: number
+            followers: string
+            likes: number
+            play: string
+            reply: number
+            share: number
+            views: number
+            vt: number
+        }
+        status: number
+        jp_title?: string
+        styles: [{
+            name: string
+        }]
+        subtitle: string
+        test_switch: {
+            channel_entrance_exp_action: number
+            enable_ep_vt: boolean
+            hide_ep_vv_vt_dm: number
+            is_merge_preview_section: boolean
+            is_ogv_fav_exp: boolean
+            mergeSeasonEpUpperExp: number
+            movie_mark_action: number
+            optimize_display_info_exp: number
+            player_ip_community_exp: number
+            short_space_title_exp: number
+            was_freya_double: number
+            was_hit_four_crowd: number
+            was_ios_pip_exp: boolean
+            was_merge_exp: boolean
+            was_pugv_style_optimize: boolean
+        }
+        title: string
+        total: number
+        type: number
+        type_desc: string
+        type_name: string
+        user_status: {
+            follow: number
+            follow_bubble: number
+            follow_status: number
+            pay: number
+            pay_for: number
+            progress: {
+                last_ep_id: number
+                last_ep_index: string
+                last_time: number
+            }
+            review: {
+                article_url: string
+                is_open: number
+                score: number
+            }
+            sponsor: number
+            vip: number
+            vip_frozen: number
+        }
+        season_status?: number
+        is_paster_ads: number
+        user_thumbup: {
+            url_image_ani: string
+            url_image_ani_cut: string
+            url_image_bright: string
+            url_image_dim: string
+        }
+        // seasons?: any[]
+    }
+    message: string
+}
+
+export interface SectionInfo {
+    code: number
+    message: string
+    result: {
+        main_section: {
+            title: any
+            id: any
+            episodes: [{
+                aid: number
+                badge: string
+                badge_info: {
+                    bg_color: string
+                    bg_color_night: string
+                    text: string
+                }
+                badge_type: string
+                cid: number
+                cover: string
+                from: string
+                id: number
+                is_premiere: number
+                long_title: string
+                share_url: string
+                status: number
+                title: string
+                vid: string
+            }]
+        }
+        section: any[]
+    }
+}
+
+export interface EpisodeInfo {
+    code: number
+    data: {
+        episode_id: number
+        related_up: [{
+            attribute: number
+            avatar: string
+            is_follow: number
+            mid: number
+            uname: number
+        }]
+        stat: {
+            coin: number
+            dm: number
+            like: number
+            reply: number
+            view: number
+        }
+        user_community: {
+            coin_number: number
+            favorite: number
+            is_original: number
+            like: number
+        }
+    }
+    message: string
 }
 
 interface SeasonInfoOnThailand {
@@ -122,8 +553,24 @@ export class BiliBiliApi {
     getSeasonInfo(season_id: string | number) {
         return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?season_id=${season_id}`)
     }
-    getSeasonInfoByEpSsIdOnBangumi(ep_id: string, season_id: string) {
-        return Async.ajax<SeasonInfoOnBangumi>('//bangumi.bilibili.com/view/web_api/season?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`))
+    getSeasonInfoById(season_id: string, ep_id: string) {
+        let paramDict = {
+            access_key: localStorage.access_key,
+            appkey: '27eb53fc9058f8c3',
+            season_id: '',
+            ep_id: ''
+        }
+
+        if (ep_id) paramDict.ep_id = ep_id
+        else if (season_id) paramDict.season_id = season_id
+        const { sign, params } = Converters.generateSign(paramDict, 'c2ed53a74eeefe3cf99fbd01d8c9c375')
+        return Async.ajax<AppSeasonInfo>('//api.bilibili.com/pgc/view/v2/app/season?' + params + '&sign=' + sign)
+    }
+    getSeasonSectionBySsId(season_id: string) {
+        return Async.ajax<SectionInfo>('//api.bilibili.com/pgc/web/season/section?' + `season_id=${season_id}`)
+    }
+    getEpisodeInfoByEpId(ep_id: string) {
+        return Async.ajax<EpisodeInfo>('//api.bilibili.com/pgc/season/episode/web/info?' + `ep_id=${ep_id}`)
     }
     getSeasonInfoByEpSsIdOnThailand(ep_id: string, season_id: string) {
         const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
