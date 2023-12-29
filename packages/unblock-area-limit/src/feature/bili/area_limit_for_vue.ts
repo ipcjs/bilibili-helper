@@ -117,7 +117,8 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     // https://github.com/yujincheng08/BiliRoaming/issues/112
     const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
     const origin = await thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id)
-    const input_episodes = origin.result.modules[0].data.episodes
+    console.log('fixThailandSeason origin', origin)
+
 
     origin.result.actors = origin.result.actor.info
     origin.result.is_paster_ads = 0
@@ -125,25 +126,23 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     origin.result.newest_ep = origin.result.new_ep
     origin.result.season_status = origin.result.status
     origin.result.season_title = origin.result.title
-    origin.result.total_ep = input_episodes.length
+    origin.result.total_ep = origin.result.total
     origin.result.rights.watch_platform = 1
 
     origin.result.episodes = []
-    input_episodes.forEach((ep) => {
-        ep.episode_status = ep.status
-        ep.ep_id = ep.id
-        ep.index = ep.title
-        ep.index_title = ep.long_title
-        origin.result.episodes?.push(ep)
-    })
-
+    if (origin.result.modules.length > 0)
+        origin.result.modules[0].data.episodes.forEach((ep) => {
+            ep.episode_status = ep.status
+            ep.ep_id = ep.id
+            ep.index = ep.title
+            ep.index_title = ep.long_title
+            origin.result.episodes?.push(ep)
+        })
     origin.result.style = []
     origin.result.styles?.forEach((it) => {
         origin.result.style.push(it.name)
     })
-
-    let result: AppSeasonInfo = JSON.parse(JSON.stringify(origin))
-    return result
+    return { code: origin.code, message: origin.message, data: origin.result }
 }
 
 let invalidInitialState: StringAnyObject | undefined
@@ -189,34 +188,46 @@ function fixBangumiPlayPage() {
                             }
                         })
                         let seasons: any[] = []
-                        result.result.modules.forEach((module: { data: { seasons: any[] } }) => {
-                            module.data.seasons.forEach(season => {
+
+                        result.result.modules.forEach((module: { data: { seasons?: any[], episodes?: any[] } }) => {
+                            if (module.data.seasons) module.data.seasons.forEach(season => {
                                 seasons.push(season)
+                            })
+                            else if (module.data.episodes) module.data.episodes.forEach(ep => {
+                                seasons.push(ep)
                             })
                         })
                         result.result['seasons'] = seasons
-                        let section = await bilibiliApi.getSeasonSectionBySsId(season_id)
-                        result.result['episodes'] = section.result.main_section.episodes
-                        result.result['section'] = section.result.section
-                        result.result['positive'] = { id: section.result.main_section.id, title: section.result.main_section.title }
-                        let episodeInfo = await bilibiliApi.getEpisodeInfoByEpId(result.result.episodes[0].id)
-                        result.result['up_info'] = episodeInfo.data.related_up[0]
-                        result.result.episodes.forEach((ep: { [x: string]: any; id: any }) => {
-                            ep['bvid'] = Converters.aid2bv(ep.aid)
-                            ep['ep_id'] = ep.id
-                            ep['link'] = `https://www.bilibili.com/bangumi/play/ep${ep.id}`
-                            ep['rights'] = { allow_download: 1, area_limit: 0, allow_dm: 1 }
-                            ep['short_link'] = `https://b23.tv/ep${ep.id}`
-                        })
-                        result.result.section.forEach(section => {
-                            section.episodes.forEach((ep: { [x: string]: any; id: any }) => {
+                        if (!result.result.episodes) {
+                            const section = await bilibiliApi.getSeasonSectionBySsId(season_id)
+                            result.result['episodes'] = section.result.main_section.episodes
+                            result.result['section'] = section.result.section
+                            result.result['positive'] = { id: section.result.main_section.id, title: section.result.main_section.title }
+                        }
+
+                        if (result.result.episodes.length > 0) {
+                            const episodeInfo = await bilibiliApi.getEpisodeInfoByEpId(result.result.episodes[0].id)
+                            if (episodeInfo.code = 0)
+                                result.result['up_info'] = episodeInfo.data.related_up[0]
+                            result.result.episodes.forEach((ep: { [x: string]: any; id: any }) => {
                                 ep['bvid'] = Converters.aid2bv(ep.aid)
                                 ep['ep_id'] = ep.id
                                 ep['link'] = `https://www.bilibili.com/bangumi/play/ep${ep.id}`
                                 ep['rights'] = { allow_download: 1, area_limit: 0, allow_dm: 1 }
                                 ep['short_link'] = `https://b23.tv/ep${ep.id}`
                             })
-                        })
+                        }
+                        if (result.result.section)
+                            result.result.section.forEach(section => {
+                                section.episodes.forEach((ep: { [x: string]: any; id: any }) => {
+                                    ep['bvid'] = Converters.aid2bv(ep.aid)
+                                    ep['ep_id'] = ep.id
+                                    ep['link'] = `https://www.bilibili.com/bangumi/play/ep${ep.id}`
+                                    ep['rights'] = { allow_download: 1, area_limit: 0, allow_dm: 1 }
+                                    ep['short_link'] = `https://b23.tv/ep${ep.id}`
+                                })
+                            })
+                        console.log('result', result.result)
                         const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
                         if (!ep) {
                             throw `通过bangumi接口未找到${ep_id}对应的视频信息`

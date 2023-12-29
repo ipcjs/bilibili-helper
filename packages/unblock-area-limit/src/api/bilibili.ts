@@ -35,23 +35,23 @@ export interface AppSeasonInfo {
             title: string
         }
         alias: string
-        all_buttons: {
+        all_buttons?: {
             watch_fornal: string
         }
-        all_up_infos: any
+        all_up_infos?: any
         areas: [{
             id: number
             name: string
         }]
-        badge: string
-        badge_info: {
+        badge?: string
+        badge_info?: {
             bg_color: string
             bg_color_night: string
             text: string
         }
         cover: string
         detail: string
-        dialog: {
+        dialog?: {
             code: number
             config: any
             image: {
@@ -66,28 +66,28 @@ export interface AppSeasonInfo {
             type: string
         }
         dynamic_subtitle: string
-        earphone_conf: {
+        earphone_conf?: {
             sp_phones: any[]
         }
-        enable_vt: boolean
+        enable_vt?: boolean
         evaluate: string
-        icon_font: {
+        icon_font?: {
             name: string
             text: string
         }
         link: string
-        media_badge_info: any
-        media_id: number
+        media_badge_info?: any
+        media_id?: number
         mode: number
         modules: any[]
         new_ep: {
-            desc: string
+            desc?: string
             id: number
-            is_new: number
-            more: string
+            is_new?: number
+            more?: string
             title: string
         }
-        new_keep_activity_material: {
+        new_keep_activity_material?: {
             activityId: number
         }
         origin_name: string
@@ -102,12 +102,12 @@ export interface AppSeasonInfo {
             vip_discount_price: string
             vip_promotion: string
         } | undefined
-        play_strategy: {
+        play_strategy?: {
             auto_play_toast: string
             recommend_show_strategy: number
             strategies: any[]
         }
-        premieres: any[]
+        premieres?: any[]
         publish: {
             is_finish: number
             is_started: number
@@ -116,34 +116,34 @@ export interface AppSeasonInfo {
             release_date_show: string
             time_length_show: string
             unknow_pub_date: number
-            update_info_desc: string
+            update_info_desc?: string
             weekday: number
         }
-        record: string
+        record?: string
         refine_cover: string
-        reserve: {
+        reserve?: {
             episodes: any[]
             tip: string
         }
         rights: {
             allow_bp: number
             allow_bp_rank: number
-            allow_download: number
+            allow_download?: number
             allow_review: number
             area_limit: number
             ban_area_show: number
             can_watch: number
             copyright: string
-            forbid_pre: number
-            freya_white: number
-            is_cover_show: number
+            forbid_pre?: number
+            freya_white?: number
+            is_cover_show?: number
             is_preview: number
-            only_vip_download: number
-            resource: string
-            watch_platform: number
+            only_vip_download?: number
+            resource?: string
+            watch_platform?: number
         }
         season_id: number
-        season_title: string
+        season_title?: string
         series: {
             display_type: number
             series_id: number
@@ -152,7 +152,7 @@ export interface AppSeasonInfo {
         share_copy: string
         share_url: string
         short_link: string
-        show_season_type: number
+        show_season_type?: number
         square_cover: string
         staff: {
             info: string
@@ -161,7 +161,7 @@ export interface AppSeasonInfo {
         stat: {
             coins: number
             danmakus: number
-            favorite: number
+            favorite?: number
             favorites: number
             followers: string
             likes: number
@@ -169,7 +169,7 @@ export interface AppSeasonInfo {
             reply: number
             share: number
             views: number
-            vt: number
+            vt?: number
         }
         status: number
         jp_title?: string | undefined
@@ -177,7 +177,7 @@ export interface AppSeasonInfo {
             name: string
         }]
         subtitle: string
-        test_switch: {
+        test_switch?: {
             channel_entrance_exp_action: number
             enable_ep_vt: boolean
             hide_ep_vv_vt_dm: number
@@ -197,9 +197,9 @@ export interface AppSeasonInfo {
         title: string
         total: number
         type: number
-        type_desc: string
+        type_desc?: string
         type_name: string
-        user_status: {
+        user_status?: {
             follow: number
             follow_bubble: number
             follow_status: number
@@ -221,7 +221,7 @@ export interface AppSeasonInfo {
         }
         season_status?: number | undefined
         is_paster_ads: number
-        user_thumbup: {
+        user_thumbup?: {
             url_image_ani: string
             url_image_ani_cut: string
             url_image_bright: string
@@ -246,18 +246,18 @@ export interface AppSeasonInfo {
             title: string
         }
         alias: string
-        all_buttons: { watch_fornal: string }
-        all_up_infos: any
+        all_buttons?: { watch_fornal: string }
+        all_up_infos?: any
         areas: [{ id: number, name: string }]
-        badge: string
-        badge_info: {
+        badge?: string
+        badge_info?: {
             bg_color: string
             bg_color_night: string
             text: string
         }
         cover: string
         detail: string
-        dialog: {
+        dialog?: {
             code: number
             config: any
             image: {
@@ -272,26 +272,26 @@ export interface AppSeasonInfo {
             type: string
         }
         dynamic_subtitle: string
-        earphone_conf: { sp_phones: any[] }
-        enable_vt: boolean
+        earphone_conf?: { sp_phones: any[] }
+        enable_vt?: boolean
         evaluate: string
-        icon_font: {
+        icon_font?: {
             name: string
             text: string
         }
         link: string
-        media_badge_info: any
-        media_id: number
+        media_badge_info?: any
+        media_id?: number
         mode: number
         modules: any[]
         new_ep: {
-            desc: string
+            desc?: string
             id: number
-            is_new: number
-            more: string
+            is_new?: number
+            more?: string
             title: string
         }
-        new_keep_activity_material: { activityId: number }
+        new_keep_activity_material?: { activityId: number }
         origin_name: string
         payment?: {
             dialog: any
@@ -302,12 +302,12 @@ export interface AppSeasonInfo {
             vip_discount_price: string
             vip_promotion: string
         }
-        play_strategy: {
+        play_strategy?: {
             auto_play_toast: string
             recommend_show_strategy: number
             strategies: any[]
         }
-        premieres: any[]
+        premieres?: any[]
         publish: {
             is_finish: number
             is_started: number
@@ -316,34 +316,34 @@ export interface AppSeasonInfo {
             release_date_show: string
             time_length_show: string
             unknow_pub_date: number
-            update_info_desc: string
+            update_info_desc?: string
             weekday: number
         }
-        record: string
+        record?: string
         refine_cover: string
-        reserve: {
+        reserve?: {
             episodes: any[]
             tip: string
         }
         rights: {
             allow_bp: number
             allow_bp_rank: number
-            allow_download: number
+            allow_download?: number
             allow_review: number
             area_limit: number
             ban_area_show: number
             can_watch: number
             copyright: string
-            forbid_pre: number
-            freya_white: number
-            is_cover_show: number
+            forbid_pre?: number
+            freya_white?: number
+            is_cover_show?: number
             is_preview: number
-            only_vip_download: number
-            resource: string
-            watch_platform: number
+            only_vip_download?: number
+            resource?: string
+            watch_platform?: number
         }
         season_id: number
-        season_title: string
+        season_title?: string
         series: {
             display_type: number
             series_id: number
@@ -352,7 +352,7 @@ export interface AppSeasonInfo {
         share_copy: string
         share_url: string
         short_link: string
-        show_season_type: number
+        show_season_type?: number
         square_cover: string
         staff: {
             info: string
@@ -361,7 +361,7 @@ export interface AppSeasonInfo {
         stat: {
             coins: number
             danmakus: number
-            favorite: number
+            favorite?: number
             favorites: number
             followers: string
             likes: number
@@ -369,7 +369,7 @@ export interface AppSeasonInfo {
             reply: number
             share: number
             views: number
-            vt: number
+            vt?: number
         }
         status: number
         jp_title?: string
@@ -377,7 +377,7 @@ export interface AppSeasonInfo {
             name: string
         }]
         subtitle: string
-        test_switch: {
+        test_switch?: {
             channel_entrance_exp_action: number
             enable_ep_vt: boolean
             hide_ep_vv_vt_dm: number
@@ -397,9 +397,9 @@ export interface AppSeasonInfo {
         title: string
         total: number
         type: number
-        type_desc: string
+        type_desc?: string
         type_name: string
-        user_status: {
+        user_status?: {
             follow: number
             follow_bubble: number
             follow_status: number
@@ -421,7 +421,7 @@ export interface AppSeasonInfo {
         }
         season_status?: number
         is_paster_ads: number
-        user_thumbup: {
+        user_thumbup?: {
             url_image_ani: string
             url_image_ani_cut: string
             url_image_bright: string
@@ -494,15 +494,60 @@ export interface EpisodeInfo {
 
 interface SeasonInfoOnThailand {
     code: number
+    message: string
     result: {
         actor: {
             info: string
+            title: string
         }
+        alias: string
+        areas: [{ id: number, name: string }]
+        cover: string
+        detail: string
+        dynamic_subtitle: string
+        evaluate: string
+        link: string
+        mode: number
+        publish: {
+            is_finish: number
+            is_started: number
+            pub_time: string
+            pub_time_show: string
+            release_date_show: string
+            time_length_show: string
+            unknow_pub_date: number
+            weekday: number
+        }
+        refine_cover: string
+        series: any
+        share_copy: string
+        share_url: string
+        short_link: string
+        square_cover: string
+        staff: any
+        stat: {
+            coins: number
+            danmakus: number
+            favorites: number
+            followers: string
+            hot: number
+            likes: number
+            play: string
+            reply: number
+            series_play: string
+            share: number
+            views: number
+        }
+        subtitle: string
+        total: number
+        type: number
+        type_name: string
         actors?: string
         origin_name: string
         jp_title?: string
         new_ep: {
             id: number
+            new_ep_display: string
             title: string
         }
         newest_ep?: {
@@ -516,6 +561,16 @@ interface SeasonInfoOnThailand {
         season_id: number
         rights: {
             watch_platform?: number
+            allow_bp: number
+            allow_bp_rank: number
+            allow_review: number
+            area_limit: number
+            ban_area_show: number
+            can_watch: number
+            copyright: string
+            forbidPre: number
+            is_preview: number
+            onlyVipDownload: number
         }
         is_paster_ads: number
         total_ep: number
