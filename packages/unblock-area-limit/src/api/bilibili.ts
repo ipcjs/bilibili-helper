@@ -33,13 +33,25 @@ export interface AppSeasonInfo {
         actor: {
             info: string
             title: string
-        }; alias: string; all_buttons: {
+        }
+        alias: string
+        all_buttons: {
             watch_fornal: string
-        }; all_up_infos: any; areas: [{ id: number; name: string }]; badge: string; badge_info: {
+        }
+        all_up_infos: any
+        areas: [{
+            id: number
+            name: string
+        }]
+        badge: string
+        badge_info: {
             bg_color: string
             bg_color_night: string
             text: string
-        }; cover: string; detail: string; dialog: {
+        }
+        cover: string
+        detail: string
+        dialog: {
             code: number
             config: any
             image: {
@@ -52,28 +64,51 @@ export interface AppSeasonInfo {
                 text_color: string
             }
             type: string
-        }; dynamic_subtitle: string; earphone_conf: {
+        }
+        dynamic_subtitle: string
+        earphone_conf: {
             sp_phones: any[]
-        }; enable_vt: boolean; evaluate: string; icon_font: {
+        }
+        enable_vt: boolean
+        evaluate: string
+        icon_font: {
             name: string
             text: string
-        }; link: string; media_badge_info: any; media_id: number; mode: number; modules: any[]; new_ep: {
+        }
+        link: string
+        media_badge_info: any
+        media_id: number
+        mode: number
+        modules: any[]
+        new_ep: {
             desc: string
             id: number
             is_new: number
             more: string
             title: string
-        }; new_keep_activity_material: {
+        }
+        new_keep_activity_material: {
             activityId: number
-        }; origin_name: string; payment?: {
-            dialog: any; pay_type: {
+        }
+        origin_name: string
+        payment?: {
+            dialog: any
+            pay_type: {
                 allow_ticket: number
-            }; price: string; report_type: number; tv_price: string; vip_discount_price: string; vip_promotion: string
-        } | undefined; play_strategy: {
+            }
+            price: string
+            report_type: number
+            tv_price: string
+            vip_discount_price: string
+            vip_promotion: string
+        } | undefined
+        play_strategy: {
             auto_play_toast: string
             recommend_show_strategy: number
             strategies: any[]
-        }; premieres: any[]; publish: {
+        }
+        premieres: any[]
+        publish: {
             is_finish: number
             is_started: number
             pub_time: string
@@ -83,10 +118,14 @@ export interface AppSeasonInfo {
             unknow_pub_date: number
             update_info_desc: string
             weekday: number
-        }; record: string; refine_cover: string; reserve: {
+        }
+        record: string
+        refine_cover: string
+        reserve: {
             episodes: any[]
             tip: string
-        }; rights: {
+        }
+        rights: {
             allow_bp: number
             allow_bp_rank: number
             allow_download: number
@@ -102,14 +141,24 @@ export interface AppSeasonInfo {
             only_vip_download: number
             resource: string
             watch_platform: number
-        }; season_id: number; season_title: string; series: {
+        }
+        season_id: number
+        season_title: string
+        series: {
             display_type: number
             series_id: number
             series_title: string
-        }; share_copy: string; share_url: string; short_link: string; show_season_type: number; square_cover: string; staff: {
+        }
+        share_copy: string
+        share_url: string
+        short_link: string
+        show_season_type: number
+        square_cover: string
+        staff: {
             info: string
             title: string
-        }; stat: {
+        }
+        stat: {
             coins: number
             danmakus: number
             favorite: number
@@ -121,9 +170,14 @@ export interface AppSeasonInfo {
             share: number
             views: number
             vt: number
-        }; status: number; jp_title?: string | undefined; styles: [{
+        }
+        status: number
+        jp_title?: string | undefined
+        styles: [{
             name: string
-        }]; subtitle: string; test_switch: {
+        }]
+        subtitle: string
+        test_switch: {
             channel_entrance_exp_action: number
             enable_ep_vt: boolean
             hide_ep_vv_vt_dm: number
@@ -139,7 +193,13 @@ export interface AppSeasonInfo {
             was_ios_pip_exp: boolean
             was_merge_exp: boolean
             was_pugv_style_optimize: boolean
-        }; title: string; total: number; type: number; type_desc: string; type_name: string; user_status: {
+        }
+        title: string
+        total: number
+        type: number
+        type_desc: string
+        type_name: string
+        user_status: {
             follow: number
             follow_bubble: number
             follow_status: number
@@ -158,7 +218,10 @@ export interface AppSeasonInfo {
             sponsor: number
             vip: number
             vip_frozen: number
-        }; season_status?: number | undefined; is_paster_ads: number; user_thumbup: {
+        }
+        season_status?: number | undefined
+        is_paster_ads: number
+        user_thumbup: {
             url_image_ani: string
             url_image_ani_cut: string
             url_image_bright: string
@@ -496,7 +559,8 @@ export class BiliBiliApi {
             appkey: '27eb53fc9058f8c3',
             season_id: '',
             ep_id: ''
-        };
+        }
+
         if (ep_id) paramDict.ep_id = ep_id
         else if (season_id) paramDict.season_id = season_id
         const { sign, params } = Converters.generateSign(paramDict, 'c2ed53a74eeefe3cf99fbd01d8c9c375')
