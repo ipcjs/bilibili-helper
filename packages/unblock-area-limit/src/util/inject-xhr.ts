@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { r } from "../feature/r"
 import { util_debug } from "./log"
-
+let noReferHostMAP = <any>[]
 /// 注入Xhr
 ///
 /// [transformRequest]:
@@ -12,6 +12,7 @@ import { util_debug } from "./log"
 export function injectXhr({ transformRequest, transformResponse }) {
     util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
     let firstCreateXHR = true
+    let referrerEle
     window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
         construct: function (target, args) {
             // 第一次创建XHR时, 打上断点...
@@ -96,6 +97,14 @@ export function injectXhr({ transformRequest, transformResponse }) {
                         let func = value
                         // open等方法, 必须在原始的xhr对象上才能调用...
                         value = function () {
+                            if (target.readyState === 1) {
+                                setReferrer('no-referrer-when-downgrade')
+                                const url = container.__url
+                                const host = new URL(url.startsWith('//') ? `https:${url}` : url).hostname
+                                if (noReferHostMAP.includes(host)) {
+                                    setReferrer('no-referrer')
+                                }
+                            }
                             if (prop === 'open') {
                                 container.__method = arguments[0]
                                 container.__url = arguments[1]
@@ -117,4 +126,28 @@ export function injectXhr({ transformRequest, transformResponse }) {
             })
         }
     })
+    function setReferrer(referrer: string) {
+        referrerEle = getReferrerEle()
+        if (referrer && referrerEle)
+            referrerEle.content = referrer
+    }
+    function getReferrerEle() {
+        if (referrerEle)
+            return referrerEle
+        else {
+            referrerEle = window.document.getElementById('referrerMark');
+            if (referrerEle)
+                return referrerEle
+            else return null
+        }
+    }
+}
+
+export function addNoReferHost(url: string) {
+    if (url) {
+        const host = new URL(url).hostname
+        if (noReferHostMAP.indexOf(host) < 0) {
+            noReferHostMAP.push(host)
+        }
+    }
 }

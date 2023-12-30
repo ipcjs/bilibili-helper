@@ -117,8 +117,6 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     // https://github.com/yujincheng08/BiliRoaming/issues/112
     const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
     const origin = await thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id)
-    console.log('fixThailandSeason origin', origin)
-
 
     origin.result.actors = origin.result.actor.info
     origin.result.is_paster_ads = 0
@@ -126,11 +124,10 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     origin.result.newest_ep = origin.result.new_ep
     origin.result.season_status = origin.result.status
     origin.result.season_title = origin.result.title
-    origin.result.total_ep = origin.result.total
     origin.result.rights.watch_platform = 1
 
     origin.result.episodes = []
-    if (origin.result.modules.length > 0)
+    if (origin.result.modules.length > 0) {
         origin.result.modules[0].data.episodes.forEach((ep) => {
             ep.episode_status = ep.status
             ep.ep_id = ep.id
@@ -138,6 +135,9 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
             ep.index_title = ep.long_title
             origin.result.episodes?.push(ep)
         })
+        origin.result.total = origin.result.modules[0].data.episodes.length
+    }
+    origin.result.total_ep = origin.result.total
     origin.result.style = []
     origin.result.styles?.forEach((it) => {
         origin.result.style.push(it.name)
@@ -146,7 +146,6 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
 }
 
 let invalidInitialState: StringAnyObject | undefined
-
 function fixBangumiPlayPage() {
     util_init(async () => {
         if (util_page.bangumi_md()) {
@@ -227,7 +226,6 @@ function fixBangumiPlayPage() {
                                     ep['short_link'] = `https://b23.tv/ep${ep.id}`
                                 })
                             })
-                        console.log('result', result.result)
                         const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
                         if (!ep) {
                             throw `通过bangumi接口未找到${ep_id}对应的视频信息`
@@ -247,6 +245,7 @@ function fixBangumiPlayPage() {
                             item.i = index
                             item.link = 'https://www.bilibili.com/bangumi/play/ep' + item.ep_id
                             item.title = item.titleFormat
+                            if (item.jump) item['skip'] = item.jump
                             return item
                         }))
                         let titleForma
