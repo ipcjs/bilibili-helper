@@ -407,6 +407,8 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     }
 
     let origin: OriginResult = JSON.parse(JSON.stringify(originJson))
+    if (origin.code === 401)
+        delete localStorage.oauthexpires_at
     interface LooseObject {
         [key: string]: any
     }

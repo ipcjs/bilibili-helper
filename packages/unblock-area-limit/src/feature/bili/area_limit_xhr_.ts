@@ -812,10 +812,10 @@ export const area_limit_xhr = (() => {
                         } else {
                             return Promise.reject(new AjaxException(`服务器错误: ${JSON.stringify(data)}`, data ? data.code : 0))
                         }
-                    } else if (isAreaLimitForPlayUrl(data)) {
+                    } else if (isAreaLimitForPlayUrl(data) || data.code === 401) {
                         util_error('>>area limit');
                         ui.pop({
-                            content: `突破黑洞失败\n需要登录\n点此确定进行登录`,
+                            content: `突破黑洞失败\n${data.message}\n需要登录\n点此确定进行登录`,
                             onConfirm: biliplus_login.showLogin
                         })
                     } else {
