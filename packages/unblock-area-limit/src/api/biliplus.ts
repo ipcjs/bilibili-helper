@@ -1,6 +1,7 @@
 import { balh_config } from "../feature/config";
 import { Async } from "../util/async";
-import { Converters } from "../util/converters";
+import { Converters, uposMap } from "../util/converters";
+import { addNoRefererHost } from "../util/inject-xhr";
 import { access_key_param_if_exist } from "./bilibili-utils";
 
 function convertPlayUrl(originUrl: string) {
@@ -113,8 +114,10 @@ export async function fixMobiPlayUrlJson(originJson: object) {
             minBufferTime: number
             min_buffer_time: number
             video: [{
-                backupUrl: string[]
-                baseUrl: string
+                backupUrl?: string[]
+                baseUrl?: string
+                backup_url: string[]
+                base_url: string
                 codecs: string
                 sar: string
                 startWithSAP: number
@@ -136,8 +139,10 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                 }
             }]
             audio: [{
-                backupUrl: string[]
-                baseUrl: string
+                backupUrl?: string[]
+                baseUrl?: string
+                backup_url: string[]
+                base_url: string
                 codecs: string
                 startWithSAP: number
                 start_with_sap: number
@@ -235,6 +240,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     }
 
     function getSegmentBase(url: string, id: string, range: string = '5000') {
+        addNoRefererHost(url)
         return new Promise((resolve, reject) => {
             // 从 window 中读取已有的值
             if (window.__segment_base_map__) {
@@ -265,7 +271,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
                     window.__segment_base_map__[id] = result
                 }
 
-                // console.log('get SegmentBase ', result, 'id=', id);
+                // console.log('get SegmentBase', result, 'id=', id);
                 resolve(result);
             }
             xhr.send(null)  // 发送请求
@@ -291,24 +297,17 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     }
     // 乱猜 range 导致泡面番播不出
     result.dash.video.forEach((video) => {
-        if (video.backupUrl.length > 0 && video.backupUrl[0].indexOf('akamaized.net') > -1) {
-            // 有时候返回 bcache 地址, 直接访问 bcache CDN 会报 403，如果备用地址有 akam，替换为 akam
-            video.baseUrl = video.backupUrl[0]
-        }
-        taskList.push(getSegmentBase(video.baseUrl, getId(video.baseUrl, '30080', true), range.toString()))
+        taskList.push(getSegmentBase(video.base_url, getId(video.base_url, '30080', true), range.toString()))
     })
     result.dash.audio.forEach((audio) => {
-        if (audio.backupUrl.length > 0 && audio.backupUrl[0].indexOf('akamaized.net') > -1) {
-            audio.baseUrl = audio.backupUrl[0]
-        }
-        taskList.push(getSegmentBase(audio.baseUrl, getId(audio.baseUrl, '30080', true), range.toString()))
+        taskList.push(getSegmentBase(audio.base_url, getId(audio.base_url, '30080', true), range.toString()))
     })
     await Promise.all(taskList)
     if (window.__segment_base_map__) segmentBaseMap = window.__segment_base_map__
 
     // 填充视频流数据
     result.dash.video.forEach((video) => {
-        let video_id = getId(video.baseUrl, '30280')
+        let video_id = getId(video.base_url, '30280')
         if (!codecsMap.hasOwnProperty(video_id)) {
             // https://github.com/ipcjs/bilibili-helper/issues/775
             // 泰区的视频URL不包含 id 了
@@ -317,7 +316,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
         video.codecs = codecsMap[video_id]
 
-        let segmentBaseId = getId(video.baseUrl, '30280', true)
+        let segmentBaseId = getId(video.base_url, '30280', true)
         video.segment_base = {
             initialization: segmentBaseMap[segmentBaseId][0],
             index_range: segmentBaseMap[segmentBaseId][1]
@@ -341,14 +340,14 @@ export async function fixMobiPlayUrlJson(originJson: object) {
 
     // 填充音频流数据
     result.dash.audio.forEach((audio) => {
-        let audio_id = getId(audio.baseUrl, '30280')
+        let audio_id = getId(audio.base_url, '30280')
         if (!codecsMap.hasOwnProperty(audio_id)) {
             // https://github.com/ipcjs/bilibili-helper/issues/775
             // 泰区的音频URL不包含 id 了
             audio_id = audio.id.toString()
         }
 
-        let segmentBaseId = getId(audio.baseUrl, '30280', true)
+        let segmentBaseId = getId(audio.base_url, '30280', true)
         audio.segment_base = {
             initialization: segmentBaseMap[segmentBaseId][0],
             index_range: segmentBaseMap[segmentBaseId][1]
@@ -429,12 +428,31 @@ export async function fixThailandPlayUrlJson(originJson: object) {
         'min_buffer_time': 0.0,
         'audio': <any>[]
     }
+
+    const upos = uposMap[balh_config.upos_server || 'hw'] ?? uposMap.hw
+
     // 填充音频流数据
     origin.data.video_info.dash_audio.forEach((audio) => {
-        audio.backupUrl = audio.backup_url
-        audio.backup_url = audio.backup_url
-        audio.base_url = audio.base_url.includes(':8000') ? audio.backup_url[0] : audio.base_url
-        audio.baseUrl = audio.base_url
+        const base_url = audio.base_url
+        const url = new URL(base_url, document.location.href)
+        const search = audio.backup_url ? new URL(audio.backup_url[0]).search : url.search
+        if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(url.hostname)) {
+            audio.base_url = new URL(url.pathname.replace(/\/v1\/resource\//g, '').replace(/\_/g, `\/`) + search, `https://${upos}`).href
+        } else if (url.hostname.includes("akamaized.net")) {
+            audio.base_url = new URL(url.pathname + search, `https://${upos}`).href
+        }
+        addNoRefererHost(audio.base_url)
+        if (audio.backup_url) {
+            audio.backup_url.forEach(u => {
+                if (u.includes("akamaized.net")) {
+                    const url = new URL(u)
+                    u = new URL(url.pathname + url.search, `https://${upos}`).href
+                }
+                addNoRefererHost(u)
+            })
+        }
+        if (audio.baseUrl) audio.baseUrl = audio.base_url
+        if (audio.backupUrl) audio.backupUrl = audio.backup_url
         dash.audio.push(audio)
     })
     // 填充视频流数据
@@ -443,16 +461,32 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     let support_formats = <any>[]
     let dash_video = <any>[]
     origin.data.video_info.stream_list.forEach((stream) => {
-        support_formats.push(stream.stream_info)
-        accept_quality.push(stream.stream_info.quality)
-        accept_description.push(stream.stream_info.new_description)
         // 只加入有视频链接的数据
         if (stream.dash_video && stream.dash_video.base_url) {
-            stream.dash_video.backupUrl = stream.dash_video.backup_url
-            stream.dash_video.backup_url = stream.dash_video.backup_url
-            stream.dash_video.base_url = stream.dash_video.base_url.includes(':8000') ? stream.dash_video.backup_url[0] : stream.dash_video.base_url
-            stream.dash_video.baseUrl = stream.dash_video.base_url
+            support_formats.push(stream.stream_info)
+            accept_quality.push(stream.stream_info.quality)
+            accept_description.push(stream.stream_info.new_description)
             stream.dash_video.id = stream.stream_info.quality
+            const base_url = stream.dash_video.base_url
+            const url = new URL(base_url, document.location.href)
+            const search = stream.dash_video.backup_url ? new URL(stream.dash_video.backup_url[0]).search : url.search
+            if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(url.hostname)) {
+                stream.dash_video.base_url = new URL(url.pathname.replace(/\/v1\/resource\//g, '').replace(/\_/g, `\/`) + search, `https://${upos}`).href
+            } else if (url.hostname.includes("akamaized.net")) {
+                stream.dash_video.base_url = new URL(url.pathname + search, `https://${upos}`).href
+            }
+            addNoRefererHost(stream.dash_video.base_url)
+            if (stream.dash_video.backup_url) {
+                stream.dash_video.backup_url.forEach(u => {
+                    if (u.includes("akamaized.net")) {
+                        const url = new URL(u)
+                        u = new URL(url.pathname + url.search, `https://${upos}`).href
+                    }
+                    addNoRefererHost(u)
+                })
+            }
+            if (stream.dash_video.baseUrl) stream.dash_video.baseUrl = stream.dash_video.base_url
+            if (stream.dash_video.backupUrl) stream.dash_video.backupUrl = stream.dash_video.backup_url
             dash_video.push(stream.dash_video)
         }
     })
@@ -463,7 +497,7 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     result['support_formats'] = support_formats
     result['dash'] = dash
     // 下面参数取自安达(ep359333)，总之一股脑塞进去（
-    result['fnval'] = 80
+    result['fnval'] = result.support_formats[0].quality
     result['fnver'] = 0
     result['status'] = 2
     result['vip_status'] = 1

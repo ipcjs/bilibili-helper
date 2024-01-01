@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { r } from "../feature/r"
 import { util_debug } from "./log"
-
+let noReferrerHostArray: string[] = []
 /// 注入Xhr
 ///
 /// [transformRequest]:
@@ -96,6 +96,15 @@ export function injectXhr({ transformRequest, transformResponse }) {
                         let func = value
                         // open等方法, 必须在原始的xhr对象上才能调用...
                         value = function () {
+                            if (target.readyState === 1) {
+                                const url = container.__url
+                                const host = new URL(url, document.location.href).hostname
+                                if (noReferrerHostArray.includes(host)) {
+                                    setReferrer('no-referrer')
+                                } else {
+                                    setReferrer('no-referrer-when-downgrade')
+                                }
+                            }
                             if (prop === 'open') {
                                 container.__method = arguments[0]
                                 container.__url = arguments[1]
@@ -117,4 +126,27 @@ export function injectXhr({ transformRequest, transformResponse }) {
             })
         }
     })
+}
+
+let referrerEle: HTMLMetaElement | null = null
+
+/**
+ * XHR请求不能修改referer头, 目前通过修改网页的meta标签实现, 当前只对脚本重建的`bangumi-play-page-template.html`网页生效
+ * 
+ * @see https://stackoverflow.com/questions/27218525/set-referer-for-xmlhttprequest
+ */
+function setReferrer(referrer: 'no-referrer-when-downgrade' | 'no-referrer') {
+    referrerEle ??= window.document.getElementById('referrerMark')
+    if (referrerEle) {
+        referrerEle.content = referrer
+    }
+}
+
+export function addNoRefererHost(url: string) {
+    if (url) {
+        const host = new URL(url).hostname
+        if (noReferrerHostArray.indexOf(host) < 0) {
+            noReferrerHostArray.push(host)
+        }
+    }
 }
