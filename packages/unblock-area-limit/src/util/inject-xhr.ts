@@ -130,6 +130,11 @@ export function injectXhr({ transformRequest, transformResponse }) {
 
 let referrerEle: HTMLMetaElement | null = null
 
+/**
+ * XHR请求不能修改referer头, 目前通过修改网页的meta标签实现, 当前只对脚本重建的`bangumi-play-page-template.html`网页生效
+ * 
+ * @see https://stackoverflow.com/questions/27218525/set-referer-for-xmlhttprequest
+ */
 function setReferrer(referrer: 'no-referrer-when-downgrade' | 'no-referrer') {
     referrerEle ??= window.document.getElementById('referrerMark')
     if (referrerEle) {
