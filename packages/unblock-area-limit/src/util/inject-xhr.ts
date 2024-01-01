@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { r } from "../feature/r"
 import { util_debug } from "./log"
-let noReferHostMAP = <any>[]
+let noReferrerHostArray: string[] = []
 /// 注入Xhr
 ///
 /// [transformRequest]:
@@ -12,7 +12,6 @@ let noReferHostMAP = <any>[]
 export function injectXhr({ transformRequest, transformResponse }) {
     util_debug('XMLHttpRequest的描述符:', Object.getOwnPropertyDescriptor(window, 'XMLHttpRequest'))
     let firstCreateXHR = true
-    let referrerEle
     window.XMLHttpRequest = new Proxy(window.XMLHttpRequest, {
         construct: function (target, args) {
             // 第一次创建XHR时, 打上断点...
@@ -98,11 +97,12 @@ export function injectXhr({ transformRequest, transformResponse }) {
                         // open等方法, 必须在原始的xhr对象上才能调用...
                         value = function () {
                             if (target.readyState === 1) {
-                                setReferrer('no-referrer-when-downgrade')
                                 const url = container.__url
-                                const host = new URL(url.startsWith('//') ? `https:${url}` : url).hostname
-                                if (noReferHostMAP.includes(host)) {
+                                const host = new URL(url, document.location.href).hostname
+                                if (noReferrerHostArray.includes(host)) {
                                     setReferrer('no-referrer')
+                                } else {
+                                    setReferrer('no-referrer-when-downgrade')
                                 }
                             }
                             if (prop === 'open') {
@@ -126,28 +126,22 @@ export function injectXhr({ transformRequest, transformResponse }) {
             })
         }
     })
-    function setReferrer(referrer: string) {
-        referrerEle = getReferrerEle()
-        if (referrer && referrerEle)
-            referrerEle.content = referrer
-    }
-    function getReferrerEle() {
-        if (referrerEle)
-            return referrerEle
-        else {
-            referrerEle = window.document.getElementById('referrerMark');
-            if (referrerEle)
-                return referrerEle
-            else return null
-        }
+}
+
+let referrerEle: HTMLMetaElement | null = null
+
+function setReferrer(referrer: 'no-referrer-when-downgrade' | 'no-referrer') {
+    referrerEle ??= window.document.getElementById('referrerMark')
+    if (referrerEle) {
+        referrerEle.content = referrer
     }
 }
 
-export function addNoReferHost(url: string) {
+export function addNoRefererHost(url: string) {
     if (url) {
         const host = new URL(url).hostname
-        if (noReferHostMAP.indexOf(host) < 0) {
-            noReferHostMAP.push(host)
+        if (noReferrerHostArray.indexOf(host) < 0) {
+            noReferrerHostArray.push(host)
         }
     }
 }

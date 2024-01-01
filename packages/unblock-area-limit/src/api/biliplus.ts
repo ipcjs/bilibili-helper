@@ -1,7 +1,7 @@
 import { balh_config } from "../feature/config";
 import { Async } from "../util/async";
 import { Converters, uposMap } from "../util/converters";
-import { addNoReferHost } from "../util/inject-xhr";
+import { addNoRefererHost } from "../util/inject-xhr";
 import { access_key_param_if_exist } from "./bilibili-utils";
 
 function convertPlayUrl(originUrl: string) {
@@ -240,7 +240,7 @@ export async function fixMobiPlayUrlJson(originJson: object) {
     }
 
     function getSegmentBase(url: string, id: string, range: string = '5000') {
-        addNoReferHost(url)
+        addNoRefererHost(url)
         return new Promise((resolve, reject) => {
             // 从 window 中读取已有的值
             if (window.__segment_base_map__) {
@@ -428,28 +428,29 @@ export async function fixThailandPlayUrlJson(originJson: object) {
         'min_buffer_time': 0.0,
         'audio': <any>[]
     }
-    let upos = uposMap.hw
-    if (balh_config.upos_server) {
-        upos = uposMap[balh_config.upos_server as keyof typeof uposMap]
-    }
+
+    const upos = uposMap[balh_config.upos_server || 'hw'] ?? uposMap.hw
+
     // 填充音频流数据
     origin.data.video_info.dash_audio.forEach((audio) => {
         const base_url = audio.base_url
-        const url = new URL(base_url.startsWith('//') ? `https:${base_url}` : base_url)
+        const url = new URL(base_url, document.location.href)
         const search = audio.backup_url ? new URL(audio.backup_url[0]).search : url.search
         if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(url.hostname)) {
             audio.base_url = new URL(url.pathname.replace(/\/v1\/resource\//g, '').replace(/\_/g, `\/`) + search, `https://${upos}`).href
         } else if (url.hostname.includes("akamaized.net")) {
             audio.base_url = new URL(url.pathname + search, `https://${upos}`).href
         }
-        addNoReferHost(audio.base_url)
-        if (audio.backup_url) audio.backup_url.forEach(u => {
-            if (u.includes("akamaized.net")) {
-                const url = new URL(u)
-                u = new URL(url.pathname + url.search, `https://${upos}`).href
-            }
-            addNoReferHost(u)
-        })
+        addNoRefererHost(audio.base_url)
+        if (audio.backup_url) {
+            audio.backup_url.forEach(u => {
+                if (u.includes("akamaized.net")) {
+                    const url = new URL(u)
+                    u = new URL(url.pathname + url.search, `https://${upos}`).href
+                }
+                addNoRefererHost(u)
+            })
+        }
         if (audio.baseUrl) audio.baseUrl = audio.base_url
         if (audio.backupUrl) audio.backupUrl = audio.backup_url
         dash.audio.push(audio)
@@ -462,29 +463,31 @@ export async function fixThailandPlayUrlJson(originJson: object) {
     origin.data.video_info.stream_list.forEach((stream) => {
         // 只加入有视频链接的数据
         if (stream.dash_video && stream.dash_video.base_url) {
-            support_formats.push(stream.stream_info);
-            accept_quality.push(stream.stream_info.quality);
-            accept_description.push(stream.stream_info.new_description);
-            stream.dash_video.id = stream.stream_info.quality;
+            support_formats.push(stream.stream_info)
+            accept_quality.push(stream.stream_info.quality)
+            accept_description.push(stream.stream_info.new_description)
+            stream.dash_video.id = stream.stream_info.quality
             const base_url = stream.dash_video.base_url
-            const url = new URL(base_url.startsWith('//') ? `https:${base_url}` : base_url)
+            const url = new URL(base_url, document.location.href)
             const search = stream.dash_video.backup_url ? new URL(stream.dash_video.backup_url[0]).search : url.search
             if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(url.hostname)) {
                 stream.dash_video.base_url = new URL(url.pathname.replace(/\/v1\/resource\//g, '').replace(/\_/g, `\/`) + search, `https://${upos}`).href
             } else if (url.hostname.includes("akamaized.net")) {
                 stream.dash_video.base_url = new URL(url.pathname + search, `https://${upos}`).href
             }
-            addNoReferHost(stream.dash_video.base_url)
-            if (stream.dash_video.backup_url) stream.dash_video.backup_url.forEach(u => {
-                if (u.includes("akamaized.net")) {
-                    const url = new URL(u)
-                    u = new URL(url.pathname + url.search, `https://${upos}`).href
-                }
-                addNoReferHost(u)
-            })
+            addNoRefererHost(stream.dash_video.base_url)
+            if (stream.dash_video.backup_url) {
+                stream.dash_video.backup_url.forEach(u => {
+                    if (u.includes("akamaized.net")) {
+                        const url = new URL(u)
+                        u = new URL(url.pathname + url.search, `https://${upos}`).href
+                    }
+                    addNoRefererHost(u)
+                })
+            }
             if (stream.dash_video.baseUrl) stream.dash_video.baseUrl = stream.dash_video.base_url
             if (stream.dash_video.backupUrl) stream.dash_video.backupUrl = stream.dash_video.backup_url
-            dash_video.push(stream.dash_video);
+            dash_video.push(stream.dash_video)
         }
     })
     dash['video'] = dash_video

@@ -189,12 +189,15 @@ function fixBangumiPlayPage() {
                         let seasons: any[] = []
 
                         result.result.modules.forEach((module: { data: { seasons?: any[], episodes?: any[] } }) => {
-                            if (module.data.seasons) module.data.seasons.forEach(season => {
-                                seasons.push(season)
-                            })
-                            else if (module.data.episodes) module.data.episodes.forEach(ep => {
-                                seasons.push(ep)
-                            })
+                            if (module.data.seasons) {
+                                module.data.seasons.forEach(season => {
+                                    seasons.push(season)
+                                })
+                            } else if (module.data.episodes) {
+                                module.data.episodes.forEach(ep => {
+                                    seasons.push(ep)
+                                })
+                            }
                         })
                         result.result['seasons'] = seasons
                         if (!result.result.episodes) {
@@ -206,8 +209,9 @@ function fixBangumiPlayPage() {
 
                         if (result.result.episodes.length > 0) {
                             const episodeInfo = await bilibiliApi.getEpisodeInfoByEpId(result.result.episodes[0].id)
-                            if (episodeInfo.code = 0)
+                            if (episodeInfo.code = 0) {
                                 result.result['up_info'] = episodeInfo.data.related_up[0]
+                            }
                             result.result.episodes.forEach((ep: { [x: string]: any; id: any }) => {
                                 ep['bvid'] = Converters.aid2bv(ep.aid)
                                 ep['ep_id'] = ep.id
@@ -216,7 +220,7 @@ function fixBangumiPlayPage() {
                                 ep['short_link'] = `https://b23.tv/ep${ep.id}`
                             })
                         }
-                        if (result.result.section)
+                        if (result.result.section) {
                             result.result.section.forEach(section => {
                                 section.episodes.forEach((ep: { [x: string]: any; id: any }) => {
                                     ep['bvid'] = Converters.aid2bv(ep.aid)
@@ -226,6 +230,7 @@ function fixBangumiPlayPage() {
                                     ep['short_link'] = `https://b23.tv/ep${ep.id}`
                                 })
                             })
+                        }
                         const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
                         if (!ep) {
                             throw `通过bangumi接口未找到${ep_id}对应的视频信息`

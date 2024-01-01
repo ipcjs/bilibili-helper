@@ -3,7 +3,7 @@ import { util_error } from "./log";
 
 
 /** @see https://github.com/yujincheng08/BiliRoaming/blob/f689b138da7ac45d2591d375f19698c969844324/app/src/main/res/values/strings.xml#L112-L131 */
-export const uposMap = {
+const rawUposMap = {
     ali: 'upos-sz-mirrorali.bilivideo.com',
     alib: 'upos-sz-mirroralib.bilivideo.com',
     ks3: 'upos-sz-mirrorks3.bilivideo.com',
@@ -26,6 +26,8 @@ export const uposMap = {
     hk: 'cn-hk-eq-bcache-01.bilivideo.com',
     akamai: 'upos-hz-mirrorakam.akamaized.net',
 }
+
+export const uposMap: Record<string, string | undefined> & typeof rawUposMap = rawUposMap
 
 export namespace Converters {
     // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
