@@ -3,17 +3,28 @@ import { Async } from "../../util/async"
 import { log, util_debug } from "../../util/log"
 import { RegExps } from "../../util/regexps"
 import { Strings } from "../../util/strings"
-
+import space_account_info_map from "./space_account_info_map"
+export const spaceAccountInfoMap: Record<string, object | undefined> & typeof space_account_info_map = space_account_info_map
 export function injectFetch() {
-    // 当前未替换任何内容...
     const originFetch = window.fetch;
-    window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-        log('fetch', input, init)
-        return originFetch(input, init)
-            .then(r => {
-                // log('then', r)
-                return r
-            })
+    window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+        const originResponse = await originFetch(input, init)
+        switch (typeof input) {
+            case 'string': {
+                if (input.match(RegExps.url('api.bilibili.com/x/space/wbi/acc/info?'))) {
+                    let json = await originResponse.json()
+                    if (json.code === -404) {
+                        const mid = new URL(input, document.location.href).searchParams.get('mid')
+                        if (mid && spaceAccountInfoMap[mid || '']) {
+                            return new Response(JSON.stringify(spaceAccountInfoMap[mid]))
+                        }
+                    }
+                    return new Response(JSON.stringify(json))
+                }
+                break
+            }
+        }
+        return originResponse
     }
 }
 export function injectFetch4Mobile() {
