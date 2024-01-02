@@ -503,8 +503,8 @@ export function area_limit_for_vue() {
                                     // data.initEpList.forEach(removeEpAreaLimit)
                                     // data.rights.area_limit = false
                                     // data.rights.allow_dm = 1
-                                } else if (data.seasonInfo && !data.seasonInfo.mediaInfo.hasPlayableEp) {
-                                    // 新版全都没用了，干脆没有Playable的直接就替换掉
+                                } else if (data.seasonInfo && !data.seasonInfo.mediaInfo.rights.can_watch) {
+                                    // 新版没有Playable的是预告 PV，不能直接跳过，can_watch=false 才替换
                                     return;
                                 }
                                 break;
