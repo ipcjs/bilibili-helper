@@ -1,6 +1,7 @@
 import { Async, Promise } from "../util/async"
 import { generateMobiPlayUrlParams } from "./biliplus"
 import { Converters } from "../util/converters"
+import { getSsId } from "../util/IndexedDB"
 
 interface SeasonInfo {
     code: number
@@ -787,7 +788,14 @@ export class BiliBiliApi {
     getEpisodeInfoByEpId(ep_id: string) {
         return Async.ajax<EpisodeInfo>('//api.bilibili.com/pgc/season/episode/web/info?' + `ep_id=${ep_id}`)
     }
-    getSeasonInfoByEpSsIdOnThailand(ep_id: string | undefined, season_id: string | undefined) {
+    async getSeasonInfoByEpSsIdOnThailand(ep_id: string | undefined, season_id: string | undefined) {
+        if (ep_id) {
+            const ssid = await getSsId(parseInt(ep_id))
+            if (ssid) {
+                season_id = ssid
+                ep_id = ''
+            }
+        }
         const params = '?' + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
         const newParams = generateMobiPlayUrlParams(params, 'th')
         return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams)

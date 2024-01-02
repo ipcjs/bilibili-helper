@@ -1,5 +1,6 @@
 import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
+import { getObjectStore, openDb } from "../../util/IndexedDB"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
@@ -111,7 +112,6 @@ interface TemplateArgs {
     appOnly: boolean,
 }
 
-
 async function fixThailandSeason(ep_id: string, season_id: string) {
     // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
     // 通过泰区 api 补全
@@ -130,12 +130,19 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
 
     origin.result.episodes = []
     if (origin.result.modules.length > 0) {
+        var store = getObjectStore(await openDb(), 'ep_id_season_id', 'readwrite')
         origin.result.modules[0].data.episodes.forEach((ep) => {
             ep.episode_status = ep.status
             ep.ep_id = ep.id
             ep.index = ep.title
             ep.index_title = ep.long_title
             origin.result.episodes?.push(ep)
+            if (season_id !== '5551')
+                try {
+                    store.put({ ep_id: ep.id, season_id: season_id })
+                } catch (e) {
+                    log('addSsEpId error', e)
+                }
         })
         origin.result.total = origin.result.modules[0].data.episodes.length
     }
