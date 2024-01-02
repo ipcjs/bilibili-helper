@@ -111,7 +111,7 @@ export const area_limit_xhr = (() => {
                         // 上一个接口的新版本
                         let json = JSON.parse(xhr.responseText);
                         // 生成简体字幕
-                        if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles && json.data.subtitle.subtitles.length > 0) {
+                        if (balh_config.generate_sub && json.code == 0 && json.data.subtitle?.subtitles?.length) {
                             const subtitles = json.data.subtitle.subtitles;
                             const lans = subtitles.map((item) => item.lan);
                             const genHans = lans.includes('zh-Hant') && !lans.includes('zh-Hans');
