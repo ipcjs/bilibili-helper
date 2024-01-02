@@ -111,39 +111,37 @@ export const area_limit_xhr = (() => {
                         // 上一个接口的新版本
                         let json = JSON.parse(xhr.responseText);
                         // 生成简体字幕
-                        if (balh_config.generate_sub && json.code == 0 && json.data.subtitle && json.data.subtitle.subtitles) {
+                        if (balh_config.generate_sub && json.code == 0 && json.data.subtitle?.subtitles?.length) {
                             const subtitles = json.data.subtitle.subtitles;
                             const lans = subtitles.map((item) => item.lan);
                             const genHans = lans.includes('zh-Hant') && !lans.includes('zh-Hans');
                             const genHant = lans.includes('zh-Hans') && !lans.includes('zh-Hant');
-                            if (!genHans && !genHant) {
-                                return null;
-                            }
-                            const origin = genHans ? 'zh-Hant' : 'zh-Hans';
-                            const target = genHans ? 'zh-Hans' : 'zh-Hant';
-                            const targetDoc = genHans ? '中文（简体）生成' : '中文（繁体）生成'
-                            if (origin && target && targetDoc) {
-                                const from = origin == 'zh-Hant' ? 'tw' : 'cn';
-                                const to = target == 'zh-Hans' ? 'cn' : 'tw';
-                                const origSub = subtitles.find((item) => item.lan == origin);
-                                const origSubUrl = 'https:' + origSub.subtitle_url;
-                                const origSubId = origSub.id;
-                                const origSubRealId = BigInt(origSub.id_str);
-                                const translateUrl = new URL(origSubUrl);
-                                translateUrl.searchParams.set('translate', '1');
-                                translateUrl.searchParams.set('from', from);
-                                translateUrl.searchParams.set('to', to);
-                                const targetSub = {
-                                    lan: target,
-                                    lan_doc: targetDoc,
-                                    is_lock: false,
-                                    subtitle_url: translateUrl.href,
-                                    type: 0,
-                                    id: origSubId + 1,
-                                    id_str: (origSubRealId + 1n).toString(),
-                                };
-                                json.data.subtitle.subtitles.push(targetSub);
-                                return json;
+                            if (genHans || genHant) {
+                                const origin = genHans ? 'zh-Hant' : 'zh-Hans';
+                                const target = genHans ? 'zh-Hans' : 'zh-Hant';
+                                const targetDoc = genHans ? '中文（简体）生成' : '中文（繁体）生成'
+                                if (origin && target && targetDoc) {
+                                    const from = origin == 'zh-Hant' ? 'tw' : 'cn';
+                                    const to = target == 'zh-Hans' ? 'cn' : 'tw';
+                                    const origSub = subtitles.find((item) => item.lan == origin);
+                                    const origSubUrl = 'https:' + origSub.subtitle_url;
+                                    const origSubId = origSub.id;
+                                    const origSubRealId = BigInt(origSub.id_str);
+                                    const translateUrl = new URL(origSubUrl);
+                                    translateUrl.searchParams.set('translate', '1');
+                                    translateUrl.searchParams.set('from', from);
+                                    translateUrl.searchParams.set('to', to);
+                                    const targetSub = {
+                                        lan: target,
+                                        lan_doc: targetDoc,
+                                        is_lock: false,
+                                        subtitle_url: translateUrl.href,
+                                        type: 0,
+                                        id: origSubId + 1,
+                                        id_str: (origSubRealId + 1n).toString(),
+                                    };
+                                    json.data.subtitle.subtitles.push(targetSub);
+                                }
                             }
                         }
                         if ((json.code === -400 || json.code === -404 || (json.code == 0 && window.__balh_app_only__ && json.data.subtitle.subtitles.length == 0)) && balh_config.server_custom_th) {
@@ -165,7 +163,11 @@ export const area_limit_xhr = (() => {
                                         }
                                         subtitle.subtitles.push(sub);
                                     })
-                                    let json = { code: 0, data: { subtitle: subtitle } };
+                                    if (json.code === 0) {
+                                        json.data.subtitle = subtitle
+                                    } else {
+                                        json = { code: 0, "message": "0", data: { subtitle: subtitle } }
+                                    }
                                     // todo: json.data中有许多字段, 需要想办法填充
                                     if (balh_config.blocked_vip) {
                                         json.data.vip = {
@@ -181,9 +183,9 @@ export const area_limit_xhr = (() => {
                             if (vip) {
                                 vip.type = 2; // 同上
                                 vip.status = 1;
-                                return json
                             }
                         }
+                        return json
                     } else if (url.match(RegExps.urlPath('/bfs/subtitle/'))) {
                         log('/bfs/subtitle', url);
                         const parsedUrl = new URL(url);
