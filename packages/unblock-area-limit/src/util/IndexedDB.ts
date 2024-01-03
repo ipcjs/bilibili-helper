@@ -1,6 +1,7 @@
 const DB_NAME = 'balh';
 const DB_VERSION = 1;
 
+let db: IDBDatabase | null = null;
 export function openDb() {
     return new Promise<IDBDatabase>((resolve, reject) => {
         var req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -19,31 +20,20 @@ export function openDb() {
     })
 }
 
-export function getObjectStore(db: IDBDatabase, store_name: string, mode: IDBTransactionMode) {
+async function getObjectStore(store_name: string, mode: IDBTransactionMode) {
+    if (db === null) db = await openDb()
     var tx = db.transaction(store_name, mode);
     return tx.objectStore(store_name);
 }
 
-async function clearObjectStore(store_name: string) {
-    var store = getObjectStore(await openDb(), store_name, 'readwrite');
-    var req = store.clear()
-    req.onerror = function (evt) {
-        console.error("clearObjectStore:", evt);
-    }
-}
-
-export function getBlob(key: any, store: IDBObjectStore, success_callback: (blob: Blob) => void) {
-    var req: IDBRequest = store.get(key)
-    req.onsuccess = async function (evt) {
-        var value = (evt.target as IDBRequest)?.result
-        if (value)
-            success_callback(value)
-    }
+export async function setSsId(ep_id: number, season_id: string) {
+    var store = await getObjectStore('ep_id_season_id', 'readwrite')
+    store.put({ ep_id: ep_id, season_id: season_id })
 }
 
 export function getSsId(ep_id: number): Promise<string> {
     return new Promise(async (resolve, reject) => {
-        var store = getObjectStore(await openDb(), 'ep_id_season_id', 'readonly');
+        var store = await getObjectStore('ep_id_season_id', 'readonly');
         var req: IDBRequest = store.get(ep_id)
         req.onsuccess = () => {
             if (!req.result)

@@ -1,6 +1,6 @@
 import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
-import { getObjectStore, openDb } from "../../util/IndexedDB"
+import { setSsId } from "../../util/IndexedDB"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
@@ -130,7 +130,6 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
 
     origin.result.episodes = []
     if (origin.result.modules.length > 0) {
-        var store = getObjectStore(await openDb(), 'ep_id_season_id', 'readwrite')
         origin.result.modules[0].data.episodes.forEach((ep) => {
             ep.episode_status = ep.status
             ep.ep_id = ep.id
@@ -139,7 +138,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
             origin.result.episodes?.push(ep)
             if (season_id !== '5551')
                 try {
-                    store.put({ ep_id: ep.id, season_id: season_id })
+                    setSsId(ep.id, season_id)
                 } catch (e) {
                     log('addSsEpId error', e)
                 }
