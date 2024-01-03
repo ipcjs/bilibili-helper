@@ -92,7 +92,6 @@ function scriptContent() {
                 delete localStorage.balh_h5_not_first
                 delete localStorage.balh_old_isLoginBiliBili
                 delete localStorage.balh_must_remind_login_v3
-                delete localStorage.balh_must_updateLoginFlag
             }
         }
     }

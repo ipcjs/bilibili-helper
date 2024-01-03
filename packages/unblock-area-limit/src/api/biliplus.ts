@@ -1,3 +1,4 @@
+import { biliplus_login } from "../feature/bili/biliplus_login";
 import { balh_config } from "../feature/config";
 import { Async } from "../util/async";
 import { Converters, uposMap } from "../util/converters";
@@ -408,7 +409,7 @@ export async function fixThailandPlayUrlJson(originJson: object) {
 
     let origin: OriginResult = JSON.parse(JSON.stringify(originJson))
     if (origin.code === 401)
-        delete localStorage.oauthexpires_at
+        biliplus_login.clearLoginFlag()
     interface LooseObject {
         [key: string]: any
     }
