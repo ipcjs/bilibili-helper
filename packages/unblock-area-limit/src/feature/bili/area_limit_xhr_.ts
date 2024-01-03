@@ -4,13 +4,12 @@ import { Converters, uposMap } from '../../util/converters';
 import { _ } from '../../util/react'
 import { Async, Promise } from '../../util/async';
 import { r, _t } from '../../feature/r'
-import { util_error, util_info, util_log, util_warn, util_debug, logHub } from '../../util/log'
+import { util_error, util_warn, log } from '../../util/log'
 import { cookieStorage } from '../../util/cookie'
 import { balh_config, isClosed } from '../../feature/config'
-import { Func } from '../../util/utils';
 import { util_page } from '../../feature/page'
 import { access_key_param_if_exist, platform_android_param_if_app_only } from '../../api/bilibili-utils'
-import { BiliPlusApi, generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from '../../api/biliplus'
+import { generateMobiPlayUrlParams, getMobiPlayUrl, fixMobiPlayUrlJson, fixThailandPlayUrlJson } from '../../api/biliplus'
 import { ui } from '../../util/ui'
 import { Strings } from '../../util/strings'
 import { util_init } from '../../util/initiator'
@@ -43,23 +42,23 @@ export const area_limit_xhr = (() => {
                 /// {@endtemplate}
                 transformResponse: ({ url, response, xhr, container }) => {
                     if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/season?'))) {
-                        log('/pgc/view/web/season:', xhr.responseText)
                         let json = JSON.parse(xhr.responseText)
                         if (json.code === 0 && json.result) {
                             // processSeasonInfo(json.result)
                             json.result.episodes.forEach(removeEpAreaLimit)
-                            json.result.rights.area_limit = false
+                            json.result.rights.area_limit = 0
+                            json.result.rights.ban_area_show = 0
                             return json
                         }
                     } else if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
                         || url.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
-                        log('/season/user/status:', xhr.responseText)
                         let json = JSON.parse(xhr.responseText)
                         let rewriteResult = false
                         if (json.code === 0 && json.result) {
                             areaLimit(json.result.area_limit !== 0)
                             if (json.result.area_limit !== 0) {
                                 json.result.area_limit = 0 // 取消区域限制
+                                json.result.ban_area_show = 0
                                 rewriteResult = true
                             }
                             if (balh_config.blocked_vip) {
@@ -211,24 +210,26 @@ export const area_limit_xhr = (() => {
                         log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, xhr.response)
                         // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                         // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
-                    } else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
+                    } else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl')) || url.match(RegExps.url('api.bilibili.com/pgc/player/web/v2/playurl'))
                         && !Strings.getSearchParam(url, 'balh_ajax')) {
-                        log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, xhr.response)
-                        if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
-                            let json = typeof xhr.response === 'object' ? xhr.response : JSON.parse(xhr.responseText)
+                        const reqUrl = new URL(url, document.location.href)
+                        const isV1 = reqUrl.pathname === '/pgc/player/web/playurl'
+                        let json = typeof xhr.response === 'object' ? xhr.response : JSON.parse(xhr.responseText)
+                        if (!container.__redirect || (!isV1 && isAreaLimitForPlayUrl(json.result))) { // 请求没有被重定向, 则需要检测结果是否有区域限制
                             if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
                                 areaLimit(true)
                                 // 2022-09-17 ipcjs: 为什么这里用的是请求url, 而不是响应url?...
-                                let requestUrl = container.__url
+                                let requestUrl = isV1 ? container.__url : `//api.bilibili.com/pgc/player/web/playurl${reqUrl.search}`
                                 if (isBangumiPage()) {
                                     requestUrl += `&module=bangumi`
                                 }
                                 return bilibiliApis._playurl.asyncAjax(requestUrl)
                                     .then(data => {
                                         if (!data.code) {
-                                            data = { code: 0, result: data, message: "0" }
+                                            data = isV1
+                                                ? { code: 0, result: data, message: "0" }
+                                                : { code: 0, message: "success", result: { video_info: data } }
                                         }
-                                        log('/pgc/player/web/playurl', 'proxy', data)
                                         return data
                                     })
                             } else {
@@ -288,7 +289,6 @@ export const area_limit_xhr = (() => {
                     } else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
                         && !Strings.getSearchParam(url, 'balh_ajax')
                         && needRedirect()) {
-                        log('/pgc/player/web/playurl')
                         // debugger
                         container.__redirect = true // 标记该请求被重定向
                         if (isBangumiPage()) {
@@ -297,13 +297,8 @@ export const area_limit_xhr = (() => {
                         return bilibiliApis._playurl.asyncAjax(url)
                             .then(data => {
                                 if (!data.code) {
-                                    data = {
-                                        code: 0,
-                                        result: data,
-                                        message: "0",
-                                    }
+                                    data = { code: 0, result: data, message: "0" }
                                 }
-                                log('/pgc/player/web/playurl', 'proxy(redirect)', data)
                                 return data
                             })
                     }
@@ -337,7 +332,6 @@ export const area_limit_xhr = (() => {
                 let oriResultTransformer
                 let oriResultTransformerWhenProxyError
                 let one_api;
-                // log(param)
                 if (param.url.match(RegExps.urlPath('/web_api/get_source'))) {
                     one_api = bilibiliApis._get_source;
                     oriResultTransformer = p => p
@@ -372,7 +366,6 @@ export const area_limit_xhr = (() => {
                             param.data = undefined
                         }
                         if (isBangumiPage()) {
-                            log(`playurl add 'module=bangumi' param`)
                             param.url += `&module=bangumi`
                         }
                         // 加上这个参数, 防止重复拦截这个url
@@ -385,7 +378,6 @@ export const area_limit_xhr = (() => {
                     }
                     oriResultTransformer = p => p
                         .then(json => {
-                            log(json)
                             if (isNewPlayurl && !json.code) {
                                 json = json.result
                             }
@@ -536,7 +528,7 @@ export const area_limit_xhr = (() => {
         }
 
         function isBangumiPage() {
-            const mediaInfo = window.__INITIAL_STATE__?.mediaInfo
+            const mediaInfo = window.__INITIAL_STATE__?.mediaInfo || window.__NEXT_DATA__?.props.pageProps.dehydratedState?.queries[0]?.state.data.seasonInfo?.mediaInfo
             return isBangumi(mediaInfo?.season_type || mediaInfo?.ssType)
         }
 
@@ -606,7 +598,7 @@ export const area_limit_xhr = (() => {
         }
 
         function isAreaLimitForPlayUrl(json) {
-            return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627);
+            return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627) || !json.video_info;
         }
 
         var bilibiliApis = (function () {
