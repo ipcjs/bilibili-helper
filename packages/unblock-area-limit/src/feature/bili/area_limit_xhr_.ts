@@ -213,19 +213,22 @@ export const area_limit_xhr = (() => {
                     } else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl')) || url.match(RegExps.url('api.bilibili.com/pgc/player/web/v2/playurl'))
                         && !Strings.getSearchParam(url, 'balh_ajax')) {
                         const reqUrl = new URL(url, document.location.href)
+                        const isV1 = reqUrl.pathname === '/pgc/player/web/playurl'
                         let json = typeof xhr.response === 'object' ? xhr.response : JSON.parse(xhr.responseText)
-                        if (!container.__redirect || (reqUrl.pathname === '/pgc/player/web/v2/playurl' && isAreaLimitForPlayUrl(json.result))) { // 请求没有被重定向, 则需要检测结果是否有区域限制
+                        if (!container.__redirect || (!isV1 && isAreaLimitForPlayUrl(json.result))) { // 请求没有被重定向, 则需要检测结果是否有区域限制
                             if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
                                 areaLimit(true)
                                 // 2022-09-17 ipcjs: 为什么这里用的是请求url, 而不是响应url?...
-                                let requestUrl = reqUrl.pathname === '/pgc/player/web/playurl' ? container.__url : `//api.bilibili.com/pgc/player/web/playurl${reqUrl.search}`
+                                let requestUrl = isV1 ? container.__url : `//api.bilibili.com/pgc/player/web/playurl${reqUrl.search}`
                                 if (isBangumiPage()) {
                                     requestUrl += `&module=bangumi`
                                 }
                                 return bilibiliApis._playurl.asyncAjax(requestUrl)
                                     .then(data => {
                                         if (!data.code) {
-                                            data = reqUrl.pathname === '/pgc/player/web/playurl' ? { code: 0, result: data, message: "0" } : { code: 0, message: "success", result: { video_info: data } }
+                                            data = isV1
+                                                ? { code: 0, result: data, message: "0" }
+                                                : { code: 0, message: "success", result: { video_info: data } }
                                         }
                                         return data
                                     })
