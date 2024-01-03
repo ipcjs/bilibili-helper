@@ -38,19 +38,22 @@ export namespace ui {
     }
 
     interface PopParam {
+        /** 内容元素数组/HTML */
         content: any
+        /** 是否显示确定按钮 */
         showConfirm?: boolean
+        /** 确定按钮的文字 */
         confirmBtn?: string
+        /** 关闭按钮的文字 */
+        closeBtn?: string
+        /** 确定回调 */
         onConfirm?: Function
+        /** 关闭回调 */
         onClose?: Function
     }
 
     /**
-     * - param.content: 内容元素数组/HTML
-     * - param.showConfirm: 是否显示确定按钮
-     * - param.confirmBtn: 确定按钮的文字
-     * - param.onConfirm: 确定回调
-     * - param.onClose: 关闭回调
+     * 确定弹窗
      */
     export const pop = function (param: PopParam) {
         if (typeof param.content === 'string') {
@@ -75,7 +78,7 @@ export namespace ui {
             children.push(_('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));
         }
         children.push(_('input', {
-            value: _t('close'), type: 'button', className: 'close', event: {
+            value: param.closeBtn || _t('close'), type: 'button', className: 'close', event: {
                 click: function () {
                     param.onClose && param.onClose();
                     div.style.height = '0';

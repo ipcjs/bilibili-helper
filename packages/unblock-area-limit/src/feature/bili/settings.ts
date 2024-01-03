@@ -6,7 +6,7 @@ import { balh_config } from "../config"
 import { util_page } from "../page"
 import { r } from "../r"
 import { util_ui_msg } from '../../util/message'
-import { biliplus_login } from "./biliplus_login"
+import { bilibili_login } from "./bilibili_login"
 import css from './settings.scss'
 
 const balh_feature_runPing = function () {
@@ -171,10 +171,10 @@ export function settings() {
         switch ((event.target as any).attributes['data-sign'].value) {
             default:
             case 'in':
-                biliplus_login.showLogin();
+                bilibili_login.showLogin();
                 break;
             case 'out':
-                biliplus_login.showLogout();
+                bilibili_login.showLogout();
                 break;
         }
     }
@@ -390,7 +390,7 @@ export function settings() {
                 ]), _('br'),
                 _('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [_('text', '帐号授权')]),
                 _('text', '　'),
-                _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]),
+                bilibili_login.isLogin() ? _('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [_('text', '取消授权')]) : _('span'),
                 _('text', '　　'),
                 _('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show(window.$(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [_('text', '（这是什么？）')]),
                 _('br'), _('br'),
