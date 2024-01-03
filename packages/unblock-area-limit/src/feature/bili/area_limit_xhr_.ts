@@ -16,7 +16,7 @@ import { Strings } from '../../util/strings'
 import { util_init } from '../../util/initiator'
 import { util_ui_msg } from '../../util/message'
 import { RegExps } from '../../util/regexps'
-import { biliplus_login } from './biliplus_login';
+import { bilibili_login } from './bilibili_login';
 import { injectFetch, injectFetch4Mobile } from '../../feature/bili/area_limit_fetch'
 import space_account_info_map from '../../feature/bili/space_account_info_map'
 import * as OpenCC from 'opencc-js'
@@ -816,7 +816,7 @@ export const area_limit_xhr = (() => {
                         util_error('>>area limit');
                         ui.pop({
                             content: `突破黑洞失败\n${data.message}\n需要登录\n点此确定进行登录`,
-                            onConfirm: biliplus_login.showLogin
+                            onConfirm: bilibili_login.showLogin
                         })
                     } else {
                         if (balh_config.flv_prefer_ws) {

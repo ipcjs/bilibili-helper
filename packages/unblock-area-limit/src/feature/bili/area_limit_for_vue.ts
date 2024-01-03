@@ -12,7 +12,7 @@ import { ifNotNull } from "../../util/utils"
 import { balh_config, isClosed } from "../config"
 import { util_page } from "../page"
 import pageTemplate from './bangumi-play-page-template.html'
-import { biliplus_login } from "./biliplus_login"
+import { bilibili_login } from "./bilibili_login"
 
 export function modifyGlobalValue<T = any>(
     name: string,
@@ -119,7 +119,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
     const thailandApi = new BiliBiliApi(balh_config.server_custom_th)
     const origin = await thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id)
     if (origin.code === 401)
-        biliplus_login.clearLoginFlag()
+        bilibili_login.clearLoginFlag()
     origin.result.actors = origin.result.actor.info
     origin.result.is_paster_ads = 0
     origin.result.jp_title = origin.result.origin_name

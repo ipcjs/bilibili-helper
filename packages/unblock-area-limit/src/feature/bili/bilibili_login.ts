@@ -143,7 +143,7 @@ util_init(() => {
     }
 }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER)
 
-export const biliplus_login = {
+export const bilibili_login = {
     showLogin,
     showLogout,
     isLogin,

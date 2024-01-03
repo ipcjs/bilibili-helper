@@ -59,15 +59,15 @@ function scriptContent() {
             'generate_sub:', balh_config.generate_sub,
             'enable_in_av:', balh_config.enable_in_av,
             'readyState:', document.readyState,
-            'isLogin:', bili.biliplus_login.isLogin(),
-            'isLoginBiliBili:', bili.biliplus_login.isLoginBiliBili()
+            'isLogin:', bili.bilibili_login.isLogin(),
+            'isLoginBiliBili:', bili.bilibili_login.isLoginBiliBili()
         )
         // 暴露接口
         window.bangumi_area_limit_hack = {
             setCookie: cookieStorage.set,
             getCookie: cookieStorage.get,
-            login: bili.biliplus_login.showLogin,
-            logout: bili.biliplus_login.showLogout,
+            login: bili.bilibili_login.showLogin,
+            logout: bili.bilibili_login.showLogout,
             getLog: () => {
                 return logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' })
             },
