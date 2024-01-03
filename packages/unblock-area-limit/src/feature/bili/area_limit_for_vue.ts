@@ -1,4 +1,4 @@
-import { AppSeasonInfo, BiliBiliApi } from "../../api/bilibili"
+import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
@@ -413,10 +413,10 @@ export function removeEpAreaLimit(ep: StringAnyObject) {
         ep.epRights.allow_dm = 1
     }
     if (ep.rights) {
-        ep.rights.area_limit = false
+        ep.rights.area_limit = 0
         ep.rights.allow_dm = 1
     }
-    if (ep.badge === '受限') {
+    if (ep.badge === '受限' || ep.badge_info.text === '受限') {
         ep.badge = ''
         ep.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" }
         ep.badge_type = 0
@@ -505,6 +505,8 @@ export function area_limit_for_vue() {
                                     // data.initEpList.forEach(removeEpAreaLimit)
                                     // data.rights.area_limit = false
                                     // data.rights.allow_dm = 1
+                                } else if (data.seasonInfo.mediaInfo.episodes.length > 0) {
+                                    data.seasonInfo.mediaInfo.episodes.forEach(removeEpAreaLimit)
                                 } else if (data.seasonInfo && !data.seasonInfo.mediaInfo.rights.can_watch) {
                                     // 新版没有Playable的是预告 PV，不能直接跳过，can_watch=false 才替换
                                     return;
