@@ -16,8 +16,8 @@ export default {
             output: false
         }),
         typescript({
-            // 这个版本会"编译"async函数
-            target: 'ES2016',
+            // 这个版本不会"编译"async函数
+            target: 'ES2017',
         }),
         template({
             filePath: path.resolve(__dirname, 'src/main.user.js'),
