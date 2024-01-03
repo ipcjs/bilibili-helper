@@ -2465,10 +2465,10 @@ function scriptSource(invokeBy) {
             ep.epRights.allow_dm = 1;
         }
         if (ep.rights) {
-            ep.rights.area_limit = false;
+            ep.rights.area_limit = 0;
             ep.rights.allow_dm = 1;
         }
-        if (ep.badge === '受限') {
+        if (ep.badge === '受限' || ep.badge_info.text === '受限') {
             ep.badge = '';
             ep.badge_info = { "bg_color": "#FB7299", "bg_color_night": "#BB5B76", "text": "" };
             ep.badge_type = 0;
@@ -2552,6 +2552,9 @@ function scriptSource(invokeBy) {
                                         // data.initEpList.forEach(removeEpAreaLimit)
                                         // data.rights.area_limit = false
                                         // data.rights.allow_dm = 1
+                                    }
+                                    else if (data.seasonInfo.mediaInfo.episodes.length > 0) {
+                                        data.seasonInfo.mediaInfo.episodes.forEach(removeEpAreaLimit);
                                     }
                                     else if (data.seasonInfo && !data.seasonInfo.mediaInfo.rights.can_watch) {
                                         // 新版没有Playable的是预告 PV，不能直接跳过，can_watch=false 才替换
@@ -3682,24 +3685,24 @@ function scriptSource(invokeBy) {
                     transformResponse: ({ url, response, xhr, container }) => {
                         var _a, _b;
                         if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/season?'))) {
-                            log('/pgc/view/web/season:', xhr.responseText);
                             let json = JSON.parse(xhr.responseText);
                             if (json.code === 0 && json.result) {
                                 // processSeasonInfo(json.result)
                                 json.result.episodes.forEach(removeEpAreaLimit);
-                                json.result.rights.area_limit = false;
+                                json.result.rights.area_limit = 0;
+                                json.result.rights.ban_area_show = 0;
                                 return json;
                             }
                         }
                         else if (url.match(RegExps.url('bangumi.bilibili.com/view/web_api/season/user/status'))
                             || url.match(RegExps.url('api.bilibili.com/pgc/view/web/season/user/status'))) {
-                            log('/season/user/status:', xhr.responseText);
                             let json = JSON.parse(xhr.responseText);
                             let rewriteResult = false;
                             if (json.code === 0 && json.result) {
                                 areaLimit(json.result.area_limit !== 0);
                                 if (json.result.area_limit !== 0) {
                                     json.result.area_limit = 0; // 取消区域限制
+                                    json.result.ban_area_show = 0;
                                     rewriteResult = true;
                                 }
                                 if (balh_config.blocked_vip) {
@@ -3712,7 +3715,7 @@ function scriptSource(invokeBy) {
                             }
                         }
                         else if (url.match(RegExps.url('bangumi.bilibili.com/web_api/season_area'))) {
-                            log('/season_area', url);
+                            util_debug('/season_area', url);
                             let json = JSON.parse(xhr.responseText);
                             if (json.code === 0 && json.result) {
                                 areaLimit(json.result.play === 0);
@@ -3725,7 +3728,7 @@ function scriptSource(invokeBy) {
                         else if (url.match(RegExps.url('api.bilibili.com/x/web-interface/nav'))) {
                             const isFromReport = Strings.getSearchParam(url, 'from') === 'report';
                             let json = JSON.parse(xhr.responseText);
-                            log('/x/web-interface/nav', (json.data && json.data.isLogin)
+                            util_debug('/x/web-interface/nav', (json.data && json.data.isLogin)
                                 ? { uname: json.data.uname, isLogin: json.data.isLogin, level: json.data.level_info.current_level, vipType: json.data.vipType, vipStatus: json.data.vipStatus, isFromReport: isFromReport }
                                 : xhr.responseText);
                             if (json.code === 0 && json.data && balh_config.blocked_vip
@@ -3739,7 +3742,7 @@ function scriptSource(invokeBy) {
                         else if (url.match(RegExps.url('api.bilibili.com/x/player.so'))) {
                             // 这个接口的返回数据貌似并不会影响界面...
                             if (balh_config.blocked_vip) {
-                                log('/x/player.so');
+                                util_debug('/x/player.so');
                                 const xml = new DOMParser().parseFromString(`<root>${xhr.responseText.replace(/\&/g, "&amp;")}</root>`, 'text/xml');
                                 const vipXml = xml.querySelector('vip');
                                 if (vipXml) {
@@ -3824,7 +3827,7 @@ function scriptSource(invokeBy) {
                                 });
                             }
                             else if (!json.code && json.data && balh_config.blocked_vip) {
-                                log('/x/player/v2', 'vip');
+                                util_debug('/x/player/v2', 'vip');
                                 const vip = json.data.vip;
                                 if (vip) {
                                     vip.type = 2; // 同上
@@ -3834,7 +3837,7 @@ function scriptSource(invokeBy) {
                             return json;
                         }
                         else if (url.match(RegExps.urlPath('/bfs/subtitle/'))) {
-                            log('/bfs/subtitle', url);
+                            util_debug('/bfs/subtitle', url);
                             const parsedUrl = new URL(url);
                             const translate = parsedUrl.searchParams.get('translate') == '1';
                             if (!translate) {
@@ -3854,28 +3857,30 @@ function scriptSource(invokeBy) {
                             return json;
                         }
                         else if (url.match(RegExps.url('api.bilibili.com/x/player/playurl'))) {
-                            log('/x/player/playurl', 'origin', `block: ${container.__block_response}`, xhr.response);
+                            util_debug('/x/player/playurl', 'origin', `block: ${container.__block_response}`, xhr.response);
                             // todo      : 当前只实现了r.const.mode.REPLACE, 需要支持其他模式
                             // 2018-10-14: 等B站全面启用新版再说(;¬_¬)
                         }
-                        else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
+                        else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl')) || url.match(RegExps.url('api.bilibili.com/pgc/player/web/v2/playurl'))
                             && !Strings.getSearchParam(url, 'balh_ajax')) {
-                            log('/pgc/player/web/playurl', 'origin', `block: ${container.__block_response}`, xhr.response);
-                            if (!container.__redirect) { // 请求没有被重定向, 则需要检测结果是否有区域限制
-                                let json = typeof xhr.response === 'object' ? xhr.response : JSON.parse(xhr.responseText);
+                            const reqUrl = new URL(url, document.location.href);
+                            const isV1 = reqUrl.pathname === '/pgc/player/web/playurl';
+                            let json = typeof xhr.response === 'object' ? xhr.response : JSON.parse(xhr.responseText);
+                            if (!container.__redirect || (!isV1 && isAreaLimitForPlayUrl(json.result))) { // 请求没有被重定向, 则需要检测结果是否有区域限制
                                 if (balh_config.blocked_vip || json.code || isAreaLimitForPlayUrl(json.result)) {
                                     areaLimit(true);
                                     // 2022-09-17 ipcjs: 为什么这里用的是请求url, 而不是响应url?...
-                                    let requestUrl = container.__url;
+                                    let requestUrl = isV1 ? container.__url : `//api.bilibili.com/pgc/player/web/playurl${reqUrl.search}`;
                                     if (isBangumiPage()) {
                                         requestUrl += `&module=bangumi`;
                                     }
                                     return bilibiliApis._playurl.asyncAjax(requestUrl)
                                         .then(data => {
                                         if (!data.code) {
-                                            data = { code: 0, result: data, message: "0" };
+                                            data = isV1
+                                                ? { code: 0, result: data, message: "0" }
+                                                : { code: 0, message: "success", result: { video_info: data } };
                                         }
-                                        log('/pgc/player/web/playurl', 'proxy', data);
                                         return data;
                                     });
                                 }
@@ -3888,7 +3893,7 @@ function scriptSource(invokeBy) {
                         else if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/freya/season'))) {
                             /* 一起看放映室用这个api来识别区域限制 */
                             let json = JSON.parse(xhr.response);
-                            log('/pgc/view/web/freya/season', 'origin', `area_limit`, json.data.viewUserStatus.area_limit);
+                            util_debug('/pgc/view/web/freya/season', 'origin', `area_limit`, json.data.viewUserStatus.area_limit);
                             if (json.code == 0 && json.data.viewUserStatus.area_limit == 1) {
                                 areaLimit(true);
                                 json.data.viewUserStatus.area_limit = 0;
@@ -3920,7 +3925,7 @@ function scriptSource(invokeBy) {
                     /// {@endtemplate}
                     transformRequest: ({ url, container }) => {
                         if (url.match(RegExps.url('api.bilibili.com/x/player/playurl')) && balh_config.enable_in_av) {
-                            log('/x/player/playurl');
+                            util_debug('/x/player/playurl');
                             // debugger
                             return bilibiliApis._playurl.asyncAjax(url)
                                 .then(data => {
@@ -3932,14 +3937,13 @@ function scriptSource(invokeBy) {
                                         ttl: 1
                                     };
                                 }
-                                log('/x/player/playurl', 'proxy', data);
+                                util_debug('/x/player/playurl', 'proxy', data);
                                 return data;
                             });
                         }
                         else if (url.match(RegExps.url('api.bilibili.com/pgc/player/web/playurl'))
                             && !Strings.getSearchParam(url, 'balh_ajax')
                             && needRedirect()) {
-                            log('/pgc/player/web/playurl');
                             // debugger
                             container.__redirect = true; // 标记该请求被重定向
                             if (isBangumiPage()) {
@@ -3948,13 +3952,8 @@ function scriptSource(invokeBy) {
                             return bilibiliApis._playurl.asyncAjax(url)
                                 .then(data => {
                                 if (!data.code) {
-                                    data = {
-                                        code: 0,
-                                        result: data,
-                                        message: "0",
-                                    };
+                                    data = { code: 0, result: data, message: "0" };
                                 }
-                                log('/pgc/player/web/playurl', 'proxy(redirect)', data);
                                 return data;
                             });
                         }
@@ -3963,7 +3962,7 @@ function scriptSource(invokeBy) {
                 });
             }
             function injectAjax() {
-                log('injectAjax at:', window.jQuery);
+                util_debug('injectAjax at:', window.jQuery);
                 let originalAjax = $.ajax;
                 $.ajax = function (arg0, arg1) {
                     let param;
@@ -3988,12 +3987,11 @@ function scriptSource(invokeBy) {
                     let oriResultTransformer;
                     let oriResultTransformerWhenProxyError;
                     let one_api;
-                    // log(param)
                     if (param.url.match(RegExps.urlPath('/web_api/get_source'))) {
                         one_api = bilibiliApis._get_source;
                         oriResultTransformer = p => p
                             .then(json => {
-                            log(json);
+                            util_debug(json);
                             if (json.code === -40301 // 区域限制
                                 || json.result.payment && json.result.payment.price != 0 && balh_config.blocked_vip) { // 需要付费的视频, 此时B站返回的cid是错了, 故需要使用代理服务器的接口
                                 areaLimit(true);
@@ -4025,7 +4023,6 @@ function scriptSource(invokeBy) {
                                 param.data = undefined;
                             }
                             if (isBangumiPage()) {
-                                log(`playurl add 'module=bangumi' param`);
                                 param.url += `&module=bangumi`;
                             }
                             // 加上这个参数, 防止重复拦截这个url
@@ -4038,7 +4035,6 @@ function scriptSource(invokeBy) {
                         }
                         oriResultTransformer = p => p
                             .then(json => {
-                            log(json);
                             if (isNewPlayurl && !json.code) {
                                 json = json.result;
                             }
@@ -4094,7 +4090,7 @@ function scriptSource(invokeBy) {
                                     }
                                 }
                                 catch (e) {
-                                    log('parse xml error: ', e);
+                                    util_debug('parse xml error: ', e);
                                 }
                                 oriSuccess(data);
                             };
@@ -4103,7 +4099,7 @@ function scriptSource(invokeBy) {
                     else if (param.url.match(RegExps.url('api.bilibili.com/x/ad/video?'))) {
                         if (balh_config.remove_pre_ad) {
                             mySuccess = function (data) {
-                                log('/ad/video', data);
+                                util_debug('/ad/video', data);
                                 if (data && data.code === 0 && data.data) {
                                     data.data = []; // 移除广告接口返回的数据
                                 }
@@ -4171,11 +4167,11 @@ function scriptSource(invokeBy) {
             function setAreaLimitSeason(limit) {
                 var season_id = getSeasonId();
                 cookieStorage.set('balh_season_' + season_id, limit ? '1' : undefined, ''); // 第三个参数为'', 表示时Session类型的cookie
-                log('setAreaLimitSeason', season_id, limit);
+                util_debug('setAreaLimitSeason', season_id, limit);
             }
             /** 使用该方法判断是否需要添加module=bangumi参数, 并不准确... */
             function isBangumi(season_type) {
-                log(`season_type: ${season_type}`);
+                util_debug(`season_type: ${season_type}`);
                 // 1: 动画
                 // 2: 电影
                 // 3: 纪录片
@@ -4184,8 +4180,8 @@ function scriptSource(invokeBy) {
                 return season_type != null; // 存在season_type就是bangumi?
             }
             function isBangumiPage() {
-                var _a;
-                const mediaInfo = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo;
+                var _a, _b, _c, _d, _e;
+                const mediaInfo = ((_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) || ((_e = (_d = (_c = (_b = window.__NEXT_DATA__) === null || _b === void 0 ? void 0 : _b.props.pageProps.dehydratedState) === null || _c === void 0 ? void 0 : _c.queries[0]) === null || _d === void 0 ? void 0 : _d.state.data.seasonInfo) === null || _e === void 0 ? void 0 : _e.mediaInfo);
                 return isBangumi((mediaInfo === null || mediaInfo === void 0 ? void 0 : mediaInfo.season_type) || (mediaInfo === null || mediaInfo === void 0 ? void 0 : mediaInfo.ssType));
             }
             function getSeasonId() {
@@ -4196,14 +4192,14 @@ function scriptSource(invokeBy) {
                     seasonId = window.season_id || window.top.season_id;
                 }
                 catch (e) {
-                    log(e);
+                    util_debug(e);
                 }
                 if (!seasonId) {
                     try {
                         seasonId = (window.top.location.pathname.match(/\/anime\/(\d+)/) || ['', ''])[1];
                     }
                     catch (e) {
-                        log(e);
+                        util_debug(e);
                     }
                 }
                 // 若没取到, 则取movie页面的seasonId, 以m开头
@@ -4215,7 +4211,7 @@ function scriptSource(invokeBy) {
                         }
                     }
                     catch (e) {
-                        log(e);
+                        util_debug(e);
                     }
                 }
                 // 若没取到, 则去新的番剧播放页面的ep或ss
@@ -4224,7 +4220,7 @@ function scriptSource(invokeBy) {
                         seasonId = (window.top.location.pathname.match(/\/bangumi\/play\/((ep|ss)\d+)/) || ['', ''])[1];
                     }
                     catch (e) {
-                        log(e);
+                        util_debug(e);
                     }
                 }
                 // 若没取到, 则从search params获取（比如放映室）
@@ -4233,7 +4229,7 @@ function scriptSource(invokeBy) {
                         seasonId = Strings.getSearchParam(window.location.href, 'seasonid');
                     }
                     catch (e) {
-                        log(e);
+                        util_debug(e);
                     }
                 }
                 // 若没取到, 则去取av页面的av号
@@ -4242,7 +4238,7 @@ function scriptSource(invokeBy) {
                         seasonId = (window.top.location.pathname.match(/\/video\/((av|BV)\w+)/) || ['', ''])[1];
                     }
                     catch (e) {
-                        log(e);
+                        util_debug(e);
                     }
                 }
                 // 最后, 若没取到, 则试图取出当前页面url中的aid
@@ -4255,7 +4251,7 @@ function scriptSource(invokeBy) {
                 return seasonId || '000';
             }
             function isAreaLimitForPlayUrl(json) {
-                return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627);
+                return (json.errorcid && json.errorcid == '8986943') || (json.durl && json.durl.length === 1 && json.durl[0].length === 15126 && json.durl[0].size === 124627) || !json.video_info;
             }
             var bilibiliApis = (function () {
                 function AjaxException(message, code = 0 /*用0表示未知错误*/) {
@@ -4276,12 +4272,12 @@ function scriptSource(invokeBy) {
                         async: true,
                         xhrFields: { withCredentials: true },
                         success: function (result) {
-                            log('==>', result);
+                            util_debug('==>', result);
                             success(one_api.processProxySuccess(result));
                             // log('success', arguments, this);
                         },
                         error: function (e) {
-                            log('error', arguments, this);
+                            util_debug('error', arguments, this);
                             error(e);
                         }
                     });
@@ -4408,7 +4404,7 @@ function scriptSource(invokeBy) {
                                 }
                             });
                         }
-                        log('xml2obj', result, '=>', obj);
+                        util_debug('xml2obj', result, '=>', obj);
                         return obj;
                     },
                     _asyncAjax: function (originUrl) {
@@ -4478,7 +4474,7 @@ function scriptSource(invokeBy) {
                                         for (i in seg.backup_url) {
                                             url = seg.backup_url[i];
                                             if (url.includes('ws.acgvideo.com')) {
-                                                log('flv prefer use:', url);
+                                                util_debug('flv prefer use:', url);
                                                 t = seg.url;
                                                 seg.url = url;
                                                 url = t;
@@ -4748,7 +4744,7 @@ function scriptSource(invokeBy) {
                             if (mutation.type === 'childList') {
                                 for (let node of mutation.addedNodes) {
                                     if (node.tagName === 'DIV' && node.className.split(' ').includes('player-mask')) {
-                                        log('隐藏添加的mask');
+                                        util_debug('隐藏添加的mask');
                                         node.style.display = 'none';
                                     }
                                 }
@@ -4770,7 +4766,7 @@ function scriptSource(invokeBy) {
                 Object.defineProperty(window, 'jQuery', {
                     configurable: true, enumerable: true, set: function (v) {
                         // debugger
-                        log('set jQuery', jQuery, '->', v);
+                        util_debug('set jQuery', jQuery, '->', v);
                         // 临时规避这个问题：https://github.com/ipcjs/bilibili-helper/issues/297
                         // 新的av页面中, 运行脚本的 injectXHR() 后, 页面会往该方法先后设置两个jQuery...原因未知
                         // 一个从jquery.min.js中设置, 一个从player.js中设置
@@ -4780,12 +4776,12 @@ function scriptSource(invokeBy) {
                             try { // 获取调用栈的方法不是标准方法, 需要try-catch
                                 const stack = (new Error()).stack.split('\n');
                                 if (stack[stack.length - 1].includes('jquery')) { // 若从jquery.min.js中调用
-                                    log('set jQueury by jquery.min.js', v);
+                                    util_debug('set jQueury by jquery.min.js', v);
                                     v.fn.balh_on = v.fn.on;
                                     v.fn.on = function (arg0, arg1) {
                                         if (arg0 === 'click.reply' && arg1 === '.reply') {
                                             // 屏蔽掉"回复"按钮的点击事件
-                                            log('block click.reply', arguments);
+                                            util_debug('block click.reply', arguments);
                                             return;
                                         }
                                         return v.fn.balh_on.apply(this, arguments);
@@ -4794,7 +4790,7 @@ function scriptSource(invokeBy) {
                                 // jQuery.fn.paging方法用于创建评论区的页标, 需要迁移到新的jQuery上
                                 if (jQuery != null && jQuery.fn.paging != null
                                     && v != null && v.fn.paging == null) {
-                                    log('迁移jQuery.fn.paging');
+                                    util_debug('迁移jQuery.fn.paging');
                                     v.fn.paging = jQuery.fn.paging;
                                 }
                             }
