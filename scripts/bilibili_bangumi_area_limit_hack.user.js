@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    https://github.com/ipcjs
-// @version      8.4.6
+// @version      8.5.0
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -715,11 +715,7 @@ function scriptSource(invokeBy) {
             return false;
         };
         /**
-         * - param.content: 内容元素数组/HTML
-         * - param.showConfirm: 是否显示确定按钮
-         * - param.confirmBtn: 确定按钮的文字
-         * - param.onConfirm: 确定回调
-         * - param.onClose: 关闭回调
+         * 确定弹窗
          */
         ui.pop = function (param) {
             var _a;
@@ -743,7 +739,7 @@ function scriptSource(invokeBy) {
                 children.push(createElement('input', { value: param.confirmBtn || _t('ok'), type: 'button', className: 'confirm', event: { click: param.onConfirm } }));
             }
             children.push(createElement('input', {
-                value: _t('close'), type: 'button', className: 'close', event: {
+                value: param.closeBtn || _t('close'), type: 'button', className: 'close', event: {
                     click: function () {
                         param.onClose && param.onClose();
                         div.style.height = '0';
@@ -908,80 +904,6 @@ function scriptSource(invokeBy) {
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
     }
 
-    const cookies = cookieStorage.all(); // 缓存的cookies
-    const balh_config = new Proxy({ /*保存config的对象*/}, {
-        get: function (target, prop) {
-            if (typeof prop !== 'string')
-                throw new TypeError(`unsupported prop: ${String(prop)}`);
-            if (prop === 'server') {
-                const server_inner = balh_config.server_inner;
-                // 保证balh_config.server一定指向biliplus
-                const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner;
-                return server;
-            }
-            else if (prop === 'server_bilibili_api_proxy') {
-                return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
-            }
-            if (prop in target) {
-                return target[prop];
-            }
-            else { // 若target中不存在指定的属性, 则从缓存的cookies中读取, 并保存到target中
-                let value = cookies['balh_' + prop];
-                switch (prop) {
-                    case 'server_inner':
-                        value = value || r.const.server.CUSTOM;
-                        break;
-                    case 'server_custom':
-                        value = value || '';
-                        break;
-                    case 'server_custom_tw':
-                        value = value || '';
-                        break;
-                    case 'server_custom_hk':
-                        value = value || '';
-                        break;
-                    case 'server_custom_cn':
-                        value = value || '';
-                        break;
-                    case 'server_custom_th':
-                        value = value || '';
-                        break;
-                    case 'mode':
-                        value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT);
-                        break;
-                    case 'flv_prefer_ws':
-                        value = r.const.FALSE; // 关闭该选项
-                        break;
-                    case 'is_closed':
-                        if (value == null) {
-                            value = FALSE; // 默认为false
-                        }
-                        break;
-                }
-                target[prop] = value;
-                return value;
-            }
-        },
-        set: function (target, prop, value) {
-            if (typeof prop !== 'string') {
-                return false;
-            }
-            target[prop] = value; // 更新值
-            cookieStorage['balh_' + prop] = value; // 更新cookie中的值
-            return true;
-        }
-    });
-    // 迁移到自定义代理服务器, 只会执行一次
-    if (util_page.new_bangumi() && !localStorage.balh_migrate_to_2) {
-        localStorage.balh_migrate_to_2 = r.const.TRUE;
-        balh_config.server_inner = r.const.server.CUSTOM;
-        balh_config.is_closed = FALSE;
-        util_debug('迁移配置完成');
-    }
-    function isClosed() {
-        return balh_config.is_closed || !balh_config.server_custom;
-    }
-
     /** @see https://github.com/yujincheng08/BiliRoaming/blob/f689b138da7ac45d2591d375f19698c969844324/app/src/main/res/values/strings.xml#L112-L131 */
     const rawUposMap = {
         ali: 'upos-sz-mirrorali.bilivideo.com',
@@ -1106,6 +1028,219 @@ function scriptSource(invokeBy) {
         }
         Converters.replaceUpos = replaceUpos;
     })(Converters || (Converters = {}));
+
+    const cookies = cookieStorage.all(); // 缓存的cookies
+    const balh_config = new Proxy({ /*保存config的对象*/}, {
+        get: function (target, prop) {
+            if (typeof prop !== 'string')
+                throw new TypeError(`unsupported prop: ${String(prop)}`);
+            if (prop === 'server') {
+                const server_inner = balh_config.server_inner;
+                // 保证balh_config.server一定指向biliplus
+                const server = server_inner === r.const.server.CUSTOM ? r.const.server.defaultServer() : server_inner;
+                return server;
+            }
+            else if (prop === 'server_bilibili_api_proxy') {
+                return r.regex.bilibili_api_proxy.test(balh_config.server_custom) ? balh_config.server_custom : undefined;
+            }
+            if (prop in target) {
+                return target[prop];
+            }
+            else { // 若target中不存在指定的属性, 则从缓存的cookies中读取, 并保存到target中
+                let value = cookies['balh_' + prop];
+                switch (prop) {
+                    case 'server_inner':
+                        value = value || r.const.server.CUSTOM;
+                        break;
+                    case 'server_custom':
+                        value = value || '';
+                        break;
+                    case 'server_custom_tw':
+                        value = value || '';
+                        break;
+                    case 'server_custom_hk':
+                        value = value || '';
+                        break;
+                    case 'server_custom_cn':
+                        value = value || '';
+                        break;
+                    case 'server_custom_th':
+                        value = value || '';
+                        break;
+                    case 'mode':
+                        value = value || (balh_config.blocked_vip ? r.const.mode.REDIRECT : r.const.mode.DEFAULT);
+                        break;
+                    case 'flv_prefer_ws':
+                        value = r.const.FALSE; // 关闭该选项
+                        break;
+                    case 'is_closed':
+                        if (value == null) {
+                            value = FALSE; // 默认为false
+                        }
+                        break;
+                }
+                target[prop] = value;
+                return value;
+            }
+        },
+        set: function (target, prop, value) {
+            if (typeof prop !== 'string') {
+                return false;
+            }
+            target[prop] = value; // 更新值
+            cookieStorage['balh_' + prop] = value; // 更新cookie中的值
+            return true;
+        }
+    });
+    // 迁移到自定义代理服务器, 只会执行一次
+    if (util_page.new_bangumi() && !localStorage.balh_migrate_to_2) {
+        localStorage.balh_migrate_to_2 = r.const.TRUE;
+        balh_config.server_inner = r.const.server.CUSTOM;
+        balh_config.is_closed = FALSE;
+        util_debug('迁移配置完成');
+    }
+    function isClosed() {
+        return balh_config.is_closed || !balh_config.server_custom;
+    }
+
+    function isLogin() {
+        return localStorage.access_key && localStorage.oauth_expires_at && Date.now() < +localStorage.oauth_expires_at;
+    }
+    function clearLoginFlag() {
+        // 只要清除过期时间, isLogin()就会返回false
+        delete localStorage.oauth_expires_at;
+    }
+    function showLogout() {
+        ui.alert('确定取消授权登出?', () => {
+            // 登出, 则应该清除所有授权相关的字段
+            delete localStorage.oauth_expires_at;
+            delete localStorage.access_key;
+            delete localStorage.refresh_token;
+        });
+    }
+    function isLoginBiliBili() {
+        return cookieStorage['DedeUserID'] !== undefined;
+    }
+    // 当前在如下情况才会弹一次登录提示框:
+    // 1. 第一次使用
+    // 2. 主站+服务器都退出登录后, 再重新登录主站
+    function checkLoginState() {
+        // 给一些状态，设置初始值
+        localStorage.balh_must_remind_login_v3 === undefined && (localStorage.balh_must_remind_login_v3 = TRUE);
+        if (isLoginBiliBili()) {
+            if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
+                || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
+                || localStorage.balh_must_remind_login_v3) { // 设置了"必须提醒"flag
+                if (!isLogin()) {
+                    // 保证一定要交互一次, 才不提醒
+                    localStorage.balh_must_remind_login_v3 = TRUE;
+                    ui.pop({
+                        content: [
+                            createElement('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
+                        ],
+                        onConfirm: () => {
+                            var _a;
+                            localStorage.balh_must_remind_login_v3 = FALSE;
+                            showLogin();
+                            (_a = document.querySelector('#AHP_Notice')) === null || _a === void 0 ? void 0 : _a.remove();
+                        },
+                        closeBtn: '不再提醒',
+                        onClose: () => {
+                            localStorage.balh_must_remind_login_v3 = FALSE;
+                        }
+                    });
+                }
+            }
+        }
+        localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? TRUE : FALSE;
+        localStorage.balh_pre_server = balh_config.server;
+    }
+    function showLogin() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const balh_auth_window = window.open('about:blank');
+            balh_auth_window.document.title = 'BALH - 授权';
+            balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
+            window.balh_auth_window = balh_auth_window;
+            try {
+                const { sign, params } = Converters.generateSign({
+                    appkey: '27eb53fc9058f8c3',
+                    local_id: "0",
+                    ts: (Date.now() / 1000).toFixed(0)
+                }, 'c2ed53a74eeefe3cf99fbd01d8c9c375');
+                const data1 = yield (yield fetch('https://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code?' + params + '&sign=' + sign, {
+                    method: 'POST'
+                })).json();
+                if (data1.code === 0 && data1.data.auth_code) {
+                    let authCode = data1.data.auth_code;
+                    balh_auth_window.document.body.innerHTML += '<br/>正在确认…… auth_code=' + authCode;
+                    const bili_jct = cookieStorage.get('bili_jct');
+                    const { params } = Converters.generateSign({
+                        auth_code: authCode,
+                        build: "7082000",
+                        csrf: bili_jct
+                    }, 'c2ed53a74eeefe3cf99fbd01d8c9c375');
+                    const data2 = yield (yield fetch(('https://passport.bilibili.com/x/passport-tv-login/h5/qrcode/confirm?' + params), {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }
+                    })).json();
+                    if (data2.code === 0 && data2.message === "0") {
+                        balh_auth_window.document.body.innerHTML += '<br/>授权成功，正在获取token……';
+                        const { sign, params } = Converters.generateSign({
+                            appkey: '27eb53fc9058f8c3',
+                            local_id: "0",
+                            auth_code: authCode,
+                            ts: (Date.now() / 1000).toFixed(0)
+                        }, 'c2ed53a74eeefe3cf99fbd01d8c9c375');
+                        const data3 = yield (yield fetch('https://passport.bilibili.com/x/passport-tv-login/qrcode/poll?' + params + '&sign=' + sign, {
+                            method: "POST",
+                        })).json();
+                        const access_token = data3.data.token_info.access_token;
+                        const oauth_expires_at = (Date.now() / 1000 + data3.data.token_info.expires_in) * 1000;
+                        balh_auth_window.document.body.innerHTML += '<br/>正在保存…… access_token=' + access_token + '， 过期于 ' + new Date(oauth_expires_at).toLocaleString();
+                        if (data3.code === 0 && data3.message === "0") {
+                            localStorage.access_key = access_token;
+                            localStorage.refresh_token = data3.data.token_info.refresh_token;
+                            localStorage.oauth_expires_at = oauth_expires_at;
+                            balh_auth_window.document.body.innerHTML += '<br/>保存成功！3秒后关闭';
+                            yield Async.timeout(3000);
+                        }
+                    }
+                    else {
+                        ui.alert(data2.message, () => {
+                            location.href = 'https://passport.bilibili.com/login';
+                        });
+                    }
+                }
+                else {
+                    ui.alert('必须登录B站才能正常授权', () => {
+                        location.href = 'https://passport.bilibili.com/login';
+                    });
+                }
+            }
+            catch (e) {
+                ui.alert((_a = e.message) !== null && _a !== void 0 ? _a : '授权出错');
+            }
+            finally {
+                balh_auth_window.close();
+            }
+        });
+    }
+    util_init(() => {
+        if (!(util_page.player() || util_page.av())) {
+            checkLoginState();
+        }
+    }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
+    const bilibili_login = {
+        showLogin,
+        showLogout,
+        isLogin,
+        isLoginBiliBili,
+        clearLoginFlag,
+    };
 
     // @ts-nocheck
     let noReferrerHostArray = [];
@@ -1526,6 +1661,8 @@ function scriptSource(invokeBy) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let origin = JSON.parse(JSON.stringify(originJson));
+            if (origin.code === 401)
+                bilibili_login.clearLoginFlag();
             let result = {
                 'format': 'flv720',
                 'type': 'DASH',
@@ -2065,6 +2202,8 @@ function scriptSource(invokeBy) {
             // https://github.com/yujincheng08/BiliRoaming/issues/112
             const thailandApi = new BiliBiliApi(balh_config.server_custom_th);
             const origin = yield thailandApi.getSeasonInfoByEpSsIdOnThailand(ep_id, season_id);
+            if (origin.code === 401)
+                bilibili_login.clearLoginFlag();
             origin.result.actors = origin.result.actor.info;
             origin.result.is_paster_ads = 0;
             origin.result.jp_title = origin.result.origin_name;
@@ -2515,127 +2654,6 @@ function scriptSource(invokeBy) {
         });
     }
 
-    function isLogin() {
-        return localStorage.oauthTime !== undefined;
-    }
-    function clearLoginFlag() {
-        delete localStorage.oauthTime;
-    }
-    function updateLoginFlag(loadCallback) {
-        Async.jsonp(balh_config.server + '/login?act=expiretime')
-            .then(() => loadCallback && loadCallback(true));
-        // .catch(() => loadCallback && loadCallback(false)) // 请求失败不需要回调
-    }
-    function isLoginBiliBili() {
-        return cookieStorage['DedeUserID'] !== undefined;
-    }
-    // 当前在如下情况才会弹一次登录提示框:
-    // 1. 第一次使用
-    // 2. 主站+服务器都退出登录后, 再重新登录主站
-    function checkLoginState() {
-        // 给一些状态，设置初始值
-        localStorage.balh_must_remind_login_v3 === undefined && (localStorage.balh_must_remind_login_v3 = r.const.TRUE);
-        if (isLoginBiliBili()) {
-            if (!localStorage.balh_old_isLoginBiliBili // 主站 不登录 => 登录
-                || localStorage.balh_pre_server !== balh_config.server // 代理服务器改变了
-                || localStorage.balh_must_remind_login_v3) { // 设置了"必须提醒"flag
-                clearLoginFlag();
-                updateLoginFlag(() => {
-                    if (!isLogin() || !localStorage.access_key) {
-                        localStorage.balh_must_remind_login_v3 = r.const.FALSE;
-                        ui.pop({
-                            content: [
-                                createElement('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
-                            ],
-                            onConfirm: () => {
-                                var _a;
-                                biliplus_login.showLogin();
-                                (_a = document.querySelector('#AHP_Notice')) === null || _a === void 0 ? void 0 : _a.remove();
-                            }
-                        });
-                    }
-                });
-            }
-            else if ((isLogin() && Date.now() - parseInt(localStorage.oauthTime) > 24 * 60 * 60 * 1000) // 已登录，每天为周期检测key有效期，过期前五天会自动续期
-                || localStorage.balh_must_updateLoginFlag) { // 某些情况下，必须更新一次
-                updateLoginFlag(() => localStorage.balh_must_updateLoginFlag = r.const.FALSE);
-            }
-        }
-        localStorage.balh_old_isLoginBiliBili = isLoginBiliBili() ? r.const.TRUE : r.const.FALSE;
-        localStorage.balh_pre_server = balh_config.server;
-    }
-    function showLogin() {
-        const balh_auth_window = window.open('about:blank');
-        balh_auth_window.document.title = 'BALH - 授权';
-        balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
-        window.balh_auth_window = balh_auth_window;
-        window.$.ajax('https://passport.bilibili.com/login/app/third?appkey=27eb53fc9058f8c3&api=https%3A%2F%2Fwww.mcbbs.net%2Ftemplate%2Fmcbbs%2Fimage%2Fspecial_photo_bg.png&sign=04224646d1fea004e79606d3b038c84a', {
-            xhrFields: { withCredentials: true },
-            type: 'GET',
-            dataType: 'json',
-            success: (data) => {
-                if (data.data.has_login) {
-                    balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在跳转……';
-                    balh_auth_window.location.href = data.data.confirm_uri;
-                }
-                else {
-                    balh_auth_window.close();
-                    ui.alert('必须登录B站才能正常授权', () => {
-                        location.href = 'https://passport.bilibili.com/login';
-                    });
-                }
-            },
-            error: (e) => {
-                alert('error');
-            }
-        });
-    }
-    function showLogout() {
-        ui.popFrame(balh_config.server + '/login?act=logout');
-    }
-    // 监听登录message
-    window.addEventListener('message', function (e) {
-        var _a;
-        if (typeof e.data !== 'string')
-            return; // 只处理e.data为string的情况
-        switch (e.data.split(':')[0]) {
-            case 'BiliPlus-Login-Success': {
-                //登入
-                localStorage.balh_must_updateLoginFlag = r.const.TRUE;
-                Promise.resolve('start')
-                    .then(() => Async.jsonp(balh_config.server + '/login?act=getlevel'))
-                    .then(() => location.reload())
-                    .catch(() => location.reload());
-                break;
-            }
-            case 'BiliPlus-Logout-Success': {
-                //登出
-                clearLoginFlag();
-                location.reload();
-                break;
-            }
-            case 'balh-login-credentials': {
-                (_a = window.balh_auth_window) === null || _a === void 0 ? void 0 : _a.close();
-                let url = e.data.split(': ')[1];
-                const access_key = new URL(url).searchParams.get('access_key');
-                localStorage.access_key = access_key;
-                ui.popFrame(url.replace('https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png', balh_config.server + '/login'));
-                break;
-            }
-        }
-    });
-    util_init(() => {
-        if (!(util_page.player() || util_page.av())) {
-            checkLoginState();
-        }
-    }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.DOM_LOADED_AFTER);
-    const biliplus_login = {
-        showLogin,
-        showLogout,
-        isLogin,
-        isLoginBiliBili,
-    };
-
     // @ts-nocheck
     /**
      * 通知模块 剽窃自 YAWF 用户脚本 硬广：https://tiansh.github.io/yawf/
@@ -2956,10 +2974,10 @@ function scriptSource(invokeBy) {
             switch (event.target.attributes['data-sign'].value) {
                 default:
                 case 'in':
-                    biliplus_login.showLogin();
+                    bilibili_login.showLogin();
                     break;
                 case 'out':
-                    biliplus_login.showLogout();
+                    bilibili_login.showLogout();
                     break;
             }
         }
@@ -3157,7 +3175,7 @@ function scriptSource(invokeBy) {
                     ]), createElement('br'),
                     createElement('a', { href: 'javascript:', 'data-sign': 'in', event: { click: onSignClick } }, [createElement('text', '帐号授权')]),
                     createElement('text', '　'),
-                    createElement('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [createElement('text', '取消授权')]),
+                    bilibili_login.isLogin() ? createElement('a', { href: 'javascript:', 'data-sign': 'out', event: { click: onSignClick } }, [createElement('text', '取消授权')]) : createElement('span'),
                     createElement('text', '　　'),
                     createElement('a', { href: 'javascript:', event: { click: function () { util_ui_msg.show(window.$(this), '如果你的帐号进行了付费，不论是大会员还是承包，\n进行授权之后将可以在解除限制时正常享有这些权益\n\n你可以随时在这里授权或取消授权\n\n不进行授权不会影响脚本的正常使用，但可能会缺失1080P', 1e4); } } }, [createElement('text', '（这是什么？）')]),
                     createElement('br'), createElement('br'),
@@ -4483,11 +4501,11 @@ function scriptSource(invokeBy) {
                                 return Promise$1.reject(new AjaxException(`服务器错误: ${JSON.stringify(data)}`, data ? data.code : 0));
                             }
                         }
-                        else if (isAreaLimitForPlayUrl(data)) {
+                        else if (isAreaLimitForPlayUrl(data) || data.code === 401) {
                             util_error('>>area limit');
                             ui.pop({
-                                content: `突破黑洞失败\n需要登录\n点此确定进行登录`,
-                                onConfirm: biliplus_login.showLogin
+                                content: `突破黑洞失败\n${data.message}\n需要登录\n点此确定进行登录`,
+                                onConfirm: bilibili_login.showLogin
                             });
                         }
                         else {
@@ -4862,13 +4880,13 @@ function scriptSource(invokeBy) {
         jump_to_baipiao();
         biliplus_check_area_limit();
         function main() {
-            util_info('mode:', balh_config.mode, 'blocked_vip:', balh_config.blocked_vip, 'server:', balh_config.server, 'upos_server:', balh_config.upos_server, 'flv_prefer_ws:', balh_config.flv_prefer_ws, 'remove_pre_ad:', balh_config.remove_pre_ad, 'generate_sub:', balh_config.generate_sub, 'enable_in_av:', balh_config.enable_in_av, 'readyState:', document.readyState, 'isLogin:', biliplus_login.isLogin(), 'isLoginBiliBili:', biliplus_login.isLoginBiliBili());
+            util_info('mode:', balh_config.mode, 'blocked_vip:', balh_config.blocked_vip, 'server:', balh_config.server, 'upos_server:', balh_config.upos_server, 'flv_prefer_ws:', balh_config.flv_prefer_ws, 'remove_pre_ad:', balh_config.remove_pre_ad, 'generate_sub:', balh_config.generate_sub, 'enable_in_av:', balh_config.enable_in_av, 'readyState:', document.readyState, 'isLogin:', bilibili_login.isLogin(), 'isLoginBiliBili:', bilibili_login.isLoginBiliBili());
             // 暴露接口
             window.bangumi_area_limit_hack = {
                 setCookie: cookieStorage.set,
                 getCookie: cookieStorage.get,
-                login: biliplus_login.showLogin,
-                logout: biliplus_login.showLogout,
+                login: bilibili_login.showLogin,
+                logout: bilibili_login.showLogout,
                 getLog: () => {
                     return logHub.getAllMsg({ [localStorage.access_key]: '{{access_key}}' });
                 },
@@ -4893,7 +4911,6 @@ function scriptSource(invokeBy) {
                     delete localStorage.balh_h5_not_first;
                     delete localStorage.balh_old_isLoginBiliBili;
                     delete localStorage.balh_must_remind_login_v3;
-                    delete localStorage.balh_must_updateLoginFlag;
                 }
             };
         }
