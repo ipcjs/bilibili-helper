@@ -173,7 +173,27 @@ function fixBangumiPlayPage() {
                     // 如果该接口失效，自动尝试后面的方法
                     try {
                         let result = await bilibiliApi.getSeasonInfoById(season_id, ep_id)
-                        if (balh_config.server_custom_th && (result.code == -404)) {
+                        if (result.code == -404) {
+                            if (season_id) {
+                                try {
+                                    let mediaInfo = await bilibiliApi.getMediaInfoBySeasonId(season_id)
+                                    if (mediaInfo.season_id) {
+                                        mediaInfo.refine_cover = decodeURI(mediaInfo.cover)
+                                        mediaInfo.share_copy = mediaInfo.title
+                                        mediaInfo.share_url = `https://www.bilibili.com/bangumi/play/ss${mediaInfo.season_id}`
+                                        mediaInfo.short_link = `https://b23.tv/ss${mediaInfo.season_id}`
+                                        mediaInfo.status = mediaInfo.season_status
+                                        mediaInfo.rights.area_limit = 0
+                                        mediaInfo.rights.ban_area_show = 0
+                                        mediaInfo.rights.is_preview = 0
+                                        mediaInfo.staff = { info: mediaInfo.staff }
+                                        result = { code: 0, data: mediaInfo, message: "success" }
+                                    }
+                                } catch (error) {
+                                }
+                            }
+                        }
+                        if (result.code != 0 && balh_config.server_custom_th) {
                             result = await fixThailandSeason(ep_id, season_id)
                             appOnly = true
                         }
@@ -182,15 +202,14 @@ function fixBangumiPlayPage() {
                         }
                         if (ep_id != '') season_id = result.data.season_id.toString()
                         result.result = result.data
-                        result.result.modules.forEach((module: { data: { [x: string]: any }; id: any }, mid: number) => {
+                        result.result.modules?.forEach((module: { data: { [x: string]: any }; id: any }, mid: number) => {
                             if (module.data) {
                                 let sid = module.id ? module.id : mid + 1
                                 module.data['id'] = sid
                             }
                         })
                         let seasons: any[] = []
-
-                        result.result.modules.forEach((module: { data: { seasons?: any[], episodes?: any[] } }) => {
+                        result.result.modules?.forEach((module: { data: { seasons?: any[], episodes?: any[] } }) => {
                             if (module.data.seasons) {
                                 module.data.seasons.forEach(season => {
                                     seasons.push(season)
@@ -234,9 +253,6 @@ function fixBangumiPlayPage() {
                             })
                         }
                         const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0]
-                        if (!ep) {
-                            throw `通过bangumi接口未找到${ep_id}对应的视频信息`
-                        }
                         const eps = JSON.stringify(result.result.episodes.map((item, index) => {
                             // 返回的数据是有序的，不需要另外排序                                
                             if (/^\d+(\.\d+)?$/.exec(item.title)) {
@@ -256,17 +272,17 @@ function fixBangumiPlayPage() {
                             return item
                         }))
                         let titleForma
-                        if (ep.index_title) {
+                        if (ep?.index_title) {
                             titleForma = ep.index_title
                         } else {
-                            titleForma = "第" + ep.index + "话"
+                            titleForma = "第" + ep?.index + "话"
                         }
                         templateArgs = {
-                            id: ep.ep_id,
-                            aid: ep.aid,
-                            cid: ep.cid,
-                            bvid: ep.bvid,
-                            title: ep.index,
+                            id: ep?.ep_id,
+                            aid: ep?.aid,
+                            cid: ep?.cid,
+                            bvid: ep?.bvid,
+                            title: ep?.index,
                             titleFormat: Strings.escapeSpecialChars(titleForma),
                             htmlTitle: result.result.title,
                             mediaInfoId: result.result.media_id,
@@ -283,7 +299,7 @@ function fixBangumiPlayPage() {
 
                     if (balh_config.server_bilibili_api_proxy && !templateArgs) {
                         try {
-                            const result = await bilibiliApi.getSeasonInfoByEpId(ep_id)
+                            const result = await bilibiliApi.getSeasonInfoByEpSsId(ep_id, season_id)
                             if (result.code) {
                                 throw result
                             }
