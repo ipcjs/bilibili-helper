@@ -1,5 +1,6 @@
 import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
+import { BalhDb } from "../../util/balh-db"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
@@ -111,7 +112,6 @@ interface TemplateArgs {
     appOnly: boolean,
 }
 
-
 async function fixThailandSeason(ep_id: string, season_id: string) {
     // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
     // 通过泰区 api 补全
@@ -136,6 +136,9 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
             ep.index = ep.title
             ep.index_title = ep.long_title
             origin.result.episodes?.push(ep)
+            if (season_id !== '5551')
+                BalhDb.setSsId(ep.id, season_id)//
+                    .catch((e) => util_warn('setSsId failed', e))
         })
         origin.result.total = origin.result.modules[0].data.episodes.length
     }
