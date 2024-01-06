@@ -1,4 +1,4 @@
-import { Async } from "../util/async"
+import { Async, Promise } from "../util/async"
 import { generateMobiPlayUrlParams } from "./biliplus"
 import { Converters } from "../util/converters"
 
@@ -596,7 +596,7 @@ interface SeasonInfoOnThailand {
     }
 }
 
-interface mediaInfo {
+interface MediaInfo {
     activity: {
         head_bg_url: string
         id: number
@@ -765,8 +765,8 @@ export class BiliBiliApi {
         this.server = server
     }
 
-    getSeasonInfoByEpSsId(ep_id: string | number, season_id: string | number) {
-        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?` + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`))
+    getSeasonInfoByEpSsId(ep_id: string | number | undefined, season_id: string | number | undefined) {
+        return Async.ajax<SeasonInfo>(`${this.server}/pgc/view/web/season?` + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`))
     }
     getSeasonInfoById(season_id: string, ep_id: string) {
         let paramDict = {
@@ -787,21 +787,22 @@ export class BiliBiliApi {
     getEpisodeInfoByEpId(ep_id: string) {
         return Async.ajax<EpisodeInfo>('//api.bilibili.com/pgc/season/episode/web/info?' + `ep_id=${ep_id}`)
     }
-    getSeasonInfoByEpSsIdOnThailand(ep_id: string, season_id: string) {
-        const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
+    getSeasonInfoByEpSsIdOnThailand(ep_id: string | undefined, season_id: string | undefined) {
+        const params = '?' + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`
         const newParams = generateMobiPlayUrlParams(params, 'th')
         return Async.ajax<SeasonInfoOnThailand>(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams)
     }
 
-    async getMediaInfoBySeasonId(season_id: string): Promise<mediaInfo> {
-        return Async.ajax(`//www.bilibili.com/bangumi/media/md${season_id}`).then(resp => {
-            const matchResult = (resp as string).match(/window\.__INITIAL_STATE__=(.*);\(function\(\)/)
-            if (matchResult) {
-                const initialState = JSON.parse(matchResult[1])
-                return initialState.mediaInfo as mediaInfo
-            }
-            throw new Error('__INITIAL_STATE__ is not found.')
-        })
+    async getMediaInfoBySeasonId(season_id: string): Promise<MediaInfo> {
+        return Async.ajax(`//www.bilibili.com/bangumi/media/md${season_id}`)
+            .then(resp => {
+                const matchResult = (resp as string).match(/window\.__INITIAL_STATE__=(.*);\(function\(\)/)
+                if (matchResult) {
+                    const initialState = JSON.parse(matchResult[1])
+                    return initialState.mediaInfo as MediaInfo
+                }
+                return Promise.reject(new Error('__INITIAL_STATE__ is not found.'))
+            })
 
     }
 }
