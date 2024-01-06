@@ -1,7 +1,7 @@
 const DB_NAME = 'balh';
 const DB_VERSION = 1;
 
-let db: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase> | undefined
 export function openDb() {
     return new Promise<IDBDatabase>((resolve, reject) => {
         var req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -21,7 +21,7 @@ export function openDb() {
 }
 
 async function getObjectStore(store_name: string, mode: IDBTransactionMode) {
-    if (db === null) db = await openDb()
+    const db = await (dbPromise ??= openDb())
     var tx = db.transaction(store_name, mode);
     return tx.objectStore(store_name);
 }

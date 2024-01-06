@@ -137,11 +137,8 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
             ep.index_title = ep.long_title
             origin.result.episodes?.push(ep)
             if (season_id !== '5551')
-                try {
-                    setSsId(ep.id, season_id)
-                } catch (e) {
-                    log('addSsEpId error', e)
-                }
+                setSsId(ep.id, season_id)//
+                    .catch((e) => util_warn('setSsId failed', e))
         })
         origin.result.total = origin.result.modules[0].data.episodes.length
     }
