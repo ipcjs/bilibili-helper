@@ -2059,11 +2059,8 @@ function scriptSource(invokeBy) {
         constructor(server = '//api.bilibili.com') {
             this.server = server;
         }
-        getSeasonInfoByEpId(ep_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?ep_id=${ep_id}`);
-        }
-        getSeasonInfo(season_id) {
-            return Async.ajax(`${this.server}/pgc/view/web/season?season_id=${season_id}`);
+        getSeasonInfoByEpSsId(ep_id, season_id) {
+            return Async.ajax(`${this.server}/pgc/view/web/season?` + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`));
         }
         getSeasonInfoById(season_id, ep_id) {
             let paramDict = {
@@ -2086,9 +2083,20 @@ function scriptSource(invokeBy) {
             return Async.ajax('//api.bilibili.com/pgc/season/episode/web/info?' + `ep_id=${ep_id}`);
         }
         getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
-            const params = '?' + (ep_id != '' ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`;
+            const params = '?' + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`;
             const newParams = generateMobiPlayUrlParams(params, 'th');
             return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams);
+        }
+        async getMediaInfoBySeasonId(season_id) {
+            return Async.ajax(`//www.bilibili.com/bangumi/media/md${season_id}`)
+                .then(resp => {
+                const matchResult = resp.match(/window\.__INITIAL_STATE__=(.*);\(function\(\)/);
+                if (matchResult) {
+                    const initialState = JSON.parse(matchResult[1]);
+                    return initialState.mediaInfo;
+                }
+                return Promise$1.reject(new Error('__INITIAL_STATE__ is not found.'));
+            });
         }
     }
 
@@ -2197,7 +2205,7 @@ function scriptSource(invokeBy) {
     let invalidInitialState;
     function fixBangumiPlayPage() {
         util_init(async () => {
-            var _a, _b, _c, _d, _e, _f, _g, _h;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
             if (util_page.bangumi_md()) {
                 // 临时保存当前的season_id
                 cookieStorage.set('balh_curr_season_id', (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.season_id, '');
@@ -2220,7 +2228,28 @@ function scriptSource(invokeBy) {
                         // 如果该接口失效，自动尝试后面的方法
                         try {
                             let result = await bilibiliApi.getSeasonInfoById(season_id, ep_id);
-                            if (balh_config.server_custom_th && (result.code == -404)) {
+                            if (result.code == -404) {
+                                if (season_id) {
+                                    try {
+                                        let mediaInfo = await bilibiliApi.getMediaInfoBySeasonId(season_id);
+                                        if (mediaInfo.season_id) {
+                                            mediaInfo.refine_cover = decodeURI(mediaInfo.cover);
+                                            mediaInfo.share_copy = mediaInfo.title;
+                                            mediaInfo.share_url = `https://www.bilibili.com/bangumi/play/ss${mediaInfo.season_id}`;
+                                            mediaInfo.short_link = `https://b23.tv/ss${mediaInfo.season_id}`;
+                                            mediaInfo.status = mediaInfo.season_status;
+                                            mediaInfo.rights.area_limit = 0;
+                                            mediaInfo.rights.ban_area_show = 0;
+                                            mediaInfo.rights.is_preview = 0;
+                                            mediaInfo.staff = { info: mediaInfo.staff };
+                                            result = { code: 0, data: mediaInfo, message: "success" };
+                                        }
+                                    }
+                                    catch (error) {
+                                    }
+                                }
+                            }
+                            if (result.code != 0 && balh_config.server_custom_th) {
                                 result = await fixThailandSeason(ep_id, season_id);
                                 appOnly = true;
                             }
@@ -2230,14 +2259,14 @@ function scriptSource(invokeBy) {
                             if (ep_id != '')
                                 season_id = result.data.season_id.toString();
                             result.result = result.data;
-                            result.result.modules.forEach((module, mid) => {
+                            (_f = result.result.modules) === null || _f === void 0 ? void 0 : _f.forEach((module, mid) => {
                                 if (module.data) {
                                     let sid = module.id ? module.id : mid + 1;
                                     module.data['id'] = sid;
                                 }
                             });
                             let seasons = [];
-                            result.result.modules.forEach((module) => {
+                            (_g = result.result.modules) === null || _g === void 0 ? void 0 : _g.forEach((module) => {
                                 if (module.data.seasons) {
                                     module.data.seasons.forEach(season => {
                                         seasons.push(season);
@@ -2281,9 +2310,6 @@ function scriptSource(invokeBy) {
                                 });
                             }
                             const ep = ep_id != '' ? result.result.episodes.find(ep => ep.ep_id === +ep_id) : result.result.episodes[0];
-                            if (!ep) {
-                                throw `通过bangumi接口未找到${ep_id}对应的视频信息`;
-                            }
                             const eps = JSON.stringify(result.result.episodes.map((item, index) => {
                                 // 返回的数据是有序的，不需要另外排序                                
                                 if (/^\d+(\.\d+)?$/.exec(item.title)) {
@@ -2305,18 +2331,18 @@ function scriptSource(invokeBy) {
                                 return item;
                             }));
                             let titleForma;
-                            if (ep.index_title) {
+                            if (ep === null || ep === void 0 ? void 0 : ep.index_title) {
                                 titleForma = ep.index_title;
                             }
                             else {
-                                titleForma = "第" + ep.index + "话";
+                                titleForma = "第" + (ep === null || ep === void 0 ? void 0 : ep.index) + "话";
                             }
                             templateArgs = {
-                                id: ep.ep_id,
-                                aid: ep.aid,
-                                cid: ep.cid,
-                                bvid: ep.bvid,
-                                title: ep.index,
+                                id: ep === null || ep === void 0 ? void 0 : ep.ep_id,
+                                aid: ep === null || ep === void 0 ? void 0 : ep.aid,
+                                cid: ep === null || ep === void 0 ? void 0 : ep.cid,
+                                bvid: ep === null || ep === void 0 ? void 0 : ep.bvid,
+                                title: ep === null || ep === void 0 ? void 0 : ep.index,
                                 titleFormat: Strings.escapeSpecialChars(titleForma),
                                 htmlTitle: result.result.title,
                                 mediaInfoId: result.result.media_id,
@@ -2333,7 +2359,7 @@ function scriptSource(invokeBy) {
                         }
                         if (balh_config.server_bilibili_api_proxy && !templateArgs) {
                             try {
-                                const result = await bilibiliApi.getSeasonInfoByEpId(ep_id);
+                                const result = await bilibiliApi.getSeasonInfoByEpSsId(ep_id, season_id);
                                 if (result.code) {
                                     throw result;
                                 }
@@ -2423,7 +2449,7 @@ function scriptSource(invokeBy) {
                                 titleFormat: ep.index_title,
                                 htmlTitle: result.result.title,
                                 mediaInfoTitle: result.result.title,
-                                mediaInfoId: (_g = (_f = result.result.media) === null || _f === void 0 ? void 0 : _f.media_id) !== null && _g !== void 0 ? _g : 28229002,
+                                mediaInfoId: (_j = (_h = result.result.media) === null || _h === void 0 ? void 0 : _h.media_id) !== null && _j !== void 0 ? _j : 28229002,
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
                                 episodes: eps,
@@ -2454,7 +2480,7 @@ function scriptSource(invokeBy) {
                     // 插入eplist_module的位置和内容一定要是这样... 不能改...
                     // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
                     const $template = createElement('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim());
-                    (_h = $danmukuBox.parentElement) === null || _h === void 0 ? void 0 : _h.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
+                    (_k = $danmukuBox.parentElement) === null || _k === void 0 ? void 0 : _k.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
                 }
             }
         });
