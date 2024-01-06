@@ -2055,6 +2055,58 @@ function scriptSource(invokeBy) {
         }, util_init.PRIORITY.DEFAULT, util_init.RUN_AT.COMPLETE);
     }
 
+    const DB_NAME = 'balh';
+    const DB_VERSION = 1;
+    let dbPromise;
+    function openDb() {
+        return new Promise((resolve, reject) => {
+            var req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onsuccess = function (evt) {
+                resolve(this.result);
+            };
+            req.onerror = function (evt) {
+                reject(evt);
+            };
+            req.onupgradeneeded = (evt) => {
+                var _a;
+                var storeEPIDCache = (_a = evt.currentTarget) === null || _a === void 0 ? void 0 : _a.result.createObjectStore('ep_id_season_id', { keyPath: 'ep_id' });
+                storeEPIDCache.createIndex('season_id', 'season_id', { unique: false });
+            };
+        });
+    }
+    function getDb() {
+        return dbPromise !== null && dbPromise !== void 0 ? dbPromise : (dbPromise = openDb());
+    }
+    async function getObjectStore(store_name, mode) {
+        const db = await getDb();
+        var tx = db.transaction(store_name, mode);
+        return tx.objectStore(store_name);
+    }
+    var BalhDb;
+    (function (BalhDb) {
+        async function setSsId(ep_id, season_id) {
+            var store = await getObjectStore('ep_id_season_id', 'readwrite');
+            store.put({ ep_id: ep_id, season_id: season_id });
+        }
+        BalhDb.setSsId = setSsId;
+        function getSsId(ep_id) {
+            return new Promise(async (resolve, reject) => {
+                var store = await getObjectStore('ep_id_season_id', 'readonly');
+                var req = store.get(ep_id);
+                req.onsuccess = () => {
+                    if (!req.result)
+                        resolve('');
+                    else
+                        resolve(req.result.season_id);
+                };
+                req.onerror = (e) => {
+                    reject(e);
+                };
+            });
+        }
+        BalhDb.getSsId = getSsId;
+    })(BalhDb || (BalhDb = {}));
+
     class BiliBiliApi {
         constructor(server = '//api.bilibili.com') {
             this.server = server;
@@ -2082,7 +2134,14 @@ function scriptSource(invokeBy) {
         getEpisodeInfoByEpId(ep_id) {
             return Async.ajax('//api.bilibili.com/pgc/season/episode/web/info?' + `ep_id=${ep_id}`);
         }
-        getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
+        async getSeasonInfoByEpSsIdOnThailand(ep_id, season_id) {
+            if (ep_id) {
+                const ssid = await BalhDb.getSsId(parseInt(ep_id));
+                if (ssid) {
+                    season_id = ssid;
+                    ep_id = '';
+                }
+            }
             const params = '?' + (ep_id ? `ep_id=${ep_id}` : `season_id=${season_id}`) + `&mobi_app=bstar_a&s_locale=zh_SG`;
             const newParams = generateMobiPlayUrlParams(params, 'th');
             return Async.ajax(`${this.server}/intl/gateway/v2/ogv/view/app/season?` + newParams);
@@ -2192,6 +2251,9 @@ function scriptSource(invokeBy) {
                 ep.index = ep.title;
                 ep.index_title = ep.long_title;
                 (_a = origin.result.episodes) === null || _a === void 0 ? void 0 : _a.push(ep);
+                if (season_id !== '5551')
+                    BalhDb.setSsId(ep.id, season_id) //
+                        .catch((e) => util_warn('setSsId failed', e));
             });
             origin.result.total = origin.result.modules[0].data.episodes.length;
         }
