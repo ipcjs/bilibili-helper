@@ -1,6 +1,6 @@
 import { BiliBiliApi } from "../../api/bilibili"
 import { BiliPlusApi } from "../../api/biliplus"
-import { setSsId } from "../../util/IndexedDB"
+import { BalhDb } from "../../util/balh-db"
 import { Converters } from "../../util/converters"
 import { cookieStorage } from "../../util/cookie"
 import { util_init } from "../../util/initiator"
@@ -137,7 +137,7 @@ async function fixThailandSeason(ep_id: string, season_id: string) {
             ep.index_title = ep.long_title
             origin.result.episodes?.push(ep)
             if (season_id !== '5551')
-                setSsId(ep.id, season_id)//
+                BalhDb.setSsId(ep.id, season_id)//
                     .catch((e) => util_warn('setSsId failed', e))
         })
         origin.result.total = origin.result.modules[0].data.episodes.length

@@ -20,29 +20,35 @@ export function openDb() {
     })
 }
 
+function getDb() {
+    return dbPromise ??= openDb()
+}
+
 async function getObjectStore(store_name: string, mode: IDBTransactionMode) {
-    const db = await (dbPromise ??= openDb())
+    const db = await getDb()
     var tx = db.transaction(store_name, mode);
     return tx.objectStore(store_name);
 }
 
-export async function setSsId(ep_id: number, season_id: string) {
-    var store = await getObjectStore('ep_id_season_id', 'readwrite')
-    store.put({ ep_id: ep_id, season_id: season_id })
-}
+export namespace BalhDb {
+    export async function setSsId(ep_id: number, season_id: string) {
+        var store = await getObjectStore('ep_id_season_id', 'readwrite')
+        store.put({ ep_id: ep_id, season_id: season_id })
+    }
 
-export function getSsId(ep_id: number): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-        var store = await getObjectStore('ep_id_season_id', 'readonly');
-        var req: IDBRequest = store.get(ep_id)
-        req.onsuccess = () => {
-            if (!req.result)
-                resolve('')
-            else
-                resolve(req.result.season_id)
-        }
-        req.onerror = (e) => {
-            reject(e)
-        }
-    })
+    export function getSsId(ep_id: number): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            var store = await getObjectStore('ep_id_season_id', 'readonly');
+            var req: IDBRequest = store.get(ep_id)
+            req.onsuccess = () => {
+                if (!req.result)
+                    resolve('')
+                else
+                    resolve(req.result.season_id)
+            }
+            req.onerror = (e) => {
+                reject(e)
+            }
+        })
+    }
 }

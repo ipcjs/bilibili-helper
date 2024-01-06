@@ -1,7 +1,7 @@
 import { Async, Promise } from "../util/async"
 import { generateMobiPlayUrlParams } from "./biliplus"
 import { Converters } from "../util/converters"
-import { getSsId } from "../util/IndexedDB"
+import { BalhDb } from "../util/balh-db"
 
 interface SeasonInfo {
     code: number
@@ -790,7 +790,7 @@ export class BiliBiliApi {
     }
     async getSeasonInfoByEpSsIdOnThailand(ep_id: string | undefined, season_id: string | undefined) {
         if (ep_id) {
-            const ssid = await getSsId(parseInt(ep_id))
+            const ssid = await BalhDb.getSsId(parseInt(ep_id))
             if (ssid) {
                 season_id = ssid
                 ep_id = ''
