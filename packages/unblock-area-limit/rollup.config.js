@@ -17,7 +17,8 @@ export default {
         }),
         typescript({
             // 这个版本不会"编译"async函数
-            target: 'ES2017',
+            // 由于使用了 BigInt, 从 ES2017 升级到 ES2020
+            target: 'ES2020',
         }),
         template({
             filePath: path.resolve(__dirname, 'src/main.user.js'),
