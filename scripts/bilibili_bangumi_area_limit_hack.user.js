@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         解除B站区域限制
 // @namespace    https://github.com/ipcjs
-// @version      8.5.2
+// @version      8.5.3
 // @description  通过替换获取视频地址接口的方式, 实现解除B站区域限制;
 // @author       ipcjs
 // @supportURL   https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md
@@ -182,8 +182,8 @@ function scriptSource(invokeBy) {
             bilibili_api_proxy: /^https?:\/\/(?<user_pass>[\p{L}\d:_-]+@)?(?<user_server>[\p{L}\d_-]+(\.[\p{L}\d_-]+)+(:\d+)?)$/u,
         },
         baipiao: [
-            { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.epInfo) === null || _b === void 0 ? void 0 : _b.ep_id) === 251255; }, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
-            { key: 'zomble_land_saga', match: () => { var _a, _b; return ((_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.media_id) === 140772; }, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.epInfo?.ep_id) === 251255, link: 'http://www.acfun.cn/bangumi/ab5022161_31405_278830', message: r_text.welcome_to_acfun },
+            { key: 'zomble_land_saga', match: () => (window.__INITIAL_STATE__?.mediaInfo?.media_id) === 140772, link: 'http://www.acfun.cn/bangumi/aa5022161', message: r_text.welcome_to_acfun },
         ]
     };
 
@@ -285,8 +285,7 @@ function scriptSource(invokeBy) {
     }
     const logHub = {
         msg: function (msg) {
-            var _a;
-            (_a = window.top) === null || _a === void 0 ? void 0 : _a.postMessage([tag, floor, msg], '*');
+            window.top?.postMessage([tag, floor, msg], '*');
         },
         getAllMsg: function (replaces = {}) {
             let allMsg = msgList.join('\n');
@@ -691,7 +690,6 @@ function scriptSource(invokeBy) {
          * 确定弹窗
          */
         ui.pop = function (param) {
-            var _a;
             if (typeof param.content === 'string') {
                 let template = createElement('template');
                 template.innerHTML = param.content.trim();
@@ -705,7 +703,7 @@ function scriptSource(invokeBy) {
                 let noticeWidth = Math.min(500, innerWidth - 40);
                 document.head.appendChild(createElement('style', { id: 'AHP_Notice_style' }, [createElement('text', `#AHP_Notice{ line-height:normal;position:fixed;left:0;right:0;top:0;height:0;z-index:20000;transition:.5s;cursor:default;pointer-events:none } .AHP_down_banner{ margin:2px;padding:2px;color:#FFFFFF;font-size:13px;font-weight:bold;background-color:green } .AHP_down_btn{ margin:2px;padding:4px;color:#1E90FF;font-size:14px;font-weight:bold;border:#1E90FF 2px solid;display:inline-block;border-radius:5px } body.ABP-FullScreen{ overflow:hidden } @keyframes pop-iframe-in{0%{opacity:0;transform:scale(.7);}100%{opacity:1;transform:scale(1)}} @keyframes pop-iframe-out{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.7)}} #AHP_Notice>div{ position:absolute;bottom:0;left:0;right:0;font-size:15px } #AHP_Notice>div>div{ border:1px #AAA solid;width:${noticeWidth}px;margin:0 auto;padding:20px 10px 5px;background:#EFEFF4;color:#000;border-radius:5px;box-shadow:0 0 5px -2px;pointer-events:auto;white-space:pre-wrap } #AHP_Notice>div>div *{ margin:5px 0; } #AHP_Notice input[type=text]{ border: none;border-bottom: 1px solid #AAA;width: 60%;background: transparent } #AHP_Notice input[type=text]:active{ border-bottom-color:#4285f4 } #AHP_Notice input[type=button] { border-radius: 2px; border: #adadad 1px solid; padding: 3px; margin: 0 5px; min-width:50px } #AHP_Notice input[type=button]:hover { background: #FFF; } #AHP_Notice input[type=button]:active { background: #CCC; } .noflash-alert{display:none}`)]));
             }
-            (_a = document.querySelector('#AHP_Notice')) === null || _a === void 0 ? void 0 : _a.remove();
+            document.querySelector('#AHP_Notice')?.remove();
             let div = createElement('div', { id: 'AHP_Notice' });
             let children = [];
             if (param.showConfirm || param.confirmBtn || param.onConfirm) {
@@ -760,7 +758,7 @@ function scriptSource(invokeBy) {
     const util_page = {
         player: () => location.href.includes('www.bilibili.com/blackboard/html5player'),
         // 在av页面中的iframe标签形式的player
-        player_in_av: Func.runCatching(() => { var _a; return util_page.player() && ((_a = window.top) === null || _a === void 0 ? void 0 : _a.location.href.includes('www.bilibili.com/video/av')); }, (e) => util_debug(e)),
+        player_in_av: Func.runCatching(() => util_page.player() && window.top?.location.href.includes('www.bilibili.com/video/av'), (e) => util_debug(e)),
         av: () => location.href.includes('www.bilibili.com/video/av') || location.href.includes('www.bilibili.com/video/BV'),
         av_new: function () { return this.av() && (window.__playinfo__ || window.__playinfo__origin); },
         bangumi: () => location.href.match(new RegExp('^https?://bangumi\\.bilibili\\.com/anime/\\d+/?$')),
@@ -777,8 +775,7 @@ function scriptSource(invokeBy) {
         watchroom: () => location.href.includes("www.bilibili.com/watchroom"),
         home: () => location.hostname === 'www.bilibili.com' && location.pathname === '/',
         get ssId() {
-            var _a, _b;
-            return (_b = (_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.ssId;
+            return window.__INITIAL_STATE__?.mediaInfo?.ssId;
         },
     };
 
@@ -837,11 +834,10 @@ function scriptSource(invokeBy) {
             var playerContent = document.querySelector('.player-content');
             if (!localStorage.balh_h5_not_first && !isHtml5Player() && window.GrayManager && playerContent) {
                 new MutationObserver(function (mutations, observer) {
-                    var _a;
                     observer.disconnect();
                     localStorage.balh_h5_not_first = r.const.TRUE;
                     if (window.confirm(GM_info.script.name + '只在HTML5播放器下有效，是否切换到HTML5？')) {
-                        (_a = window.GrayManager) === null || _a === void 0 ? void 0 : _a.clickMenu('change_h5'); // change_flash, change_h5
+                        window.GrayManager?.clickMenu('change_h5'); // change_flash, change_h5
                     }
                 }).observe(playerContent, {
                     childList: true, // 监听child的增减
@@ -905,29 +901,34 @@ function scriptSource(invokeBy) {
     var Converters;
     (function (Converters) {
         // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
-        const table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF';
-        const tr = {};
-        for (var i = 0; i < 58; ++i) {
-            tr[table[i]] = i;
-        }
-        const s = [11, 10, 3, 8, 4, 6];
-        const xor = 177451812;
-        const add = 8728348608;
-        function bv2aid(bv) {
-            let r = 0;
-            for (let i = 0; i < 6; ++i) {
-                r += tr[bv[s[i]]] * (58 ** i);
-            }
-            return String((r - add) ^ xor);
+        // 新算法代码实现如下：
+        // https://socialsisteryi.github.io/bilibili-API-collect/docs/misc/bvid_desc.html#javascript-typescript
+        const XOR_CODE = 23442827791579n;
+        const MASK_CODE = 2251799813685247n;
+        const MAX_AID = 1n << 51n;
+        const BASE = 58n;
+        const data = 'FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf';
+        function bv2aid(bvid) {
+            const bvidArr = Array.from(bvid);
+            [bvidArr[3], bvidArr[9]] = [bvidArr[9], bvidArr[3]];
+            [bvidArr[4], bvidArr[7]] = [bvidArr[7], bvidArr[4]];
+            bvidArr.splice(0, 3);
+            const tmp = bvidArr.reduce((pre, bvidChar) => pre * BASE + BigInt(data.indexOf(bvidChar)), 0n);
+            return String((tmp & MASK_CODE) ^ XOR_CODE);
         }
         Converters.bv2aid = bv2aid;
-        function aid2bv(x) {
-            x = (x ^ xor) + add;
-            const r = Array.from('BV1  4 1 7  ');
-            for (let i = 0; i < 6; i++) {
-                r[s[i]] = table[Math.trunc(x / (58 ** i)) % 58];
+        function aid2bv(aid) {
+            const bytes = ['B', 'V', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
+            let bvIndex = bytes.length - 1;
+            let tmp = (MAX_AID | BigInt(aid)) ^ XOR_CODE;
+            while (tmp > 0) {
+                bytes[bvIndex] = data[Number(tmp % BigInt(BASE))];
+                tmp = tmp / BASE;
+                bvIndex -= 1;
             }
-            return r.join('');
+            [bytes[3], bytes[9]] = [bytes[9], bytes[3]];
+            [bytes[4], bytes[7]] = [bytes[7], bytes[4]];
+            return bytes.join('');
         }
         Converters.aid2bv = aid2bv;
         function xml2obj(xml) {
@@ -1112,10 +1113,9 @@ function scriptSource(invokeBy) {
                             createElement('text', `${GM_info.script.name}\n要不要考虑进行一下授权？\n\n授权后可以观看区域限定番剧的1080P\n（如果你是大会员或承包过这部番的话）\n\n你可以随时在设置中打开授权页面`)
                         ],
                         onConfirm: () => {
-                            var _a;
                             localStorage.balh_must_remind_login_v3 = FALSE;
                             showLogin();
-                            (_a = document.querySelector('#AHP_Notice')) === null || _a === void 0 ? void 0 : _a.remove();
+                            document.querySelector('#AHP_Notice')?.remove();
                         },
                         closeBtn: '不再提醒',
                         onClose: () => {
@@ -1129,7 +1129,6 @@ function scriptSource(invokeBy) {
         localStorage.balh_pre_server = balh_config.server;
     }
     async function showLogin() {
-        var _a;
         const balh_auth_window = window.open('about:blank');
         balh_auth_window.document.title = 'BALH - 授权';
         balh_auth_window.document.body.innerHTML = '<meta charset="UTF-8" name="viewport" content="width=device-width">正在获取授权，请稍候……';
@@ -1194,7 +1193,7 @@ function scriptSource(invokeBy) {
             }
         }
         catch (e) {
-            ui.alert((_a = e.message) !== null && _a !== void 0 ? _a : '授权出错');
+            ui.alert(e.message ?? '授权出错');
         }
         finally {
             balh_auth_window.close();
@@ -1343,7 +1342,7 @@ function scriptSource(invokeBy) {
      * @see https://stackoverflow.com/questions/27218525/set-referer-for-xmlhttprequest
      */
     function setReferrer(referrer) {
-        referrerEle !== null && referrerEle !== void 0 ? referrerEle : (referrerEle = window.document.getElementById('referrerMark'));
+        referrerEle ?? (referrerEle = window.document.getElementById('referrerMark'));
         if (referrerEle) {
             referrerEle.content = referrer;
         }
@@ -1627,7 +1626,6 @@ function scriptSource(invokeBy) {
         return result;
     }
     async function fixThailandPlayUrlJson(originJson) {
-        var _a;
         let origin = JSON.parse(JSON.stringify(originJson));
         if (origin.code === 401)
             bilibili_login.clearLoginFlag();
@@ -1649,7 +1647,7 @@ function scriptSource(invokeBy) {
             'min_buffer_time': 0.0,
             'audio': []
         };
-        const upos = (_a = uposMap[balh_config.upos_server || 'hw']) !== null && _a !== void 0 ? _a : uposMap.hw;
+        const upos = uposMap[balh_config.upos_server || 'hw'] ?? uposMap.hw;
         // 填充音频流数据
         origin.data.video_info.dash_audio.forEach((audio) => {
             const base_url = audio.base_url;
@@ -1759,8 +1757,7 @@ function scriptSource(invokeBy) {
         // 服务器需要通过这个接口判断是否有区域限制
         // 详见: https://github.com/ipcjs/bilibili-helper/issues/385
         util_init(() => {
-            var _a, _b, _c;
-            const season_id = (_c = (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.param) === null || _c === void 0 ? void 0 : _c.season_id;
+            const season_id = window?.__INITIAL_STATE__?.mediaInfo?.param?.season_id;
             if (season_id) {
                 BiliPlusApi.season(season_id)
                     .then(r => util_debug(`season${season_id}`, r))
@@ -1771,12 +1768,11 @@ function scriptSource(invokeBy) {
 
     function fill_season_page() {
         function tryFillSeasonList() {
-            var _a;
             const error_container = document.querySelector('div.error-container');
             if (!error_container) {
                 return;
             }
-            let season_id = (_a = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)) === null || _a === void 0 ? void 0 : _a[1];
+            let season_id = window.location.pathname.match(/^\/anime\/(\d+)\/?$/)?.[1];
             if (!season_id) {
                 return;
             }
@@ -1800,7 +1796,6 @@ function scriptSource(invokeBy) {
             util_debug('season>:', season_id);
             BiliPlusApi.season(season_id)
                 .then(function (data) {
-                var _a;
                 util_debug('season>then:', data);
                 if (data.code) {
                     return Promise.reject(data);
@@ -1820,15 +1815,14 @@ function scriptSource(invokeBy) {
                 }
                 function generateSeasonList(seasons) {
                     function onSeasonClick(event) {
-                        var _a;
-                        window.location.href = '//bangumi.bilibili.com/anime/' + ((_a = event.target) === null || _a === void 0 ? void 0 : _a.attributes['data-season-id'].value);
+                        window.location.href = '//bangumi.bilibili.com/anime/' + event.target?.attributes['data-season-id'].value;
                     }
                     return seasons.map(function (season) {
                         return createElement('li', { className: season.season_id == season_id ? 'cur' : '', 'data-season-id': season.season_id, event: { click: onSeasonClick } }, [createElement('text', season.title)]);
                     });
                 }
                 if (data.result) {
-                    if (((_a = msg.parentNode) === null || _a === void 0 ? void 0 : _a.parentNode) != error_container) {
+                    if (msg.parentNode?.parentNode != error_container) {
                         util_error('`msg.parentNode?.parentNode != error_container`, 按理来说不可能...');
                     }
                     document.title = data.result.title;
@@ -1899,7 +1893,7 @@ function scriptSource(invokeBy) {
             }
             // 自动点击"取消跳转按钮"
             let $goHomeBtn = document.querySelector(".big-btn.go-home");
-            $goHomeBtn === null || $goHomeBtn === void 0 ? void 0 : $goHomeBtn.click();
+            $goHomeBtn?.click();
             let msg = document.createElement('a');
             $errorPanel.insertBefore(msg, $errorPanel.firstChild);
             msg.innerText = '获取番剧页Url中...';
@@ -1992,7 +1986,6 @@ function scriptSource(invokeBy) {
             });
         }
         function generatePlayer(data, aid, page, cid) {
-            var _a;
             let generateSrc = function (aid, cid) {
                 return `//www.bilibili.com/blackboard/html5player.html?cid=${cid}&aid=${aid}&player_type=1`;
             };
@@ -2046,7 +2039,7 @@ function scriptSource(invokeBy) {
             // 添加包含bbFeedback的js
             document.head.appendChild(createElement('script', { type: 'text/javascript', src: '//static.hdslb.com/js/core-v5/base.core.js' }));
             document.title = data.title;
-            (_a = (document.querySelector('.error-body') || document.querySelector('.error-container'))) === null || _a === void 0 ? void 0 : _a.remove(); // 移除错误信息面板
+            (document.querySelector('.error-body') || document.querySelector('.error-container'))?.remove(); // 移除错误信息面板
         }
         util_init(() => {
             if (util_page.av()) {
@@ -2068,14 +2061,13 @@ function scriptSource(invokeBy) {
                 reject(evt);
             };
             req.onupgradeneeded = (evt) => {
-                var _a;
-                var storeEPIDCache = (_a = evt.currentTarget) === null || _a === void 0 ? void 0 : _a.result.createObjectStore('ep_id_season_id', { keyPath: 'ep_id' });
+                var storeEPIDCache = evt.currentTarget?.result.createObjectStore('ep_id_season_id', { keyPath: 'ep_id' });
                 storeEPIDCache.createIndex('season_id', 'season_id', { unique: false });
             };
         });
     }
     function getDb() {
-        return dbPromise !== null && dbPromise !== void 0 ? dbPromise : (dbPromise = openDb());
+        return dbPromise ?? (dbPromise = openDb());
     }
     async function getObjectStore(store_name, mode) {
         const db = await getDb();
@@ -2170,8 +2162,7 @@ function scriptSource(invokeBy) {
             configurable: true,
             enumerable: true,
             get: () => {
-                var _a;
-                (_a = options === null || options === void 0 ? void 0 : options.onRead) === null || _a === void 0 ? void 0 : _a.call(options, value);
+                options?.onRead?.(value);
                 return value;
             },
             set: (val) => {
@@ -2227,7 +2218,6 @@ function scriptSource(invokeBy) {
         }
     }
     async function fixThailandSeason(ep_id, season_id) {
-        var _a;
         // 部分泰区番剧通过 bangumi 无法取得数据或者数据不完整
         // 通过泰区 api 补全
         // https://github.com/yujincheng08/BiliRoaming/issues/112
@@ -2245,12 +2235,11 @@ function scriptSource(invokeBy) {
         origin.result.episodes = [];
         if (origin.result.modules.length > 0) {
             origin.result.modules[0].data.episodes.forEach((ep) => {
-                var _a;
                 ep.episode_status = ep.status;
                 ep.ep_id = ep.id;
                 ep.index = ep.title;
                 ep.index_title = ep.long_title;
-                (_a = origin.result.episodes) === null || _a === void 0 ? void 0 : _a.push(ep);
+                origin.result.episodes?.push(ep);
                 if (season_id !== '5551')
                     BalhDb.setSsId(ep.id, season_id) //
                         .catch((e) => util_warn('setSsId failed', e));
@@ -2259,7 +2248,7 @@ function scriptSource(invokeBy) {
         }
         origin.result.total_ep = origin.result.total;
         origin.result.style = [];
-        (_a = origin.result.styles) === null || _a === void 0 ? void 0 : _a.forEach((it) => {
+        origin.result.styles?.forEach((it) => {
             origin.result.style.push(it.name);
         });
         return { code: origin.code, message: origin.message, data: origin.result };
@@ -2267,10 +2256,9 @@ function scriptSource(invokeBy) {
     let invalidInitialState;
     function fixBangumiPlayPage() {
         util_init(async () => {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
             if (util_page.bangumi_md()) {
                 // 临时保存当前的season_id
-                cookieStorage.set('balh_curr_season_id', (_b = (_a = window === null || window === void 0 ? void 0 : window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) === null || _b === void 0 ? void 0 : _b.season_id, '');
+                cookieStorage.set('balh_curr_season_id', window?.__INITIAL_STATE__?.mediaInfo?.season_id, '');
             }
             if (util_page.anime_ep() || util_page.anime_ss()) {
                 // 旧版偶尔会出现client-app，why？
@@ -2279,7 +2267,7 @@ function scriptSource(invokeBy) {
                     // 这个fixBangumiPlayPage()函数，本来是用来重建appOnly页面的，不过最近这样appOnly的页面基本上没有了，反而出现了一批非appOnly但页面也需要重建的情况
                     // 如：https://www.bilibili.com/bangumi/media/md28235576
                     // 故当前默认值改为false🤔
-                    let appOnly = (_e = (_d = (_c = invalidInitialState === null || invalidInitialState === void 0 ? void 0 : invalidInitialState.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.appOnly) !== null && _e !== void 0 ? _e : false;
+                    let appOnly = invalidInitialState?.mediaInfo?.rights?.appOnly ?? false;
                     try {
                         // 读取保存的season_id
                         let season_id = (window.location.pathname.match(/\/bangumi\/play\/ss(\d+)/) || ['', cookieStorage.get('balh_curr_season_id')])[1];
@@ -2321,14 +2309,14 @@ function scriptSource(invokeBy) {
                             if (ep_id != '')
                                 season_id = result.data.season_id.toString();
                             result.result = result.data;
-                            (_f = result.result.modules) === null || _f === void 0 ? void 0 : _f.forEach((module, mid) => {
+                            result.result.modules?.forEach((module, mid) => {
                                 if (module.data) {
                                     let sid = module.id ? module.id : mid + 1;
                                     module.data['id'] = sid;
                                 }
                             });
                             let seasons = [];
-                            (_g = result.result.modules) === null || _g === void 0 ? void 0 : _g.forEach((module) => {
+                            result.result.modules?.forEach((module) => {
                                 if (module.data.seasons) {
                                     module.data.seasons.forEach(season => {
                                         seasons.push(season);
@@ -2393,18 +2381,18 @@ function scriptSource(invokeBy) {
                                 return item;
                             }));
                             let titleForma;
-                            if (ep === null || ep === void 0 ? void 0 : ep.index_title) {
+                            if (ep?.index_title) {
                                 titleForma = ep.index_title;
                             }
                             else {
-                                titleForma = "第" + (ep === null || ep === void 0 ? void 0 : ep.index) + "话";
+                                titleForma = "第" + ep?.index + "话";
                             }
                             templateArgs = {
-                                id: ep === null || ep === void 0 ? void 0 : ep.ep_id,
-                                aid: ep === null || ep === void 0 ? void 0 : ep.aid,
-                                cid: ep === null || ep === void 0 ? void 0 : ep.cid,
-                                bvid: ep === null || ep === void 0 ? void 0 : ep.bvid,
-                                title: ep === null || ep === void 0 ? void 0 : ep.index,
+                                id: ep?.ep_id,
+                                aid: ep?.aid,
+                                cid: ep?.cid,
+                                bvid: ep?.bvid,
+                                title: ep?.index,
                                 titleFormat: Strings.escapeSpecialChars(titleForma),
                                 htmlTitle: result.result.title,
                                 mediaInfoId: result.result.media_id,
@@ -2511,7 +2499,7 @@ function scriptSource(invokeBy) {
                                 titleFormat: ep.index_title,
                                 htmlTitle: result.result.title,
                                 mediaInfoTitle: result.result.title,
-                                mediaInfoId: (_j = (_h = result.result.media) === null || _h === void 0 ? void 0 : _h.media_id) !== null && _j !== void 0 ? _j : 28229002,
+                                mediaInfoId: result.result.media?.media_id ?? 28229002,
                                 evaluate: result.result.evaluate,
                                 cover: result.result.cover,
                                 episodes: eps,
@@ -2542,7 +2530,7 @@ function scriptSource(invokeBy) {
                     // 插入eplist_module的位置和内容一定要是这样... 不能改...
                     // 写错了会导致Vue渲染出错, 比如视频播放窗口消失之类的(╯°口°)╯(┴—┴
                     const $template = createElement('template', {}, `<div id="eplist_module" class="ep-list-wrapper report-wrap-module"><div class="list-title clearfix"><h4 title="正片">正片</h4> <span class="mode-change" style="position:relative"><i report-id="click_ep_switch" class="iconfont icon-ep-list-detail"></i> <!----></span> <!----> <span class="ep-list-progress">8/8</span></div> <div class="list-wrapper" style="display:none;"><ul class="clearfix" style="height:-6px;"></ul></div></div>`.trim());
-                    (_k = $danmukuBox.parentElement) === null || _k === void 0 ? void 0 : _k.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
+                    $danmukuBox.parentElement?.replaceChild($template.content.firstElementChild, $danmukuBox.nextSibling.nextSibling);
                 }
             }
         });
@@ -2656,7 +2644,7 @@ function scriptSource(invokeBy) {
                         }
                         return value;
                     }
-                    catch (_a) {
+                    catch {
                         return;
                     }
                 },
@@ -2670,8 +2658,7 @@ function scriptSource(invokeBy) {
         function replaceInitialState() {
             modifyGlobalValue('__INITIAL_STATE__', {
                 onWrite: (value) => {
-                    var _a, _b, _c, _d, _e, _f, _g, _h;
-                    if (((_a = value === null || value === void 0 ? void 0 : value.epInfo) === null || _a === void 0 ? void 0 : _a.id) === -1 && ((_b = value === null || value === void 0 ? void 0 : value.epList) === null || _b === void 0 ? void 0 : _b.length) === 0 && ((_d = (_c = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _c === void 0 ? void 0 : _c.rights) === null || _d === void 0 ? void 0 : _d.limitNotFound) === true) {
+                    if (value?.epInfo?.id === -1 && value?.epList?.length === 0 && value?.mediaInfo?.rights?.limitNotFound === true) {
                         invalidInitialState = value;
                         return undefined;
                     }
@@ -2684,12 +2671,12 @@ function scriptSource(invokeBy) {
                             }
                         }
                     }
-                    if (((_f = (_e = value === null || value === void 0 ? void 0 : value.mediaInfo) === null || _e === void 0 ? void 0 : _e.rights) === null || _f === void 0 ? void 0 : _f.appOnly) === true) {
+                    if (value?.mediaInfo?.rights?.appOnly === true) {
                         value.mediaInfo.rights.appOnly = false;
                         window.__balh_app_only__ = true;
                     }
-                    ifNotNull((_g = value === null || value === void 0 ? void 0 : value.epInfo) === null || _g === void 0 ? void 0 : _g.rights, (it) => it.area_limit = 0);
-                    (_h = value === null || value === void 0 ? void 0 : value.epList) === null || _h === void 0 ? void 0 : _h.forEach((it) => ifNotNull(it === null || it === void 0 ? void 0 : it.rights, (it) => it.area_limit = 0));
+                    ifNotNull(value?.epInfo?.rights, (it) => it.area_limit = 0);
+                    value?.epList?.forEach((it) => ifNotNull(it?.rights, (it) => it.area_limit = 0));
                     return value;
                 }
             });
@@ -2946,7 +2933,7 @@ function scriptSource(invokeBy) {
                 // 信息页添加到按钮右侧
                 if (util_page.bangumi_md()) {
                     indexNav = document.querySelector('.media-info-btns');
-                    indexNav === null || indexNav === void 0 ? void 0 : indexNav.appendChild(createBtnStyle('44px', `
+                    indexNav?.appendChild(createBtnStyle('44px', `
                             #balh-settings-btn {
                                 float: left;
                                 margin: 3px 0 0 20px;
@@ -3011,8 +2998,7 @@ function scriptSource(invokeBy) {
         }
         // 往顶层窗口发显示设置的请求
         function showSettings() {
-            var _a;
-            (_a = window.top) === null || _a === void 0 ? void 0 : _a.postMessage('balh-show-setting', '*');
+            window.top?.postMessage('balh-show-setting', '*');
         }
         // 只有顶层窗口才接收请求
         if (window === window.top) {
@@ -3357,11 +3343,9 @@ function scriptSource(invokeBy) {
 
     var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-    var fullExports = {};
-    var full = {
-      get exports(){ return fullExports; },
-      set exports(v){ fullExports = v; },
-    };
+    var full = {exports: {}};
+
+    full.exports;
 
     (function (module, exports) {
     	(function (global, factory) {
@@ -3747,8 +3731,10 @@ function scriptSource(invokeBy) {
     	  exports.Locale = Locale;
     	  exports.Trie = Trie;
 
-    	}));
-    } (full, fullExports));
+    	})); 
+    } (full, full.exports));
+
+    var fullExports = full.exports;
 
     // @ts-nocheck
     const area_limit_xhr = (() => {
@@ -3771,7 +3757,6 @@ function scriptSource(invokeBy) {
                     /// - object|string, 同步转换
                     /// {@endtemplate}
                     transformResponse: ({ url, response, xhr, container }) => {
-                        var _a, _b;
                         if (url.match(RegExps.url('api.bilibili.com/pgc/view/web/season?'))) {
                             let json = JSON.parse(xhr.responseText);
                             if (json.code === 0 && json.result) {
@@ -3846,7 +3831,7 @@ function scriptSource(invokeBy) {
                             // 上一个接口的新版本
                             let json = JSON.parse(xhr.responseText);
                             // 生成简体字幕
-                            if (balh_config.generate_sub && json.code == 0 && ((_b = (_a = json.data.subtitle) === null || _a === void 0 ? void 0 : _a.subtitles) === null || _b === void 0 ? void 0 : _b.length)) {
+                            if (balh_config.generate_sub && json.code == 0 && json.data.subtitle?.subtitles?.length) {
                                 const subtitles = json.data.subtitle.subtitles;
                                 const lans = subtitles.map((item) => item.lan);
                                 const genHans = lans.includes('zh-Hant') && !lans.includes('zh-Hans');
@@ -4268,9 +4253,8 @@ function scriptSource(invokeBy) {
                 return season_type != null; // 存在season_type就是bangumi?
             }
             function isBangumiPage() {
-                var _a, _b, _c, _d, _e;
-                const mediaInfo = ((_a = window.__INITIAL_STATE__) === null || _a === void 0 ? void 0 : _a.mediaInfo) || ((_e = (_d = (_c = (_b = window.__NEXT_DATA__) === null || _b === void 0 ? void 0 : _b.props.pageProps.dehydratedState) === null || _c === void 0 ? void 0 : _c.queries[0]) === null || _d === void 0 ? void 0 : _d.state.data.seasonInfo) === null || _e === void 0 ? void 0 : _e.mediaInfo);
-                return isBangumi((mediaInfo === null || mediaInfo === void 0 ? void 0 : mediaInfo.season_type) || (mediaInfo === null || mediaInfo === void 0 ? void 0 : mediaInfo.ssType));
+                const mediaInfo = window.__INITIAL_STATE__?.mediaInfo || window.__NEXT_DATA__?.props.pageProps.dehydratedState?.queries[0]?.state.data.seasonInfo?.mediaInfo;
+                return isBangumi(mediaInfo?.season_type || mediaInfo?.ssType);
             }
             function getSeasonId() {
                 var seasonId;
