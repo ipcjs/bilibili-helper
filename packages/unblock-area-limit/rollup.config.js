@@ -16,8 +16,7 @@ export default {
             output: false
         }),
         typescript({
-            // 这个版本不会"编译"async函数
-            // 由于使用了 BigInt, 从 ES2017 升级到 ES2020
+            // 支持BigInt, async等
             target: 'ES2020',
         }),
         template({

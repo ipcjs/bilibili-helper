@@ -32,7 +32,7 @@ export function redirect_to_bangumi_or_insert_player() {
             episode_id: string | undefined;
         let avData: any;
         if (!aid) {
-            let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1] as `BV1${string}`
+            let bv = (location.pathname.match(/\/video\/(BV\w+)/) || ['', ''])[1]
             if (bv) {
                 aid = Converters.bv2aid(bv)
             }
