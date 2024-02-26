@@ -900,8 +900,6 @@ function scriptSource(invokeBy) {
     const uposMap = rawUposMap;
     var Converters;
     (function (Converters) {
-        // https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
-        // 新算法代码实现如下：
         // https://socialsisteryi.github.io/bilibili-API-collect/docs/misc/bvid_desc.html#javascript-typescript
         const XOR_CODE = 23442827791579n;
         const MASK_CODE = 2251799813685247n;
