@@ -4,9 +4,7 @@
 
 ### Bilibili
 
-1. [解除B站区域限制](https://greasyfork.org/zh-CN/scripts/25718-%E8%A7%A3%E9%99%A4b%E7%AB%99%E5%8C%BA%E5%9F%9F%E9%99%90%E5%88%B6): 已暂停维护
-    - [帮助](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.md)
-    - [高级设置/测试页面 等](https://github.com/ipcjs/bilibili-helper/blob/user.js/packages/unblock-area-limit/README.dev.md)
+1. ~~解除B站区域限制~~: 应版权方要求, 已删除
 2. [Bilibili HTML5播放器网页全屏模式优化 脚本版](https://greasyfork.org/zh-CN/scripts/25858-bilibili-html5%E6%92%AD%E6%94%BE%E5%99%A8%E7%BD%91%E9%A1%B5%E5%85%A8%E5%B1%8F%E6%A8%A1%E5%BC%8F%E4%BC%98%E5%8C%96-%E8%84%9A%E6%9C%AC%E7%89%88)
 3. [Bilibili UGC](./scripts/bilibili_block_ugc.user.js): 过滤B站UGC内容
 
@@ -34,8 +32,6 @@
 2. [Fuck Baidu Cursor](https://greasyfork.org/zh-CN/scripts/28206-baidu-cursor)
 
 ## 赞助
-
-**注意**：要赞助`解除B站区域限制的服务器`，请直接点击脚本设置页面的“捐赠”链接（在服务器地址旁边）。如下赞助只针对脚本本身，不针对服务器。
 
 [赞助列表](donate/donation.jsonc)
 

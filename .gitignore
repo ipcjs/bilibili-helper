@@ -7,3 +7,4 @@ build/
 temp/
 # /.vscode/settings.json
 /*.user.js
+/scripts/bilibili_bangumi_area_limit_hack.user.js
